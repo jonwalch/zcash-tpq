@@ -60,6 +60,8 @@ op, ok: true, result}`. Failure responses replace `result` with
 Stages are `transport`, `schema`, `integrity`, `correspondence`, `generation`.
 Reasons are fixed snake_case identifiers, documented alongside implementation;
 they are diagnostics rather than consensus rejection codes.
+On failure, `op` is `unknown` when strict parsing could not determine the
+operation; a successful response always names the requested operation.
 
 `prepare` result is `{case_id, network, transaction_version,
 consensus_branch_id, unsigned_transaction_hex, inputs, outputs}`. Inputs use
@@ -136,7 +138,7 @@ has valid native signatures and fails only this explicit test profile.
 `producer` is exactly `{zakura_revision, algorithm_revision, blake3_version,
 host_source_inventory_sha256, host_lock_sha256, host_binary_sha256,
 signer_source_inventory_sha256, signer_lock_sha256, signer_binary_sha256}`.
-Revisions are 40 lowercase hex bytes-as-text characters. `zakura_revision`
+Revisions are 40 lowercase hex characters. `zakura_revision`
 identifies pinned upstream `9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`, not a
 claim that upstream contains these extensions. Algorithm revision is
 `b392fe82d2d9770142477a576a758a233888bc0a`, BLAKE3 version `1.8.5`.
