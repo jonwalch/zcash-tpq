@@ -6,6 +6,13 @@ Run one bounded JSON request on stdin and receive one JSON response. The
 `prepare`, `assemble` and `check` operations never hold or request secret keys.
 Prepared outpoints/values/scripts are synthetic fixture context.
 
+Additional public acceptance operations provide classical funding, mixed-input
+controls and transparent block construction. See the
+[human runbook](../../../../docs/slh-dsa-b128s/acceptance.md) and
+[lifecycle controls](../../../../docs/slh-dsa-b128s/lifecycle-controls.md).
+Their fixed public ECDSA test scalars are explicitly attributable and are never
+operational wallet keys. Original corpus operations and bytes remain unchanged.
+
 Select this package explicitly for focused checks:
 
 ```sh
