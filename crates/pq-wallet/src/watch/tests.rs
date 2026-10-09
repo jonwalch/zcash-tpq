@@ -38,7 +38,16 @@ fn inventory(receive: u32, change: u32) -> Manifest {
                     index,
                     wallet_id: manifest.wallet_id,
                 }],
-                policy_hex: hex::encode(Policy::new(1, vec![zakura_pq_slh_dsa_b_exp::codec::key_commitment(key.public_key())]).unwrap().encode()),
+                policy_hex: hex::encode(
+                    Policy::new(
+                        1,
+                        vec![zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                            key.public_key(),
+                        )],
+                    )
+                    .unwrap()
+                    .encode(),
+                ),
                 role: role as u8,
             });
         }
@@ -253,7 +262,10 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
             },
         ),
         (
-            zakura_pq_slh_dsa_b_exp::codec::key_commitment(zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([33; 48])).public_key()),
+            zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([33; 48]))
+                    .public_key(),
+            ),
             Origin {
                 account: 0,
                 index: 7,
@@ -261,7 +273,10 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
             },
         ),
         (
-            zakura_pq_slh_dsa_b_exp::codec::key_commitment(zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([44; 48])).public_key()),
+            zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([44; 48]))
+                    .public_key(),
+            ),
             Origin {
                 account: 0,
                 index: 9,
@@ -307,7 +322,10 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
     let mut wrong = candidate.clone();
     let foreign = Policy::new(
         1,
-        vec![zakura_pq_slh_dsa_b_exp::codec::key_commitment(zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([55; 48])).public_key())],
+        vec![zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+            zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([55; 48]))
+                .public_key(),
+        )],
     )
     .unwrap();
     wrong.entries[2] = Entry {
@@ -848,4 +866,3 @@ fn mismatched_node_context_and_block_data_do_not_advance_a_scan() {
         assert_eq!(store.status().unwrap().checkpoint, None);
     }
 }
-

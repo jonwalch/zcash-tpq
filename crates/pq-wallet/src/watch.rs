@@ -341,6 +341,32 @@ impl WatchStore {
         self.status()
     }
 
+    // Recovery preserves exact approved capabilities and their reservations,
+    // but cached observations cannot authorize spending before trusted sync.
+    pub(crate) fn restore_reconciled_inventory(
+        &mut self,
+        manifest: &Manifest,
+        known_authority: bool,
+    ) -> Result<(), Error> {
+        self.ready()?;
+        self.state.manifest.check_update(manifest)?;
+        let mut candidate = self.state.clone();
+        candidate.manifest = manifest.clone();
+        candidate.receive_next = candidate.receive_next.max(manifest.retired_receive_end);
+        candidate.payments.change_next = candidate
+            .payments
+            .change_next
+            .max(manifest.retired_change_end);
+        candidate.mode = if known_authority && self.state.mode == WatchMode::Allocator {
+            WatchMode::Allocator
+        } else {
+            WatchMode::Monitor
+        };
+        candidate.scan.complete = false;
+        candidate.scan.context = None;
+        self.commit(candidate)
+    }
+
     pub(crate) fn ready(&self) -> Result<(), Error> {
         if self.poisoned {
             Err(Error::ReopenRequired)

@@ -233,8 +233,12 @@ fn multisig_enrollment_binds_independent_approval_and_preserves_rejected_state()
         }
     }
 
-    let attacker_keys =
-        [71, 72].map(|seed| zakura_pq_slh_dsa_b_exp::codec::key_commitment(zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([seed; 48])).public_key()));
+    let attacker_keys = [71, 72].map(|seed| {
+        zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+            zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([seed; 48]))
+                .public_key(),
+        )
+    });
     for (i, saved) in wallets.iter_mut().enumerate() {
         for (role, agreed) in [Role::Receive, Role::Change].into_iter().zip(&shared) {
             let local = saved.before.wallet_id;
@@ -397,7 +401,12 @@ fn multisig_enrollment_coordinator_supplied_hash_is_not_authentication() {
                 },
             ),
             (
-                zakura_pq_slh_dsa_b_exp::codec::key_commitment(zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([81; 48])).public_key()),
+                zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                    zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new(
+                        [81; 48],
+                    ))
+                    .public_key(),
+                ),
                 Origin {
                     account: 0,
                     index: 4,
@@ -405,7 +414,12 @@ fn multisig_enrollment_coordinator_supplied_hash_is_not_authentication() {
                 },
             ),
             (
-                zakura_pq_slh_dsa_b_exp::codec::key_commitment(zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new([82; 48])).public_key()),
+                zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                    zakura_pq_slh_dsa_b_sign::SigningKey::from_seed(zeroize::Zeroizing::new(
+                        [82; 48],
+                    ))
+                    .public_key(),
+                ),
                 Origin {
                     account: 0,
                     index: 7,

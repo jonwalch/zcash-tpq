@@ -51,15 +51,17 @@ mod backup;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod journal;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
+pub mod payment;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 mod receiving;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+pub mod recovery;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod scan;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod storage;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod watch;
-#[cfg(feature = "experimental-slh-dsa-b128s")]
-pub mod payment;
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod canonical;
@@ -75,13 +77,15 @@ pub use receiving::Receiver;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 pub use scan::{ChainSource, Checkpoint, Coin, NodeContext, Outpoint, ScanStatus};
 #[cfg(feature = "experimental-slh-dsa-b128s")]
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 pub use watch::archive::{
     PaymentDetails, PaymentHistoryEntry, PaymentHistoryPage, PaymentLocation, PaymentObservation,
 };
 #[cfg(feature = "experimental-slh-dsa-b128s")]
-pub use watch::{export_inventory, read_inventory, read_transfer, write_transfer, WatchMode, WatchStore};
-#[cfg(feature = "experimental-slh-dsa-b128s")]
-use serde::{Deserialize, Serialize};
+pub use watch::{
+    export_inventory, read_inventory, read_transfer, write_transfer, WatchMode, WatchStore,
+};
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 pub use error::Error;
@@ -362,3 +366,6 @@ impl Wallet {
 
 #[cfg(all(test, feature = "experimental-slh-dsa-b128s"))]
 mod wallet_tests;
+
+#[cfg(all(test, feature = "experimental-slh-dsa-b128s"))]
+mod backup_tests;
