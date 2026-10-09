@@ -964,6 +964,13 @@ struct DTestnetParameters {
     max_block_time_start_height: Option<u32>,
     genesis_hash: Option<String>,
     activation_heights: Option<ConfiguredActivationHeights>,
+    /// Regtest-only SLH-DSA-B-128s activation, independent of network upgrades.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    experimental_slh_dsa_b128s_activation_height: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    experimental_slh_dsa_b128s_max_checks_per_transaction: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    experimental_slh_dsa_b128s_max_checks_per_block: Option<u32>,
     pre_nu6_funding_streams: Option<ConfiguredFundingStreams>,
     post_nu6_funding_streams: Option<ConfiguredFundingStreams>,
     funding_streams: Option<Vec<ConfiguredFundingStreams>>,
@@ -989,7 +996,7 @@ struct DTestnetParameters {
 
 /// Network configuration used during deserialization.
 #[derive(Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(untagged, deny_unknown_fields)]
 enum DNetwork {
     DefaultForKind(NetworkKind),
     ConfiguredRegtest {
@@ -1077,6 +1084,15 @@ impl From<Arc<testnet::Parameters>> for DTestnetParameters {
             max_block_time_start_height: Some(params.max_block_time_start_height().0),
             genesis_hash: Some(params.genesis_hash().to_string()),
             activation_heights: Some(params.activation_heights().into()),
+            experimental_slh_dsa_b128s_activation_height: params
+                .experimental_slh_dsa_b128s_activation_height()
+                .map(|height| height.0),
+            experimental_slh_dsa_b128s_max_checks_per_transaction: params
+                .experimental_slh_dsa_b128s_limits()
+                .map(|limits| limits.transaction()),
+            experimental_slh_dsa_b128s_max_checks_per_block: params
+                .experimental_slh_dsa_b128s_limits()
+                .map(|limits| limits.block()),
             pre_nu6_funding_streams: None,
             post_nu6_funding_streams: None,
             funding_streams: Some(params.funding_streams().iter().map(Into::into).collect()),
@@ -1199,6 +1215,24 @@ impl<'de> Deserialize<'de> for Config {
         } = DConfig::deserialize(deserializer)?;
 
         let p2p_stack = p2p_stack_from_config::<D>(p2p_stack, legacy_p2p, v2_p2p)?;
+
+        // Do not silently discard consensus settings when another network form takes precedence.
+        if testnet_parameters.as_ref().is_some_and(|params| {
+            params
+                .experimental_slh_dsa_b128s_activation_height
+                .is_some()
+                || params
+                    .experimental_slh_dsa_b128s_max_checks_per_transaction
+                    .is_some()
+                || params
+                    .experimental_slh_dsa_b128s_max_checks_per_block
+                    .is_some()
+        }) && !matches!(&dnetwork, DNetwork::DefaultForKind(NetworkKind::Regtest))
+        {
+            return Err(de::Error::custom(
+                "experimental_slh_dsa_b128s_activation_height in testnet_parameters requires network = 'Regtest'; do not combine it with an inline network configuration",
+            ));
+        }
 
         let network = match (dnetwork, testnet_parameters) {
             (DNetwork::ConfiguredTestnet(params), None) => {
@@ -1372,6 +1406,9 @@ where
         max_block_time_start_height,
         genesis_hash,
         activation_heights,
+        experimental_slh_dsa_b128s_activation_height,
+        experimental_slh_dsa_b128s_max_checks_per_transaction,
+        experimental_slh_dsa_b128s_max_checks_per_block,
         pre_nu6_funding_streams,
         post_nu6_funding_streams,
         funding_streams,
@@ -1382,6 +1419,15 @@ where
         temporary_orchard_disabling_soft_fork_height,
         initial_nsm_value_balance,
     } = params;
+
+    if experimental_slh_dsa_b128s_activation_height.is_some()
+        || experimental_slh_dsa_b128s_max_checks_per_transaction.is_some()
+        || experimental_slh_dsa_b128s_max_checks_per_block.is_some()
+    {
+        return Err(de::Error::custom(
+            "experimental_slh_dsa_b128s_activation_height is only supported on Regtest",
+        ));
+    }
 
     let mut params_builder = testnet::Parameters::build();
 
@@ -1515,6 +1561,9 @@ where
 {
     let DTestnetParameters {
         activation_heights,
+        experimental_slh_dsa_b128s_activation_height,
+        experimental_slh_dsa_b128s_max_checks_per_transaction,
+        experimental_slh_dsa_b128s_max_checks_per_block,
         pre_nu6_funding_streams,
         post_nu6_funding_streams,
         funding_streams,
@@ -1551,6 +1600,23 @@ where
     )]
     let params = RegtestParameters {
         activation_heights: activation_heights.unwrap_or_default(),
+        experimental_slh_dsa_b128s_activation_height: experimental_slh_dsa_b128s_activation_height
+            .map(zakura_chain::block::Height),
+        experimental_slh_dsa_b128s_limits: match (
+            experimental_slh_dsa_b128s_max_checks_per_transaction,
+            experimental_slh_dsa_b128s_max_checks_per_block,
+        ) {
+            (None, None) => None,
+            (Some(transaction), Some(block)) => Some(
+                testnet::ExperimentalSlhDsaB128sLimits::new(transaction, block)
+                    .map_err(de::Error::custom)?,
+            ),
+            _ => {
+                return Err(de::Error::custom(
+                    "both experimental SLH-DSA-B-128s limits must be configured together",
+                ))
+            }
+        },
         funding_streams: Some(funding_streams_vec),
         lockbox_disbursements,
         checkpoints: Some(checkpoints),

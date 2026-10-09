@@ -234,7 +234,26 @@ impl StartCmd {
         config
             .consensus
             .validate()
-            .map_err(|error| eyre!("invalid consensus configuration: {error}"))
+            .map_err(|error| eyre!("invalid consensus configuration: {error}"))?;
+        Self::validate_experimental_slh_dsa_b128s_support(config)
+    }
+
+    /// A node without the SLH-DSA-B-128s verifier would reject SLH-DSA-B-128s spends that other
+    /// nodes on the same experimental Regtest chain accept, so it must not start.
+    fn validate_experimental_slh_dsa_b128s_support(config: &ZakuradConfig) -> Result<(), Report> {
+        if config
+            .network
+            .network
+            .experimental_slh_dsa_b128s_activation_height()
+            .is_some()
+            && !zakura_consensus::supports_experimental_slh_dsa_b128s()
+        {
+            return Err(eyre!(
+                "experimental_slh_dsa_b128s_activation_height requires complete SLH-DSA-B-128s \
+                 runtime support; this build does not provide it"
+            ));
+        }
+        Ok(())
     }
 
     fn validate_debug_blocksync_throughput_config(config: &ZakuradConfig) -> Result<(), Report> {
@@ -1416,6 +1435,36 @@ mod tests {
     use zakura_network::types::PeerServices;
     use zakura_network::P2pStack;
     use zakura_state::{PruningConfig, StorageMode};
+
+    #[test]
+    fn experimental_slh_dsa_b128s_config_requires_complete_runtime_support() {
+        use zakura_chain::parameters::{
+            testnet::{
+                ConfiguredActivationHeights, ExperimentalSlhDsaB128sLimits, RegtestParameters,
+            },
+            Network,
+        };
+        let mut config = ZakuradConfig::default();
+        assert!(StartCmd::validate_experimental_slh_dsa_b128s_support(&config).is_ok());
+        config.network.network = Network::new_regtest(RegtestParameters {
+            activation_heights: ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(5),
+                ..Default::default()
+            },
+            experimental_slh_dsa_b128s_activation_height: Some(block::Height(10)),
+            experimental_slh_dsa_b128s_limits: Some(
+                ExperimentalSlhDsaB128sLimits::new(10, 40).unwrap(),
+            ),
+            ..Default::default()
+        });
+        let result = StartCmd::validate_consensus_config(&config);
+        assert_eq!(
+            result.is_ok(),
+            zakura_consensus::supports_experimental_slh_dsa_b128s(),
+            "{result:?}"
+        );
+    }
 
     #[test]
     fn zcashd_compat_advertises_node_network_when_pruned() {

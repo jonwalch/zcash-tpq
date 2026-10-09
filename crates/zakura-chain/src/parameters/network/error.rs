@@ -48,6 +48,29 @@ pub enum ParametersBuilderError {
     #[non_exhaustive]
     InvalidActivationHeight,
 
+    #[error("experimental_slh_dsa_b128s_activation_height must be between 1 and Height::MAX")]
+    InvalidExperimentalSlhDsaB128sActivationHeight,
+
+    #[error("experimental SLH-DSA-B-128s limits must satisfy 0 < transaction <= block")]
+    InvalidExperimentalSlhDsaB128sLimits,
+
+    #[error(
+        "experimental_slh_dsa_b128s_activation_height and both explicit SLH-DSA-B-128s limits must be configured together"
+    )]
+    MissingExperimentalSlhDsaB128sLimits,
+
+    #[error("experimental SLH-DSA-B-128s activation at {activation_height:?} must be after every configured and mandatory checkpoint (last: {checkpoint_height:?}); SLH-DSA-B-128s-active blocks require semantic validation")]
+    ExperimentalSlhDsaB128sCheckpointConflict {
+        activation_height: Height,
+        checkpoint_height: Height,
+    },
+
+    #[error("experimental SLH-DSA-B-128s activation at {activation_height:?} must be strictly after NU7 activation (NU7: {nu7_height:?}); the v1 contract covers NU7 contexts only")]
+    ExperimentalSlhDsaB128sBeforeNu7 {
+        activation_height: Height,
+        nu7_height: Option<Height>,
+    },
+
     #[error("Height(0) is reserved for the `Genesis` upgrade")]
     #[non_exhaustive]
     InvalidHeightZero,

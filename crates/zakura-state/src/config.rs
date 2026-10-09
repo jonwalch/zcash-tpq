@@ -69,6 +69,10 @@ pub struct Config {
     /// Each state format version and network has a separate state.
     /// These states are stored in `state/vN/mainnet` and `state/vN/testnet` subdirectories,
     /// underneath the `cache_dir` path, where `N` is the state format version.
+    /// Experimental SLH Regtest uses `regtest-slh-dsa-b128s-v1-hH-tT-bB`, where
+    /// `H` is its activation height and `T`/`B` are its transaction/block check
+    /// limits, for both database and non-finalized backups. Never copy state
+    /// between different rules.
     ///
     /// When Zebra's state format changes, it creates a new state subdirectory for that version,
     /// and re-syncs from genesis.
@@ -215,6 +219,25 @@ fn gen_temp_path(prefix: &str) -> PathBuf {
         .keep()
 }
 
+/// Keep experimental consensus histories separate, including their restart backups.
+fn state_network_directory(network: &Network) -> String {
+    let base = network.lowercase_name();
+    match network.experimental_slh_dsa_b128s_activation_height() {
+        Some(height) => {
+            let limits = network
+                .experimental_slh_dsa_b128s_limits()
+                .expect("SLH-DSA-B-128s activation requires explicit limits");
+            format!(
+                "{base}-slh-dsa-b128s-v1-h{}-t{}-b{}",
+                height.0,
+                limits.transaction(),
+                limits.block()
+            )
+        }
+        None => base,
+    }
+}
+
 impl Config {
     /// Returns the path for the database, based on the kind, major version and network.
     /// Each incompatible database format or network gets its own unique path.
@@ -226,7 +249,7 @@ impl Config {
     ) -> PathBuf {
         let db_kind = db_kind.as_ref();
         let major_version = format!("v{major_version}");
-        let net_dir = network.lowercase_name();
+        let net_dir = state_network_directory(network);
 
         if self.ephemeral {
             gen_temp_path(&format!("zebra-{db_kind}-{major_version}-{net_dir}-"))
@@ -248,7 +271,7 @@ impl Config {
             return None;
         }
 
-        let net_dir = network.lowercase_name();
+        let net_dir = state_network_directory(network);
         Some(self.cache_dir.join("non_finalized_state").join(net_dir))
     }
 
@@ -478,6 +501,150 @@ impl Default for Config {
 mod tests {
     use super::*;
 
+    fn slh_dsa_b128s_network(height: u32, transaction: u32, block: u32) -> Network {
+        use zakura_chain::{
+            block::Height,
+            parameters::testnet::{
+                ConfiguredActivationHeights, ExperimentalSlhDsaB128sLimits, RegtestParameters,
+            },
+        };
+        Network::new_regtest(RegtestParameters {
+            activation_heights: ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(105),
+                ..Default::default()
+            },
+            experimental_slh_dsa_b128s_activation_height: Some(Height(height)),
+            experimental_slh_dsa_b128s_limits: Some(
+                ExperimentalSlhDsaB128sLimits::new(transaction, block).unwrap(),
+            ),
+            ..Default::default()
+        })
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_state_and_backups_are_isolated_by_rules() {
+        let directory = tempfile::tempdir().unwrap();
+        let config = Config {
+            cache_dir: directory.path().to_owned(),
+            ephemeral: false,
+            should_backup_non_finalized_state: true,
+            ..Default::default()
+        };
+        let plain = Network::new_regtest(Default::default());
+        for old in [
+            config.db_path("state", 1, &plain),
+            config.non_finalized_state_backup_dir(&plain).unwrap(),
+        ] {
+            fs::create_dir_all(&old).unwrap();
+            fs::write(old.join("marker"), b"plain Regtest state").unwrap();
+        }
+        let mut paths = std::collections::HashSet::new();
+        for (height, transaction, block) in
+            [(110, 16, 64), (111, 16, 64), (110, 15, 64), (110, 16, 65)]
+        {
+            let network = slh_dsa_b128s_network(height, transaction, block);
+            let expected = format!("regtest-slh-dsa-b128s-v1-h{height}-t{transaction}-b{block}");
+            for path in [
+                config.db_path("state", 1, &network),
+                config.non_finalized_state_backup_dir(&network).unwrap(),
+            ] {
+                assert_eq!(path.file_name().unwrap(), expected.as_str());
+                assert!(
+                    paths.insert(path.clone()),
+                    "different rules must not share state"
+                );
+                assert!(!path.exists(), "new rules require fresh state");
+                fs::create_dir_all(&path).unwrap();
+                fs::write(path.join("marker"), b"SLH state").unwrap();
+            }
+            let restart = network.clone();
+            for path in [
+                config.db_path("state", 1, &restart),
+                config.non_finalized_state_backup_dir(&restart).unwrap(),
+            ] {
+                assert_eq!(fs::read(path.join("marker")).unwrap(), b"SLH state");
+            }
+            assert_eq!(
+                config
+                    .version_file_path("state", 1, &network)
+                    .parent()
+                    .unwrap(),
+                config.db_path("state", 1, &network)
+            );
+        }
+        for old in [
+            config.db_path("state", 1, &plain),
+            config.non_finalized_state_backup_dir(&plain).unwrap(),
+        ] {
+            assert_eq!(
+                fs::read(old.join("marker")).unwrap(),
+                b"plain Regtest state"
+            );
+        }
+        for network in [Network::Mainnet, Network::new_default_testnet(), plain] {
+            assert_eq!(
+                config.db_path("state", 1, &network),
+                directory
+                    .path()
+                    .join("state/v1")
+                    .join(network.lowercase_name())
+            );
+        }
+        let network = slh_dsa_b128s_network(110, 16, 64);
+        let ephemeral = Config {
+            ephemeral: true,
+            ..config.clone()
+        };
+        assert!(ephemeral.non_finalized_state_backup_dir(&network).is_none());
+        let ephemeral_path = ephemeral.db_path("state", 1, &network);
+        assert!(ephemeral_path
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("zebra-state-v1-regtest-slh-dsa-b128s-v1-h110-t16-b64-"));
+        fs::remove_dir_all(ephemeral_path).unwrap();
+        let disabled = Config {
+            should_backup_non_finalized_state: false,
+            ..config
+        };
+        assert!(disabled.non_finalized_state_backup_dir(&network).is_none());
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_cleanup_uses_the_namespaced_version_parent() {
+        let directory = tempfile::tempdir().unwrap();
+        let config = Config {
+            cache_dir: directory.path().to_owned(),
+            ephemeral: false,
+            delete_old_database: true,
+            ..Default::default()
+        };
+        let network = slh_dsa_b128s_network(110, 16, 64);
+        let restorable: Vec<_> = restorable_db_versions()
+            .into_iter()
+            .map(|v| v - 1)
+            .collect();
+        let current = restorable.iter().copied().max().unwrap_or(1) + 3;
+        let old = (0..current).find(|v| !restorable.contains(v)).unwrap();
+        let retained: Vec<_> = restorable
+            .into_iter()
+            .chain([current, current + 1])
+            .map(|v| config.db_path("state", v, &network))
+            .collect();
+        let obsolete = config.db_path("state", old, &network);
+        for path in retained.iter().chain([&obsolete]) {
+            fs::create_dir_all(path).unwrap();
+            fs::write(path.join("marker"), b"temporary fixture").unwrap();
+        }
+        delete_old_databases(config, "state".into(), current, &network);
+        assert!(!obsolete.exists());
+        for path in retained {
+            assert_eq!(fs::read(path.join("marker")).unwrap(), b"temporary fixture");
+        }
+    }
+
     #[test]
     fn storage_mode_deserializes_from_documented_toml() {
         assert!(
@@ -677,7 +844,7 @@ fn delete_old_databases(config: Config, db_kind: String, major_version: u64, net
     // Check and remove the network path.
     assert_eq!(
         db_path.file_name(),
-        Some(network.lowercase_name().as_ref()),
+        Some(state_network_directory(network).as_ref()),
         "unexpected database network path structure"
     );
     assert!(db_path.pop());
