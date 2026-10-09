@@ -170,7 +170,7 @@ def manifest_paths(path, data, names, *, added):
             walk(item)
     walk(manifest)
     # Includes patches/replacements, package build scripts and workspace membership.
-    def paths(value, prefix=()):
+    def paths(value):
         if isinstance(value, dict):
             for key, item in value.items():
                 if key == "path" and isinstance(item, str):
@@ -178,7 +178,10 @@ def manifest_paths(path, data, names, *, added):
                     require(target in names or target + "/Cargo.toml" in names, "manifest path missing: " + target)
                 if key == "git" and isinstance(item, str):
                     require("zcash-transparent-pq" not in item, "research Git source")
-                paths(item, prefix + (key,))
+                paths(item)
+        elif isinstance(value, list):
+            for item in value:
+                paths(item)
     paths(manifest)
     return package.get("name")
 

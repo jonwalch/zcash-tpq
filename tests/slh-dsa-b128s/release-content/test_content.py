@@ -73,6 +73,18 @@ class PathTests(unittest.TestCase):
             with self.subTest(build=value), self.assertRaises(ValueError):
                 audit.manifest_paths("Cargo.toml", ('[package]\nbuild="'+value+'"').encode(), names, added=False)
 
+    def test_explicit_cargo_target_arrays_require_tracked_in_repo_sources(self):
+        names = {"Cargo.toml", "src/main.rs"}
+        for kind in ("bin", "test", "bench", "example"):
+            for target in ("src/main.rs", "../outside.rs", "missing.rs", "/private/outside.rs"):
+                data = ('[['+kind+']]\nname="public"\npath="'+target+'"\n').encode()
+                with self.subTest(kind=kind, target=target):
+                    if target == "src/main.rs":
+                        audit.manifest_paths("Cargo.toml", data, names, added=False)
+                    else:
+                        with self.assertRaises(ValueError):
+                            audit.manifest_paths("Cargo.toml", data, names, added=False)
+
     def test_archive_and_package_traversal_and_private_files_fail(self):
         for value in ("../secret", "/absolute", "a/../secret", "a\\secret", "a//secret"):
             with self.subTest(path=value), self.assertRaises(ValueError):
