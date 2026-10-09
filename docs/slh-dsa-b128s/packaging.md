@@ -72,15 +72,18 @@ alternate, symlink to another checkout, worktree dependency or Cargo path outsid
 the clone. Start with an empty Cargo home/target; no node build is needed. The
 bounded guard tests and archive audit must succeed without a research checkout
 or source download. Cargo's offline `package --list` also requires registry index
-metadata even though it does not compile or need crate source payloads. Record
+metadata even though it does not compile. Record
 an empty-cache failure as a missing metadata prerequisite. For offline listings,
 an existing registry index can be copied into the isolated Cargo home: record
 its original registry URL and every copied file hash, and exclude crate archives,
 extracted sources, binaries and target caches. Keep the package-list receipt
 separate from the empty-cache source audit; do not claim empty-cache package
-success. If source bytes are also required, report that exact prerequisite
-instead of silently downloading them. Keep all source/command/output hashes in
-the release validation record.
+success. The isolated public fixture signer also needs its existing pinned
+`PQC-Suite-B/signatures` Git dependency at
+`b392fe82d2d9770142477a576a758a233888bc0a` available to Cargo before listing its
+package. Registry metadata alone does not satisfy that source prerequisite.
+Report missing source bytes instead of silently downloading them. Keep all
+source/command/output hashes in the release validation record.
 
 The audit is allowed to fail on missing source objects, missing toolchains or a
 package-list prerequisite. Report that specific limit; do not compensate by
