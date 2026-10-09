@@ -29,7 +29,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "budgets": {
       "anchor": "slh_dsa_b128s_functional_profile_exact_boundaries",
@@ -50,7 +50,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "codec-caps": {
       "anchor": "caps_are_checked_before_records_and_sixteenth_record_before_its_body",
@@ -171,6 +171,13 @@
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
       "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
     },
+    "human-dust-policy": {
+      "anchor": "receipt[\"dust_relay\"]",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+    },
     "human-funding": {
       "anchor": "classical_funding_submission",
       "kind": "human_case_prepared",
@@ -184,6 +191,13 @@
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
       "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-mixed-lifecycle": {
+      "anchor": "receipt[\"mixed_reactivation\"]",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
     },
     "human-namespace": {
       "anchor": "def namespace_controls(",
@@ -199,6 +213,13 @@
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
       "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
     },
+    "human-quorum-substitution": {
+      "anchor": "def authorization_variants(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+    },
     "human-reorg": {
       "anchor": "reorg_payment_tip",
       "kind": "human_case_prepared",
@@ -212,6 +233,20 @@
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
       "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-same-txid": {
+      "anchor": "receipt[\"same_txid_reentry\"]",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+    },
+    "human-separate-same-block": {
+      "anchor": "receipt[\"separate_transactions_same_block\"]",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
     },
     "human-slh-reactivation": {
       "anchor": "reactivated_slh",
@@ -241,6 +276,13 @@
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
       "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
     },
+    "human-unsupported-mixed": {
+      "anchor": "def mixed_artifacts(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+    },
     "human-wallet-max": {
       "anchor": "def execute(",
       "kind": "human_case_prepared",
@@ -267,7 +309,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "max-wire": {
       "anchor": "maximum_input_uses_compact_size_five_and_signature_pushdata_two",
@@ -281,7 +323,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "namespace": {
       "anchor": "experimental_slh_dsa_b128s_state_and_backups_are_isolated_by_rules",
@@ -290,12 +332,40 @@
       "scope": "Source present; execution is not asserted by this matrix.",
       "sha256": "e73ab97342bdbed236d2cfffe9082e1072aef609eff3241b8a8854679bbbea03"
     },
+    "observation-consensus": {
+      "anchor": "slh_diagnostics_match_actual_primitive_entries_and_authorization_identity",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Library diagnostic/native observer agreement; no isolated RPC or daemon execution claim.",
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
+    },
+    "observation-native": {
+      "anchor": "signed_primitive_observation_counts_attempts_without_replacing_results",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "scope": "Actual primitive callback parity and pre-entry controls; library coverage only.",
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+    },
+    "observation-receipts": {
+      "anchor": "def analyze(",
+      "kind": "bounded_tool_source",
+      "path": "tests/slh-dsa-b128s/acceptance/observations.py",
+      "scope": "Bounded closed-process capture and positive-bracket parser; process/window attempts only.",
+      "sha256": "931d9fa0decd854bcbf2284aeb94391f437a9d24a45cd2d5bf220e44b6b32255"
+    },
+    "observation-worker": {
+      "anchor": "fn observation(",
+      "kind": "bounded_tool_source",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs",
+      "scope": "Explicit Regtest fixed-primitive entry diagnostic source; no daemon capture result.",
+      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc"
+    },
     "observer": {
       "anchor": "slh_real_primitive_entry_and_structural_zero_entry_controls",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "oracle-binding": {
       "anchor": "test_digest_binds_order_context_and_outputs_but_excludes_scriptsig",
@@ -358,7 +428,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "pure": {
       "anchor": "independent_pure_known_answers",
@@ -379,7 +449,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "regions": {
       "anchor": "every_signature_node_and_both_key_halves_are_bound",
@@ -393,7 +463,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "shapes": {
       "anchor": "all_120_policy_shapes_round_trip_and_match_record_boundaries",
@@ -470,28 +540,28 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
     },
     "signed-canonical": {
       "anchor": "canonicality_failures_on_real_signatures_precede_reservation",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
     },
     "signed-max": {
       "anchor": "signed_high_index_and_maximum_size_controls",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
     },
     "signed-quorum": {
       "anchor": "valid_partials_reject_wrong_count_index_key_and_signature",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
     },
     "storage": {
       "anchor": "slh_funding_storage_requires_matching_success_metadata_and_finite_tip",
@@ -568,14 +638,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "worker-order": {
       "anchor": "slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_failure",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
     },
     "wrong-profiles": {
       "anchor": "source_valid_sha2_and_shake_signatures_reject_at_crypto",
@@ -695,10 +765,13 @@
             "structure-first",
             "signed-canonical",
             "observer",
-            "relay-order"
+            "relay-order",
+            "observation-native",
+            "observation-consensus",
+            "observation-receipts"
           ],
           "id": "precrypto",
-          "remaining_preparation": "Library observer is test-only; daemon primitive-entry receipt is not implemented.",
+          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
           "requirement": "Structural failures precede reservation and primitive entry."
         }
       ],
@@ -790,10 +863,12 @@
         {
           "evidence": [
             "block-worker",
-            "human-slh-switch"
+            "human-slh-switch",
+            "observation-worker",
+            "observation-receipts"
           ],
           "id": "fallback",
-          "remaining_preparation": "Prepared default-vs-enabled direct-block case; no executed daemon fallback/entry receipt.",
+          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
           "requirement": "Active exact SLH never falls back; inactive template keeps historical script semantics."
         }
       ],
@@ -816,18 +891,22 @@
         {
           "evidence": [
             "publish",
-            "observer"
+            "observer",
+            "observation-native",
+            "observation-consensus",
+            "observation-receipts"
           ],
           "id": "zero",
-          "remaining_preparation": "Live acceptance receipts do not measure daemon primitive entries; add narrow observation plumbing only if exact daemon count evidence is required.",
+          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
           "requirement": "Classical-only funding publishes explicit zero PQ checks and no native primitive entries."
         },
         {
           "evidence": [
-            "funding-auth"
+            "funding-auth",
+            "human-quorum-substitution"
           ],
           "id": "classical-quorum",
-          "remaining_preparation": "Library control removes an ordinary unlock script; genuine missing 2-of-3 classical quorum artifacts and live variants are not prepared.",
+          "remaining_preparation": null,
           "requirement": "Missing classical quorum rejects instead of bypassing legacy authorization."
         },
         {
@@ -844,10 +923,11 @@
         {
           "evidence": [
             "mixed-worker",
-            "signed-quorum"
+            "signed-quorum",
+            "human-quorum-substitution"
           ],
           "id": "substitution",
-          "remaining_preparation": "Dedicated same-input classical/PQ quorum-substitution public artifacts and live cases are not prepared; current tests cover mixed input families and SLH quorum errors separately.",
+          "remaining_preparation": null,
           "requirement": "ECDSA/PQ signature-family substitution and shared classical/PQ multisig must reject."
         }
       ],
@@ -868,20 +948,24 @@
         {
           "evidence": [
             "mixed-worker",
-            "recognition"
+            "recognition",
+            "human-unsupported-mixed"
           ],
           "id": "unsupported",
-          "remaining_preparation": "The library mixes SLH with bare OP_1 and separately tests 0x51/0x52 recognition; full unsupported-template mixed artifacts (both orders) and human variants are not prepared.",
+          "remaining_preparation": null,
           "requirement": "Unsupported0x51/0x52 mixing uses public bytes without importing another verifier."
         },
         {
           "evidence": [
             "mixed-worker",
             "publish",
-            "observer"
+            "observer",
+            "observation-native",
+            "observation-consensus",
+            "observation-receipts"
           ],
           "id": "zero",
-          "remaining_preparation": "No daemon primitive-entry observations; library test observer is not a live count.",
+          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
           "requirement": "Mixed classification must precede workers/reservations and publish no success metadata."
         },
         {
@@ -896,20 +980,22 @@
           "evidence": [
             "tip-reset",
             "human-mixed",
-            "human-slh-reactivation"
+            "human-slh-reactivation",
+            "human-mixed-lifecycle"
           ],
           "id": "lifecycle",
-          "remaining_preparation": "Prepared mixed cases run active stable tips; repeat genuine mixed candidates across rollback/reactivation/reorg is not yet a single executable case.",
+          "remaining_preparation": null,
           "requirement": "Mixed rejection remains across activation/reorg."
         },
         {
           "evidence": [
             "worker",
             "human-funding",
-            "human-16-17"
+            "human-16-17",
+            "human-separate-same-block"
           ],
           "id": "legal",
-          "remaining_preparation": "Separate classical and SLH transactions in one same-block acceptance case is not explicitly prepared; template zero-cost eligibility is tested below.",
+          "remaining_preparation": null,
           "requirement": "Multiple SLH policies remain legal; classical funding and separate classical/SLH transactions can coexist."
         }
       ],
@@ -1002,7 +1088,8 @@
         {
           "evidence": [
             "payload",
-            "template-payload"
+            "template-payload",
+            "human-same-txid"
           ],
           "id": "identity",
           "remaining_preparation": null,
@@ -1028,10 +1115,11 @@
         },
         {
           "evidence": [
-            "template-small"
+            "template-small",
+            "human-separate-same-block"
           ],
           "id": "separate",
-          "remaining_preparation": "Explicit simultaneous classical/SLH same-block human fixture is not prepared.",
+          "remaining_preparation": null,
           "requirement": "Separate classical/SLH transactions remain eligible; zero-cost after full allowance."
         },
         {
@@ -1133,10 +1221,11 @@
         },
         {
           "evidence": [
-            "payload"
+            "payload",
+            "human-same-txid"
           ],
           "id": "same-txid",
-          "remaining_preparation": "Actual same TXID changed-signature mempool lifecycle driver remains unprepared.",
+          "remaining_preparation": null,
           "requirement": "Changed signature with unchangedTXID cannot reuse verification identity."
         },
         {
@@ -1220,10 +1309,11 @@
         {
           "evidence": [
             "policy-not-consensus",
-            "policy"
+            "policy",
+            "human-dust-policy"
           ],
           "id": "policy",
-          "remaining_preparation": "Current live funding cases are standard; explicit nonstandard-but-consensus-valid funding driver is not prepared.",
+          "remaining_preparation": null,
           "requirement": "Consensus-valid funding and nonstandard relay policy errors remain separate."
         },
         {
@@ -1239,10 +1329,11 @@
         {
           "evidence": [
             "recognition",
-            "build-guard"
+            "build-guard",
+            "human-unsupported-mixed"
           ],
           "id": "unsupported",
-          "remaining_preparation": "No alternate backend is imported; dedicated human unsupported-template matrix is not prepared.",
+          "remaining_preparation": "Prepared both-order unsupported-template/SLH rejection controls; no alternate verifier is imported or claimed.",
           "requirement": "Other PQ templates remain unsupported."
         }
       ],
@@ -1251,5 +1342,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "aed18c4e01c6cda03528b168a93584bf980e66c4"
+  "source_checkpoint": "d5c4d4c271ab749f07f6c1beb106fae309bd961d"
 }

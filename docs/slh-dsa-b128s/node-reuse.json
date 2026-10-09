@@ -226,6 +226,15 @@
       "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
       "source_sha256": "ff4ac80c291b55ce83d78a5aa6248fd01b047a02b5a664e1f07f2270214a3bb2",
       "target_path": "crates/zakurad/src/components/mempool/storage/tests/slh_dsa_b128s.rs"
+    },
+    {
+      "adaptation": "Reuse cached environment opt-in and INFO tracing; restrict to Regtest/exact token, fixed SLH backend, public authorization identity and sequence; observe inside fixed native primitive instead of a replaceable primitive hook.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakura-consensus/src/transaction/sqisign/worker.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "0858e916115264c6aa6b8a28f6271a64fa71738daf25755c8070a43115e49630",
+      "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
     }
   ],
   "upstream_commit": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"

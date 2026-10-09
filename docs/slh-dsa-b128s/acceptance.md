@@ -102,6 +102,13 @@ validation, exact 64/65-check direct blocks, default-build configuration refusal
 and isolated state/backup namespaces for each rules change. It checks unchanged
 state after rejection and peerless restart under the original configuration.
 
+Additional [transparent controls](transparent-controls.md) prepare genuine missing
+classical quorum, same-input signature-family substitution, unsupported-template
+mixing in both orders, mixed rollback/reactivation/reorg, separate classical and
+SLH transactions in one block, and same-TXID authorization changes. The guide
+records the relay/direct-consensus distinction and required positive setup;
+these source-prepared cases have not been run against a daemon.
+
 ## Wallet and terminal commands
 
 ```sh
@@ -184,11 +191,11 @@ untrusted until both actual nodes authenticate the outputs and tip.
 | Wallet and recovery | Matrix above, public enrollment, independent roots, quorum/subquorum, watch exhaustion/replenishment, known/unknown restore, subsequent spends, refresh/archive/resume, late receipt/reorg | Strict fake CLI executes group/payment/recover/refresh and missing-root orchestration; independent immutable format calculations reused. Later archive/snapshot corruption/late-receipt and full terminal flows are source-prepared, not established by those mocks |
 | Terminal/passwords | Full terminal adapter above | Parser/provenance mocks and pinned-source adaptation only; no PTY or password/KDF run performed |
 | All 120 threshold shapes | Existing independent structural/format corpus remains unchanged | Selected funded matrix above; the driver accepts other 1 <= m <= n <= 15 shapes, but no exhaustive funded 120-shape run or result is claimed |
-| Primitive entry counts and shielded routing | Existing bounded native/consensus tests and independent oracles remain separate | No daemon primitive-entry telemetry is exposed; node receipts cannot claim exact verifier-call counts. Actual shielded-proof mixed-pool lifecycle fixtures are **not prepared by these transparent-only adapters**; they need a separate attributable proof-fixture adapter and human proof generation |
-| Fault injection and hostile history | Snapshot authentication/missing-state/no-clobber controls are prepared | Process kills at every durable-write boundary, entropy/quota failures and a live incomplete/pruned-history RPC server are **not prepared here**. Existing wallet/library fake tests cover their bounded contracts; production failpoint or hostile-service machinery has not been added merely for these drivers |
+| Primitive entry counts and shielded routing | Opt-in Regtest primitive attempts and bounded capture receipts are prepared; see [observations.md](observations.md) | Counts describe process/window attempts and require complete enabled capture with positive controls. No daemon receipt has been executed. Actual shielded-proof mixed-pool lifecycle fixtures still need a separate attributable adapter and proof generation |
+| Fault injection and hostile history | Snapshot authentication/missing-state/no-clobber controls plus [funded hostile-history refusals and reconciliation](history-controls.md) are prepared | The bounded loopback service covers unavailable, missing, inconsistent and pruned history; restored monitors and incomplete rescans retain authority limits. Only mocks have run. Process kills at durable-write boundaries and entropy/quota orchestration remain unprepared |
 | Performance | None | No workload measurements or production budget recommendation; any separate study must retain p50/p95/p99 and the project's workload/hardware baseline |
 
-The last two tooling gaps are distinct from prepared scenarios awaiting human
+The remaining tooling gaps are distinct from prepared scenarios awaiting human
 execution. Neither source inspection, a default-disabled build, immutable corpus
 success nor a fake RPC run can be reported as funded SLH acceptance. The existing
 crypto and digest references retain their independence and original provenance.

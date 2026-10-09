@@ -29,22 +29,35 @@ subcontrol merely to make the guard pass.
 | Codec and policy | 120 shapes, high index, maximum wire size, canonical encoding, structural ordering | Library observation is not daemon primitive telemetry |
 | Transaction binding | Transparent independent oracle; separate shielded parser/digest comparisons | Supplied previous outputs are not authenticated UTXOs; valid proof/node cases remain separate |
 | Dispatch | Exact spent-output recognition, decoys and worker dispatch; prepared enabled/default control | Live execution and daemon entry observations pending |
-| Migration | Classical authorization/funding, explicit zero accounting, later SLH threshold | Missing classical quorum and same-input signature-family substitution need dedicated real cases |
-| Mixed inputs | Library classification; genuine both-order relay/direct-block driver | Unsupported-template variants and mixed candidates across activation/reorg need preparation |
+| Migration | Classical authorization/funding, explicit zero accounting, later SLH threshold; prepared missing classical quorum and same-input family substitution | Prepared cases require authenticated parents and actual node execution |
+| Mixed inputs | Library classification; both-order relay/direct-block, unsupported-template and activation/reorg controls prepared | No live count or rejection result follows from source preparation |
 | Accounting | 16/17, 64/65, concurrent atomic budgets, no refunds; prepared live limits | Prepared live cases remain unexecuted |
 | Publication/mining | Bound payload identity, atomic selection, parent ordering, maximum authorization | Generic late failure and synthetic shielded resource counts do not prove real shielded failure suppression |
 | Build/gates | Dependency isolation, configuration/gate tests; prepared default/enabled build/startup controls | Dedicated daemon builds and startup cases are human-only |
-| Lifecycle | Tip reset, signature/payload identity, prepared-cache bypass; rollback/reorg driver | Deterministic pending/completed/stored queue barriers and same-TXID live mutation are not prepared |
+| Lifecycle | Tip reset, signature/payload identity, prepared-cache bypass; rollback/reorg and same-TXID authorization mutation prepared | Deterministic pending/completed/stored queue barriers remain distinct from those controls |
 | Persistent history | Namespaces, clean restart, ordinary backups; optional fresh block replay/recovered spend | No crash durability or future-contract-version migration claim; finalized DB internals are not inspected |
-| Compatibility | Classical parity and active SLH enabled/default driver; policy separation tests | Explicit nonstandard-but-consensus-valid, unsupported-template and real shielded compatibility variants remain |
+| Compatibility | Classical parity and active SLH enabled/default driver; prepared transparent policy and unsupported-template controls | Real shielded compatibility and all live execution remain pending |
 
-Run prepared human cases exactly as described in [acceptance.md](acceptance.md)
-and [lifecycle-controls.md](lifecycle-controls.md): both transaction versions and
+Run prepared human cases exactly as described in [acceptance.md](acceptance.md),
+[lifecycle-controls.md](lifecycle-controls.md) and
+[transparent-controls.md](transparent-controls.md): both transaction versions and
 both classical funding profiles, plus a separate `--finalized-history` run.
 The matrix identifies the actual driver function or assertion for each claim.
 All node/build/wallet/terminal workloads remain human-only under
 [AGENTS.md](../../AGENTS.md). No performance workload is registered here;
 resource sampling preparation remains gated on human functional acceptance.
+
+The opt-in [observation mechanism](observations.md) records actual primitive
+attempts with transaction and authorization identity. Its bounded receipt parser
+requires complete capture and positive controls before accepting a zero count.
+Counts describe a process/window, not successful validation or isolated RPC work;
+the existing retry and concurrency behavior is preserved. Library tests exercise
+the real primitive boundary, but daemon capture remains unexecuted.
+
+The [hostile-history wallet controls](history-controls.md) prepare funded refusal
+and reconciliation cases for unavailable, missing, inconsistent, pruned and
+incomplete history. They preserve saved payment authority and restored monitors.
+Offline mock checks do not establish live wallet recovery or crash durability.
 
 ## Independent checking of saved public artifacts
 
@@ -110,9 +123,10 @@ commit or interpret its shared-budget tests as live direct-block acceptance.
 The existing [shielded target](../../tests/slh-dsa-b128s/shielded/README.md),
 introduced by `88e834a8d` and integrated as `7a8c5a84e`, has 12 offline tests:
 114 shielded mutations, four transparent authorization exclusions and 36 context
-comparisons. Its source files remain unchanged at the matrix checkpoint. Prior
-execution evidence belongs to that earlier checkpoint; this work does not rerun
-or upgrade it. The separate pinned parser/digest reference shares low-level
+comparisons. Its source files remain unchanged at the matrix checkpoint.
+Historical execution receipts retain their original checkpoint scope; a later
+library test run still does not establish proof validity or node acceptance.
+The separate pinned parser/digest reference shares low-level
 hash, curve and librustzcash-family libraries with the comparison target. It
 covers synthetic shielded bundles and effects, not proof validity, genuine SLH
 signatures on those shapes, or node acceptance. A narrow attributed adapter for
@@ -121,8 +135,8 @@ still required before those human runs can be prepared.
 
 ## Reuse and attribution
 
-No existing oracle, vector, producer receipt, acceptance driver or runtime source
-is changed by these tools. [Evidence source mappings](../../tests/slh-dsa-b128s/evidence/sources.json)
+The independent artifact wrapper reuses existing oracle/reference source,
+vectors and producer receipts unchanged. [Evidence source mappings](../../tests/slh-dsa-b128s/evidence/sources.json)
 record exact inputs and adaptation scope. The wrapper reuses G2's bounded file
 reader and complete oracle, and the pinned G1 reference loader. Its preflight,
 receipt binding and fixed work limits are new glue for arbitrary saved cases.

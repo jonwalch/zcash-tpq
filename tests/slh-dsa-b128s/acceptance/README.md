@@ -19,3 +19,9 @@ requirements as [wallet formats](../wallet/formats/requirements.txt).
 Source mappings and file hashes are in [sources.json](sources.json); imported
 code attribution is in [NOTICE](NOTICE). `fake_cli.py` is a test-only adapter,
 and is never imported by a human live driver.
+
+Additional prepared cases cover [transparent authorization and lifecycle](../../../docs/slh-dsa-b128s/transparent-controls.md)
+and [hostile wallet history](../../../docs/slh-dsa-b128s/history-controls.md).
+[Opt-in observation](../../../docs/slh-dsa-b128s/observations.md) records bounded
+process/window primitive attempts without changing verification or retry rules.
+Their focused mock tests do not establish live acceptance.

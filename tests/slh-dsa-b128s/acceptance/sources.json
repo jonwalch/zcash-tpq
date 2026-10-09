@@ -167,6 +167,54 @@
       "path": "tests/wallet-spec/sqisign_recovery_live.py",
       "repository": "https://github.com/jonwalch/zcash-transparent-pq",
       "sha256": "64b8e393cf2b0397244feed91e42f2f9df465d54476c2e4bf8338fca57fc005d"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_node_scan",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/node_scan.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "52734c2dd4dae0045ffc6a10efe115bdfb7eb0c3a7294b1a352bbe55f742787c"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_recovery_controls",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/recovery_controls.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "9ec2b420016a488eece5b0036bcfcf76529cd9a5633845cc458dd018a3dca55a"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fake_rpc",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/rpc/tests/payment.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "f298b4ffb6f29569cc6174e3586d50f66938cc1f4f9341aa6deaa1137bd32590"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "primitive_observer",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/src/transaction/sqisign/worker.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "0858e916115264c6aa6b8a28f6271a64fa71738daf25755c8070a43115e49630"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "primitive_log_comparison",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_c_comparison.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "809f1b1bf6b96ade07ed1aa491dbabd7d093cf40247d64b23908f0121b0e9a06"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "authorization_mutation",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/src/transaction/pq_test_support.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "a9aa2491f58223960a5eef09e6e25e89105b64a429a30da83c25a564460543b4"
     }
   ],
   "targets": [
@@ -192,14 +240,15 @@
       ]
     },
     {
-      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes.",
+      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes. Optional explicit capture token adds bounded source/binary/config/log binding; ordinary nodes remove inherited opt-in and retain prior behavior.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/nodes.py",
-      "sha256": "52d90c1f8ae510d56393e585789d0d801ee5885e6bc98e8c6c71fff1d51db598",
+      "sha256": "5b1b3529357e0ded81e4e2e8b9c40db56337034fc8cdcf5f331d783cb4eb9c80",
       "sources": [
         "rpc_node",
         "relay",
-        "history"
+        "history",
+        "primitive_observer"
       ]
     },
     {
@@ -295,7 +344,7 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/acceptance/README.md",
-      "sha256": "668b2334484a758d09494e367116ef977e5170ba31c7798beb0bff59621aef08",
+      "sha256": "1d4a626c799f2ebdbe7b2fbb5c06f35d9bcc307bda38d47a8f207637f950e086",
       "sources": []
     },
     {
@@ -309,7 +358,7 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
       "classification": "new or amended product documentation",
       "path": "docs/slh-dsa-b128s/acceptance.md",
-      "sha256": "78cb3d0863f2fce3fea93dd478b27db6e2eec987ffa5b7d0ba336c4aef6a3925",
+      "sha256": "65c03ee8b4a273ff16fa4c9f236a223ddace74cdd4e67bc822ebfce283cac6ea",
       "sources": []
     },
     {
@@ -327,34 +376,34 @@
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
-      "sha256": "9034afb2638e35236256eb87255b0beb0fe8301cbd8cfa2fcb0fc11c722ec65b",
+      "sha256": "cbe36a48e9e7a5c1bd374ba8e3aa1cd0b5f9f9878c5573bcd20c30885dbce4ec",
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
-      "sha256": "8181e063efa5c591c1c669e15503bc64b3a48f53acbb00b970f4bb6a7a0e5639",
+      "sha256": "e23e212961fe1480bdc94d7e7a02a0902650ed81ea187d5962604aa25d96276e",
       "sources": []
     },
     {
-      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input.",
+      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input. Retain classical-spend default; explicit control-funding allows only two additional exact unsupported templates.",
       "classification": "adapted classical helper",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
-      "sha256": "774047bbc3037dbae91365b3bfc76dce6223b16287c4aee11c953ab41148c9b2",
+      "sha256": "0cc6f17f7da1d3480fe20b562ae1547ea23b43fc1759186039b2d9e7d444d69f",
       "sources": [
         "nu7",
         "classical_sign"
       ]
     },
     {
-      "adaptation": "Retain transparent empty-template block construction, NU7 aggregate miner fee share and existing header/Merkle/history/auth commitments. Combine existing public classical signer and native SLH signing context for both mixed input orders; no shielded proofs or alternate backend.",
+      "adaptation": "Retain transparent empty-template block construction, NU7 aggregate miner fee share and existing header/Merkle/history/auth commitments. Combine existing public classical signer and native SLH signing context for both mixed input orders; no shielded proofs or alternate backend. Retain default blocks/mixed builders; allow NU7 heights105-109, exact unsupported51/52 counterpart templates without signer, and bounded positive/negative regressions.",
       "classification": "adapted transparent block and mixed control",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/controls.rs",
-      "sha256": "cffe10dbf25927c934eec5320147c76db68347be85f102069c797fe16127aced",
+      "sha256": "b83419bac4bb57e91347e04612fd8a5e6f9d767d6c2978365246c0d561494090",
       "sources": [
         "block",
         "nu7",
@@ -362,17 +411,17 @@
       ]
     },
     {
-      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs.",
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
-      "sha256": "62656dc2b1055b6043de0717cfdc0e3269ab6eb8b7b7f3f4460dc7976e15f204",
+      "sha256": "bd61fd5921da5753fc083e40ff363d3211b7c356eacd97599f7749219185dad0",
       "sources": []
     },
     {
-      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs.",
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
-      "sha256": "2e2222bcdc7569bbf7c977009b5f2786d63faea2888ca6fc4642915062a91780",
+      "sha256": "02795637ae8db3c02e149ad27788bbfcc660f5e1cc9beb5e98520bc4e102399b",
       "sources": []
     },
     {
@@ -381,6 +430,152 @@
       "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
       "sha256": "5c70264428fe44f2a1fa64b2cf5fc66094fc302bf8ba2c702ba486c5843ee34b",
       "sources": []
+    },
+    {
+      "adaptation": "Adapts late_receipt_and_offline, monitor_rejections, reopen/status parity and recovery flows using existing Demo/Network/authenticate_coinbase/profile/host helpers. Two authenticated mature-funded outputs and successful non-reserving previews prove new proposal eligibility while preserving a separate saved signed payment. Fresh monitors force pruned/raw-block fetches; cached context faults preserve coins, undo, tip and authority. No runtime behavior change.",
+      "path": "tests/slh-dsa-b128s/acceptance/history_controls.py",
+      "sha256": "4af84a27cc425cce837755bc90355fee230b8b07b22e0bce7b68e448bfccb521",
+      "sources": [
+        "wallet_node_scan",
+        "recovery",
+        "wallet_recovery_controls"
+      ]
+    },
+    {
+      "adaptation": "New bounded loopback fault proxy from the pinned scripted RPC server/read-only shapes and existing product fake discovery tests; reuses common.endpoint/canonical/strict_json. Honest responses preserve exact raw bytes. No production RPC or scanner rewrite.",
+      "path": "tests/slh-dsa-b128s/acceptance/history_service.py",
+      "sha256": "df430e738b4e1a5c9d892bbc5921b6d687760d06baeeb0561289c093c3c2815a",
+      "sources": [
+        "wallet_fake_rpc",
+        "wallet_node_scan"
+      ]
+    },
+    {
+      "adaptation": "New focused mocked orchestration tests for otherwise-eligible controls, exact negative diagnostics, stable saved authorization/scan data, monitor authority and honest reconciliation; mutation cases reject vacuous passes. No terminal or live workload.",
+      "path": "tests/slh-dsa-b128s/acceptance/test_history_controls.py",
+      "sha256": "21392e541560943ee02f914ec07384c902fe61391420adeb0d302c708f91ae39",
+      "sources": [
+        "wallet_recovery_controls",
+        "recovery"
+      ]
+    },
+    {
+      "adaptation": "New offline fake-relay HTTP tests for exact bytes, fault selection, bounds, read-only methods and distinguishing genuine upstream failures; no wallet/node process.",
+      "path": "tests/slh-dsa-b128s/acceptance/test_history_service.py",
+      "sha256": "9652cd0ed78b458c2a306f4f7e2c91a46895e1112dcd21421c5fbb983f5a15cb",
+      "sources": [
+        "wallet_fake_rpc"
+      ]
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/pq-slh-dsa-b-exp/src/verifier.rs",
+      "sha256": "29afc243055c3b9bd108a8022a15d20a2c026c9864a68bea5ab07fc84e1712bb",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s.rs",
+      "sha256": "24a784af3a8a799f2e23d2d6c78c218de8f75f79def5f4ca165d5cc856bb20de",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs",
+      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc",
+      "sources": [
+        "primitive_observer"
+      ]
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "docs/changelog/unreleased/slh-primitive-observation.md",
+      "sha256": "101eed6eec2c5e2f9ba4672d05ae6a68053d3ca2bc465444ff890d757ae320cb",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "docs/slh-dsa-b128s/observations.md",
+      "sha256": "7c765e021f4263ac7c44255e40cf117d179dc08c72de27ed4bbf81bc64ebb89d",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "tests/slh-dsa-b128s/acceptance/observations.py",
+      "sha256": "931d9fa0decd854bcbf2284aeb94391f437a9d24a45cd2d5bf220e44b6b32255",
+      "sources": [
+        "primitive_log_comparison"
+      ]
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "tests/slh-dsa-b128s/acceptance/test_observations.py",
+      "sha256": "1f315f1f833da583c7f3457053696a52ed078c504ce27c807a2931e3e3a76789",
+      "sources": []
+    },
+    {
+      "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "docs/changelog/unreleased/slh-transparent-controls.md",
+      "sha256": "7e31493d9ba51a8081260b8f028b3a4b8550ba80b890d0c7bf6b392f56387328",
+      "sources": []
+    },
+    {
+      "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "docs/slh-dsa-b128s/transparent-controls.md",
+      "sha256": "cfcc6b167839d3471f5743c8ae96e6c66e430923795831ddc08379c173fb5a72",
+      "sources": []
+    },
+    {
+      "adaptation": "New bounded offline ledger mock runs actual driver through real helper state checks and saved-byte retries; mutations must detect wrong diagnostics, tip changes, missing parents, raw/block order and mismatched authorization identity.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "tests/slh-dsa-b128s/acceptance/test_transparent_controls.py",
+      "sha256": "e8dd23a1071f2a78e97479df36d363f773fb7ef596a164eb1da62732eca061de",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse product mature funding, block proposals, single-input SLH fixtures, strict RPC receipts, state snapshots and saved-byte reconciliation. Adapt pinned preactivation/dust and same-TXID lifecycle controls; add genuine classical quorum/substitution and unsupported-template matrices without alternate backends.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d",
+      "sources": [
+        "relay",
+        "history",
+        "rpc_node",
+        "classical_history"
+      ]
+    },
+    {
+      "adaptation": "Reuse native codec/TXID-preserving signature mutation and fixed public classical signer; add exact missing2of3 and same-input family substitutions, strict public envelope and complete byte identity checks.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/transparent.rs",
+      "sha256": "534fc2acf1bca23c080756c723c6672c7ed04312a932bb2a301bbb22c9d7e326",
+      "sources": [
+        "authorization_mutation",
+        "classical_sign"
+      ]
     }
   ],
   "upstream_zakura": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",

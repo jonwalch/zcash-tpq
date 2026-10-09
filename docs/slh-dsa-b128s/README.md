@@ -22,6 +22,8 @@ retain upstream behavior except the documented SLH integration boundaries.
 | Maintain public finite receive inventory and monitor balances | [Inventory and watch-only behavior](wallet.md#recovery-and-watch-only-behavior) |
 | Preserve and restore payment authority | [Recovery artifacts and trust](recovery.md) |
 | Run the prepared node/wallet/terminal scenarios | [Human acceptance runbook](acceptance.md), [lifecycle controls](lifecycle-controls.md) |
+| Exercise transparent refusal and uncertain wallet history | [Transparent controls](transparent-controls.md), [history controls](history-controls.md) |
+| Capture opt-in Regtest primitive attempts | [Observation and bounded receipts](observations.md) |
 | Check new public artifacts and inspect validation coverage | [Independent evidence and coverage](validation.md) |
 | Compare public enrollment and snapshot identities | [Independent wallet interfaces](../../tests/slh-dsa-b128s/wallet/interfaces/README.md) |
 | Audit source, dependencies and archives | [Packaging](packaging.md), [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) |
@@ -50,8 +52,9 @@ the [recovery guide](recovery.md) describes the required trust and retirement.
 
 The 16-check transaction/64-check block profile is a functional test setting,
 not a production budget. Library/reference/mock evidence is distinct from live
-funded acceptance. The runbook records unexecuted human cases and remaining
-shielded-fixture, hostile-history, fault-injection and telemetry preparation.
+funded acceptance. The runbook records unexecuted human cases, prepared hostile
+history and observation tools, and remaining shielded-fixture, durable-fault and
+scenario-specific capture preparation.
 No production readiness, live recovery, performance or proof-validation result
 is implied by packaging success.
 
