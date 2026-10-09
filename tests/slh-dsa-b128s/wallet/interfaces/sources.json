@@ -45,7 +45,8 @@
   "reuse": [
     "Import existing separately implemented format reference: canonical JSON, domains, policy/origin mapping, manifest/profile and update checks.",
     "Read immutable H1 public keys and L1 inventory/encrypted backup answers by checked hash; no key generation, KDF, signing or production calls.",
-    "Retain research v2 watch/scan/payment schema for a deterministic empty authority companion."
+    "Retain research v2 watch/scan/payment schema for a deterministic empty authority companion.",
+    "Mirror the existing Zakura TestChild::wait_with_output_or_timeout polling/kill pattern in the bounded public CLI test helper, without adding the test framework dependency."
   ],
   "scope": "Public interface identities and deterministic v2 snapshot companions only. v3 receipt metadata boundary is syntax-only, not a journal authority or live recovery claim.",
   "specification_inputs": [
@@ -68,6 +69,10 @@
     {
       "path": "docs/slh-dsa-b128s/recovery.md",
       "sha256": "6081b080773da0cff742f50c5e08d138200e359baf201b30112119525fa327f6"
+    },
+    {
+      "path": "crates/zakura-test/src/command.rs",
+      "sha256": "1c5e32a985ddf8cf6fe5d4a321303e102466617db4b9b342681a0d2b9cb431a6"
     }
   ]
 }

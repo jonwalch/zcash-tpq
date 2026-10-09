@@ -31,7 +31,7 @@ The new, separate `vectors.json` contains:
   deliberately not a valid journal store or a recoverable authority fixture.
 
 The Rust CLI integration test launches only nonterminal `enroll-prepare` with
-public files and closed stdin. It compares the output file and stdout object to
+public files, closed stdin and a ten-second process timeout. It compares the output file and stdout object to
 retained answers, verifies that retries cannot replace a candidate, and rejects
 eleven transport/pairing/origin mutations without publishing output. The wallet
 integration test consumes independently supplied receipt bytes and captures one
