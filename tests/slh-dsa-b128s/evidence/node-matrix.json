@@ -905,7 +905,7 @@
             "human-shielded-spends"
           ],
           "id": "shielded-effects",
-          "remaining_preparation": "Genuine bounded shielded-spend constructors and all supported v5/v6 shapes are prepared; actual authorized local execution requires separate source-bound receipts. The independent digest corpus remains unchanged.",
+          "remaining_preparation": "Valid-proof output and genuine bounded shielded-spend constructors for all supported v5/v6 shapes are prepared; actual authorized local execution requires separate source-bound receipts. The independent digest corpus remains unchanged.",
           "requirement": "Shielded effecting fields/collections and authorizing-data exclusions use separate Rust reference."
         },
         {
