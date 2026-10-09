@@ -1,5 +1,6 @@
 [workspace]
 members = [
+        "tests/slh-dsa-b128s/fixtures/host",
         "crates/pq-slh-dsa-b-exp",
         "crates/pq-tx-context",
         "crates/pq-test-support",
