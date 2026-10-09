@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "construction": "SLH-DSA-BLAKE3-128s",
+  "algorithm_revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+  "algorithm_license": "MIT OR Apache-2.0",
+  "hash_dependency": {
+    "version": "=1.8.5",
+    "default_features": false,
+    "features": [
+      "std",
+      "zeroize"
+    ],
+    "rayon_requested": false
+  },
+  "files": [
+    {
+      "target": "src/address.rs",
+      "target_sha256": "7dd5ca79dcdcf4f3140a1fdb3c2395e942b24eaf51fb414e7fd349d69512b2e3",
+      "sources": [
+        {
+          "repository": "this repository",
+          "revision": "24ff6cfc607a169fbf3ce4c34b596ba22ba02789",
+          "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+          "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+        },
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/address.rs",
+          "sha256": "b620899768627e910d98f787ffe5363da558c3b8e7e8fc3f1bddc7ed69356079"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Reuse explicit big-endian address encoding; add upstream WotsPrf/ForsPrf roles with cleared hash/height words."
+    },
+    {
+      "target": "src/util.rs",
+      "target_sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa",
+      "sources": [
+        {
+          "repository": "this repository",
+          "revision": "24ff6cfc607a169fbf3ce4c34b596ba22ba02789",
+          "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+          "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+        }
+      ],
+      "classification": "unchanged import",
+      "adaptation": "Unchanged fixed base conversion, node helper and masked digest split."
+    },
+    {
+      "target": "src/recovery.rs",
+      "target_sha256": "ea97d2b287cea63f08dc1b61e43ffaec8408d88ff44279d092a9b580108622c6",
+      "sources": [
+        {
+          "repository": "this repository",
+          "revision": "24ff6cfc607a169fbf3ce4c34b596ba22ba02789",
+          "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+          "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retain FORS/WOTS/XMSS recovery unchanged; remove unused ht_root and expose XMSS recovery within this private crate."
+    },
+    {
+      "target": "src/hash.rs",
+      "target_sha256": "aef72bb23d3adea932a9323e2173519e54636ab345b13898d4e8f813ed181545",
+      "sources": [
+        {
+          "repository": "this repository",
+          "revision": "24ff6cfc607a169fbf3ce4c34b596ba22ba02789",
+          "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+          "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+        },
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/hashes/blake3.rs",
+          "sha256": "a3ad96163b2d01347ad7691a1cd7665daca6b2c98982e0848f17cdf740a52b54"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Preserve unkeyed hash byte ordering; safe serial streaming avoids unsafe coalescing/Rayon; add secret PRF roles and owned zeroizing Hasher/OutputReader/secret nodes."
+    },
+    {
+      "target": "src/signing.rs",
+      "target_sha256": "477916fe13c6592f5f0b6324c2786b91438aea4f1cf5935f667ab09501ea0414",
+      "sources": [
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/wots.rs",
+          "sha256": "5048fed9ee1a3f5ae6e10fdcb4b548cec97443a85bb88b94d7ceabf252ac8e6e"
+        },
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/xmss.rs",
+          "sha256": "c20501770a08fa75288f9fb9ba70f4b27bdc3bde0f8c4111274c8c4ccfb313d9"
+        },
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/fors.rs",
+          "sha256": "71940febfc87e14b90df75db34fc725f2f37d191f2e9262e970e7eb044a6c03f"
+        },
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/hypertree.rs",
+          "sha256": "3b8b9eb00f7b6a21b389395b46543ac14eae03375b42ac40d889c8fa4d6854b3"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Specialize upstream serial recursive algorithms to fixed arrays/borrowed output; retain loop/order/address semantics, no caches; own and clear WOTS secret chains."
+    },
+    {
+      "target": "src/lib.rs",
+      "target_sha256": "67d4261be72a1971e766be59fcb5bc345711291e5a2c56699b155b985ace87aa",
+      "sources": [
+        {
+          "repository": "https://github.com/PQC-Suite-B/signatures",
+          "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+          "path": "slh-dsa/src/signing_key.rs",
+          "sha256": "b348450157d8bd47dbebd9dfe7609b2bddf75837f33c4460b21f06798c116f34"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retain fixed keygen and Pure-empty-context signing flow; remove generic APIs/alternate profiles/secret serialization/Clone/Debug; own48-byte seed, exact101-byte input, fallible OsRng16 and mandatory A verification before release."
+    },
+    {
+      "target": "src/tests.rs",
+      "target_sha256": "616b1e112e49637284df40db44872a2f220f016e5d08d3e54fb655f27256d62c",
+      "sources": [],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "New boundary/fault/entropy controls consuming independently produced public expected answers, with no operational deterministic API."
+    }
+  ],
+  "licenses": [
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    }
+  ],
+  "vectors": {
+    "path": "../../tests/slh-dsa-b128s/wallet/vectors.json",
+    "sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd",
+    "expected_producer": "Python stdlib HMAC-SHA256 and existing independently pinned Python/C SLH reference; no production Rust used"
+  }
+}
