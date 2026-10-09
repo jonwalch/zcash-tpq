@@ -36,7 +36,7 @@ subcontrol merely to make the guard pass.
 | Build/gates | Dependency isolation, configuration/gate tests; prepared default/enabled build/startup controls | Dedicated daemon builds and startup cases are human-only |
 | Lifecycle | Tip reset, signature/payload identity, prepared-cache bypass; rollback/reorg and same-TXID authorization mutation prepared | Deterministic pending/completed/stored queue barriers remain distinct from those controls |
 | Persistent history | Namespaces, clean restart, ordinary backups; optional fresh block replay/recovered spend | No crash durability or future-contract-version migration claim; finalized DB internals are not inspected |
-| Compatibility | Classical parity, active SLH enabled/default and real output-only shielded block replay prepared | Shielded spends/anchors and all live execution remain pending |
+| Compatibility | Classical parity, active SLH enabled/default and real output-only shielded block replay prepared | Genuine spend/anchor controls are prepared; actual outcomes require separate source-bound receipts |
 
 Run prepared human cases exactly as described in [acceptance.md](acceptance.md),
 [lifecycle-controls.md](lifecycle-controls.md) and

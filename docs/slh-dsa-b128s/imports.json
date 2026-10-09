@@ -2231,7 +2231,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools.",
-      "sha256": "b1a7c9477b3d4f864f577ce53a7ccc2a473c090dabad32f276c57092857376f1"
+      "sha256": "8641aa974859eb06fcec30361ac180b4c6d31fdd6a345886d3bc86fcc828d773"
     },
     {
       "disposition": "new",
