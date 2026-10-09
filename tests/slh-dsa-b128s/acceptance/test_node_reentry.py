@@ -1,8 +1,143 @@
 """Offline model of inherited RPC rejected-transaction retries; no processes."""
+import contextlib
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
 import common
 import node_live
+from nodes import Network
+
+
+class BackupNode:
+    """Only public block bytes and an asynchronous ordinary-backup model."""
+    def __init__(self, model, directory, height=2):
+        self.model, self.directory, self.height = model, directory, height
+        self.current = (height, "aa" * 32)
+        self.backup = directory / "state/non_finalized_state/regtest-slh-dsa-b128s-v1-h110-t16-b64"
+        self.backup.mkdir(parents=True)
+        for block_hash in model.invalidated:
+            (self.backup / block_hash).write_bytes(bytes(8) + b"old")
+
+    def tip(self):
+        return self.current
+
+    def rpc(self, method, *args):
+        if method == "getblockhash":
+            return "aa" * 32 if args[0] == self.height else "11" * 32
+        if method == "getblock":
+            return (b"tip" if args[0] == "aa" * 32 else b"parent").hex()
+        raise AssertionError(method)
+
+    def stop(self):
+        self.model.events.append("stop")
+
+    def start(self):
+        self.model.events.append("start")
+        self.current = (self.height, "bb" * 32 if (self.backup / ("bb" * 32)).exists() else "aa" * 32)
+        if self.model.mode == "changed-reopen":
+            self.current = (self.height - 1, "11" * 32)
+
+
+class BackupNetwork:
+    restart = Network.restart
+
+    def __init__(self, directory, mode="complete", height=2, invalidated=("bb" * 32,)):
+        self.events, self.mode = [], mode
+        self.invalidated = invalidated
+        self.nodes = [BackupNode(self, directory / label, height) for label in ("a", "b")]
+        self.a, self.b = self.nodes
+        self.updated = False
+
+    def wait(self, predicate, reason, timeout=60):
+        if predicate():
+            return
+        self.events.append("backup-update")
+        if not self.updated:
+            self.updated = True
+            for node in self.nodes:
+                (node.backup / ("aa" * 32)).write_bytes(bytes(8) +
+                    (b"wrong" if self.mode == "wrong-tip-bytes" else b"tip"))
+                if self.mode != "missing-parent":
+                    (node.backup / ("11" * 32)).write_bytes(bytes(8) + b"parent")
+                if self.mode != "orphan-retained":
+                    for block_hash in self.invalidated:
+                        (node.backup / block_hash).unlink()
+        common.require(predicate(), reason)
+
+
+class BackupRestartTests(unittest.TestCase):
+    def backup_waits(self, model):
+        import crash_controls
+        import lifecycle_controls
+        import shielded_spend_controls
+        stack = contextlib.ExitStack()
+        for module in (crash_controls, lifecycle_controls, shielded_spend_controls):
+            stack.enter_context(patch.object(module, "wait_for", side_effect=model.wait))
+        return stack
+
+    def test_old_immediate_restart_loses_tip_but_observed_restart_preserves_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old = BackupNetwork(Path(temporary) / "old")
+            with self.assertRaisesRegex(common.AcceptanceError, "restart_tip"):
+                old.restart()
+            self.assertNotIn("backup-update", old.events)
+            current = BackupNetwork(Path(temporary) / "current")
+            with self.backup_waits(current):
+                result = node_live.restart_with_backups(current, excluded=("bb" * 32,))
+            self.assertEqual(result["height"], 2)
+            self.assertEqual(result["hash"], "aa" * 32)
+            self.assertEqual(result["backup"]["excluded_block_hashes"], ["bb" * 32])
+            self.assertEqual([row["blocks"] for row in result["backup"]["canonical"]], [2, 2])
+            self.assertEqual(current.events, ["backup-update", "stop", "stop", "start", "start"])
+
+    def test_every_invalidated_backup_is_excluded_before_restart(self):
+        invalidated = ("bb" * 32, "cc" * 32, "dd" * 32)
+        with tempfile.TemporaryDirectory() as temporary:
+            model = BackupNetwork(Path(temporary), invalidated=invalidated)
+            with self.backup_waits(model):
+                result = node_live.restart_with_backups(model, excluded=invalidated)
+            self.assertEqual(result["backup"]["excluded_block_hashes"], list(invalidated))
+            self.assertTrue(all(not (node.backup / block_hash).exists()
+                                for node in model.nodes for block_hash in invalidated))
+
+    def test_missing_or_wrong_backup_and_retained_invalidated_block_prevent_shutdown(self):
+        for mode, reason in (("wrong-tip-bytes", "ordinary_backup_did_not_preserve_tip"),
+                             ("missing-parent", "crash_incomplete_backup"),
+                             ("orphan-retained", "spend_invalidated_backup_present")):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
+                model = BackupNetwork(Path(temporary), mode)
+                with self.backup_waits(model), self.assertRaisesRegex(common.AcceptanceError, reason):
+                    node_live.restart_with_backups(model, excluded=("bb" * 32,))
+                self.assertNotIn("stop", model.events)
+
+    def test_ready_backup_does_not_excuse_a_changed_reopened_tip(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            model = BackupNetwork(Path(temporary), "changed-reopen")
+            with self.backup_waits(model), self.assertRaisesRegex(common.AcceptanceError, "restart_tip"):
+                node_live.restart_with_backups(model, excluded=("bb" * 32,))
+
+    def test_long_replay_reuses_tip_backup_without_widening_short_history_bound(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            model = BackupNetwork(Path(temporary), height=1114)
+            expected = {"height": 1114, "hash": "aa" * 32}
+            with self.backup_waits(model):
+                result = node_live.restart_replayed(model.a, expected)
+            self.assertEqual((result["height"], result["hash"]), (1114, "aa" * 32))
+            self.assertEqual(model.events, ["backup-update", "stop", "start"])
+            with self.backup_waits(model), self.assertRaisesRegex(common.AcceptanceError, "crash_history_bound"):
+                node_live.restart_with_backups(model)
+
+    def test_long_replay_refuses_wrong_tip_backup_and_reopen(self):
+        for mode, reason in (("wrong-tip-bytes", "ordinary_backup_did_not_preserve_tip"),
+                             ("changed-reopen", "replay_restart")):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
+                model = BackupNetwork(Path(temporary), mode, height=1114)
+                with self.backup_waits(model), self.assertRaisesRegex(common.AcceptanceError, reason):
+                    node_live.restart_replayed(model.a, {"height": 1114, "hash": "aa" * 32})
+                if mode == "wrong-tip-bytes":
+                    self.assertNotIn("stop", model.events)
 
 
 class QueuedNetwork:

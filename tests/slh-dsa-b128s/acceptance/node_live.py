@@ -104,6 +104,27 @@ def reconcile_saved(network, transactions, max_blocks):
     return {"initial_states": initial, "mined_blocks": mined}
 
 
+def restart_with_backups(network, *, excluded=()):
+    """Observe ordinary backup completion/removal before an exact-tip reopen."""
+    # These existing lifecycle helpers reuse this module's public fixtures, so
+    # import after initialization rather than introducing an import cycle.
+    from shielded_spend_controls import backup_ready
+    backup = backup_ready(network, excluded=excluded)
+    return {**network.restart(), "backup": backup}
+
+
+def restart_replayed(node, expected):
+    """Use the research history tip-backup check for the longer replay case."""
+    from lifecycle_controls import backup_tip, namespace
+    target = (expected["height"], expected["hash"])
+    require(node.tip() == target, "replay_backup_tip_changed")
+    backup = backup_tip(node, node.directory / "state", namespace((SLH_HEIGHT, TX_LIMIT, BLOCK_LIMIT)))
+    node.stop()
+    node.start()
+    require(node.tip() == target, "replay_restart")
+    return backup
+
+
 def execute(args, artifacts, receipt):
     info = host_call(args.host, "classical-info", kind=args.classical)
     producer, inventories = producer_identity(args.root, args.host, args.signer)
@@ -185,10 +206,12 @@ def execute(args, artifacts, receipt):
                     require(node.rpc("getrawtransaction", tx["txid"], 1)["hex"] == tx["raw"], "reorg_saved_bytes")
             receipt["reorg"] = {"fork": before, "old_blocks": [first_block, second_block],
                                 "replacement_blocks": replacement}
-            receipt["restart"] = network.restart()
+            receipt["restart"] = restart_with_backups(network, excluded=(first_block, second_block))
             # Candidate-height rules use tip+1. Tip103 is below the NU7
             # candidate gate; tip104 is the boundary for candidate105.
             rollback = network.a.rpc("getblockhash", NU7_HEIGHT - 1)
+            removed = [network.a.rpc("getblockhash", height)
+                       for height in range(NU7_HEIGHT - 1, network.a.tip()[0] + 1)]
             for node in network.nodes:
                 node.rpc("invalidateblock", rollback)
             wait_for(lambda: all(node.tip()[0] == NU7_HEIGHT - 2 for node in network.nodes),
@@ -197,7 +220,7 @@ def execute(args, artifacts, receipt):
                         for node in network.nodes for tx in transactions), "stale_slh_mempool_metadata")
             # Clear pre-rollback relay retries by restarting our disposable nodes;
             # the subsequent negative controls deliberately retain retry behavior.
-            receipt["below_nu7_restart"] = network.restart()
+            receipt["below_nu7_restart"] = restart_with_backups(network, excluded=removed)
             nu7_parent = authenticate_coinbase(network.nodes, 2, info["script_hex"])
             require((nu7_parent["txid"], nu7_parent["output_index"]) !=
                     (parent["txid"], parent["output_index"]), "nu7_control_distinct_parent")
@@ -239,9 +262,9 @@ def execute(args, artifacts, receipt):
                     for tx in transactions:
                         original = network.a.rpc("gettxout", tx["txid"], 0, False)
                         require(original == replay.rpc("gettxout", tx["txid"], 0, False), "replay_utxo")
-                    replay.stop()
-                    replay.start()
-                    require(replay.tip() == (original_tip["height"], original_tip["hash"]), "replay_restart")
+                    # Reuse the research history driver's ordinary tip-backup
+                    # observation, without widening the short crash-case bound.
+                    receipt["history_restart_backup"] = restart_replayed(replay, original_tip)
                     recovered = signed_artifact(args, keys, producer,
                         [tx["txid"] for tx in transactions[:2]], [0, 0], [5_000_000, 5_000_000],
                         [(1, 1), (1, 1)], args.version, original_tip["height"] + 20, "post-replay")

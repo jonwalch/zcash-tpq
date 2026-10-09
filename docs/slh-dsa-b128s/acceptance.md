@@ -100,10 +100,15 @@ Its main checks are:
 A distinct mature outpoint isolates the classical rollback control.
 Restart below NU7 clears the inherited RPC retry queue.
 The driver then reconciles saved transactions across absent, side-chain, mempool, and confirmed states.
+Before each restart after a reorg or rollback, the driver observes the ordinary backup.
+It requires complete canonical block bytes and removal of invalidated block backups.
+These checks wait for the existing asynchronous writer. They do not force a flush
+or change node shutdown, storage, or P2P behavior.
 
 For a separate durable-history run, add `--finalized-history` to `node_live.py`.
 This longer run crosses the 1,000-block reorg window.
 It replays actual blocks into a new peerless database, compares UTXOs, and spends a recovered output.
+It observes the ordinary tip backup before reopening the replay node.
 It does not inspect finalized-database internals.
 
 The [lifecycle driver](lifecycle-controls.md) tests default/enabled compatibility,
