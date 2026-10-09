@@ -1837,8 +1837,8 @@
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "833f422de3e6e1e68d091e033e3841532fcd8c66ee0f87e0fd706a847ef28564"
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior. SLH identity stdout lint allowance is attached to its conditional instead of ignored on the macro invocation; runtime behavior unchanged.",
+      "sha256": "2b7d730bf3ec792b62f0932477f196f26d20654edd926efa42673749d63f0a81"
     },
     {
       "disposition": "upstream-modification",
@@ -1898,6 +1898,15 @@
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
       "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-identity-lint.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Move only the SLH identity stdout lint allowance onto the enclosing conditional; runtime tokens and inherited startup behavior are unchanged. Compiler regression checks cover the ignored macro attribute and narrow allowance.",
+      "sha256": "3cb2f3230f58820405721fe99dde325a0cb383c3c1b31ee4de539496d7aa6c10"
     },
     {
       "disposition": "new",
@@ -2176,7 +2185,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "a523a41ac898888c3bfb8462b0574990930775ef3a4eb4166222865e03a03734"
+      "sha256": "bb9dce6593bbffff7ce1986791829d09e80039577fb7becb4aa2c297f5142694"
     },
     {
       "disposition": "new",
@@ -2373,7 +2382,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8"
+      "sha256": "b40337d32a8441552a1414126bbc0ea6b27e68f3ce242b1d82088c283c8f7242"
     },
     {
       "disposition": "attribution",
@@ -2384,7 +2393,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "bcc31b1e98aa816433696c2416e6f6019581736a1685dd986594e483b983855e"
+      "sha256": "7042f140cd642f1191c2e1057be46e7f6bbb568525862eba9cd5c47efc819c6f"
     },
     {
       "disposition": "new",
@@ -2520,7 +2529,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "23544f470eacfdda83cc2db05397d4bf9da709a3e15ff0f943e97bea3660023b"
+      "sha256": "6f9a211e438b4a68a547be6b4498937f191b8ac3c21fe5a6b22d0d23eb793031"
     },
     {
       "disposition": "new",

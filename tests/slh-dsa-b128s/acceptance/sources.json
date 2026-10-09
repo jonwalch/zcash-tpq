@@ -511,10 +511,10 @@
       "sources": []
     },
     {
-      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation.",
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse the current node_live one-origin publication pattern: submit only to node-a, retain its public RPC reply, and boundedly authenticate the exact saved bytes in both mempools/templates before mining; causal delayed-gossip mocks reject the previous eager duplicate-submission path.",
       "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
       "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
-      "sha256": "a523a41ac898888c3bfb8462b0574990930775ef3a4eb4166222865e03a03734",
+      "sha256": "bb9dce6593bbffff7ce1986791829d09e80039577fb7becb4aa2c297f5142694",
       "sources": [
         "shielded_spend_fixture_python",
         "shielded_spend_fixture_tests",
@@ -677,10 +677,10 @@
       ]
     },
     {
-      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation.",
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse inert D5 export_chain/backup_observed for complete bounded canonical backups, retain in-memory anchor invalidation until reconsider, and require removed-spend backup absence before later clean restart. Reuse the current node_live one-origin publication pattern: submit only to node-a, retain its public RPC reply, and boundedly authenticate the exact saved bytes in both mempools/templates before mining; causal delayed-gossip mocks reject the previous eager duplicate-submission path.",
       "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
       "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
-      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8",
+      "sha256": "b40337d32a8441552a1414126bbc0ea6b27e68f3ce242b1d82088c283c8f7242",
       "sources": [
         "shielded_spend_fixture_python",
         "shielded_spend_fixture_tests",
@@ -791,10 +791,10 @@
       "sources": []
     },
     {
-      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation.",
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse inert D5 export_chain/backup_observed for complete bounded canonical backups, retain in-memory anchor invalidation until reconsider, and require removed-spend backup absence before later clean restart. Reuse the current node_live one-origin publication pattern: submit only to node-a, retain its public RPC reply, and boundedly authenticate the exact saved bytes in both mempools/templates before mining; causal delayed-gossip mocks reject the previous eager duplicate-submission path.",
       "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
       "path": "tests/slh-dsa-b128s/acceptance/test_shielded_spend_controls.py",
-      "sha256": "23544f470eacfdda83cc2db05397d4bf9da709a3e15ff0f943e97bea3660023b",
+      "sha256": "6f9a211e438b4a68a547be6b4498937f191b8ac3c21fe5a6b22d0d23eb793031",
       "sources": [
         "shielded_spend_fixture_python",
         "shielded_spend_fixture_tests",
