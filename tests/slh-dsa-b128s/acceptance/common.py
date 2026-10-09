@@ -121,12 +121,7 @@ def validate_build(record, binary, kind, *, root=ROOT, runtime_required=False):
             and record["schema_version"] == 1
             and record["complete"] is True and record["contract"] == CONTRACT
             and record["kind"] == kind, "build_receipt_schema")
-    require(kind in ("node-default", "node-slh", "wallet-default", "wallet-slh", "host", "signer"), "build_kind")
     enabled = kind.endswith("-slh")
-    features = (["default-release-binaries"] if kind.startswith("node-") else [])
-    if enabled:
-        features.append(FEATURE)
-    require(record["features"] == features, "build_features")
     # Verify the exact supported recipe, including a fresh per-receipt target.
     from build import command
     argv = record["command"]
@@ -134,7 +129,9 @@ def validate_build(record, binary, kind, *, root=ROOT, runtime_required=False):
             and argv.count("--target-dir") == 1, "build_command")
     index = argv.index("--target-dir")
     require(index + 1 < len(argv), "build_command")
-    require(argv == command(kind, Path(argv[index + 1]))[0], "build_command")
+    expected, _, features = command(kind, Path(argv[index + 1]))
+    require(record["features"] == features, "build_features")
+    require(argv == expected, "build_command")
     require(record["source"] == source_state(root), "stale_build_source")
     require(record["binary_sha256"] == sha256(binary), "stale_build_binary")
     if kind.startswith("node-"):
