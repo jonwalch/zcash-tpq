@@ -15,6 +15,7 @@ import common
 import node_live
 import nodes
 import wallet_live
+import terminal_smoke
 
 
 class BuildReceiptTests(unittest.TestCase):
@@ -105,7 +106,7 @@ class BuildReceiptTests(unittest.TestCase):
     def test_failed_attempt_is_retained_without_claiming_completion(self):
         with tempfile.TemporaryDirectory() as temporary:
             args = SimpleNamespace(threshold=1, participants=1, inputs=1, version=5, classical="single",
-                artifacts=Path(temporary) / "fresh", node_build=Path("missing"), node=Path("missing"))
+                missing_required_key=False, artifacts=Path(temporary) / "fresh", node_build=Path("missing"), node=Path("missing"))
             with patch.object(wallet_live, "read_json", side_effect=common.AcceptanceError("missing_receipt")):
                 with self.assertRaises(common.AcceptanceError):
                     wallet_live.main(args)
@@ -256,6 +257,23 @@ class WalletFlowTests(unittest.TestCase):
             result = demo.payment(group, "recipient", 5, 9, directory / "good", reject=True)
             self.assertEqual(result["rejected_checks"], 18)
 
+    def test_fifteen_of_fifteen_missing_root_has_no_saved_full_authorization(self):
+        from fake_cli import FakeCli
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            node = SimpleNamespace(address="127.0.0.1:8232", tip=lambda: (110, "aa" * 32))
+            demo = wallet_live.Demo(Path("mock-cli"), directory / "profile", directory, [node, node], b"mock")
+            fake = FakeCli([node, node]); demo.cli = fake
+            originals = demo.group(directory / "owners", 15, 15)
+            survivors = demo.missing_required_key(originals, directory / "recovery")
+            self.assertEqual(len(survivors), 14)
+            self.assertTrue(all(not owner.backup.exists() for owner in originals))
+            result = demo.payment(survivors, "recipient", 6, 1, directory / "subquorum",
+                                  all_value=3_000_000, incomplete_quorum=True)
+            self.assertEqual(result["available_private_roots"], 14)
+            self.assertIs(result["assembled"], False)
+            self.assertTrue(all(fake.watches[owner.store]["raw"] is None for owner in survivors))
+
     def partial(self, directory, index=0, slot=14):
         public = "11" * 32
         owner = "22" * 16
@@ -298,7 +316,7 @@ class WalletFlowTests(unittest.TestCase):
             oracle.check_payment_capacity(5, [(15, 15)] * 2)
 
     def test_human_drivers_require_explicit_run_and_real_artifact_paths(self):
-        for parser in (wallet_live.parser, node_live.parser, build.parser):
+        for parser in (wallet_live.parser, node_live.parser, build.parser, terminal_smoke.parser):
             with patch("sys.stderr", io.StringIO()), self.assertRaises(SystemExit):
                 parser().parse_args([])
 

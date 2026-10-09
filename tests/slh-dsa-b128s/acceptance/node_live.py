@@ -12,7 +12,7 @@ from pathlib import Path
 from common import (CONTRACT, AcceptanceError, common_tip, read_json, require, sha256,
                     source_state, validate_build, wait_for, write_json, zat)
 from generate_transactions import (host_call, producer_identity, randomizer, seed, signer_call)
-from nodes import Network, ManagedNode, SLH_HEIGHT, TX_LIMIT, BLOCK_LIMIT, authenticate_coinbase, port
+from nodes import Network, ManagedNode, NU7_HEIGHT, SLH_HEIGHT, TX_LIMIT, BLOCK_LIMIT, authenticate_coinbase, port
 from wallet_live import key_commitment
 
 
@@ -60,6 +60,48 @@ def authenticated_outputs(nodes, txid, outputs):
                     and output["scriptPubKey"]["hex"] == expected["script_hex"]
                     and zat(output["value"]) == expected["value_zat"] for output in observed),
                 "authenticated_funding_output")
+
+
+def transaction_state(node, transaction):
+    """Bind saved bytes before interpreting best-chain or mempool presence."""
+    reply = node.response("getrawtransaction", transaction["txid"], 1)
+    error = reply.get("error")
+    if error is not None:
+        require(type(error) is dict and error.get("code") == -5 and
+                "not found" in error.get("message", "").lower(), "saved_transaction_lookup")
+        return "absent"
+    value = reply.get("result")
+    require(type(value) is dict and value.get("hex") == transaction["raw"], "saved_transaction_bytes")
+    if value.get("confirmations", 0) > 0:
+        return "confirmed"
+    # Side-chain transactions are also returned by getrawtransaction. Their
+    # bytes alone do not establish active-chain acceptance or mempool presence.
+    return "mempool" if transaction["txid"] in node.rpc("getrawmempool") else "absent"
+
+
+def reconcile_saved(network, transactions, max_blocks):
+    """Respect upstream rejected-transaction retries across activation changes."""
+    common_tip(network.nodes)
+    initial = {}
+    for transaction in transactions:
+        state = transaction_state(network.a, transaction)
+        initial[transaction["txid"]] = state
+        if state == "absent":
+            reply = network.a.response("sendrawtransaction", transaction["raw"])
+            # A retry can enter the mempool between lookup and explicit submit.
+            # Only authenticated presence of these exact bytes excuses refusal.
+            require(reply.get("error") is None and reply.get("result") == transaction["txid"]
+                    or transaction_state(network.a, transaction) != "absent", "saved_transaction_submission")
+    wait_for(lambda: all(transaction_state(node, tx) != "absent"
+                        for node in network.nodes for tx in transactions), "saved_transaction_relay")
+    mined = []
+    for _ in range(max_blocks):
+        if all(transaction_state(node, tx) == "confirmed" for node in network.nodes for tx in transactions):
+            break
+        mined.extend(network.mine())
+    require(all(transaction_state(node, tx) == "confirmed" for node in network.nodes for tx in transactions),
+            "saved_transaction_confirmation")
+    return {"initial_states": initial, "mined_blocks": mined}
 
 
 def execute(args, artifacts, receipt):
@@ -144,26 +186,37 @@ def execute(args, artifacts, receipt):
             receipt["reorg"] = {"fork": before, "old_blocks": [first_block, second_block],
                                 "replacement_blocks": replacement}
             receipt["restart"] = network.restart()
-            rollback = network.a.rpc("getblockhash", SLH_HEIGHT - 1)
+            # Candidate-height rules use tip+1. Tip103 is below the NU7
+            # candidate gate; tip104 is the boundary for candidate105.
+            rollback = network.a.rpc("getblockhash", NU7_HEIGHT - 1)
             for node in network.nodes:
                 node.rpc("invalidateblock", rollback)
-            wait_for(lambda: all(node.tip()[0] == SLH_HEIGHT - 2 for node in network.nodes),
-                     "rollback_below_activation")
+            wait_for(lambda: all(node.tip()[0] == NU7_HEIGHT - 2 for node in network.nodes),
+                     "rollback_below_nu7")
             require(all(tx["txid"] not in node.rpc("getrawmempool")
                         for node in network.nodes for tx in transactions), "stale_slh_mempool_metadata")
+            # Clear pre-rollback relay retries by restarting our disposable nodes;
+            # the subsequent negative controls deliberately retain retry behavior.
+            receipt["below_nu7_restart"] = network.restart()
+            nu7_parent = authenticate_coinbase(network.nodes, 2, info["script_hex"])
+            require((nu7_parent["txid"], nu7_parent["output_index"]) !=
+                    (parent["txid"], parent["output_index"]), "nu7_control_distinct_parent")
+            nu7_control = host_call(args.host, "classical-spend", recipe={"kind": args.classical,
+                "transaction_version": args.version, "lock_time": 0, "expiry_height": before["height"] + 20,
+                "parent_hex": nu7_parent["parent_hex"], "output_index": nu7_parent["output_index"],
+                "outputs": [{"value_zat": 1_000_000, "script_hex": info["script_hex"]}], "fee_zat": 20_000})
+            receipt["nu7_rollback"] = network.a.reject("sendrawtransaction", "incorrect consensus branch id",
+                                                      nu7_control["transaction_hex"])
+            network.mine()
+            receipt["nu7_candidate_boundary"] = common_tip(network.nodes)
+            network.mine(SLH_HEIGHT - 2 - network.a.tip()[0])
             receipt["gate_rollback"] = network.a.reject("sendrawtransaction", "before activation",
                                                         funding["transaction_hex"])
             network.mine(2)
-            require(network.a.rpc("sendrawtransaction", funding["transaction_hex"]) == funding["txid"],
-                    "reactivated_classical_funding")
-            wait_for(lambda: funding["txid"] in network.b.rpc("getrawmempool"), "reactivated_funding_relay")
-            network.mine()
+            receipt["reactivated_funding"] = reconcile_saved(network,
+                [{"txid": funding["txid"], "raw": funding["transaction_hex"]}], 1)
             authenticated_outputs(network.nodes, funding["txid"], funding["outputs"][:-1])
-            for tx in transactions:
-                require(network.a.rpc("sendrawtransaction", tx["raw"]) == tx["txid"], "reactivated_slh_spend")
-            wait_for(lambda: all(tx["txid"] in network.b.rpc("getrawmempool") for tx in transactions),
-                     "reactivated_slh_relay")
-            network.mine(2)
+            receipt["reactivated_slh"] = reconcile_saved(network, transactions, 2)
             if args.finalized_history:
                 # The pin fixes MAX_BLOCK_REORG_HEIGHT=1000. This is a human
                 # workload; never run it as part of mocked/offline verification.
