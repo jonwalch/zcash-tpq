@@ -189,12 +189,40 @@ class FundingAndRpcTests(unittest.TestCase):
         import tomllib
         config = tomllib.loads(nodes.configuration("127.0.0.1:1", 2, 3, Path("/private/state"), "public-address"))
         parameters = config["network"]["testnet_parameters"]
+        self.assertEqual(parameters["activation_heights"], {"NU6.3": 1, "NU7": 105})
         self.assertEqual(parameters["experimental_slh_dsa_b128s_activation_height"], 110)
         self.assertEqual(parameters["experimental_slh_dsa_b128s_max_checks_per_transaction"], 16)
         self.assertEqual(parameters["experimental_slh_dsa_b128s_max_checks_per_block"], 64)
         self.assertEqual(config["network"]["initial_testnet_peers"], ["127.0.0.1:3"])
         self.assertFalse(config["state"]["ephemeral"])
         self.assertEqual(config["mining"]["miner_address"], "public-address")
+
+    def test_spend_profile_only_opens_the_pre_nu63_deposit_window(self):
+        import tomllib
+        arguments = ("127.0.0.1:1", 2, 3, Path("/private/state"), "public-address")
+        original = tomllib.loads(nodes.configuration(*arguments))
+        expected = copy.deepcopy(original)
+        expected["network"]["testnet_parameters"]["activation_heights"] = {
+            "NU6.2": 1, "NU6.3": 104, "NU7": 105}
+        configured = tomllib.loads(nodes.configuration(
+            *arguments, activation_heights=nodes.SPEND_ACTIVATION_HEIGHTS))
+        self.assertEqual(configured, expected)
+        for invalid in ({"NU6.2": True, "NU6.3": 104, "NU7": 105},
+                        {"NU6.2": 1, "NU6.3": 104, "NU7": 104}, {}, []):
+            with self.subTest(activations=invalid), self.assertRaisesRegex(
+                    common.AcceptanceError, "unsupported_activation_profile"):
+                nodes.configuration(*arguments, activation_heights=invalid)
+        with tempfile.TemporaryDirectory() as temporary:
+            network = nodes.Network(Path("unused-binary"), Path(temporary), "public-address",
+                                    activation_heights=nodes.SPEND_ACTIVATION_HEIGHTS)
+            try:
+                for node in network.nodes:
+                    config = tomllib.loads(node.config.read_text())
+                    self.assertEqual(config["network"]["testnet_parameters"],
+                                     expected["network"]["testnet_parameters"])
+            finally:
+                for node in network.nodes:
+                    node.close()
 
     def test_rpc_rejection_requires_the_specific_diagnostic(self):
         node = common.Node("127.0.0.1:1")

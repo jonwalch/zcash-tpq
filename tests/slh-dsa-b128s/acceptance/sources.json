@@ -532,10 +532,10 @@
       ]
     },
     {
-      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes. Optional explicit capture token adds bounded source/binary/config/log binding; ordinary nodes remove inherited opt-in and retain prior behavior.",
+      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes. Optional explicit capture token adds bounded source/binary/config/log binding; ordinary nodes remove inherited opt-in and retain prior behavior. Add only the exact isolated NU6.2=1, NU6.3=104, NU7=105 shielded-spend funding profile; preserve the default profile and SLH height/limits.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/nodes.py",
-      "sha256": "5b1b3529357e0ded81e4e2e8b9c40db56337034fc8cdcf5f331d783cb4eb9c80",
+      "sha256": "f9498b6cf0455b2fcf4d52ca2998a545f4289d8c11e9dbde21a7e9a3732997e3",
       "sources": [
         "rpc_node",
         "relay",
@@ -595,10 +595,10 @@
       ]
     },
     {
-      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference. Verify the isolated deposit window preserves all other settings, rejects unintended profiles and reaches both node configurations without starting processes.",
       "classification": "new focused offline test adapter",
       "path": "tests/slh-dsa-b128s/acceptance/test_acceptance.py",
-      "sha256": "63001c79af5266746d7f1277cca6f7ce0811a07251260199e292c92cbc9fdc46",
+      "sha256": "42efc35a60fc3194d36185df5c0275486f78c6e20c8ee2cdeff57bb838fe0d45",
       "sources": []
     },
     {
@@ -721,10 +721,10 @@
       "sources": []
     },
     {
-      "adaptation": "Add only existing workspace secp256k1/ripemd dependency edges needed by extracted public classical helper. No registry identity/version or production graph change; coordinated root lock is separately bound by build receipts. Add optional shielded-fixtures dependencies on existing pinned workspace Orchard/Sapling/proofs/protocol/rand libraries; local-prover supplies explicit parameter loading. No download-params or bundled-prover feature requested. Cargo.lock adds only these host edges and three directory helper packages; existing package versions/checksums are unchanged.",
+      "adaptation": "Add only existing workspace secp256k1/ripemd dependency edges needed by extracted public classical helper. No registry identity/version or production graph change; coordinated root lock is separately bound by build receipts. Add optional shielded-fixtures dependencies on existing pinned workspace Orchard/Sapling/proofs/protocol/rand libraries; local-prover supplies explicit parameter loading. No download-params or bundled-prover feature requested. Cargo.lock adds only these host edges and three directory helper packages; existing package versions/checksums are unchanged. Reuse pinned optional incrementalmerkletree and zcash_note_encryption packages for bounded genuine note recovery and witnesses; lock changes are host dependency edges only.",
       "classification": "existing workspace dependency reuse",
       "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
-      "sha256": "ba18a7b2edd941333e0b4654cca2b8a11ed22bc6d858e52ecdbf9314681d1520",
+      "sha256": "263944065b0773175c8df1978a01affb860031ce9f43cf0baa866cc2bacb14e1",
       "sources": []
     },
     {
@@ -742,10 +742,10 @@
       "sources": []
     },
     {
-      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input. Retain classical-spend default; explicit control-funding allows only two additional exact unsupported templates.",
+      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input. Retain classical-spend default; explicit control-funding allows only two additional exact unsupported templates. Expose feature-gated explicit NU6.2 v5 fixture signing for pre-NU6.3 Orchard deposits while retaining existing NU7 signing behavior.",
       "classification": "adapted classical helper",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
-      "sha256": "0cc6f17f7da1d3480fe20b562ae1547ea23b43fc1759186039b2d9e7d444d69f",
+      "sha256": "b8cca5994bec4784bd21539bb6bebac3849bc6d2c240195b7758d501c0d689c6",
       "sources": [
         "nu7",
         "classical_sign"

@@ -15,6 +15,7 @@ NU7_HEIGHT = 105
 SLH_HEIGHT = 110
 TX_LIMIT = 16
 BLOCK_LIMIT = 64
+SPEND_ACTIVATION_HEIGHTS = {"NU6.2": 1, "NU6.3": 104, "NU7": NU7_HEIGHT}
 
 
 def port():
@@ -23,7 +24,17 @@ def port():
         return listener.getsockname()[1]
 
 
-def configuration(address, p2p, peer, state, miner, *, enabled=True):
+def configuration(address, p2p, peer, state, miner, *, enabled=True, activation_heights=None):
+    # A separate deposit window permits a nonzero Orchard note before NU6.3.
+    # Keep the ordinary acceptance profile and the SLH activation gate intact.
+    activations = f'"NU6.3" = 1, "NU7" = {NU7_HEIGHT}'
+    if activation_heights is not None:
+        require(type(activation_heights) is dict
+                and activation_heights == SPEND_ACTIVATION_HEIGHTS
+                and all(type(value) is int for value in activation_heights.values()),
+                "unsupported_activation_profile")
+        activations = ', '.join(f'"{name}" = {height}'
+                                for name, height in SPEND_ACTIVATION_HEIGHTS.items())
     gate = (f"experimental_slh_dsa_b128s_activation_height = {SLH_HEIGHT}\n"
             f"experimental_slh_dsa_b128s_max_checks_per_transaction = {TX_LIMIT}\n"
             f"experimental_slh_dsa_b128s_max_checks_per_block = {BLOCK_LIMIT}\n") if enabled else ""
@@ -35,7 +46,7 @@ cache_dir = false
 initial_testnet_peers = {json.dumps([] if peer is None else [f"127.0.0.1:{peer}"])}
 
 [network.testnet_parameters]
-activation_heights = {{ "NU6.3" = 1, "NU7" = {NU7_HEIGHT} }}
+activation_heights = {{ {activations} }}
 {gate}lockbox_disbursements = [{{ address = "t2RnBRiqrN1nW4ecZs1Fj3WWjNdnSs4kiX8", amount = 0 }}]
 
 [state]
@@ -60,12 +71,14 @@ filter = "info"
 
 
 class ManagedNode(Node):
-    def __init__(self, binary, directory, label, miner, p2p, peer=None, *, observation_token=None):
+    def __init__(self, binary, directory, label, miner, p2p, peer=None, *, observation_token=None,
+                 activation_heights=None):
         self.directory = directory / label
         self.directory.mkdir(mode=0o700)
         self.config = self.directory / "node.toml"
         address = f"127.0.0.1:{port()}"
-        self.config.write_text(configuration(address, p2p, peer, self.directory / "state", miner))
+        self.config.write_text(configuration(address, p2p, peer, self.directory / "state", miner,
+                                             activation_heights=activation_heights))
         self.observation_token = observation_token
         if observation_token is not None:
             observations.valid_token(observation_token)
@@ -131,12 +144,12 @@ class ManagedNode(Node):
 
 
 class Network:
-    def __init__(self, binary, directory, miner, *, observation_token=None):
+    def __init__(self, binary, directory, miner, *, observation_token=None, activation_heights=None):
         first, second = port(), port()
         self.nodes = [ManagedNode(binary, directory, "node-a", miner, first, second,
-                                  observation_token=observation_token),
+                                  observation_token=observation_token, activation_heights=activation_heights),
                       ManagedNode(binary, directory, "node-b", miner, second, first,
-                                  observation_token=observation_token)]
+                                  observation_token=observation_token, activation_heights=activation_heights)]
         self.a, self.b = self.nodes
 
     def __enter__(self):
