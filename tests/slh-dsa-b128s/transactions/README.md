@@ -43,7 +43,7 @@ comparison and is not a substitute for the complete G2 gate. Later source
 changes make old producer hashes differ intentionally; verify the recorded
 committed source checkpoint when reproducing the original gate.
 
-The eight cheap unit tests use explicitly synthetic zero signatures to exercise
+The nine cheap unit tests use explicitly synthetic zero signatures to exercise
 schemas, all 120 policy shapes, bounds, correspondence and failure precedence.
 Their callbacks do not establish primitive validity. Only the separate full
 checker runs real independent verification. Neither workflow runs key generation,

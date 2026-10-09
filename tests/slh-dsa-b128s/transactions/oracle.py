@@ -357,17 +357,26 @@ def evaluate(raw, verify_signature):
     for index, (item, actual, spent) in enumerate(zip(a["inputs"], tx["inputs"], previous)):
         digest, framed = message(tx, a["network"], previous, index)
         require(digest.hex() == item["sighash_all_digest_hex"] and framed.hex() == item["message_hex"], "correspondence", "digest_message")
+        decoded, parse_error = None, None
+        try:
+            decoded = decode_authorization(actual["script"])
+        except NativeFailure as error:
+            parse_error = error
+        if decoded is not None:
+            descriptor, records = decoded
+            require(descriptor.hex() == item["descriptor_hex"] and records == item["records"], "correspondence", "authorization")
         try:
             script = spent["script"]
             if len(script) != 35 or script[:2] != b"\x53\x20" or script[-1:] != b"\xc0":
                 raise NativeFailure("output_template")
-            descriptor, records = decode_authorization(actual["script"])
+            if parse_error is not None:
+                raise parse_error
+            descriptor, records = decoded
             if script != lock_script(descriptor):
                 raise NativeFailure("output_commitment")
             _, commitments = decode_policy(descriptor)
             if any(key_commitment(bytes.fromhex(record["public_key_hex"])) != commitments[record["signer_index"]] for record in records):
                 raise NativeFailure("key_commitment")
-            require(descriptor.hex() == item["descriptor_hex"] and records == item["records"], "correspondence", "authorization")
             parsed.append((index, records, framed))
         except NativeFailure as error:
             if first_failure is None:

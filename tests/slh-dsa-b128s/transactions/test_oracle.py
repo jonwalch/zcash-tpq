@@ -161,6 +161,21 @@ class OracleTests(unittest.TestCase):
         _, observed = oracle.evaluate(oracle.canonical(a), lambda *args: True)
         self.assertEqual(observed, oracle.observation(count=1))
 
+    def test_decodable_metadata_checked_despite_binding_failure(self):
+        a = copy.deepcopy(self.artifacts["v5-1of1"])
+        tx = wire.parse_transaction(bytes.fromhex(a["transaction_hex"]))
+        script = bytearray.fromhex(a["inputs"][0]["spent_output"]["script_hex"])
+        script[2] ^= 1
+        a["inputs"][0]["spent_output"]["script_hex"] = script.hex()
+        a = mutations.refresh(a, tx)
+        _, observed = oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+        self.assertEqual(observed, oracle.observation("authorization", "output_commitment", 0))
+        a["inputs"][0]["descriptor_hex"] = "00"
+        a["artifact_sha256"] = oracle.artifact_hash(a)
+        with self.assertRaises(oracle.InterfaceFailure) as caught:
+            oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+        self.assertEqual(caught.exception.stage, "correspondence")
+
 
 if __name__ == "__main__":
     unittest.main()
