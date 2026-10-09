@@ -57,21 +57,36 @@ def transaction_identity(tx):
     return result
 
 
-def identify(nodes, tx):
-    """Bind exact public bytes to both nodes' ordinary decoded identities."""
+def identify(host, tx, *, variant=None, input_index=0):
+    """Reuse the host's exact original-byte identity in authorization controls.
+
+    Pinned Zakura has no decoderawtransaction RPC. Rejected subjects are never
+    available through getrawtransaction, so bind their identities at generation.
+    """
     raw = tx["transaction_hex"]
     require(type(raw) is str and 0 < len(raw) <= 524288 and len(raw) % 2 == 0
             and all(char in "0123456789abcdef" for char in raw), "capture_transaction_bytes")
     require(observations.digest(bytes.fromhex(raw)) == tx["transaction_sha256"],
             "capture_transaction_hash")
-    decoded = [node.rpc("decoderawtransaction", raw) for node in nodes]
-    ids = [{"txid": row["txid"], "auth_digest": row["authdigest"]} for row in decoded]
-    require(ids[0] == ids[1], "capture_decoded_disagreement")
-    observations.identity(ids[0])
-    for name, value in ids[0].items():
-        require(name not in tx or tx[name] == value, "capture_fixture_identity")
-    tx.update(ids[0])
-    return ids[0]
+    if variant is None:
+        # Both malformed variants already carry the exact identity returned by
+        # control-authorization, whose output bytes were hashed just above.
+        transaction_identity(tx)
+        return None
+    witness = host_call(host, "control-authorization", recipe={
+        "transaction_hex": raw, "input_index": input_index, "variant": variant,
+        "donor_transaction_hex": None})
+    require(witness["positive_transaction_sha256"] == tx["transaction_sha256"]
+            and witness["transaction_hex"] != raw and witness["outputs"] == tx["outputs"]
+            and witness["auth_digest"] != witness["positive_auth_digest"]
+            and observations.digest(bytes.fromhex(witness["transaction_hex"])) == witness["transaction_sha256"],
+            "capture_identity_witness")
+    identity = {"txid": witness["txid"], "auth_digest": witness["positive_auth_digest"]}
+    observations.identity(identity)
+    require(all(name not in tx or tx[name] == value for name, value in identity.items()),
+            "capture_fixture_identity")
+    tx.update(identity)
+    return witness
 
 
 def parents(network, funding, classical_parent):
@@ -214,7 +229,10 @@ def replay(network, txs, funding, classical_parent):
                 and len(block["tx"]) == 3, "capture_replay_wrong_transactions")
         for tx in saved:
             observed = node.rpc("getrawtransaction", tx["txid"], 1)
-            require(observed["hex"] == tx["raw"] and observed["confirmations"] > 0,
+            require(observed["hex"] == tx["raw"] and observed["confirmations"] > 0
+                    and observed["txid"] == tx["txid"]
+                    and observed["authdigest"] == next(item["auth_digest"] for item in txs.values()
+                        if item["transaction_hex"] == tx["raw"]),
                     "capture_replay_wrong_bytes")
     require(utxos(network.nodes, funding["txid"], [1]) == [None]
             and utxos(network.nodes, classical_parent["txid"], [classical_parent["output_index"]]) == [None],
@@ -296,9 +314,16 @@ def execute(args, artifacts, receipt):
                 "parent_hex": classical_parent["parent_hex"], "output_index": classical_parent["output_index"],
                 "outputs": [{"value_zat": 3_000_000, "script_hex": script}], "fee_zat": 20_000})
             mixed = mixed_artifacts(args, artifacts, funding, keys, 210)
-            for name, tx in [("funding", funding), *txs.items(),
-                             *((case["name"], case["transaction"]) for case in mixed)]:
-                identify(network.nodes, tx)
+            identities = [("funding", funding, "missing-classical-quorum", 0)]
+            identities += [(name, tx, None if name in ("structural", "changed-authorization")
+                else "missing-classical-quorum" if name == "classical-funding" else "corrupt-slh", 0)
+                for name, tx in txs.items()]
+            identities += [(case["name"], case["transaction"], "corrupt-slh",
+                            case["transaction"]["slh_input_index"]) for case in mixed]
+            for name, tx, variant, index in identities:
+                witness = identify(args.host, tx, variant=variant, input_index=index)
+                if witness is not None:
+                    write_json(artifacts / ("identity-witness-" + name + ".json"), witness)
                 write_json(artifacts / ("identified-" + name + ".json"), tx)
             require(fee(txs["classical-funding"], [zat(utxos(network.nodes, classical_parent["txid"],
                     [classical_parent["output_index"]])[0]["value"])]) == 20_000, "capture_classical_fee")

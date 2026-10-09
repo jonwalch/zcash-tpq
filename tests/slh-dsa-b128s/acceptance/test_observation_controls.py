@@ -74,7 +74,21 @@ class ObservedLedger(Ledger):
                 - sum(row["value_zat"] for row in outputs) - recipe["fee_zat"],
                 "script_hex": self.classical_script})
             return self.tx(name, outputs, [(parent["txid"], index)])
-        result = super().host(binary, operation, **fields)
+        # Authorization controls have unique serialized variants for every
+        # original, just as the host does. Preserve pre-existing source fixtures.
+        if operation == "control-authorization":
+            original = self.transactions[fields["recipe"]["transaction_hex"]]
+            prior = dict(self.transactions)
+            result = super().host(binary, operation, **fields)
+            row = self.transactions.pop(result["transaction_hex"])
+            self.transactions.update(prior)
+            raw = (row["name"] + ":" + original["name"]).encode().hex()
+            result.update(transaction_hex=raw, transaction_sha256=observations.digest(bytes.fromhex(raw)))
+            if self.wrong_identity:
+                result["positive_auth_digest"] = identity("wrong")
+            self.transactions[raw] = dict(row, **result)
+        else:
+            result = super().host(binary, operation, **fields)
         if operation == "control-block":
             old = self.blocks.pop(result["block_hex"])
             raw = repr((fields["recipe"], result)).encode().hex()
@@ -133,14 +147,15 @@ class ObservedNode(FakeNode):
         return super().response(method, *args)
 
     def rpc(self, method, *args):
+        assert method != "decoderawtransaction", "pinned node has no decoderawtransaction RPC"
         if method == "getblock" and args[1] == 1:
             block = self.state.blocks[args[0]]
             if block["block_hex"].startswith("generated-"):
                 return {"tx": [self.state.transactions[raw]["txid"] for raw in block["raws"]]}
-        if method == "decoderawtransaction":
-            tx = self.state.transactions[args[0]]
-            return {"txid": identity("wrong") if self.state.wrong_identity else tx["txid"],
-                    "authdigest": tx["auth_digest"]}
+        if method == "getrawtransaction":
+            result = super().rpc(method, *args)
+            tx = self.state.transactions[result["hex"]]
+            return dict(result, txid=tx["txid"], authdigest=tx["auth_digest"])
         if method == "invalidateblock" and self.state.no_rollback:
             return None
         if method == "submitblock" or method == "getblocktemplate" and args:
@@ -261,7 +276,7 @@ class CaptureDriverTests(unittest.TestCase):
 
     def test_unrelated_failure_missing_parent_and_wrong_identity_cannot_complete(self):
         for field, error in (("unrelated_rejection", "transparent_wrong_relay_rejection"),
-                ("wrong_identity", "capture_fixture_identity"),
+                ("wrong_identity", "transparent_positive_identity_changed"),
                 ("missing_parent", "authenticated_funding_output"),
                 ("change_on_reject", "capture_control_changed_state")):
             with self.subTest(field=field), self.assertRaisesRegex(AcceptanceError, error):
@@ -282,10 +297,31 @@ class CaptureDriverTests(unittest.TestCase):
             self.assertEqual(row["failure"], "test_rpc_failure")
             self.assertEqual(row["identity"], capture.transaction_identity(tx))
 
+    def test_identity_uses_exact_host_original_and_no_invented_rpc(self):
+        with self.assertRaisesRegex(AssertionError, "no decoderawtransaction"):
+            ObservedLedger().a.rpc("decoderawtransaction", "00")
+        raw, changed = "00", "01"
+        tx = {"transaction_hex": raw, "transaction_sha256": observations.digest(bytes.fromhex(raw)),
+              "txid": "11" * 32, "outputs": []}
+        witness = {"transaction_hex": changed, "transaction_sha256": observations.digest(bytes.fromhex(changed)),
+            "positive_transaction_sha256": tx["transaction_sha256"], "txid": tx["txid"],
+            "auth_digest": "22" * 32, "positive_auth_digest": "33" * 32, "outputs": []}
+        for field, bad in (("positive_transaction_sha256", "00" * 32), ("txid", "44" * 32),
+                           ("outputs", [{}]), ("transaction_sha256", "00" * 32)):
+            with self.subTest(field=field), patch.object(capture, "host_call", return_value=dict(witness, **{field: bad})), \
+                    self.assertRaises(AcceptanceError):
+                capture.identify(Path("unused-host"), dict(tx), variant="corrupt-slh")
+        with patch.object(capture, "host_call", return_value=witness) as call:
+            result = dict(tx)
+            capture.identify(Path("unused-host"), result, variant="corrupt-slh", input_index=1)
+            self.assertEqual(result["auth_digest"], witness["positive_auth_digest"])
+            self.assertEqual(call.call_args.kwargs["recipe"]["transaction_hex"], raw)
+            self.assertEqual(call.call_args.kwargs["recipe"]["input_index"], 1)
+
     def test_identity_refuses_modified_raw_bytes_before_decoding(self):
         tx = {"transaction_hex": "00", "transaction_sha256": "00" * 32}
         with self.assertRaisesRegex(AcceptanceError, "capture_transaction_hash"):
-            capture.identify([], tx)
+            capture.identify(Path("unused-host"), tx)
 
 
 if __name__ == "__main__":

@@ -65,12 +65,18 @@ and the saved valid SLH spend must relay and mine together in one new block;
 both peers must return the exact saved transaction bytes and positive
 confirmations, and both actual parents must be spent.
 
-The public `decoderawtransaction` response on each peer supplies `txid` and
-`authdigest`; these must agree with each other and any host-supplied identity.
-Exact raw transaction SHA-256 is checked independently of that RPC identity.
-Changed authorization preserves TXID and changes authorizing digest. This is
-identity binding to the observed node, not an independent transaction digest
-oracle. Existing independent digest/vector references are unchanged.
+The existing host `control-authorization` operation supplies the original TXID
+and authorizing digest, bound to the exact original transaction SHA-256. Its
+existing missing-classical-quorum or corrupt-SLH mutation provides an identity
+witness for unmodified transactions; both actual malformed subjects already
+carry their exact generated identities. Every witness and original is retained,
+and raw byte hashes and unchanged effects are checked. Pinned Zakura has no
+`decoderawtransaction` RPC, and a rejected transaction is not available through
+`getrawtransaction`. After saved-byte mining, both peers' `getrawtransaction`
+results must agree on raw bytes, TXID and authorizing digest. Changed
+authorization preserves TXID and changes authorizing digest. These host/node
+identities are not an independent digest oracle; existing independent
+digest/vector references remain unchanged.
 
 `attempts.json` retains each intended subject/control call before dispatch,
 including node, method, identity, exact transaction hash, and candidate block
