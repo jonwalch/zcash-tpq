@@ -176,3 +176,88 @@ fn trusted_payment_review_accepts_all_120_enrolled_shapes_for_both_versions() {
         }
     }
 }
+
+#[test]
+fn real_fifteen_of_fifteen_authorization_survives_journal_reopen() {
+    let mut owners = wallets(15, 1, 1);
+    let mut entries = owners[0].manifest.entries.clone();
+    for entry in &mut entries {
+        let commitments = entry.policy().unwrap().commitments().to_vec();
+        entry.policy_hex = hex::encode(Policy::new(15, commitments).unwrap().descriptor());
+    }
+    for owner in &mut owners {
+        owner.manifest.entries = entries.clone();
+        owner.manifest.validate().unwrap();
+    }
+    let temporary = tempfile::tempdir().unwrap();
+    let paths: Vec<_> = (0..15)
+        .map(|i| temporary.path().join(i.to_string()))
+        .collect();
+    let mut stores: Vec<_> = owners
+        .iter()
+        .zip(&paths)
+        .map(|(wallet, path)| create(path, wallet.manifest(), WatchMode::Allocator))
+        .collect();
+    let mut source = Source::funded(&owners[0], &[2_000_000]);
+    let approved = intent(6);
+    let (proposal, summary) = stores[0]
+        .prepare_payment(&owners[0], &mut source, &approved)
+        .unwrap();
+    assert_eq!(summary.checks, 15);
+    assert_eq!(summary.final_bytes, 119_041);
+    stores[0].migrate_payment_journal().unwrap();
+    let mut partials = Vec::new();
+    for (store, owner) in stores.iter_mut().zip(&owners) {
+        partials.extend(
+            store
+                .sign_payment(
+                    owner,
+                    &mut source,
+                    &proposal,
+                    &approved,
+                    summary.proposal_id,
+                )
+                .unwrap(),
+        );
+    }
+    assert_eq!(partials.len(), 15);
+    assert!(partials.iter().any(|partial| partial.signer_index == 14));
+    let signed = stores[0]
+        .assemble_payment(&owners[0], &mut source, &proposal, &approved, &partials)
+        .unwrap();
+    assert_eq!(signed.len(), 119_041);
+    let transaction = proposal::decode_transaction(&signed).unwrap();
+    let Input::PrevOut { unlock_script, .. } = &transaction.inputs()[0] else {
+        unreachable!()
+    };
+    assert_eq!(unlock_script.as_raw_bytes().len(), 118_882);
+    let local = stores[0].payments().unwrap()[0].partials.clone();
+    assert_eq!(local.len(), 1);
+    drop(stores.remove(0));
+    let mut store = WatchStore::open(&paths[0], &profile()).unwrap();
+    assert_eq!(store.payments().unwrap()[0].partials, local);
+    assert_eq!(
+        store.payments().unwrap()[0].signed_transaction_hex,
+        Some(hex::encode(&signed))
+    );
+    assert!(
+        store
+            .journal_snapshot()
+            .unwrap()
+            .metadata()
+            .reachable_objects
+            > 0
+    );
+    assert_eq!(
+        store
+            .sign_payment(
+                &owners[0],
+                &mut source,
+                &proposal,
+                &approved,
+                summary.proposal_id
+            )
+            .unwrap(),
+        local
+    );
+}
