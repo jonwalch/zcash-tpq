@@ -292,6 +292,8 @@ def recipes(public_keys):
 def generate(root, host, signer, destination):
     producer, inventory = producer_identity(root, host, signer)
     state = source_state(root)
+    if any(line.startswith("?? ") for line in state["source_status"]):
+        raise FixtureError("untracked_source")
     if destination.exists():
         raise FixtureError("destination_exists")
     keys = {}

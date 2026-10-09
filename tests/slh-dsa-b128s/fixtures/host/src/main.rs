@@ -19,8 +19,8 @@ use zakura_chain::{
     transparent::{Input as ChainInput, OutPoint, Output as ChainOutput, Script},
 };
 use zakura_pq_slh_dsa_b_exp::{
-    codec::key_commitment, contract::CONTRACT, input_authorization, InputSigningContext, Policy,
-    Record as NativeRecord, Rejection, TransactionContext,
+    codec::key_commitment, contract::CONTRACT, input_authorization, Authorization,
+    InputSigningContext, Policy, Record as NativeRecord, Rejection, TransactionContext,
 };
 use zakura_pq_test_support::{install, Spend, TransactionRecipe};
 use zakura_pq_tx_context::NetworkDomain;
@@ -603,15 +603,16 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
     let mut authorizations = Vec::new();
     let mut first_error = None;
     for i in 0..artifact.inputs.len() {
-        match input_authorization(&tx, &previous, i) {
-            Ok(authorization) => authorizations.push(Some(authorization)),
-            Err(error) => {
-                if first_error.is_none() {
-                    first_error = Some(("authorization", error, Some(i)));
-                }
-                authorizations.push(None);
+        if let Err(error) = input_authorization(&tx, &previous, i) {
+            if first_error.is_none() {
+                first_error = Some(("authorization", error, Some(i)));
             }
         }
+        let ChainInput::PrevOut { unlock_script, .. } = &tx.inputs()[i] else {
+            unreachable!("wire correspondence already rejected coinbase inputs")
+        };
+        // Binding failures do not make canonically decoded wire fields unavailable.
+        authorizations.push(Authorization::decode(unlock_script.as_raw_bytes()).ok());
     }
     // Every decodable authorization must match metadata, including when another
     // input is invalid. Metadata cannot hide an unrelated correspondence error.
@@ -924,5 +925,63 @@ mod tests {
             .unwrap()
             .remove("input_index");
         assert!(serde_json::from_value::<Outcome>(rejected).is_err());
+    }
+    #[test]
+    fn binding_rejection_does_not_hide_decodable_metadata_mismatch() {
+        let Request::Prepare { recipe, .. } = serde_json::from_value(request()).unwrap() else {
+            unreachable!()
+        };
+        let mut prepared = prepare(&recipe).unwrap();
+        let entry = Record {
+            signer_index: 0,
+            public_key_hex: "11".repeat(32),
+            signature_hex: "00".repeat(7856),
+        };
+        let authorization = Authorization {
+            policy: prepared.policies[0].clone(),
+            records: vec![record(&entry).unwrap()],
+        };
+        install(&mut prepared.tx, 0, Script::new(&authorization.encode()));
+        Arc::make_mut(&mut prepared.previous)[0].lock_script = Script::new(&[0x51]);
+        let mut inputs = input_fields(&recipe, &prepared).unwrap();
+        inputs[0].records = vec![entry];
+        let bytes = prepared.tx.zcash_serialize_to_vec().unwrap();
+        let producer: Producer = serde_json::from_value(json!({"zakura_revision":"9b175e9d3d46a6aa4cfb5552517c3d828852ecbc","algorithm_revision":"b392fe82d2d9770142477a576a758a233888bc0a","blake3_version":"1.8.5","host_source_inventory_sha256":"00".repeat(32),"host_lock_sha256":"00".repeat(32),"host_binary_sha256":"00".repeat(32),"signer_source_inventory_sha256":"00".repeat(32),"signer_lock_sha256":"00".repeat(32),"signer_binary_sha256":"00".repeat(32)})).unwrap();
+        let mut artifact = Artifact {
+            schema_version: 1,
+            contract: CONTRACT.into(),
+            public_fixture: true,
+            case_id: recipe.case_id,
+            context_provenance: "synthetic-public-fixture".into(),
+            producer,
+            network: recipe.network,
+            transaction_version: 5,
+            consensus_branch_id: NU7,
+            transaction_hex: hex::encode(&bytes),
+            transaction_sha256: strict::hash(&bytes),
+            inputs,
+            outputs: output_fields(&prepared.tx),
+            expected: outcome(
+                Some(("authorization", Rejection::OutputTemplate, Some(0))),
+                None,
+            ),
+            artifact_sha256: String::new(),
+        };
+        artifact.artifact_sha256 = strict::artifact_hash(&encode(&artifact)).unwrap();
+        assert_eq!(check(&artifact).unwrap(), artifact.expected);
+        for mutate_descriptor in [true, false] {
+            let mut altered = artifact.clone();
+            if mutate_descriptor {
+                altered.inputs[0].descriptor_hex = "00".into();
+            } else {
+                altered.inputs[0].records[0].signature_hex = "01".repeat(7856);
+            }
+            altered.artifact_sha256 = strict::artifact_hash(&encode(&altered)).unwrap();
+            let failure = check(&altered).unwrap_err();
+            assert_eq!(
+                (failure.stage, failure.reason),
+                ("correspondence", "authorization_fields")
+            );
+        }
     }
 }
