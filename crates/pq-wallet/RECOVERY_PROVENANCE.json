@@ -67,12 +67,12 @@
     },
     {
       "target": "src/recovery.rs",
-      "target_sha256": "29112dfeea79aece19bbeb5b13947bcee0579098120c80843b157c7f8000083c",
+      "target_sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339",
       "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
     },
     {
       "target": "src/recovery/tests.rs",
-      "target_sha256": "ae21548e3f1d92da6926d18516cd87c6a560a89edb0b8e11bb94db4429257c1d",
+      "target_sha256": "d8ab13f759bbed882a61eca41e0cae9cea86e6ee06fb009c48d1cf44450f6017",
       "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
     }
   ],

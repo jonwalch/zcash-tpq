@@ -204,7 +204,7 @@
     },
     {
       "target": "src/payment/tests/snapshot.rs",
-      "target_sha256": "faa4437179dc7822162a3797f9a82de9f48dd4a7afa8e2646e70926a62f06aa6",
+      "target_sha256": "b894872f9caf268e7310696f1a4df7514740bec095fa80cfe540365cfe620017",
       "classification": "new recovery boundary or conformance test",
       "adaptation": "New bounded coherent snapshot validation of existing readers, index references, alias/history/reservation cross-links, immutable predecessor chain and orphan quotas; no storage or cryptographic container change."
     },

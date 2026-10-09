@@ -269,6 +269,11 @@ fn directory_publication_is_atomic_private_and_never_clobbers_racing_destination
     let directory = tempfile::tempdir().unwrap();
     let destination = directory.path().join("published");
     let stage = staging(&destination).unwrap();
+    assert_eq!(
+        fs::metadata(stage.path()).unwrap().permissions().mode() & 0o777,
+        0o700,
+        "staging is private before the first recovery file is written"
+    );
     write_private(&stage.path().join("complete"), b"complete").unwrap();
     assert!(publish(stage, &destination, &mut |point| {
         if point == RecoveryStage::Publish {
