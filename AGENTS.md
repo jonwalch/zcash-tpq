@@ -7,6 +7,13 @@ resolution, existing classical/shielded behavior, source pins and attribution.
 Reuse existing code and tests with the smallest necessary adaptations. Record
 the reason and regression coverage for new behavior or rewritten modules.
 
+Focus implementation and review fixes on failures and regressions introduced by
+this SLH extension. Check suspected inherited issues against pinned upstream
+Zakura. Do not undertake general upstream cleanup or make unrelated existing bugs
+completion gates; record them separately. Make a minimal upstream change only
+when this integration exposes a failure or it directly blocks the requested SLH
+implementation.
+
 Keep experimental support off by default and Regtest-only. Node dependencies
 must not include key generation, signing, alternate PQ backends, fixture tools
 or a dependency on an external research checkout. Never add research notes,
