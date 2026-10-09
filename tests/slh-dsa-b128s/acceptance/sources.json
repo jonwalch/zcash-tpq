@@ -9,8 +9,8 @@
   "reused_product": [
     {
       "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
-      "role": "Existing canonical/strict parser, transport, public fixture seed/randomizer, host/sign calls and producer source inventories; imported unchanged.",
-      "sha256": "cde18e133bf47a317e383fc363243b4710dc11cc07898171f02ac7a366828621"
+      "role": "Existing canonical/strict parser, transport, public fixture seeds, host/sign calls and default producer inventories remain unchanged. Only the inventory helper adds an explicit allowlist for pinned inherited links used by broad build receipts.",
+      "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b"
     },
     {
       "path": "tests/slh-dsa-b128s/wallet/formats/reference.py",
@@ -219,10 +219,10 @@
   ],
   "targets": [
     {
-      "adaptation": "Retain bounded loopback RPC, exact source/build provenance and public diagnostics; reuse product canonical/parser/inventory functions and current SLH identity. Exact canonical wallet files omit trailing whitespace.",
+      "adaptation": "Retain bounded loopback RPC, exact source/build provenance and public diagnostics; reuse product canonical/parser/inventory functions and current SLH identity. Exact canonical wallet files omit trailing whitespace. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/common.py",
-      "sha256": "1c271737ad67d72a79d93163bdbed53f54522454082656fe0f1eca691e1e6517",
+      "sha256": "2b10326f2936240dc6864ebe1ec92eb3a60f060514f6c9d4845b6013686bcf6d",
       "sources": [
         "rpc_node",
         "build",
@@ -576,6 +576,20 @@
         "authorization_mutation",
         "classical_sign"
       ]
+    },
+    {
+      "adaptation": "Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "classification": "narrow source inventory compatibility and focused regression",
+      "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+      "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b",
+      "sources": []
+    },
+    {
+      "adaptation": "Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "classification": "narrow source inventory compatibility and focused regression",
+      "path": "tests/slh-dsa-b128s/fixtures/test_generate_transactions.py",
+      "sha256": "650d83c57589222c1f6649835d671eb13deca11a08632de2d139bab67f2997b6",
+      "sources": []
     }
   ],
   "upstream_zakura": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",

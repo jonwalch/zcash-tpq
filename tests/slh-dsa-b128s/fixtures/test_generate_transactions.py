@@ -111,6 +111,73 @@ class PublicCorpusTests(unittest.TestCase):
                 with self.assertRaisesRegex(gen.FixtureError, "source_file"):
                     gen.source_inventory(root, ["link.rs"])
 
+    def test_inventory_explicit_link_binds_literal_text_and_regular_target(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "proto").mkdir()
+            (root / "source.proto").write_bytes(b"first")
+            (root / "proto/link.proto").symlink_to("../source.proto")
+            listed = types.SimpleNamespace(stdout=b"proto/link.proto\0source.proto\0")
+            links = {"proto/link.proto": "../source.proto"}
+            with mock.patch.object(gen.subprocess, "run", return_value=listed):
+                rows = gen.source_inventory(root, ["proto", "source.proto"], allowed_symlinks=links)
+                self.assertEqual(rows, [
+                    {"path": "proto/link.proto", "sha256": gen.digest(b"../source.proto"), "symlink_target": "source.proto"},
+                    {"path": "source.proto", "sha256": gen.digest(b"first")},
+                ])
+                (root / "source.proto").write_bytes(b"second")
+                changed = gen.source_inventory(root, ["proto", "source.proto"], allowed_symlinks=links)
+                self.assertEqual(rows[0], changed[0])
+                self.assertNotEqual(rows[1], changed[1])
+                with self.assertRaisesRegex(gen.FixtureError, "source_file"):
+                    gen.source_inventory(root, ["proto", "source.proto"])
+
+    def test_inventory_link_opt_in_rejects_escapes_mutations_and_unbound_targets(self):
+        for case in ("changed-link", "escape", "untracked", "excluded", "chained-file", "chained-directory", "hidden-chain", "missing-directory", "missing-link"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "source.proto").write_bytes(b"source")
+                text = "source.proto"
+                expected = text
+                names = ["link.proto", "source.proto"]
+                if case == "changed-link":
+                    text = "./source.proto"
+                elif case == "escape":
+                    text = expected = "../outside.proto"
+                elif case == "untracked":
+                    names.remove("source.proto")
+                elif case == "excluded":
+                    (root / "target").mkdir()
+                    (root / "target/source.proto").write_bytes(b"source")
+                    text = expected = "target/source.proto"
+                    names.append(text)
+                elif case == "chained-file":
+                    (root / "source.proto").unlink()
+                    (root / "real.proto").write_bytes(b"source")
+                    (root / "source.proto").symlink_to("real.proto")
+                    names.append("real.proto")
+                elif case == "chained-directory":
+                    (root / "real").mkdir()
+                    (root / "real/source.proto").write_bytes(b"source")
+                    (root / "alias").symlink_to("real", target_is_directory=True)
+                    text = expected = "alias/source.proto"
+                    names.append(text)
+                elif case == "hidden-chain":
+                    (root / "real/child").mkdir(parents=True)
+                    (root / "real/source.proto").write_bytes(b"different")
+                    (root / "alias").symlink_to("real/child", target_is_directory=True)
+                    text = expected = "alias/../source.proto"
+                elif case == "missing-directory":
+                    text = expected = "missing/../source.proto"
+                if case == "missing-link":
+                    (root / "link.proto").write_bytes(b"source")
+                else:
+                    (root / "link.proto").symlink_to(text)
+                listed = types.SimpleNamespace(stdout=("\0".join(names) + "\0").encode())
+                with mock.patch.object(gen.subprocess, "run", return_value=listed):
+                    with self.assertRaisesRegex(gen.FixtureError, "source_file"):
+                        gen.source_inventory(root, ["."], allowed_symlinks={"link.proto": expected})
+
 
 class Stream:
     def __init__(self, fd):

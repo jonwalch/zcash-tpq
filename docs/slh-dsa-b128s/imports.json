@@ -2175,8 +2175,8 @@
         "tests/slh-dsa-b128s/acceptance/NOTICE",
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "1c271737ad67d72a79d93163bdbed53f54522454082656fe0f1eca691e1e6517"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "sha256": "2b10326f2936240dc6864ebe1ec92eb3a60f060514f6c9d4845b6013686bcf6d"
     },
     {
       "disposition": "new",
@@ -2258,7 +2258,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "ab23e9335978c9dfa33343c2d73a219486b6c20099f6cef8987a9e3297dc8aae"
+      "sha256": "e5481fe851d6ed40923c47f91edf155ae228f1b311ff9a92f0bbe7e8a1dfb0c4"
     },
     {
       "disposition": "new",
@@ -2747,8 +2747,8 @@
         "tests/slh-dsa-b128s/fixtures/data/README.md",
         "docs/slh-dsa-b128s/transaction-fixtures.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "cde18e133bf47a317e383fc363243b4710dc11cc07898171f02ac7a366828621"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b"
     },
     {
       "disposition": "attribution",
@@ -2846,8 +2846,8 @@
         "tests/slh-dsa-b128s/fixtures/data/README.md",
         "docs/slh-dsa-b128s/transaction-fixtures.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "bc0a767c39fdb259c3f99ad77fdaef237d9e3a20d35df8c346cbbb695dad7496"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "sha256": "650d83c57589222c1f6649835d671eb13deca11a08632de2d139bab67f2997b6"
     },
     {
       "disposition": "attribution",

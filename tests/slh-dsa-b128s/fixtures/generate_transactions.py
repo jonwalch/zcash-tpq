@@ -202,17 +202,37 @@ def signer_call(binary, op, **fields):
     return response
 
 
-def source_inventory(root, paths):
+def source_inventory(root, paths, *, allowed_symlinks=None):
     try:
         listed = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "--", *paths],
                                 check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout
     except (OSError, subprocess.CalledProcessError):
         raise FixtureError("source_inventory") from None
     names = sorted(set(p.decode("ascii") for p in listed.split(b"\0") if p))
+    names = [name for name in names if not any(part in {"target", "__pycache__", ".git"}
+             for part in Path(name).parts) and Path(name).name != "Cargo.lock"]
+    allowed_symlinks = allowed_symlinks or {}
+    if not set(allowed_symlinks).issubset(names):
+        raise FixtureError("source_file")
     inventory = []
     for name in names:
         path = root / name
-        if any(part in {"target", "__pycache__", ".git"} for part in Path(name).parts) or path.name == "Cargo.lock":
+        if name in allowed_symlinks:
+            # Only an explicitly pinned inherited link may opt in. Bind its
+            # literal text separately from its regular target's inventory row.
+            if not path.is_symlink() or any((root / parent).is_symlink() for parent in Path(name).parents):
+                raise FixtureError("source_file")
+            link = os.readlink(path)
+            raw_target = Path(name).parent / link
+            target = Path(os.path.normpath(str(raw_target)))
+            if (link != allowed_symlinks[name] or target.is_absolute() or ".." in target.parts
+                    or target.as_posix() not in names
+                    or any((root / parent).is_symlink() for parent in [*reversed(raw_target.parents), raw_target])
+                    or any((root / parent).is_symlink() for parent in [target, *target.parents])
+                    or not (root / target).is_file() or not path.is_file()
+                    or path.resolve() != (root / target).resolve()):
+                raise FixtureError("source_file")
+            inventory.append(dict(path=name, sha256=digest(link.encode("utf-8")), symlink_target=target.as_posix()))
             continue
         if any((root / parent).is_symlink() for parent in [Path(name), *Path(name).parents]) or not path.is_file():
             raise FixtureError("source_file")
