@@ -2,6 +2,7 @@
 members = [
         "crates/pq-tx-context",
         "crates/pq-test-support",
+        "crates/pq-slh-dsa-b-verify",
         "crates/zakurad",
         "crates/zakura-chain",
         "crates/zakura-header-chain",
