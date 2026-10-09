@@ -49,7 +49,7 @@
       "source_path": "crates/pq-wallet/src/rpc.rs",
       "source_sha256": "92757a9e1b391053fa456bcf3eebc6ed972b52f2b531f1de761208fc7ace75ff",
       "target_path": "crates/pq-wallet/src/rpc.rs",
-      "target_sha256": "f9813142b98844a07f7cc99f71983d509b03e2bffd5885ce8df061e378b6eb0f",
+      "target_sha256": "5db2d83decae5e378f9dce9cb201a894083a34c9b1942a23096460ee0d9040cf",
       "classification": "adapted",
       "adaptations": "Public API docs and rustfmt only; existing bounded loopback framing, authenticated block/UTXO and submission logic retained."
     },
@@ -79,6 +79,15 @@
         "crates/pq-cli/src/main.rs"
       ],
       "adaptations": "Thin command adapters to existing J snapshot/restore APIs, explicit trust and allocator-retirement assertion; no new backup encryption or journal format."
+    },
+    {
+      "source_path": "crates/pq-wallet/src/watch/tests.rs",
+      "source_sha256": "17c4eaf4abdbdf7e52467691058368dabfa112fbcd8d25b69e18980f4165fccc",
+      "source_symbol": "local_rpc_scans_raw_blocks_using_actual_pinned_rpc_shapes",
+      "target_path": "crates/pq-wallet/src/rpc/tests/discovery.rs",
+      "target_sha256": "51c6388121f45037e32db7202adbb2c5e76fb451a66e1fd01586512cdb40af03",
+      "classification": "adapted test move",
+      "adaptations": "Restore J-deferred discovery mock under RPC module; reuse source HTTP/mock chain control flow and imported watch helpers; substitute existing public SLH inventory corpus for another secret root/key generation."
     }
   ],
   "new_dependencies": "Only optional already-pinned serde/sha2/native/terminal crates. No registry package/version changes. Default CLI normal/build graph is empty.",
