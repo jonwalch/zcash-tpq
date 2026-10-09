@@ -1,0 +1,1255 @@
+{
+  "contract": "slh-dsa-b-128s-exp-v1",
+  "functional_acceptance_complete": false,
+  "human_execution": "pending",
+  "references": {
+    "accounting": {
+      "anchor": "slh_accounting_requires_complete_active_context_and_explicit_count",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s/tests.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "34e0ae6355c2a0725c8917e61d36fde8f5cc9bd217600d75db3faa6e9e63dc6c"
+    },
+    "atomic": {
+      "anchor": "slh_dsa_b128s_reservations_are_atomic_across_both_allowances",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/pq.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+    },
+    "binding": {
+      "anchor": "v5_v6_message_layout_and_effect_context_binding",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/context.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "312b5f28a05eeb077b9fc31e7172d94eb00fdd75fd4438434d51a41c72675e9f"
+    },
+    "block-worker": {
+      "anchor": "slh_trusted_block_dispatch_uses_real_worker_and_preserves_fresh_attempts",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "budgets": {
+      "anchor": "slh_dsa_b128s_functional_profile_exact_boundaries",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/pq.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+    },
+    "build-guard": {
+      "anchor": "def check(",
+      "kind": "bounded_tool_source",
+      "path": "tests/slh-dsa-b128s/dependencies/check.py",
+      "scope": "Dependency/feature isolation source guard; does not replace default/enabled daemon builds.",
+      "sha256": "e87ecffc18eff735088ca41f4f4b1243ea003e0c1287ea1ba94aadb9e23ba842"
+    },
+    "cancel": {
+      "anchor": "slh_cancelled_inflight_worker_keeps_reservation_and_discards_result",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "codec-caps": {
+      "anchor": "caps_are_checked_before_records_and_sixteenth_record_before_its_body",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "concurrent": {
+      "anchor": "slh_dsa_b128s_concurrent_reservations_never_overspend",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/pq.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+    },
+    "config": {
+      "anchor": "experimental_slh_dsa_b128s_config_roundtrips_without_changing_defaults",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/config/tests/vectors.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "2de8605e48d653ec787dfd628fb8e40502fcafd44a4f2dafcb3f94ab94b455de"
+    },
+    "config-invalid": {
+      "anchor": "experimental_slh_dsa_b128s_config_rejects_invalid_boundaries",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/config/tests/vectors.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "2de8605e48d653ec787dfd628fb8e40502fcafd44a4f2dafcb3f94ab94b455de"
+    },
+    "config-required": {
+      "anchor": "experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/config/tests/vectors.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "2de8605e48d653ec787dfd628fb8e40502fcafd44a4f2dafcb3f94ab94b455de"
+    },
+    "consensus-receipt": {
+      "anchor": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
+      "kind": "historical_receipt",
+      "path": "docs/slh-dsa-b128s/receipts/consensus-library-2026-10-09.json",
+      "scope": "Historical consensus library checkpoint 27af4949d7 only. Recorded default 4/observer 16 SLH selections, not later added tests; runtime support was false then. No current daemon or RPC evidence.",
+      "sha256": "e8ea04aab63a4e98ac852a46b1b5e1790d712de4405f090c72931e82b9e6e3bb"
+    },
+    "context": {
+      "anchor": "contexts_reject_mismatch_and_preserve_shared_output_allocation",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/context.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "312b5f28a05eeb077b9fc31e7172d94eb00fdd75fd4438434d51a41c72675e9f"
+    },
+    "domains": {
+      "anchor": "commitment_known_answers_and_exact_template_are_domain_separated",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "framing": {
+      "anchor": "message_context_and_single_pure_wrapper_are_bound",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+    },
+    "funding-auth": {
+      "anchor": "slh_relay_funding_uses_candidate_height_and_requires_classical_authorization",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/policy.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "095edc3ecc308496c5039ffe541cc10d6813da21f9c3a41743fbc3867e82e956"
+    },
+    "g1-receipt": {
+      "anchor": "schema_version",
+      "kind": "historical_receipt",
+      "path": "tests/slh-dsa-b128s/reference/receipts/g1-initial.json",
+      "scope": "Historical independent primitive checkpoint only; inspect source/binary/config hashes inside; not current node acceptance.",
+      "sha256": "bb8299364a1f6fcb6615a3303150e817044cc8797f0323b5d242869bdc6903a5"
+    },
+    "g2-receipt": {
+      "anchor": "schema_version",
+      "kind": "historical_receipt",
+      "path": "tests/slh-dsa-b128s/transactions/receipts/g2-initial.json",
+      "scope": "Historical fixed 18 transparent public artifacts/146 signatures plus 60 controls; original producer, not current host identity; no shielded/node acceptance.",
+      "sha256": "d76806e3b2d353832616abfeb7ff385c83adbc39c7dfd2b1afd469ef1dbee290"
+    },
+    "gates": {
+      "anchor": "experimental_slh_dsa_b128s_gate_is_regtest_only_and_strictly_after_nu7",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "a6c04001533ef713fafd05397c5cd346b29458eb9fd4d82236fbb98f78bbcfdc"
+    },
+    "human-16-17": {
+      "anchor": "transaction_excess",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-64-65": {
+      "anchor": "def block_controls(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-build": {
+      "anchor": "def build(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/build.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "501ac8851ccb28bdf335193dcff5e7cbec36f8c0f270559a4a31202ebdbea638"
+    },
+    "human-classical": {
+      "anchor": "def classical_compatibility(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-funding": {
+      "anchor": "classical_funding_submission",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-mixed": {
+      "anchor": "def mixed_controls(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-namespace": {
+      "anchor": "def namespace_controls(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-nu7-rollback": {
+      "anchor": "rollback_below_nu7",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-reorg": {
+      "anchor": "reorg_payment_tip",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-replay": {
+      "anchor": "if args.finalized_history:",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-slh-reactivation": {
+      "anchor": "reactivated_slh",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-slh-switch": {
+      "anchor": "def slh_compatibility(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-startup": {
+      "anchor": "def startup_refusal(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    "human-template": {
+      "anchor": "template_exact_slh_block_budget",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+    },
+    "human-wallet-max": {
+      "anchor": "def execute(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/wallet_live.py",
+      "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
+      "sha256": "9c2eb9265bb604dd0b0d2cbcbfc010b3c37d81daa4db99633122ef473a7f8543"
+    },
+    "independent-artifacts": {
+      "anchor": "def run(",
+      "kind": "bounded_tool_source",
+      "path": "tests/slh-dsa-b128s/evidence/artifacts.py",
+      "scope": "Offline independent-only arbitrary case wrapper. Ordered previous outputs remain caller-supplied; producer unverified; no production or node acceptance claim.",
+      "sha256": "ee723877682a7bd065b612bbff870b4982947e1f2c7811933414b013776ffd5e"
+    },
+    "index14": {
+      "anchor": "index_fourteen_is_canonical_and_fifteen_is_rejected",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "late-failure": {
+      "anchor": "slh_accounting_waits_for_other_checks_and_never_refunds_cancelled_work",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "max-wire": {
+      "anchor": "maximum_input_uses_compact_size_five_and_signature_pushdata_two",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "mixed-worker": {
+      "anchor": "slh_dispatch_rejects_mixed_inputs_before_any_budget_or_authorization_work",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "namespace": {
+      "anchor": "experimental_slh_dsa_b128s_state_and_backups_are_isolated_by_rules",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-state/src/config.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "e73ab97342bdbed236d2cfffe9082e1072aef609eff3241b8a8854679bbbea03"
+    },
+    "observer": {
+      "anchor": "slh_real_primitive_entry_and_structural_zero_entry_controls",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "oracle-binding": {
+      "anchor": "test_digest_binds_order_context_and_outputs_but_excludes_scriptsig",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "32ce5d9669c67c1e554caa9195c4d216813d02f6fb3898c9d1b75a77c608fdb3"
+    },
+    "oracle-mutants": {
+      "anchor": "test_typed_mutations_precede_crypto_where_required",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "32ce5d9669c67c1e554caa9195c4d216813d02f6fb3898c9d1b75a77c608fdb3"
+    },
+    "ordering": {
+      "anchor": "descriptors_and_signer_order_are_rejected_without_normalizing",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "payload": {
+      "anchor": "slh_accounting_binds_full_authorization_and_exact_payload_allocations",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s/tests.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "34e0ae6355c2a0725c8917e61d36fde8f5cc9bd217600d75db3faa6e9e63dc6c"
+    },
+    "policy": {
+      "anchor": "slh_funding_policy_uses_exact_template_gate_and_existing_dust_rate",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/policy.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "095edc3ecc308496c5039ffe541cc10d6813da21f9c3a41743fbc3867e82e956"
+    },
+    "policy-not-consensus": {
+      "anchor": "slh_funding_policy_errors_are_not_consensus_invalid_or_peer_penalties",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/policy.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "095edc3ecc308496c5039ffe541cc10d6813da21f9c3a41743fbc3867e82e956"
+    },
+    "prepared": {
+      "anchor": "experimental_slh_dsa_b128s_active_candidates_never_reuse_prepared_work",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/block/prepared.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "7d340a5c9a63e13ce02b365b4f496d09aeea00fff474cd47365ffe1bdcd62ca8"
+    },
+    "primitive-bounds": {
+      "anchor": "exact_lengths_and_public_bounds",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+    },
+    "publish": {
+      "anchor": "slh_mempool_publishes_bound_counts_only_after_complete_success_including_zero_funding",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "pure": {
+      "anchor": "independent_pure_known_answers",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+    },
+    "pushes": {
+      "anchor": "every_field_rejects_nonminimal_pushes_and_wrong_fixed_lengths",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "recognition": {
+      "anchor": "slh_exact_recognition_ignores_created_outputs_and_native_looking_witnesses",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "regions": {
+      "anchor": "every_signature_node_and_both_key_halves_are_bound",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+    },
+    "relay-order": {
+      "anchor": "slh_relay_structural_precheck_precedes_worker_n1_ordering",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "shapes": {
+      "anchor": "all_120_policy_shapes_round_trip_and_match_record_boundaries",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    "shielded-action-fields": {
+      "anchor": "every_orchard_and_ironwood_effecting_field_is_committed",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/fields.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "36af3ab62100f628e4c1949c0442377cf3dc419bdcd3877f4c856bb2a88e1169"
+    },
+    "shielded-actions": {
+      "anchor": "orchard_and_ironwood_actions_and_authorization_are_distinguished",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "04386c3564a032cd0f3ba9b130689d1b66f6cda10fadd0d2fb0698442822fe16"
+    },
+    "shielded-collections": {
+      "anchor": "orchard_and_ironwood_collection_counts_order_and_pool_identity_are_committed",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/fields.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "36af3ab62100f628e4c1949c0442377cf3dc419bdcd3877f4c856bb2a88e1169"
+    },
+    "shielded-context": {
+      "anchor": "shielded_shapes_bind_all_previous_outputs_and_the_transparent_input",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "04386c3564a032cd0f3ba9b130689d1b66f6cda10fadd0d2fb0698442822fe16"
+    },
+    "shielded-destinations": {
+      "anchor": "pq_spends_can_have_only_shielded_destinations",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/fields.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "36af3ab62100f628e4c1949c0442377cf3dc419bdcd3877f4c856bb2a88e1169"
+    },
+    "shielded-fields": {
+      "anchor": "every_sapling_effecting_field_and_ciphertext_region_is_committed",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/fields.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "36af3ab62100f628e4c1949c0442377cf3dc419bdcd3877f4c856bb2a88e1169"
+    },
+    "shielded-pools": {
+      "anchor": "all_supported_shielded_pool_combinations_match_reference_digests",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "04386c3564a032cd0f3ba9b130689d1b66f6cda10fadd0d2fb0698442822fe16"
+    },
+    "shielded-reference": {
+      "anchor": "TxIdDigester",
+      "kind": "reference_source",
+      "path": "tests/slh-dsa-b128s/shielded/reference.rs",
+      "scope": "Separate pinned parser/digest; shares low-level hash/curve/librustzcash-family dependencies. Synthetic bundles; no SLH signature or proof/node acceptance.",
+      "sha256": "ea23b6f99b94ad579af275ea5ae9e6b13781808c568a7daf52387c2527fea8b3"
+    },
+    "shielded-sapling": {
+      "anchor": "sapling_effects_and_authorizing_fields_have_version_specific_commitments",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/shielded/controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "04386c3564a032cd0f3ba9b130689d1b66f6cda10fadd0d2fb0698442822fe16"
+    },
+    "signed-bind": {
+      "anchor": "signed_authorizations_bind_effects_network_and_supplied_outputs",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+    },
+    "signed-canonical": {
+      "anchor": "canonicality_failures_on_real_signatures_precede_reservation",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+    },
+    "signed-max": {
+      "anchor": "signed_high_index_and_maximum_size_controls",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+    },
+    "signed-quorum": {
+      "anchor": "valid_partials_reject_wrong_count_index_key_and_signature",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+    },
+    "storage": {
+      "anchor": "slh_funding_storage_requires_matching_success_metadata_and_finite_tip",
+      "kind": "bounded_test_source",
+      "path": "crates/zakurad/src/components/mempool/storage/tests/slh_dsa_b128s.rs",
+      "scope": "Daemon test source present; compiling/executing daemon targets is human-only and not asserted.",
+      "sha256": "bc45bc06aac916a125ab0900a234171b56a7a16759b4651e61820c6df6f0cccf"
+    },
+    "structure-first": {
+      "anchor": "all_structural_checks_precede_exactly_one_reservation",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-exp/tests/context.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "312b5f28a05eeb077b9fc31e7172d94eb00fdd75fd4438434d51a41c72675e9f"
+    },
+    "template": {
+      "anchor": "slh_templates_enforce_16_per_transaction_and_64_per_block",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "template-all-parents": {
+      "anchor": "slh_child_waits_for_every_parent",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "template-atomic": {
+      "anchor": "slh_rejection_and_other_limits_leave_every_allowance_unchanged",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "template-child": {
+      "anchor": "slh_budget_applies_to_descendants_and_requires_selected_parents",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "template-payload": {
+      "anchor": "slh_templates_require_current_rules_and_exact_verification_payloads",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "template-shielded": {
+      "anchor": "slh_accounting_preserves_shielded_limits_and_atomic_rejection",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "template-small": {
+      "anchor": "slh_templates_enforce_configured_limit_and_keep_zero_cost_candidates",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    "tip-reset": {
+      "anchor": "experimental_slh_dsa_b128s_resets_at_its_own_next_block_activation",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "44fc5e52fdad495cd5b66e4cb2fd1f17f7a7c49f586f8282d55fc499a10f8b9d"
+    },
+    "worker": {
+      "anchor": "slh_worker_real_signatures_and_exact_transaction_block_boundaries",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "worker-order": {
+      "anchor": "slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_failure",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "c346f717bcb883ec92c5eee0fa63b7db24ec5a177a888e72c67cd972af577fba"
+    },
+    "wrong-profiles": {
+      "anchor": "source_valid_sha2_and_shake_signatures_reject_at_crypto",
+      "kind": "bounded_test_source",
+      "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+      "scope": "Source present; execution is not asserted by this matrix.",
+      "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+    }
+  },
+  "rows": [
+    {
+      "id": "primitive",
+      "subcontrols": [
+        {
+          "evidence": [
+            "pure",
+            "framing",
+            "g1-receipt",
+            "g2-receipt"
+          ],
+          "id": "answers",
+          "remaining_preparation": null,
+          "requirement": "Independent full known answers, exact external Pure framing and original offline-domain rejection."
+        },
+        {
+          "evidence": [
+            "framing",
+            "primitive-bounds",
+            "g1-receipt"
+          ],
+          "id": "contexts",
+          "remaining_preparation": null,
+          "requirement": "Empty,255-byte and overlong contexts; changed message; reject double framing."
+        },
+        {
+          "evidence": [
+            "regions",
+            "g1-receipt"
+          ],
+          "id": "regions",
+          "remaining_preparation": null,
+          "requirement": "Both public-key halves and every signature node/region are bound."
+        },
+        {
+          "evidence": [
+            "primitive-bounds"
+          ],
+          "id": "sizes",
+          "remaining_preparation": null,
+          "requirement": "Truncated/extended signatures and bounded interface inputs fail before backend entry."
+        },
+        {
+          "evidence": [
+            "wrong-profiles",
+            "g1-receipt"
+          ],
+          "id": "profiles",
+          "remaining_preparation": null,
+          "requirement": "Equal-length SHAKE/SHA2 signatures valid at source fail this BLAKE3 profile."
+        }
+      ],
+      "title": "Primitive and domains"
+    },
+    {
+      "id": "codec",
+      "subcontrols": [
+        {
+          "evidence": [
+            "shapes",
+            "index14",
+            "signed-max"
+          ],
+          "id": "shapes",
+          "remaining_preparation": null,
+          "requirement": "All 120 threshold shapes, signer indices 0..14,1-of15 index14 and15-of15."
+        },
+        {
+          "evidence": [
+            "codec-caps",
+            "index14"
+          ],
+          "id": "caps",
+          "remaining_preparation": null,
+          "requirement": "Participant/record 16, index 15 and out-of-range counts reject; guard 131072/131073."
+        },
+        {
+          "evidence": [
+            "max-wire",
+            "signed-max"
+          ],
+          "id": "maximum",
+          "remaining_preparation": null,
+          "requirement": "Canonical maximum 118882 authorization; CompactSize 3-to5 transition."
+        },
+        {
+          "evidence": [
+            "pushes",
+            "ordering",
+            "signed-canonical"
+          ],
+          "id": "canonical",
+          "remaining_preparation": null,
+          "requirement": "Nonminimal/extra pushes, duplicate/nonascending records and descriptors reject without normalization."
+        },
+        {
+          "evidence": [
+            "domains",
+            "signed-bind",
+            "oracle-mutants"
+          ],
+          "id": "binding",
+          "remaining_preparation": null,
+          "requirement": "Wrong suite and non-signing member change bind the whole descriptor."
+        },
+        {
+          "evidence": [
+            "structure-first",
+            "signed-canonical",
+            "observer",
+            "relay-order"
+          ],
+          "id": "precrypto",
+          "remaining_preparation": "Library observer is test-only; daemon primitive-entry receipt is not implemented.",
+          "requirement": "Structural failures precede reservation and primitive entry."
+        }
+      ],
+      "title": "Codec and policy"
+    },
+    {
+      "id": "transaction",
+      "subcontrols": [
+        {
+          "evidence": [
+            "binding",
+            "context",
+            "oracle-mutants",
+            "g2-receipt"
+          ],
+          "id": "versions",
+          "remaining_preparation": null,
+          "requirement": "Both v5/v6 at NU7; wrong network/branch/input index/mode reject."
+        },
+        {
+          "evidence": [
+            "oracle-binding",
+            "g2-receipt",
+            "independent-artifacts"
+          ],
+          "id": "independent",
+          "remaining_preparation": null,
+          "requirement": "Independent complete wire bytes, digest and message; moves/reorders inputs and outputs bind."
+        },
+        {
+          "evidence": [
+            "signed-bind",
+            "block-worker",
+            "human-funding"
+          ],
+          "id": "prevouts",
+          "remaining_preparation": "Offline oracle previous outputs are caller-supplied; only a successful human driver authenticates node UTXOs/tips.",
+          "requirement": "Exact ordered supplied spent scripts/amounts bind; node resolves actual parents."
+        },
+        {
+          "evidence": [
+            "shielded-pools",
+            "shielded-context",
+            "shielded-sapling",
+            "shielded-actions",
+            "shielded-fields",
+            "shielded-action-fields",
+            "shielded-collections",
+            "shielded-destinations",
+            "shielded-reference"
+          ],
+          "id": "shielded-effects",
+          "remaining_preparation": "Existing 12 offline tests cover 114 shielded mutations and 36 context comparisons. Valid-proof, genuinely signed shielded-shape node cases still need a narrow fixture adapter and human proof generation/execution.",
+          "requirement": "Shielded effecting fields/collections and authorizing-data exclusions use separate Rust reference."
+        },
+        {
+          "evidence": [
+            "mixed-worker",
+            "human-mixed"
+          ],
+          "id": "family",
+          "remaining_preparation": null,
+          "requirement": "Legacy/SLH combinations are rejection controls, never positive mixed authorization."
+        }
+      ],
+      "title": "Transaction binding"
+    },
+    {
+      "id": "dispatch",
+      "subcontrols": [
+        {
+          "evidence": [
+            "recognition",
+            "mixed-worker"
+          ],
+          "id": "resolved-only",
+          "remaining_preparation": null,
+          "requirement": "Exact 0x53 template selected only from resolved spent outputs."
+        },
+        {
+          "evidence": [
+            "recognition",
+            "policy"
+          ],
+          "id": "decoys",
+          "remaining_preparation": null,
+          "requirement": "0x51/0x52,near-matches,scriptSig/redeem copies and pushed opcode do not select SLH."
+        },
+        {
+          "evidence": [
+            "block-worker",
+            "human-slh-switch"
+          ],
+          "id": "fallback",
+          "remaining_preparation": "Prepared default-vs-enabled direct-block case; no executed daemon fallback/entry receipt.",
+          "requirement": "Active exact SLH never falls back; inactive template keeps historical script semantics."
+        }
+      ],
+      "title": "Native dispatch"
+    },
+    {
+      "id": "migration",
+      "subcontrols": [
+        {
+          "evidence": [
+            "funding-auth",
+            "publish",
+            "human-funding",
+            "human-classical"
+          ],
+          "id": "funding",
+          "remaining_preparation": null,
+          "requirement": "V5/v6 classical single-signature/multisig funding creates SLH output without PQ authorization."
+        },
+        {
+          "evidence": [
+            "publish",
+            "observer"
+          ],
+          "id": "zero",
+          "remaining_preparation": "Live acceptance receipts do not measure daemon primitive entries; add narrow observation plumbing only if exact daemon count evidence is required.",
+          "requirement": "Classical-only funding publishes explicit zero PQ checks and no native primitive entries."
+        },
+        {
+          "evidence": [
+            "funding-auth"
+          ],
+          "id": "classical-quorum",
+          "remaining_preparation": "Library control removes an ordinary unlock script; genuine missing 2-of-3 classical quorum artifacts and live variants are not prepared.",
+          "requirement": "Missing classical quorum rejects instead of bypassing legacy authorization."
+        },
+        {
+          "evidence": [
+            "signed-quorum",
+            "worker",
+            "human-16-17",
+            "human-wallet-max"
+          ],
+          "id": "later-pq",
+          "remaining_preparation": null,
+          "requirement": "Later all-SLH spending needs valid threshold; missing/invalid PQ authorization rejects."
+        },
+        {
+          "evidence": [
+            "mixed-worker",
+            "signed-quorum"
+          ],
+          "id": "substitution",
+          "remaining_preparation": "Dedicated same-input classical/PQ quorum-substitution public artifacts and live cases are not prepared; current tests cover mixed input families and SLH quorum errors separately.",
+          "requirement": "ECDSA/PQ signature-family substitution and shared classical/PQ multisig must reject."
+        }
+      ],
+      "title": "Migration and policy separation"
+    },
+    {
+      "id": "mixed",
+      "subcontrols": [
+        {
+          "evidence": [
+            "mixed-worker",
+            "human-mixed"
+          ],
+          "id": "orders",
+          "remaining_preparation": null,
+          "requirement": "Actual classical/SLH parents, individually valid authorizations, both input orders."
+        },
+        {
+          "evidence": [
+            "mixed-worker",
+            "recognition"
+          ],
+          "id": "unsupported",
+          "remaining_preparation": "The library mixes SLH with bare OP_1 and separately tests 0x51/0x52 recognition; full unsupported-template mixed artifacts (both orders) and human variants are not prepared.",
+          "requirement": "Unsupported0x51/0x52 mixing uses public bytes without importing another verifier."
+        },
+        {
+          "evidence": [
+            "mixed-worker",
+            "publish",
+            "observer"
+          ],
+          "id": "zero",
+          "remaining_preparation": "No daemon primitive-entry observations; library test observer is not a live count.",
+          "requirement": "Mixed classification must precede workers/reservations and publish no success metadata."
+        },
+        {
+          "evidence": [
+            "human-mixed"
+          ],
+          "id": "entrypoints",
+          "remaining_preparation": null,
+          "requirement": "Mixed transactions reject at mempool and direct proposal/submission."
+        },
+        {
+          "evidence": [
+            "tip-reset",
+            "human-mixed",
+            "human-slh-reactivation"
+          ],
+          "id": "lifecycle",
+          "remaining_preparation": "Prepared mixed cases run active stable tips; repeat genuine mixed candidates across rollback/reactivation/reorg is not yet a single executable case.",
+          "requirement": "Mixed rejection remains across activation/reorg."
+        },
+        {
+          "evidence": [
+            "worker",
+            "human-funding",
+            "human-16-17"
+          ],
+          "id": "legal",
+          "remaining_preparation": "Separate classical and SLH transactions in one same-block acceptance case is not explicitly prepared; template zero-cost eligibility is tested below.",
+          "requirement": "Multiple SLH policies remain legal; classical funding and separate classical/SLH transactions can coexist."
+        }
+      ],
+      "title": "No mixed transparent inputs"
+    },
+    {
+      "id": "accounting",
+      "subcontrols": [
+        {
+          "evidence": [
+            "worker",
+            "budgets",
+            "human-16-17"
+          ],
+          "id": "transaction",
+          "remaining_preparation": null,
+          "requirement": "15+1=16 succeeds; adding one reaches 17 and rejects."
+        },
+        {
+          "evidence": [
+            "worker",
+            "human-64-65"
+          ],
+          "id": "block",
+          "remaining_preparation": null,
+          "requirement": "Four 16-check transactions reach 64; another one reaches 65 and rejects."
+        },
+        {
+          "evidence": [
+            "template",
+            "human-template"
+          ],
+          "id": "template",
+          "remaining_preparation": null,
+          "requirement": "Templates skip aggregate excess but keep eligible remaining transactions."
+        },
+        {
+          "evidence": [
+            "budgets",
+            "template-small"
+          ],
+          "id": "profiles",
+          "remaining_preparation": null,
+          "requirement": "Custom small configured profiles and zero-cost selection after exhaustion."
+        },
+        {
+          "evidence": [
+            "atomic",
+            "concurrent"
+          ],
+          "id": "atomic",
+          "remaining_preparation": null,
+          "requirement": "Concurrent dual-budget reservations never partially debit/overspend."
+        },
+        {
+          "evidence": [
+            "worker-order",
+            "late-failure",
+            "cancel"
+          ],
+          "id": "no-refund",
+          "remaining_preparation": null,
+          "requirement": "Reserved work is not refunded after later failure/cancellation."
+        },
+        {
+          "evidence": [
+            "block-worker",
+            "payload"
+          ],
+          "id": "fresh",
+          "remaining_preparation": null,
+          "requirement": "Fresh attempts receive fresh budgets and no stale accounting."
+        }
+      ],
+      "title": "Accounting"
+    },
+    {
+      "id": "publication",
+      "subcontrols": [
+        {
+          "evidence": [
+            "publish",
+            "late-failure",
+            "accounting"
+          ],
+          "id": "complete-success",
+          "remaining_preparation": "The late-check failure is a generic failing future; an actual invalid shielded proof/signature alongside valid SLH needs dedicated adapter/human execution.",
+          "requirement": "Mixed or failed other checks cannot publish success; active zero-native transaction publishes bound zero."
+        },
+        {
+          "evidence": [
+            "payload",
+            "template-payload"
+          ],
+          "id": "identity",
+          "remaining_preparation": null,
+          "requirement": "Missing/replaced/stale payloads or UTXOs reject accounting reuse; same TXID changed authorization binds."
+        },
+        {
+          "evidence": [
+            "template-atomic",
+            "template-shielded"
+          ],
+          "id": "selection",
+          "remaining_preparation": "Shielded resource counts here are synthetic, not accepted proofs.",
+          "requirement": "Selection is atomic across PQ,legacy,size and shielded resource counters."
+        },
+        {
+          "evidence": [
+            "template-child",
+            "template-all-parents"
+          ],
+          "id": "parents",
+          "remaining_preparation": null,
+          "requirement": "A child needs every selected parent and remains subject to limits."
+        },
+        {
+          "evidence": [
+            "template-small"
+          ],
+          "id": "separate",
+          "remaining_preparation": "Explicit simultaneous classical/SLH same-block human fixture is not prepared.",
+          "requirement": "Separate classical/SLH transactions remain eligible; zero-cost after full allowance."
+        },
+        {
+          "evidence": [
+            "signed-max",
+            "worker",
+            "storage",
+            "human-16-17",
+            "human-wallet-max"
+          ],
+          "id": "maximum",
+          "remaining_preparation": "Daemon storage test is source-only here; full 15-of-15 pipeline requires the prepared human runs.",
+          "requirement": "Real 15-of-15 bytes survive serialization/preparation/validation/storage/selection."
+        }
+      ],
+      "title": "Publication and mining"
+    },
+    {
+      "id": "build",
+      "subcontrols": [
+        {
+          "evidence": [
+            "human-build",
+            "build-guard"
+          ],
+          "id": "feature-builds",
+          "remaining_preparation": "Dedicated daemon builds are human-only and unexecuted; selected historical library builds do not substitute.",
+          "requirement": "Default and enabled target builds with exact sources/features/binary identity."
+        },
+        {
+          "evidence": [
+            "config",
+            "config-required",
+            "config-invalid",
+            "human-namespace"
+          ],
+          "id": "config",
+          "remaining_preparation": null,
+          "requirement": "Absent/active/varied budgets, required fields and invalid boundaries."
+        },
+        {
+          "evidence": [
+            "build-guard"
+          ],
+          "id": "isolation",
+          "remaining_preparation": null,
+          "requirement": "No alternate backend runtime or optional dependency integration."
+        },
+        {
+          "evidence": [
+            "human-startup"
+          ],
+          "id": "startup",
+          "remaining_preparation": null,
+          "requirement": "Unsupported build refuses configured activation before opening state."
+        },
+        {
+          "evidence": [
+            "gates",
+            "config-required"
+          ],
+          "id": "public-networks",
+          "remaining_preparation": null,
+          "requirement": "Mainnet/Testnet cannot activate; SLH requires Regtest strictly after NU7."
+        }
+      ],
+      "title": "Build and gates"
+    },
+    {
+      "id": "lifecycle",
+      "subcontrols": [
+        {
+          "evidence": [
+            "tip-reset",
+            "accounting",
+            "storage"
+          ],
+          "id": "queues",
+          "remaining_preparation": "No deterministic live queue-barrier driver for each pending/completed/stored state. Existing tip reset and payload tests do not execute all daemon queue states.",
+          "requirement": "Pending/completed-unconsumed/stored mempool work resets across activation/branch/same-height fork."
+        },
+        {
+          "evidence": [
+            "tip-reset",
+            "human-nu7-rollback",
+            "human-slh-reactivation"
+          ],
+          "id": "rollback",
+          "remaining_preparation": null,
+          "requirement": "Rollback below both SLH and NU7, then reactivate."
+        },
+        {
+          "evidence": [
+            "human-reorg"
+          ],
+          "id": "reorg",
+          "remaining_preparation": null,
+          "requirement": "Reorg and remine preserve actual saved transaction bytes and UTXOs."
+        },
+        {
+          "evidence": [
+            "payload"
+          ],
+          "id": "same-txid",
+          "remaining_preparation": "Actual same TXID changed-signature mempool lifecycle driver remains unprepared.",
+          "requirement": "Changed signature with unchangedTXID cannot reuse verification identity."
+        },
+        {
+          "evidence": [
+            "prepared"
+          ],
+          "id": "prepared-cache",
+          "remaining_preparation": "Library prepared-cache test/source checks remain distinct from a daemon hit/miss receipt.",
+          "requirement": "Both active prepared-cache paths bypass old work."
+        }
+      ],
+      "title": "Lifecycle"
+    },
+    {
+      "id": "history",
+      "subcontrols": [
+        {
+          "evidence": [
+            "namespace",
+            "human-namespace"
+          ],
+          "id": "restart",
+          "remaining_preparation": null,
+          "requirement": "Clean restart and ordinary backup namespace/tip preservation."
+        },
+        {
+          "evidence": [
+            "human-replay"
+          ],
+          "id": "replay",
+          "remaining_preparation": "Prepared optional --finalized-history does not inspect finalized-database internals; execution is pending.",
+          "requirement": "Finalization-window crossing and fresh peerless actual-block replay; compare exact tip/UTXO then spend recovered output."
+        },
+        {
+          "evidence": [
+            "namespace",
+            "human-namespace"
+          ],
+          "id": "namespace",
+          "remaining_preparation": null,
+          "requirement": "Changing gate/transaction/block limits creates fresh namespace and leaves old cache unchanged."
+        },
+        {
+          "evidence": [
+            "namespace"
+          ],
+          "id": "contract",
+          "remaining_preparation": "Only frozen v1 exists: future contract-version namespace migration is not an executable alternate-version case.",
+          "requirement": "Contract identifier belongs to state/backup namespace."
+        },
+        {
+          "evidence": [
+            "human-namespace"
+          ],
+          "id": "durability",
+          "remaining_preparation": "Crash,kill,quota and power-loss durability injection are not prepared; no durability claim.",
+          "requirement": "Clean restart must not be reported as crash/fault durability."
+        }
+      ],
+      "title": "Persistent history"
+    },
+    {
+      "id": "compatibility",
+      "subcontrols": [
+        {
+          "evidence": [
+            "human-classical"
+          ],
+          "id": "classical",
+          "remaining_preparation": null,
+          "requirement": "Default and enabled binaries agree on classical blocks/UTXOs for v5/v6 single/multisig."
+        },
+        {
+          "evidence": [
+            "human-slh-switch"
+          ],
+          "id": "active-slh",
+          "remaining_preparation": null,
+          "requirement": "Only enabled binary accepts valid active SLH on identical legally funded parent."
+        },
+        {
+          "evidence": [
+            "policy-not-consensus",
+            "policy"
+          ],
+          "id": "policy",
+          "remaining_preparation": "Current live funding cases are standard; explicit nonstandard-but-consensus-valid funding driver is not prepared.",
+          "requirement": "Consensus-valid funding and nonstandard relay policy errors remain separate."
+        },
+        {
+          "evidence": [
+            "template-shielded",
+            "shielded-reference",
+            "human-classical"
+          ],
+          "id": "shielded",
+          "remaining_preparation": "No full real-proof classical/shielded default-vs-enabled compatibility driver; do not broaden this to unrelated upstream cleanup.",
+          "requirement": "Existing classical/shielded behavior remains intact."
+        },
+        {
+          "evidence": [
+            "recognition",
+            "build-guard"
+          ],
+          "id": "unsupported",
+          "remaining_preparation": "No alternate backend is imported; dedicated human unsupported-template matrix is not prepared.",
+          "requirement": "Other PQ templates remain unsupported."
+        }
+      ],
+      "title": "Compatibility"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "source-and-preparation-map-v1",
+  "source_checkpoint": "e88653096f989742ae8b36fed35acdb63f76f498"
+}
