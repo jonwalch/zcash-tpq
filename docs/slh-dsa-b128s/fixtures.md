@@ -38,7 +38,8 @@ from changes to algorithm source.
 ## Public transaction artifact limits
 
 The transaction artifact schema is version 1 and uses the same contract label.
-Freeze the concrete field layout before implementing its producer/consumer.
+The concrete layout and deterministic corpus are specified in
+[transaction fixtures](transaction-fixtures.md).
 Its required contents are backend/source/hash identity, complete transaction
 bytes, ordered input outpoints and trusted spent values/scripts, network/version/
 branch/input index, descriptors and signer indices, exact messages and empty
