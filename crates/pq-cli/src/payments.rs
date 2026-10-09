@@ -328,6 +328,29 @@ mod tests {
             Partial::from_json(corpus["partial_json"].as_str().unwrap().as_bytes()).unwrap();
         partial.input_index = 0;
         partial.proposal_id = proposal.id().unwrap();
+        let display = review_display(
+            &serde_json::json!({"proposal_id":proposal.id().unwrap(),"fee":1234}),
+            &proposal,
+        )
+        .unwrap();
+        assert_eq!(
+            display["proposal_id"],
+            hex::encode(proposal.id().unwrap().0)
+        );
+        assert_eq!(display["fee"], 1234);
+        assert_eq!(display["suite"]["byte"], 247);
+        assert_eq!(display["input_policies"][0]["threshold"], 15);
+        assert_eq!(
+            display["input_policies"][0]["origins"]
+                .as_array()
+                .unwrap()
+                .len(),
+            15
+        );
+        assert_eq!(
+            display["profile"],
+            serde_json::to_value(&proposal.profile).unwrap()
+        );
         let dir = tempfile::tempdir().unwrap();
         for i in 0..15 {
             partial.signer_index = i;

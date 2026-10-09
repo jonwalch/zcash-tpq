@@ -41,7 +41,7 @@
       "source_path": "crates/pq-cli/src/payments.rs",
       "source_sha256": "56aa08789b23103bbdc6bb627e98e5c34c536521f73e2ea71bf541e51ce01b89",
       "target_path": "crates/pq-cli/src/payments.rs",
-      "target_sha256": "77a83fd1ed5fb886e76048064b61bff419a79254120825a5e1364e12455a69a2",
+      "target_sha256": "628fac8fb5e4a6d2554b12323ce1d478dd33174367477aa92e8994b548d278c3",
       "classification": "adapted",
       "adaptations": "Retain command flows; SLH-only help; bounded per-input threshold partial collection up to 225 with duplicate and subquorum refusal before primitive work. Display checked public suite, profile and ordered input/change policy origins alongside existing approval fields, preserving all IDs and approval logic."
     },
