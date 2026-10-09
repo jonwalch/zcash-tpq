@@ -25,7 +25,9 @@ signing. Classical compatibility uses the mature classical output directly.
 Sapling and Ironwood each receive 50,000 zatoshis. **Orchard receives zero**:
 the inherited NU6.3 rule prohibits net additions to that pool. Its real zero-value
 output bundle has value balance zero, spends disabled and cross-address transfers
-disabled. Both v5 and v6 use the NU6.3 Orchard circuit/bundle version. These are
+disabled. It requires the pinned builder's two zero-value dummy action pairs,
+with each pair using the same recipient; no ordinary output is requested. Both
+v5 and v6 use the NU6.3 Orchard circuit/bundle version. These are
 valid-proof shape controls, not evidence of nonzero Orchard payments. This rule
 is unchanged from the pinned upstream baseline; the tool does not bypass it.
 
@@ -33,8 +35,9 @@ No case spends a shielded note. Sapling therefore needs no spend witness or anch
 Orchard/Ironwood disable spends and use the public empty-tree anchor permitted for
 that mode. All deposited value comes from the authenticated transparent coin.
 Nonzero Orchard spending requires genuinely created pre-NU6.3 notes and their
-actual witnesses; Sapling/Ironwood spend authorization, witness/anchor lifecycle,
-shielded recovery and reorg cases remain separate unprepared scope.
+actual witnesses. Genuine spends and anchor/reorg controls are prepared in the
+separate [spend driver](shielded-spend-controls.md); shielded-wallet recovery is
+outside these node fixtures.
 
 ## Build and run
 

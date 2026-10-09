@@ -507,7 +507,7 @@
       "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
       "classification": "narrow attributed shielded fixture and acceptance preparation",
       "path": "docs/slh-dsa-b128s/shielded-controls.md",
-      "sha256": "9ea3aae0e5283b4103acbe990a0451d1a1c581fde5c3e72dc3a11a2cb854f04d",
+      "sha256": "7cc04808ee768967f4cef22d8ff0e5e25859808c3c0e8f8dcb8526d77dc2b5b0",
       "sources": []
     },
     {
@@ -873,7 +873,7 @@
       "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
       "classification": "narrow attributed shielded fixture and acceptance preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md",
-      "sha256": "b0a21b9c46c173012fb64481d6ff5af64d12837284a7f52892c2c59e1a164a56",
+      "sha256": "f5a8952ff99dcb70591ea234b6e3b152588415d57e7f575e2e9aee6394b26915",
       "sources": []
     },
     {
@@ -929,7 +929,7 @@
       "adaptation": "Reuse real output-only action conversion/proving, temporary bindings/full-effect signing, valid proof-donor/wrong-digest variants and batch validation. Add Sapling builder API glue, bounded hashed local parameters, all pool subsets with zero Orchard value, exact parent/native finalization; no alternate backend/workload. Expose current helpers; extend canonical Sapling adapter with parser-based spend conversion; share unchanged final native/classical authorization sequence. Preserve output operation restrictions.",
       "classification": "narrow attributed shielded fixture and acceptance preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded.rs",
-      "sha256": "0b7ab2657708018830af6ac3a005f2eb4ebf4c263d3f9eb3ca1aa755d966ddbe",
+      "sha256": "817a779aec7f67c920d88ca47259d8c8e0a15fc1cf4e7ff1293ffe3defc19ec5",
       "sources": [
         "shielded_output_deposit",
         "shielded_output_fixture",

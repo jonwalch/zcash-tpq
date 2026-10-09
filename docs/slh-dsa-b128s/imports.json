@@ -1910,6 +1910,15 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-orchard-output-padding.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Correct the fixture adaptation to reuse pinned Orchard v3 paired zero-value dummy padding under disabled cross-address transfers; preserve flags, anchors, two actions and Ironwood behavior, with causal actual-builder regression coverage. No upstream rule change.",
+      "sha256": "e3b6af43cd0e6d9517203ac7bd570dd87d33f47e07403f0f1bc7c1e646f455ac"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/slh-primitive-observation.md",
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
@@ -2176,7 +2185,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
-      "sha256": "9ea3aae0e5283b4103acbe990a0451d1a1c581fde5c3e72dc3a11a2cb854f04d"
+      "sha256": "7cc04808ee768967f4cef22d8ff0e5e25859808c3c0e8f8dcb8526d77dc2b5b0"
     },
     {
       "disposition": "new",
@@ -2393,7 +2402,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "7042f140cd642f1191c2e1057be46e7f6bbb568525862eba9cd5c47efc819c6f"
+      "sha256": "5e3481bd88917dcccb0cb856b8928d3d41bf0936490075f865aa71d8b1052572"
     },
     {
       "disposition": "new",
@@ -2976,7 +2985,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
-      "sha256": "b0a21b9c46c173012fb64481d6ff5af64d12837284a7f52892c2c59e1a164a56"
+      "sha256": "f5a8952ff99dcb70591ea234b6e3b152588415d57e7f575e2e9aee6394b26915"
     },
     {
       "disposition": "attribution",
@@ -3043,7 +3052,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
-      "sha256": "0b7ab2657708018830af6ac3a005f2eb4ebf4c263d3f9eb3ca1aa755d966ddbe"
+      "sha256": "817a779aec7f67c920d88ca47259d8c8e0a15fc1cf4e7ff1293ffe3defc19ec5"
     },
     {
       "disposition": "adapted",
