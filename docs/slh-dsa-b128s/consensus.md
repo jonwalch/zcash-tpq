@@ -63,3 +63,7 @@ These checks do not constitute live node, relay/mining, reorg, wallet or recover
 acceptance. Heavy validation remains human-only under the repository's
 [agent rules](../../AGENTS.md). Source reuse is recorded in the
 [consensus attribution](../../crates/zakura-consensus/SLH_ATTRIBUTION.md).
+
+The [library validation receipt](receipts/consensus-library-2026-10-09.json)
+records checked source, lock, configuration and test-binary hashes, exact gates
+and remaining validation limits. Original fixture-producer identities are preserved.
