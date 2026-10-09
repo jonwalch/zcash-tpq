@@ -348,3 +348,30 @@ fn backup_publication_is_private_noclobber_and_preserves_previous_generation_on_
     fs::set_permissions(&old, fs::Permissions::from_mode(0o644)).unwrap();
     assert!(Wallet::load_backup(&old, password, &wallet.manifest.profile).is_err());
 }
+
+#[test]
+fn restored_allocator_entropy_and_revision_failures_preserve_the_inventory() {
+    // Preserve the source retirement failure controls against the SLH inventory.
+    let mut wallet = fixture_wallet();
+    let original = wallet.manifest().clone();
+    assert!(matches!(
+        wallet.retire_for_restore_with_rng(&mut TestRng::failing(0)),
+        Err(Error::Entropy)
+    ));
+    assert_eq!(wallet.manifest(), &original);
+    wallet
+        .retire_for_restore_with_rng(&mut TestRng::new())
+        .unwrap();
+    original.check_update(wallet.manifest()).unwrap();
+    assert_eq!(wallet.manifest().entries, original.entries);
+    assert_eq!(wallet.manifest().retired_receive_end, original.receive_end);
+    assert_eq!(wallet.manifest().retired_change_end, original.change_end);
+    wallet.manifest.revision = u32::MAX;
+    let mut rng = TestRng::new();
+    assert!(matches!(
+        wallet.retire_for_restore_with_rng(&mut rng),
+        Err(Error::Exhausted)
+    ));
+    assert_eq!(rng.calls, 0);
+    assert_eq!(wallet.manifest().revision, u32::MAX);
+}

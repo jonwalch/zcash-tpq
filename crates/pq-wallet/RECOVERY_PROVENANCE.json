@@ -55,7 +55,7 @@
     },
     {
       "target": "src/backup_tests.rs",
-      "target_sha256": "4e0cb46b5ddf6af1e04160e294c95b8a98417ff8d6abde3ac6612a680f24e558",
+      "target_sha256": "b9e5bed0165ebeb5360c6a47fd67d385ac228d9867a809a6f3fa94f3f1566ef6",
       "source": "crates/pq-wallet/src/tests.rs",
       "source_sha256": "889ca9cd9dd0d6dc281ed96e5f784327c15258f744ecddc73b19745160d23bd6",
       "adaptation": "Preserved focused encrypted-answer, schema/authentication, entropy and durable-publication tests from src/tests.rs, using independent SLH format corpus."
