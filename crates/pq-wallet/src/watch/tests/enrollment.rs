@@ -216,7 +216,7 @@ fn multisig_enrollment_binds_independent_approval_and_preserves_rejected_state()
     assert_eq!(approved.into_iter().collect::<BTreeSet<_>>().len(), 3);
     for candidate in &candidates {
         assert_eq!(candidate.profile, profile());
-        assert_eq!((candidate.suite, candidate.derivation_version), (1, 1));
+        assert_eq!((candidate.suite, candidate.derivation_version), (0xf7, 1));
     }
     for (saved, candidate) in wallets.iter().zip(&candidates) {
         for (role, expected) in [Role::Receive, Role::Change].into_iter().zip(&shared) {
