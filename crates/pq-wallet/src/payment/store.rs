@@ -21,16 +21,25 @@ use zakura_chain::{
     transparent::{Input, OutPoint, Output, Script},
 };
 
+/// Cached transaction observation, independent of retained signature authority.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PaymentState {
+    /// Approved effects and durable reservations, before local signing.
     Prepared,
+    /// At least one local partial is durably retained.
     PartiallySigned,
+    /// Exact assembled transaction bytes are durably retained.
     Signed,
+    /// Submission may have succeeded; reconcile or retry the same saved bytes.
     SubmissionUnknown,
+    /// The trusted node currently observes this transaction in its mempool.
     Pending,
+    /// Observed in the active chain at a recorded checkpoint.
     Confirmed,
+    /// Observed inputs spent by another transaction at a recorded checkpoint.
     Conflicted,
+    /// Observed past expiry; a rollback can reactivate its reservations.
     Expired,
 }
 
@@ -38,11 +47,16 @@ pub enum PaymentState {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PaymentRecord {
+    /// Locally retained independent payment approval.
     pub intent: Intent,
+    /// Exact saved local partials; at most one per input.
     #[serde(deserialize_with = "partials")]
     pub partials: Vec<Partial>,
+    /// Complete canonical proposal with retained effects.
     pub proposal: Proposal,
+    /// Exact saved authorization bytes for retry, never silently regenerated.
     pub signed_transaction_hex: Option<String>,
+    /// Cached payment observation; it does not revoke an authorization or reservation.
     pub state: PaymentState,
 }
 fn partials<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<Partial>, D::Error> {
@@ -735,7 +749,14 @@ impl WatchStore {
         intent: &Intent,
         approved_id: Hex<32>,
     ) -> Result<Vec<Partial>, Error> {
-        self.sign_payment_inner(wallet, source, proposal, intent, approved_id, &mut || Ok(()))
+        self.sign_payment_inner(
+            wallet,
+            source,
+            proposal,
+            intent,
+            approved_id,
+            &mut || Ok(()),
+        )
     }
     // Test-only durable-failure checkpoint. Supplied bytes are discarded and
     // never reach SLH signing, whose entropy remains exclusively operational OS
@@ -752,7 +773,8 @@ impl WatchStore {
     ) -> Result<Vec<Partial>, Error> {
         self.sign_payment_inner(wallet, source, proposal, intent, approved_id, &mut || {
             let mut discarded = zeroize::Zeroizing::new([0; 16]);
-            rng.try_fill_bytes(discarded.as_mut()).map_err(|_| Error::Entropy)
+            rng.try_fill_bytes(discarded.as_mut())
+                .map_err(|_| Error::Entropy)
         })
     }
 
@@ -835,6 +857,7 @@ impl WatchStore {
         )
     }
 
+    /// Verify a complete unique threshold set and durably save exact transaction bytes.
     pub fn assemble_payment(
         &mut self,
         wallet: &Wallet,
@@ -860,7 +883,13 @@ impl WatchStore {
             return Err(Error::ProposalMismatch);
         }
         let mut by_input = vec![Vec::new(); proposal.inputs.len()];
+        let mut slots = BTreeSet::new();
         for partial in partials {
+            if !slots.insert((partial.input_index, partial.signer_index)) {
+                return Err(Error::Authorization(
+                    zakura_pq_slh_dsa_b_exp::Rejection::SignerIndex,
+                ));
+            }
             if partial.proposal_id != checked.review.proposal_id {
                 return Err(Error::ProposalMismatch);
             }

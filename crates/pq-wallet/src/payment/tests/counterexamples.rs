@@ -123,11 +123,11 @@ pub(super) fn change_entry(wallets: &[&Wallet], index: u32) -> Entry {
         .iter()
         .map(|w| {
             (
-                w.key(KeyPath {
+                w.key_commitment(KeyPath {
                     role: Role::Change,
                     index,
                 })
-                .commitment(),
+                .unwrap(),
                 Origin {
                     account: 0,
                     index,
@@ -145,7 +145,7 @@ pub(super) fn change_entry(wallets: &[&Wallet], index: u32) -> Entry {
                 keys.iter().map(|(c, _)| *c).collect(),
             )
             .unwrap()
-            .encode(),
+            .descriptor(),
         ),
         role: Role::Change as u8,
     }

@@ -978,45 +978,36 @@ fn capabilities_preserve_public_fixture_proposals_partials_and_signed_bytes() {
     use zakura_chain::{
         serialization::ZcashSerialize, transaction::Transaction, transparent::Input,
     };
-    use zakura_pq::{Authorization, SignerAuthorization};
-    // Only public fixture fields are used: no recovery roots or signing calls.
-    let corpus: serde_json::Value =
-        serde_json::from_str(include_str!("../../../../tests/vectors/wallet-v1.json")).unwrap();
+    use zakura_pq_slh_dsa_b_exp::{Authorization, Record};
+    // Independent public format fixtures. Signatures here are structural bytes,
+    // not cryptographic claims: journal readers preserve authority verbatim.
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
+    ))
+    .unwrap();
     let manifest =
         Manifest::from_json(corpus["inventory_json"].as_str().unwrap().as_bytes()).unwrap();
-    for row in corpus["transactions"].as_array().unwrap() {
+    for row in corpus["proposals"].as_array().unwrap() {
         let proposal =
             Proposal::from_json(row["proposal_json"].as_str().unwrap().as_bytes()).unwrap();
-        let mut signatures = vec![];
-        let mut local = vec![];
-        for signer in row["signers"].as_array().unwrap() {
-            let key = corpus["derivations"]
-                .as_array()
+        let mut partial: Partial =
+            serde_json::from_str(corpus["partial_json"].as_str().unwrap()).unwrap();
+        partial.input_index = 0;
+        partial.signer_index = 0;
+        partial.proposal_id = proposal.id().unwrap();
+        let record = Record {
+            index: 0,
+            public_key: hex::decode(&partial.public_key_hex)
                 .unwrap()
-                .iter()
-                .find(|key| key["name"] == signer["key_name"])
-                .unwrap();
-            let partial = Partial {
-                format: "ZcashTransparentPQ/partial/v1".into(),
-                input_index: 0,
-                proposal_id: proposal.id().unwrap(),
-                public_key_hex: key["public_key_hex"].as_str().unwrap().into(),
-                signature_hex: signer["signature_hex"].as_str().unwrap().into(),
-                signer_index: signer["index"].as_u64().unwrap() as u8,
-            };
-            let mut public_key = [0; zakura_pq::PUBLIC_KEY_SIZE];
-            let mut signature = [0; zakura_pq::SIGNATURE_SIZE];
-            hex::decode_to_slice(&partial.public_key_hex, &mut public_key).unwrap();
-            hex::decode_to_slice(&partial.signature_hex, &mut signature).unwrap();
-            signatures.push(SignerAuthorization {
-                index: partial.signer_index,
-                public_key,
-                signature,
-            });
-            if signer["key_name"].as_str().unwrap().starts_with("alice_") {
-                local.push(partial);
-            }
-        }
+                .try_into()
+                .unwrap(),
+            signature: hex::decode(&partial.signature_hex)
+                .unwrap()
+                .into_boxed_slice()
+                .try_into()
+                .unwrap(),
+        };
+        let local = vec![partial];
         let mut signed = proposal.transaction().unwrap();
         let inputs = match &mut signed {
             Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. } => inputs,
@@ -1025,13 +1016,17 @@ fn capabilities_preserve_public_fixture_proposals_partials_and_signed_bytes() {
         let Input::PrevOut { unlock_script, .. } = &mut inputs[0] else {
             unreachable!()
         };
-        *unlock_script = Authorization::new(proposal.inputs[0].entry.policy().unwrap(), signatures)
-            .unwrap()
-            .encode();
+        *unlock_script = zakura_chain::transparent::Script::new(
+            &Authorization {
+                policy: proposal.inputs[0].entry.policy().unwrap(),
+                records: vec![record],
+            }
+            .encode(),
+        );
         let signed_hex = hex::encode(signed.zcash_serialize_to_vec().unwrap());
         let record = PaymentRecord {
             intent: Intent {
-                amount: 100_000,
+                amount: 20_000,
                 max_fee: 100_000,
                 receiver: proposal.outputs[0].receiver.clone(),
                 receiver_activation_height: None,
@@ -1106,4 +1101,40 @@ fn capabilities_preserve_public_fixture_proposals_partials_and_signed_bytes() {
             ));
         }
     }
+}
+
+#[test]
+fn complete_snapshot_traversal_checks_unvisited_descendant_pages() {
+    let (temp, mut watch) = fixture();
+    let mut journal = Journal::create(&mut watch, ID, Limits::default(), |_| Ok(())).unwrap();
+    let snapshot = populated(&mut journal, 257);
+    let mut reachable = std::collections::BTreeSet::new();
+    journal
+        .validate_snapshot_pages(&snapshot, &mut reachable)
+        .unwrap();
+    assert!(reachable.len() > 16);
+    let page = journal
+        .load_page(
+            snapshot.root.as_ref().unwrap(),
+            Kind::Aliases,
+            true,
+            None,
+            &mut budget(),
+        )
+        .unwrap();
+    let missing = page.children.last().unwrap().hash;
+    fs::remove_file(object_path(&temp, missing)).unwrap();
+    drop(journal);
+    let mut journal = Journal::open(&mut watch, ID, Limits::default()).unwrap();
+    assert!(journal
+        .get(
+            &snapshot,
+            &snapshot.root.as_ref().unwrap().min,
+            &mut budget()
+        )
+        .unwrap()
+        .is_some());
+    assert!(journal
+        .validate_snapshot_pages(&snapshot, &mut std::collections::BTreeSet::new())
+        .is_err());
 }

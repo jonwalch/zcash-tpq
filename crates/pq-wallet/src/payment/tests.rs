@@ -13,8 +13,8 @@ mod hostile;
 mod incoming;
 mod profile_limits;
 mod sequences;
-#[cfg(feature = "experimental-sqisign")]
-mod sqisign;
+mod slh_capacity;
+mod snapshot;
 
 use super::*;
 use crate::{
@@ -28,7 +28,7 @@ use zakura_chain::{
     transaction::Transaction,
     transparent::{Input, OutPoint},
 };
-use zakura_pq::Policy;
+use zakura_pq_slh_dsa_b_exp::Policy;
 
 fn wallets(n: usize, receive: u32, change: u32) -> Vec<Wallet> {
     wallets_with_rng(n, receive, change, &mut rand_core::OsRng)
@@ -49,7 +49,7 @@ fn wallets_with_rng(
                 .iter()
                 .map(|w| {
                     (
-                        w.key(KeyPath { role, index }).commitment(),
+                        w.key_commitment(KeyPath { role, index }).unwrap(),
                         Origin {
                             account: 0,
                             index,
@@ -67,7 +67,7 @@ fn wallets_with_rng(
                         keys.iter().map(|(c, _)| *c).collect(),
                     )
                     .unwrap()
-                    .encode(),
+                    .descriptor(),
                 ),
                 role: role as u8,
             });
@@ -230,9 +230,11 @@ impl PaymentSource for Source {
 
 #[test]
 fn published_proposals_and_partials_remain_canonical() {
-    let corpus: serde_json::Value =
-        serde_json::from_str(include_str!("../../../../tests/vectors/wallet-v1.json")).unwrap();
-    for row in corpus["transactions"].as_array().unwrap() {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
+    ))
+    .unwrap();
+    for row in corpus["proposals"].as_array().unwrap() {
         let bytes = row["proposal_json"].as_str().unwrap().as_bytes();
         let proposal = Proposal::from_json(bytes).unwrap();
         assert_eq!(proposal.to_json().unwrap(), bytes);
@@ -267,8 +269,8 @@ fn single_signer_versions_have_exact_fees_native_change_and_durable_submission()
         let intent = intent(version);
         let (proposal, review) = store.prepare_payment(wallet, &mut source, &intent).unwrap();
         assert_eq!(review.input_value, 2_000_000); // deterministic largest first
-        assert_eq!(review.fee, 10_400);
-        assert_eq!(review.change_value, 1_489_600);
+        assert_eq!(review.fee, 21_600);
+        assert_eq!(review.change_value, 1_478_400);
         assert_eq!(proposal.outputs[1].entry.as_ref().unwrap().role, 1);
         let partials = store
             .sign_payment(wallet, &mut source, &proposal, &intent, review.proposal_id)
@@ -303,7 +305,7 @@ fn single_signer_versions_have_exact_fees_native_change_and_durable_submission()
         );
         assert_eq!(
             store.sync(&mut source, 10).unwrap().confirmed_zatoshis,
-            Some(2_289_600)
+            Some(2_278_400)
         );
         let (_, second) = store.prepare_payment(wallet, &mut source, &intent).unwrap();
         assert_ne!(review.change_receiver, second.change_receiver);
@@ -332,7 +334,7 @@ fn separate_two_of_three_signers_reject_foreign_duplicate_and_invalid_partials()
         let (proposal, review) = stores[0]
             .prepare_payment(&wallets[0], &mut source, &intent)
             .unwrap();
-        assert_eq!(review.fee, 20_400);
+        assert_eq!(review.fee, 42_800);
         assert_eq!(review.checks, 2);
         let mut partials = Vec::new();
         for i in [0, 2] {
@@ -443,7 +445,7 @@ fn review_rechecks_intent_trusted_inputs_policy_and_current_ancestry() {
         Err(Error::ProposalMismatch)
     ));
     wrong = intent.clone();
-    wrong.max_fee = 10_399;
+    wrong.max_fee = 21_599;
     assert!(matches!(
         store.review_payment(wallet, &mut source, &proposal, &wrong),
         Err(Error::Fee)
@@ -492,7 +494,7 @@ fn review_rechecks_intent_trusted_inputs_policy_and_current_ancestry() {
 fn remainder_requires_explicit_choice_and_respects_dust_and_fee_ceiling() {
     let wallets = wallets(1, 1, 1);
     let wallet = &wallets[0];
-    for remainder in [0, DUST - 1, DUST, 10_399, 10_400] {
+    for remainder in [0, DUST - 1, DUST, 21_599, 21_600] {
         for choice in [Remainder::Reject, Remainder::Keep, Remainder::Fee] {
             let temp = tempfile::tempdir().unwrap();
             let mut store = create(
@@ -500,18 +502,18 @@ fn remainder_requires_explicit_choice_and_respects_dust_and_fee_ceiling() {
                 wallet.manifest(),
                 WatchMode::Allocator,
             );
-            let mut source = Source::funded(wallet, &[510_400 + remainder]);
+            let mut source = Source::funded(wallet, &[521_600 + remainder]);
             let mut intent = intent(6);
             intent.remainder = choice;
             let result = store.prepare_payment(wallet, &mut source, &intent);
             let allowed = remainder == 0
-                || remainder >= 10_400
+                || remainder >= 21_600
                 || choice == Remainder::Fee
                 || (remainder >= DUST && choice == Remainder::Keep);
             assert_eq!(result.is_ok(), allowed, "{remainder} {choice:?}");
             if let Ok((proposal, review)) = result {
-                let donated = remainder > 0 && remainder < 10_400 && choice == Remainder::Fee;
-                assert_eq!(review.fee, 10_400 + if donated { remainder } else { 0 });
+                let donated = remainder > 0 && remainder < 21_600 && choice == Remainder::Fee;
+                assert_eq!(review.fee, 21_600 + if donated { remainder } else { 0 });
                 assert_eq!(
                     proposal.outputs.len(),
                     if remainder == 0 || donated { 1 } else { 2 }
@@ -942,7 +944,16 @@ fn coordinator_cannot_redirect_recipient_or_downgrade_enrolled_change() {
             index: 1,
             wallet_id: wallet.manifest.wallet_id,
         }],
-        policy_hex: hex::encode(Policy::new(1, vec![key.commitment()]).unwrap().encode()),
+        policy_hex: hex::encode(
+            Policy::new(
+                1,
+                vec![zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                    key.public_key(),
+                )],
+            )
+            .unwrap()
+            .descriptor(),
+        ),
         role: 1,
     };
     let temp = tempfile::tempdir().unwrap();
@@ -1009,7 +1020,7 @@ fn donation_over_fee_ceiling_continues_selection() {
                 let (proposal, review) = result.unwrap();
                 if ceiling == 20_500 {
                     assert_eq!(proposal.inputs.len(), 2);
-                    assert_eq!(review.fee, 20_400);
+                    assert_eq!(review.fee, 42_800);
                     assert_eq!(review.change_value, 512_399);
                 } else {
                     assert_eq!(proposal.inputs.len(), 1);

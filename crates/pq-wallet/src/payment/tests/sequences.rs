@@ -584,12 +584,12 @@ fn restored_inventory_import_preserves_journal_and_requires_fresh_payment_approv
     ));
     assert_eq!(fs::read(path.join("state.json")).unwrap(), before);
     let mut exact = t.intent.clone();
-    exact.amount = VALUES[1] - 10_400;
+    exact.amount = VALUES[1] - 21_600;
     let (proposal, review) = store
         .prepare_payment(&restored, &mut t.source, &exact)
         .unwrap();
     assert_eq!(proposal.outputs.len(), 1);
-    assert_eq!((review.fee, review.change_value), (10_400, 0));
+    assert_eq!((review.fee, review.change_value), (21_600, 0));
     assert_eq!(
         proposal.points().unwrap(),
         [proposal::point(OutPoint {

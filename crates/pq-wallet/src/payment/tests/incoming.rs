@@ -134,7 +134,7 @@ fn hostile_receipts_leave_normal_and_recovered_funds_spendable() {
                     .unwrap()
                     .outpoint;
                 assert_eq!(stores[0].coins().last().unwrap().outpoint, usable);
-                let fee = if n == 1 { 10_400 } else { 20_400 };
+                let fee = if n == 1 { 21_600 } else { 42_800 };
                 let mut approved = intent(version);
                 approved.max_fee = fee;
                 if restored {
@@ -232,7 +232,7 @@ fn hostile_receipts_alone_cannot_fund_or_erase_a_reserved_payment() {
             let balance = status.confirmed_zatoshis.unwrap();
             assert!(balance > approved.amount);
             // Every receipt costs more to spend than its own value.
-            assert!(store.coins().iter().all(|coin| coin.value < 10_400));
+            assert!(store.coins().iter().all(|coin| coin.value < 21_600));
             let before = snapshot(&store, &path);
             let error = store
                 .prepare_payment(wallet, &mut source, &approved)
@@ -248,7 +248,7 @@ fn hostile_receipts_alone_cannot_fund_or_erase_a_reserved_payment() {
 
             // The same wallet succeeds once a usable receipt arrives at a retired
             // receiver; no new inventory or change range is required for an exact payment.
-            let fee = if n == 1 { 10_400 } else { 20_400 };
+            let fee = if n == 1 { 21_600 } else { 42_800 };
             let funding = transaction(
                 version,
                 2,

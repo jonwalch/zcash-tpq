@@ -90,6 +90,7 @@ impl WatchStore {
         }
         let mut capabilities = BTreeMap::new();
         let mut active_seen = BTreeSet::new();
+        let mut archived_without_history = BTreeSet::new();
         for kind in [
             Kind::Lineages,
             Kind::Aliases,
@@ -115,6 +116,7 @@ impl WatchStore {
                         &mut capabilities,
                         &mut reachable,
                         &mut active_seen,
+                        &mut archived_without_history,
                     )?;
                     count = count.checked_add(1).ok_or(Error::JournalLimit)?;
                 }
@@ -127,7 +129,7 @@ impl WatchStore {
                 return Err(Error::JournalCorrupt);
             }
         }
-        if active_seen.len() != root.active.len() {
+        if active_seen.len() != root.active.len() || !archived_without_history.is_empty() {
             return Err(Error::JournalCorrupt);
         }
         metadata.generation = Some(root.descriptor.generation);
@@ -233,6 +235,7 @@ fn validate_entry(
     checked: &mut BTreeMap<(Hex<32>, u64), Hex<32>>,
     reachable: &mut BTreeSet<Hex<32>>,
     active_seen: &mut BTreeSet<Hex<32>>,
+    archived_without_history: &mut BTreeSet<(Hex<32>, Hex<32>)>,
 ) -> Result<(), Error> {
     let descriptor = &root.descriptor;
     match (&entry.value, kind) {
@@ -269,7 +272,9 @@ fn validate_entry(
                     let mut budget = ReadBudget::new(4096)?;
                     validate_active(journal, None, descriptor, active, &cap, &mut budget)?;
                 }
-                (Location::Archived, None) => (),
+                (Location::Archived, None) => {
+                    archived_without_history.insert((cap.lineage_id, *hash));
+                }
                 _ => return Err(Error::JournalCorrupt),
             }
             // Archived authority retains every original reservation too.
@@ -332,6 +337,7 @@ fn validate_entry(
             Kind::History,
         ) => {
             let cap = capability_chain(journal, *hash, manifest, change_next, checked, reachable)?;
+            archived_without_history.remove(&(*lineage_id, *hash));
             if entry.key != Key::sequence(sequence)
                 || cap.lineage_id != *lineage_id
                 || cap.proposal.id()? != *proposal_id

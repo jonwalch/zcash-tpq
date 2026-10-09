@@ -47,9 +47,11 @@ fn proposal_encoding_failure_does_not_hash() {
 
 #[test]
 fn proposal_id_preserves_complete_canonical_bytes() {
-    let corpus: serde_json::Value =
-        serde_json::from_str(include_str!("../../../../../tests/vectors/wallet-v1.json")).unwrap();
-    for row in corpus["transactions"].as_array().unwrap() {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
+    ))
+    .unwrap();
+    for row in corpus["proposals"].as_array().unwrap() {
         let original = row["proposal_json"].as_str().unwrap();
         // Load the independent fixture directly so an omitted Serialize field
         // reaches the exact assertion rather than failing a decoder control.

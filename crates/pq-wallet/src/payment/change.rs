@@ -6,7 +6,9 @@ use sha2::{Digest, Sha256};
 /// Local inventory effects, recomputed by each signer; never proposal metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct ChangeReview {
+    /// Explicit local approval required when unused change entries would be skipped.
     pub advancement: Option<ChangeAdvancement>,
+    /// This wallet participant’s enrolled change derivation index.
     pub local_index: u32,
 }
 
@@ -14,9 +16,13 @@ pub struct ChangeReview {
 /// [skipped_start, skipped_end), including entries for other ownership groups.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct ChangeAdvancement {
+    /// Digest binding the exact local change advancement.
     pub approval_id: Hex<32>,
+    /// Earliest available enrolled change index for this ownership group.
     pub first_eligible_index: u32,
+    /// Exclusive end of the local retirement range.
     pub skipped_end: u64,
+    /// Inclusive start of the local retirement range.
     pub skipped_start: u64,
 }
 

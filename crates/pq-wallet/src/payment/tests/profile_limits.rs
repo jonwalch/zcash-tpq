@@ -218,7 +218,7 @@ fn each_signer_rejects_an_incompatible_policy_before_reserving_or_signing() {
             let policy = proposal.inputs[0].entry.policy().unwrap();
             let context = InputSigningContext::new(
                 &tx,
-                zakura_pq::NetworkDomain::Regtest,
+                zakura_pq_tx_context::NetworkDomain::Regtest,
                 zakura_chain::parameters::NetworkUpgrade::Nu7,
                 Arc::new(vec![previous]),
                 0,
@@ -226,13 +226,12 @@ fn each_signer_rejects_an_incompatible_policy_before_reserving_or_signing() {
             )
             .unwrap();
             is_policy_limit(
-                owner.sign_partial_with_rng(
+                owner.sign_partial(
                     &context,
                     KeyPath {
                         role: Role::Receive,
                         index: 0,
                     },
-                    &mut FailingRng,
                 ),
                 1,
                 1,

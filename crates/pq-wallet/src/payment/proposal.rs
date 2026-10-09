@@ -15,31 +15,45 @@ use zakura_chain::{
     transparent::{Input, Output},
 };
 
+/// Public proposal input hints, checked against authenticated UTXOs before signing.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct InputRecord {
+    /// Enrolled policy and public origin mapping; a proposal does not authenticate ownership.
     pub entry: Entry,
+    /// Canonical previous-output bytes, checked against the authenticated node before approval.
     pub spent_output_hex: String,
 }
 
+/// Canonical recipient or enrolled change output metadata.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OutputRecord {
+    /// Enrolled policy and public origin mapping; a proposal does not authenticate ownership.
     pub entry: Option<Entry>,
+    /// Exact output role: payment or change.
     pub kind: String,
+    /// Canonical experimental Regtest receiver.
     pub receiver: String,
 }
 
+/// Bounded transparent payment proposal; no field grants trust or signing approval.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Proposal {
+    /// Exact versioned transport identity.
     pub format: String,
+    /// Ordered input records, bounded to fifteen.
     #[serde(deserialize_with = "inputs")]
     pub inputs: Vec<InputRecord>,
+    /// One recipient and optional change record.
     #[serde(deserialize_with = "outputs")]
     pub outputs: Vec<OutputRecord>,
+    /// Independently approved Regtest activation and check limits.
     pub profile: Profile,
+    /// Trusted checkpoint to which this observation or approval is bound.
     pub tip: Checkpoint,
+    /// Canonical unsigned transparent transaction bytes as lowercase hex.
     pub transaction_hex: String,
 }
 fn inputs<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<InputRecord>, D::Error> {
@@ -50,15 +64,18 @@ fn outputs<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<OutputRecord>, D::Erro
 }
 
 impl Proposal {
+    /// Decode strictly bounded canonical JSON without normalization.
     pub fn from_json(bytes: &[u8]) -> Result<Self, Error> {
         let proposal: Self = canonical::decode(bytes, MAX_PROPOSAL)?;
         proposal.transaction()?;
         Ok(proposal)
     }
+    /// Validate and encode exact canonical JSON within the transport cap.
     pub fn to_json(&self) -> Result<Vec<u8>, Error> {
         self.transaction()?;
         Ok(canonical::encode(self, MAX_PROPOSAL)?.to_vec())
     }
+    /// Hash the complete validated canonical proposal with its fixed domain.
     pub fn id(&self) -> Result<Hex<32>, Error> {
         super::approval::proposal_id(
             || self.to_json(),
@@ -179,19 +196,27 @@ impl Proposal {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Partial {
+    /// Exact versioned transport identity.
     pub format: String,
+    /// Zero-based input position, bounded to fourteen.
     pub input_index: u32,
+    /// Digest of the complete canonical proposal.
     pub proposal_id: Hex<32>,
+    /// Exactly 32 public-key bytes in lowercase hex.
     pub public_key_hex: String,
+    /// Exactly 7,856 signature bytes in lowercase hex.
     pub signature_hex: String,
+    /// Zero-based position in the sorted enrolled policy, bounded to fourteen.
     pub signer_index: u8,
 }
 impl Partial {
+    /// Decode strictly bounded canonical JSON without normalization.
     pub fn from_json(bytes: &[u8]) -> Result<Self, Error> {
         let partial: Self = canonical::decode(bytes, MAX_PARTIAL)?;
         partial.authorization()?;
         Ok(partial)
     }
+    /// Validate and encode exact canonical JSON within the transport cap.
     pub fn to_json(&self) -> Result<Vec<u8>, Error> {
         self.authorization()?;
         Ok(canonical::encode(self, MAX_PARTIAL)?.to_vec())

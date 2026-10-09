@@ -17,8 +17,11 @@ use zakura_chain::{
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Remainder {
+    /// Require a new explicit choice before retaining uneconomic change.
     Reject,
+    /// Keep change even when below its future spending fee.
     Keep,
+    /// Explicitly add the remainder to the approved fee.
     Fee,
 }
 
@@ -27,23 +30,30 @@ pub enum Remainder {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Intent {
+    /// Recipient amount in zatoshis.
     pub amount: u64,
+    /// Independently approved maximum fee in zatoshis.
     pub max_fee: u64,
+    /// Canonical experimental Regtest receiver.
     pub receiver: String,
     /// Operator-approved activation of the receiver's suite on this chain.
     /// Required when paying a different suite; never inferred from a proposal.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub receiver_activation_height: Option<u32>,
+    /// Explicit handling of economically small change.
     pub remainder: Remainder,
+    /// Transaction version, restricted to v5 or v6.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version: Option<u8>,
 }
 impl Intent {
+    /// Decode strictly bounded canonical JSON without normalization.
     pub fn from_json(bytes: &[u8]) -> Result<Self, Error> {
         let intent: Self = canonical::decode(bytes, 4096)?;
         intent.validate()?;
         Ok(intent)
     }
+    /// Validate and encode exact canonical JSON within the transport cap.
     pub fn to_json(&self) -> Result<Vec<u8>, Error> {
         self.validate()?;
         Ok(canonical::encode(self, 4096)?.to_vec())
@@ -78,23 +88,40 @@ impl Intent {
     }
 }
 
+/// Recomputed transaction effects presented for independent signer approval.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Review {
+    /// Canonical change receiver when change is present.
     pub change_receiver: Option<String>,
+    /// Change amount in zatoshis.
     pub change_value: u64,
+    /// Number of SLH primitive signature checks required by all inputs.
     pub checks: u32,
+    /// Current actual-size ZIP-317 fee in zatoshis.
     pub conventional_fee: u64,
+    /// Last block height at which this transaction is valid.
     pub expiry_height: u32,
+    /// Approved fee in zatoshis, preserving any explicitly retained historical approval.
     pub fee: u64,
+    /// Exact serialized byte length including complete authorizations.
     pub final_bytes: usize,
+    /// Estimated actual-size fee to spend the change output.
     pub future_change_spend_fee: u64,
+    /// Total authenticated input value in zatoshis.
     pub input_value: u64,
+    /// Locally recomputed change allocation and any advancement requiring approval.
     pub local_change: Option<ChangeReview>,
+    /// Absolute transaction lock height; this wallet requires zero.
     pub lock_height: u32,
+    /// Independently approved recipient receiver.
     pub payment_receiver: String,
+    /// Independently approved recipient value in zatoshis.
     pub payment_value: u64,
+    /// Digest of the complete canonical proposal.
     pub proposal_id: Hex<32>,
+    /// Trusted checkpoint to which this observation or approval is bound.
     pub tip: crate::Checkpoint,
+    /// Transaction version, restricted to v5 or v6.
     pub version: u32,
 }
 

@@ -125,7 +125,7 @@ fn coin_capacity_preserves_authorization_and_recovers_only_after_history_fits() 
         .prepare_payment(wallet, &mut source, &approved)
         .unwrap();
     assert_eq!(proposal.points().unwrap(), [usable]);
-    assert_eq!(summary.fee, 10_400);
+    assert_eq!(summary.fee, 21_600);
     let signed = authorize(
         &owners,
         std::slice::from_mut(&mut store),
@@ -322,7 +322,7 @@ fn last_change_receipts_exhaust_normal_and_restored_wallets_after_reorg() {
                 store = reopen(store, &path, &before);
                 assert_eq!(wallet.plaintext().unwrap(), inventory);
 
-                let fee = if n == 1 { 10_400 } else { 20_400 };
+                let fee = if n == 1 { 21_600 } else { 42_800 };
                 let mut exact = approved;
                 exact.amount = USABLE - fee; // Independently approve an exact payment.
                 let (proposal, summary) =
@@ -479,7 +479,7 @@ fn exhausted_change_requires_successfully_backed_up_extension() {
             .prepare_payment(&owners[0], &mut source, &approved)
             .unwrap();
         assert_eq!(proposal.outputs[1].entry.as_ref(), Some(&entry));
-        assert_eq!(summary.fee, if n == 1 { 10_400 } else { 20_400 });
+        assert_eq!(summary.fee, if n == 1 { 21_600 } else { 42_800 });
         assert_eq!(summary.change_value, USABLE - approved.amount - summary.fee);
         let before = state(&store, &path);
         store = reopen(store, &path, &before);

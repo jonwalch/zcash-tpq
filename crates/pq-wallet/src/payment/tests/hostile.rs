@@ -276,7 +276,7 @@ fn hostile_transaction_shapes_fail_before_signer_state_changes() {
                     _ => {
                         // Attributed historical bytes; only parse the bundle, never generate proofs.
                         let mut bytes = hex::decode(
-                            include_str!("../../../../../tests/vectors/sapling-source.hex")
+                            include_str!("../../../../../tests/slh-dsa-b128s/shielded/data/sapling-source.hex")
                                 .split_whitespace()
                                 .collect::<String>(),
                         )
@@ -455,7 +455,16 @@ fn hostile_mixed_enrolled_input_groups_are_rejected() {
             wallet_id: wallet.manifest.wallet_id,
         }],
         role: 0,
-        policy_hex: hex::encode(Policy::new(1, vec![key.commitment()]).unwrap().encode()),
+        policy_hex: hex::encode(
+            Policy::new(
+                1,
+                vec![zakura_pq_slh_dsa_b_exp::codec::key_commitment(
+                    key.public_key(),
+                )],
+            )
+            .unwrap()
+            .descriptor(),
+        ),
     };
     wallet.manifest.validate().unwrap();
     let (mut source, proposal, intent) = fixture(wallet, 6, &[0, 1], 2, 2_000_000);
@@ -569,7 +578,7 @@ fn hostile_fees_and_lookalike_change_preserve_signer_state() {
 
 #[test]
 fn hostile_dust_change_is_not_masked_by_fee_or_remainder() {
-    for (n, fee) in [(1, 10_400), (3, 20_400)] {
+    for (n, fee) in [(1, 21_600), (3, 42_800)] {
         let owners = wallets(n, 2, 3);
         let wallet = &owners[0];
         let temp = tempfile::tempdir().unwrap();

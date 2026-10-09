@@ -159,9 +159,9 @@ pub(super) fn resume_legacy_approvals(owners: &[Wallet], current_fee: u64, legac
 }
 
 #[test]
-fn mldsa_legacy_approvals_resume_across_fee_upgrade() {
-    resume_legacy_approvals(&wallets(1, 1, 2), 10_400, 130_000);
-    resume_legacy_approvals(&wallets(3, 1, 2), 20_400, 255_000);
+fn slh_legacy_approvals_resume_across_fee_upgrade() {
+    resume_legacy_approvals(&wallets(1, 1, 2), 21_600, 270_000);
+    resume_legacy_approvals(&wallets(3, 1, 2), 42_800, 535_000);
 }
 
 #[test]
@@ -177,7 +177,7 @@ fn legacy_fee_requires_exact_local_approval_and_still_checks_trusted_inputs() {
         let (new, _) = store
             .preview_payment(wallet, &mut source, &approved)
             .unwrap();
-        let old = with_fee(&new, 130_000);
+        let old = with_fee(&new, 270_000);
         let id = old.id().unwrap();
         assert!(matches!(
             store.review_payment(wallet, &mut source, &old, &approved),
@@ -212,7 +212,7 @@ fn legacy_fee_requires_exact_local_approval_and_still_checks_trusted_inputs() {
             ),
             "changed tip needs the explicit refresh approval"
         );
-        let altered = with_fee(&refreshed, 130_001);
+        let altered = with_fee(&refreshed, 270_001);
         assert!(matches!(
             store.approve_payment_refresh(wallet, &mut source, id, &altered, altered.id().unwrap()),
             Err(Error::ProposalMismatch)
@@ -234,9 +234,9 @@ fn retained_approval_does_not_waive_fee_ceiling_or_allow_arbitrary_overpayment()
     let wallet = &owners[0];
     for journal in [false, true] {
         for (fee, ceiling) in [
-            (130_001, 1_000_000),
-            (130_000, 129_999),
-            (10_399, 1_000_000),
+            (270_001, 1_000_000),
+            (270_000, 269_999),
+            (21_599, 1_000_000),
         ] {
             let temp = tempfile::tempdir().unwrap();
             let mut store = create(

@@ -264,11 +264,11 @@ fn reordered_cosigners() -> Vec<Wallet> {
             .map(|(owner, index)| {
                 (
                     owner
-                        .key(KeyPath {
+                        .key_commitment(KeyPath {
                             role: Role::Change,
                             index,
                         })
-                        .commitment(),
+                        .unwrap(),
                     Origin {
                         account: 0,
                         index,
@@ -283,7 +283,7 @@ fn reordered_cosigners() -> Vec<Wallet> {
             policy_hex: hex::encode(
                 Policy::new(2, keys.iter().map(|(commitment, _)| *commitment).collect())
                     .unwrap()
-                    .encode(),
+                    .descriptor(),
             ),
             role: 1,
         });
@@ -701,7 +701,7 @@ fn retired_inventory_cannot_be_reopened_by_an_old_change_approval() {
     assert_eq!(state(&store, &path), before);
     // No-change payments still work with every change entry retired.
     let mut exact = approved;
-    exact.amount = 2_000_000 - 10_400;
+    exact.amount = 2_000_000 - 21_600;
     let (_, summary) = store.prepare_payment(wallet, &mut source, &exact).unwrap();
     assert!(summary.local_change.is_none());
     assert_eq!(store.state.payments.change_next, 4);

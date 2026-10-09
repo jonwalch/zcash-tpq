@@ -10,14 +10,18 @@ const CURSOR_BYTES: usize = 512;
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PaymentLocation {
+    /// Present in the bounded mutable active book.
     Active,
+    /// Retained in immutable history; authority and reservations remain.
     Archived,
 }
 
 /// A cached observation. An absent checkpoint means it is undated, not current.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct PaymentObservation {
+    /// Trusted checkpoint dating the cached observation; it does not establish current status.
     pub checkpoint: Option<Checkpoint>,
+    /// Cached payment observation; it does not revoke an authorization or reservation.
     pub state: PaymentState,
 }
 
@@ -26,15 +30,25 @@ pub struct PaymentObservation {
 /// Archived/old versions have no implied current chain observation.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct PaymentDetails {
+    /// Content hash of the immutable saved capability, absent in legacy inline state.
     pub capability: Option<Hex<32>>,
+    /// Most recent approved proposal ID in this lineage.
     pub current_proposal_id: Hex<32>,
+    /// Locally retained independent payment approval.
     pub intent: Intent,
+    /// Stable ID of the initial proposal in this lineage.
     pub lineage_id: Option<Hex<32>>,
+    /// Current active or archived storage placement.
     pub location: PaymentLocation,
+    /// Dated cached chain observation, when available.
     pub observation: Option<PaymentObservation>,
+    /// Exact saved local partials; at most one per input.
     pub partials: Vec<Partial>,
+    /// Complete canonical proposal with retained effects.
     pub proposal: Proposal,
+    /// Monotonic capability revision in this lineage.
     pub revision: Option<u64>,
+    /// Exact saved authorization bytes for retry, never silently regenerated.
     pub signed_transaction_hex: Option<String>,
 }
 
@@ -42,19 +56,30 @@ pub struct PaymentDetails {
 /// by a reorg; it never proves an input is available for another authorization.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct PaymentHistoryEntry {
+    /// Recipient amount in zatoshis.
     pub amount: u64,
+    /// Content hash of the immutable saved capability, absent in legacy inline state.
     pub capability: Hex<32>,
+    /// Trusted checkpoint dating the cached observation; it does not establish current status.
     pub checkpoint: Checkpoint,
+    /// Stable ID of the initial proposal in this lineage.
     pub lineage_id: Hex<32>,
+    /// Digest of the complete canonical proposal.
     pub proposal_id: Hex<32>,
+    /// Canonical experimental Regtest receiver.
     pub receiver: String,
+    /// Monotonic journal archival event number.
     pub sequence: u64,
+    /// Cached payment observation; it does not revoke an authorization or reservation.
     pub state: PaymentState,
 }
 
+/// A bounded page of events from one immutable journal snapshot.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct PaymentHistoryPage {
+    /// At most sixteen historical events from the pinned snapshot.
     pub entries: Vec<PaymentHistoryEntry>,
+    /// Opaque continuation bound to this exact snapshot, or none at the end.
     pub next_cursor: Option<String>,
 }
 
