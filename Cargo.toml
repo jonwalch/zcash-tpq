@@ -1,5 +1,6 @@
 [workspace]
 members = [
+        "crates/pq-slh-dsa-b-exp",
         "crates/pq-tx-context",
         "crates/pq-test-support",
         "crates/pq-slh-dsa-b-verify",

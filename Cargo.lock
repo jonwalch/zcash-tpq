@@ -7947,6 +7947,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "zakura-pq-slh-dsa-b-exp"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "sha2 0.10.9",
+ "zakura-chain",
+ "zakura-pq-slh-dsa-b-verify",
+ "zakura-pq-test-support",
+ "zakura-pq-tx-context",
+]
+
+[[package]]
 name = "zakura-pq-slh-dsa-b-verify"
 version = "0.1.0"
 dependencies = [
