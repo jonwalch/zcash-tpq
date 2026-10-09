@@ -60,7 +60,9 @@ pub struct LocatedTransaction {
 pub trait PaymentSource: ChainSource {
     /// Include mempool spends, but return only confirmed output creations.
     fn resolve(&mut self, outpoint: Outpoint) -> Result<Option<ResolvedInput>, Error>;
+    /// Resolve exact saved transaction bytes and current chain placement.
     fn transaction(&mut self, txid: Hex<32>) -> Result<Option<LocatedTransaction>, Error>;
+    /// Submit exact previously persisted bytes; an error may leave the outcome unknown.
     fn submit(&mut self, transaction: &[u8]) -> Result<Hex<32>, Error>;
 }
 

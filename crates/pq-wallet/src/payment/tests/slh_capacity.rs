@@ -78,3 +78,101 @@ fn recipient_dust_floor_is_2403_independent_of_signature_cost() {
         assert_eq!(intent.to_json().is_ok(), amount >= 2_403);
     }
 }
+
+#[test]
+fn trusted_payment_review_accepts_all_120_enrolled_shapes_for_both_versions() {
+    let mut owners = wallets(1, 1, 1);
+    let wallet = &mut owners[0];
+    let own = [
+        wallet
+            .key_commitment(KeyPath {
+                role: Role::Receive,
+                index: 0,
+            })
+            .unwrap(),
+        wallet
+            .key_commitment(KeyPath {
+                role: Role::Change,
+                index: 0,
+            })
+            .unwrap(),
+    ];
+    let recipient = intent(6).receiver;
+    let temporary = tempfile::tempdir().unwrap();
+    for n in 1..=15u8 {
+        for m in 1..=n {
+            wallet.manifest.entries = (0..2u8)
+                .map(|role| {
+                    let mut commitments = vec![(
+                        own[usize::from(role)],
+                        Origin {
+                            account: 0,
+                            index: 0,
+                            wallet_id: wallet.manifest.wallet_id,
+                        },
+                    )];
+                    for participant in 1..n {
+                        let mut wallet_id = wallet.manifest.wallet_id;
+                        wallet_id.0[0] ^= participant;
+                        let mut commitment = [participant; 32];
+                        commitment[31] = role;
+                        commitments.push((
+                            commitment,
+                            Origin {
+                                account: 0,
+                                index: 0,
+                                wallet_id,
+                            },
+                        ));
+                    }
+                    commitments.sort_by_key(|(commitment, _)| *commitment);
+                    Entry {
+                        origins: commitments
+                            .iter()
+                            .map(|(_, origin)| origin.clone())
+                            .collect(),
+                        policy_hex: hex::encode(
+                            Policy::new(m, commitments.iter().map(|(key, _)| *key).collect())
+                                .unwrap()
+                                .descriptor(),
+                        ),
+                        role,
+                    }
+                })
+                .collect();
+            wallet.manifest.validate().unwrap();
+            for version in [5, 6] {
+                let mut store = create(
+                    &temporary.path().join(format!("{m}-{n}-{version}")),
+                    wallet.manifest(),
+                    WatchMode::Allocator,
+                );
+                let mut source = Source::funded(wallet, &[2_000_000]);
+                let approved = Intent {
+                    amount: 500_000,
+                    max_fee: 1_000_000,
+                    receiver: recipient.clone(),
+                    receiver_activation_height: None,
+                    remainder: Remainder::Keep,
+                    version: Some(version),
+                };
+                let (proposal, reviewed) = store
+                    .prepare_payment(wallet, &mut source, &approved)
+                    .unwrap();
+                assert_eq!(reviewed.checks, u32::from(m));
+                assert_eq!(
+                    reviewed,
+                    store
+                        .review_payment(wallet, &mut source, &proposal, &approved)
+                        .unwrap()
+                );
+                assert!(reviewed.final_bytes <= MAX_TRANSACTION);
+                assert_eq!(proposal.inputs[0].entry.origins.len(), usize::from(n));
+                assert_eq!(
+                    proposal.outputs[1].entry.as_ref().unwrap().origins.len(),
+                    usize::from(n)
+                );
+            }
+        }
+    }
+}
