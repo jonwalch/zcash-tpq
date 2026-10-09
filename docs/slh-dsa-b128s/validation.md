@@ -142,8 +142,10 @@ signatures on those shapes, or node acceptance. The separate attributed
 [shielded adapter](shielded-controls.md) now prepares real output-only bundles,
 their final native SLH message, proof/binding failure controls and legal funded
 node scenarios. It reuses upstream proof libraries and is not an independent
-proof oracle. Proof generation and live execution are unrun; shielded spends
-and genuine spend anchors remain outside this prepared subset.
+proof oracle. This output-only adapter is separate from the
+[genuine spend and anchor controls](shielded-spend-controls.md). Proof and node
+outcomes require completed receipts bound to their exact source and build inputs;
+the source matrix does not record those outcomes.
 
 ## Reuse and attribution
 

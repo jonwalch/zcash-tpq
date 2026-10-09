@@ -2032,7 +2032,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "4153f47ebfbd7f1cdb0c6ed7132fc49ac3f0a7b3d015020a458b209cace11e5d"
+      "sha256": "afbb6720dc0f6a6652aad347e47acdd8873cae9ec93e3d81709807daa101809e"
     },
     {
       "disposition": "new",
@@ -2202,8 +2202,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "7cfbb54efa06e61818b3457025724d262bab41060a09aec1827f941138d2f51d"
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change. Require exact per-node initial admission and replay saved bytes through the pinned research direct-block path without assuming renewed transaction gossip; shared lifecycle helpers and upstream behavior remain unchanged.",
+      "sha256": "d8ab41588e9bb38648f2446fe158d31e453393be3ad0680d0350d5ffe2847f07"
     },
     {
       "disposition": "new",
@@ -2231,7 +2231,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools.",
-      "sha256": "526a095b5294dcb3c920ffd51412f53615785ecd51de99e2dfbe4ac44a276469"
+      "sha256": "b1a7c9477b3d4f864f577ce53a7ccc2a473c090dabad32f276c57092857376f1"
     },
     {
       "disposition": "new",
@@ -2399,8 +2399,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "b40337d32a8441552a1414126bbc0ea6b27e68f3ce242b1d82088c283c8f7242"
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change. Require exact per-node initial admission and replay saved bytes through the pinned research direct-block path without assuming renewed transaction gossip; shared lifecycle helpers and upstream behavior remain unchanged.",
+      "sha256": "e089e5e0df8ece698da3c81644d66ccb42ca2179a3b8e3c3f74034b615261f1f"
     },
     {
       "disposition": "attribution",
@@ -2411,7 +2411,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "a8ecd2eee4bce4b38cb06b10f5a3cf0c58ea4b1367380c5fd12783f77f29b565"
+      "sha256": "a825b62334f2f0ff64ffe8a7b471b9781d01f5e4a0dbf765fdad74579ff94b51"
     },
     {
       "disposition": "new",
@@ -2546,8 +2546,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "6f9a211e438b4a68a547be6b4498937f191b8ac3c21fe5a6b22d0d23eb793031"
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change. Require exact per-node initial admission and replay saved bytes through the pinned research direct-block path without assuming renewed transaction gossip; shared lifecycle helpers and upstream behavior remain unchanged.",
+      "sha256": "e0a9016bdc3739ee26d0085c98fe93b23c9dc64b1251b686379497f169bf7b73"
     },
     {
       "disposition": "new",

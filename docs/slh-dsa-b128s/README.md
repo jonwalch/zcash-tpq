@@ -54,7 +54,7 @@ the [recovery guide](recovery.md) describes the required trust and retirement.
 
 The 16-check transaction/64-check block profile is a functional test setting,
 not a production budget. Library/reference/mock evidence is distinct from live
-funded acceptance. The runbook records unexecuted human cases, including funded
+funded acceptance. The runbook records prepared cases, including funded
 capture brackets, real shielded outputs/spends/anchors, test-only wallet write
 faults and bounded node process-crash checkpoints. These prepared drivers require
 completed source-bound execution receipts. Deterministic internal queue occupancy, operating-system
