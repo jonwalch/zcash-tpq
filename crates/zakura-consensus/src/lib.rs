@@ -68,3 +68,11 @@ pub use router::RouterError;
 
 /// A boxed [`std::error::Error`].
 pub type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+/// Whether the complete experimental SLH-DSA-B-128s runtime is available.
+///
+/// Configuration must remain unavailable until consensus, relay, mining and
+/// state lifecycle support have been integrated and checked together.
+pub const fn supports_experimental_slh_dsa_b128s() -> bool {
+    false
+}

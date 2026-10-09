@@ -1,3 +1,46 @@
+# SLH extension rules
+
+These rules take precedence over the inherited upstream command examples below.
+This repository adds only experimental SLH-DSA-B-128s to pinned upstream Zakura.
+Read `docs/slh-dsa-b128s/protocol.md`. Preserve canonical encoding, trusted UTXO
+resolution, existing classical/shielded behavior, source pins and attribution.
+Reuse existing code and tests with the smallest necessary adaptations. Record
+the reason and regression coverage for new behavior or rewritten modules.
+
+Keep experimental support off by default and Regtest-only. Node dependencies
+must not include key generation, signing, alternate PQ backends, fixture tools
+or a dependency on an external research checkout. Never add research notes,
+experiments, raw results, real secrets or research Git history to this repository.
+
+Workers commit locally for coordinator integration; only the coordinator may
+deliver integrated changes to a designated product remote. Do not push upstream
+Zakura or infer that an unrelated repository's origin is the product destination.
+Preserve assigned branches. The coordinator owns shared manifests, lockfiles,
+feature wiring and cross-lane integration; obtain ownership before editing a
+shared file. Use a separate working tree per worker.
+
+Heavy validation is human-only. Agents must not launch dedicated node/container
+builds, live node/Regtest drivers, wallet live payment/recovery/discovery or
+terminal backup suites, Docker restart/reorg suites, real shielded-proof fixture
+generation, profiling, large-context workloads or full performance matrices.
+This includes wrappers, background/delegated runs and manual CI dispatch/reruns.
+Record required human runs as pending. Existing automatic CI is exempt; do not
+change CI triggers to bypass this rule. Review inherited release/deployment
+automation before publishing to a new remote.
+
+Agents may run proportional focused Rust/library/crypto/corpus tests, mocked
+Python unit tests, dependency/provenance guards and bounded comparisons. For
+changed packages run formatting, locked focused tests and clippy with warnings
+denied, selecting packages explicitly; do not use the full-workspace or live
+commands below as blanket authorization. Serialize substantial compilations on
+the shared host. Preserve independent crypto/digest references and mutation
+controls. Identify checks not run and their reasons precisely.
+
+Unchanged proof-covered approval source retains only its recorded existing proof
+scope. A change to covered source requires a checker consuming these actual
+target files; never edit generated proofs or add admissions. Never claim crypto
+or target execution proved by an unrelated source-checkout run.
+
 # Zakura — Agent Guidelines
 
 > This file is read by AI coding agents (Claude Code, GitHub Copilot, Cursor, Devin, etc.).
