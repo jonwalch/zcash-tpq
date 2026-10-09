@@ -156,6 +156,8 @@ impl ChainSource for Source {
         self.chain.block_bytes(h)
     }
 }
+// Invalid synthetic fixture data must panic, not simulate a trusted-node refusal.
+#[allow(clippy::unwrap_in_result)]
 impl PaymentSource for Source {
     fn resolve(&mut self, point: Outpoint) -> Result<Option<ResolvedInput>, Error> {
         let context = self.context()?;

@@ -160,6 +160,8 @@ impl Chain {
         });
     }
 }
+// Invalid synthetic blocks must panic, not simulate unavailable trusted history.
+#[allow(clippy::unwrap_in_result)]
 impl ChainSource for Chain {
     fn context(&mut self) -> Result<NodeContext, Error> {
         let height = self.blocks.len() as u32 - 1;

@@ -662,6 +662,8 @@ fn signing_returns_no_partial_when_final_publication_fails_then_retries_after_re
         calls: usize,
     }
     impl CryptoRng for RelocatingRng {}
+    // Fixture relocation failure must fail the test rather than imitate entropy failure.
+    #[allow(clippy::unwrap_in_result)]
     impl RngCore for RelocatingRng {
         fn next_u32(&mut self) -> u32 {
             panic!("must use fallible randomness")
