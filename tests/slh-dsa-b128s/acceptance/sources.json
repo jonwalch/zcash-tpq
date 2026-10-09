@@ -461,7 +461,7 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
       "classification": "new or amended product documentation",
       "path": "docs/slh-dsa-b128s/acceptance.md",
-      "sha256": "9aeb4b91b6c76205f131759a8e6ff58702a1d1dceab56300048945ceb9ab5b4d",
+      "sha256": "4a70e56c7009d7f458b58300d26062505d24c60004ae686db935300ca3318846",
       "sources": []
     },
     {
@@ -523,10 +523,10 @@
       ]
     },
     {
-      "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
+      "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Reuse the existing node ordinary-backup observer for both transparent rollback restarts, capturing and excluding the full invalidated canonical range before mutation. Offline causal regression preserves the inherited asynchronous writer, exact reopen checks, fresh P2P behavior and saved-byte flows.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "docs/slh-dsa-b128s/transparent-controls.md",
-      "sha256": "9337131e97a8486a39fe62bf28179ca0cfd06c35a427235169ee82e1a101634c",
+      "sha256": "e71473957378d270dd5733e543f1ae7fed1ab1be702fe7e67cf58d68c5ee0bd9",
       "sources": []
     },
     {
@@ -810,17 +810,24 @@
       "sources": []
     },
     {
-      "adaptation": "New bounded offline ledger mock runs actual driver through real helper state checks and saved-byte retries; mutations must detect wrong diagnostics, tip changes, missing parents, raw/block order and mismatched authorization identity.",
+      "adaptation": "New bounded offline ledger mock runs actual driver through real helper state checks and saved-byte retries; mutations must detect wrong diagnostics, tip changes, missing parents, raw/block order and mismatched authorization identity. Reuse the existing node ordinary-backup observer for both transparent rollback restarts, capturing and excluding the full invalidated canonical range before mutation. Offline causal regression preserves the inherited asynchronous writer, exact reopen checks, fresh P2P behavior and saved-byte flows.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "tests/slh-dsa-b128s/acceptance/test_transparent_controls.py",
-      "sha256": "e8dd23a1071f2a78e97479df36d363f773fb7ef596a164eb1da62732eca061de",
+      "sha256": "16c5a662fb93a1c082d3832d3391624cdf5b50256136337091f64f4eb9c1e979",
       "sources": []
     },
     {
-      "adaptation": "Reuse product mature funding, block proposals, single-input SLH fixtures, strict RPC receipts, state snapshots and saved-byte reconciliation. Adapt pinned preactivation/dust and same-TXID lifecycle controls; add genuine classical quorum/substitution and unsupported-template matrices without alternate backends.",
+      "adaptation": "Exercise the actual wallet execute boundary with a delayed ordinary-backup model. Reuse existing node backup fixtures to reproduce the old stale-tip restart and require observation before stopping; reject changed backup bytes or a changed reopened tip. No live wallet failure or new runtime behavior is inferred.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_wallet_restart.py",
+      "sha256": "4af552745bd7be14f6de0948ca9154c0bbaee24e828c7887657068543ba3a9e2",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse product mature funding, block proposals, single-input SLH fixtures, strict RPC receipts, state snapshots and saved-byte reconciliation. Adapt pinned preactivation/dust and same-TXID lifecycle controls; add genuine classical quorum/substitution and unsupported-template matrices without alternate backends. Reuse the existing node ordinary-backup observer for both transparent rollback restarts, capturing and excluding the full invalidated canonical range before mutation. Offline causal regression preserves the inherited asynchronous writer, exact reopen checks, fresh P2P behavior and saved-byte flows.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d",
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568",
       "sources": [
         "relay",
         "history",
@@ -829,10 +836,10 @@
       ]
     },
     {
-      "adaptation": "Reuse separate-root proposal/review/approve/sign/assemble/submit, finite watchers and coherent recovery flows. Adapt to SLH public enrollment APIs, adjacent revisions, 15-participant limits, independent format oracle and legal classical funding. Add current snapshot authority modes, preserved archive/refresh bytes and retired-receipt reorg controls.",
+      "adaptation": "Reuse separate-root proposal/review/approve/sign/assemble/submit, finite watchers and coherent recovery flows. Adapt to SLH public enrollment APIs, adjacent revisions, 15-participant limits, independent format oracle and legal classical funding. Add current snapshot authority modes, preserved archive/refresh bytes and retired-receipt reorg controls. Reuse the existing ordinary-backup observer before the post-recovery node restart. Local wallet operations do not establish node backup completion; empty exclusions preserve this no-rollback checkpoint.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/wallet_live.py",
-      "sha256": "9c2eb9265bb604dd0b0d2cbcbfc010b3c37d81daa4db99633122ef473a7f8543",
+      "sha256": "71e68d67152a4a06010bbda97f9ec16d26a6686a13702fa3d19fdb30359fabf5",
       "sources": [
         "payments",
         "recovery",

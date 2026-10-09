@@ -197,7 +197,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
     },
     "human-funding": {
       "anchor": "classical_funding_submission",
@@ -218,7 +218,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
     },
     "human-namespace": {
       "anchor": "def namespace_controls(",
@@ -246,7 +246,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
     },
     "human-reorg": {
       "anchor": "reorg_payment_tip",
@@ -267,14 +267,14 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
     },
     "human-separate-same-block": {
       "anchor": "receipt[\"separate_transactions_same_block\"]",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
     },
     "human-shielded-anchors": {
       "anchor": "def lifecycle(",
@@ -351,7 +351,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
-      "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
     },
     "human-wallet-faults": {
       "anchor": "def bracket(",
@@ -365,7 +365,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/wallet_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "9c2eb9265bb604dd0b0d2cbcbfc010b3c37d81daa4db99633122ef473a7f8543"
+      "sha256": "71e68d67152a4a06010bbda97f9ec16d26a6686a13702fa3d19fdb30359fabf5"
     },
     "independent-artifacts": {
       "anchor": "def run(",
@@ -1443,5 +1443,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "8c9fb455ab16ce9a346002129bc4e26c03016c65"
+  "source_checkpoint": "eca9da6032eebeb0b6023f35626031249b4140b5"
 }
