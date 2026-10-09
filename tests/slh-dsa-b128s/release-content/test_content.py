@@ -87,14 +87,20 @@ class PathTests(unittest.TestCase):
 
     def test_historical_registration_can_precede_source_but_cannot_escape(self):
         names = {"Cargo.toml"}
-        registration = b'[workspace]\nmembers=["tests/public-host"]\n'
-        audit.manifest_paths("Cargo.toml", registration, names, added=False, require_workspace_members=False)
-        with self.assertRaisesRegex(ValueError, "workspace member not tracked"):
-            audit.manifest_paths("Cargo.toml", registration, names, added=False)
-        for value in ("../outside", "/private/outside", "C:/outside"):
-            with self.subTest(path=value), self.assertRaises(ValueError):
-                audit.manifest_paths("Cargo.toml", registration.replace(b"tests/public-host", value.encode()),
-                                     names, added=False, require_workspace_members=False)
+        for template in ('[workspace]\nmembers=["PATH"]\n',
+                         '[[test]]\nname="public"\npath="PATH"\n',
+                         '[package]\nbuild="PATH"\n',
+                         '[dependencies]\npublic={path="PATH"}\n'):
+            registration = template.replace("PATH", "missing").encode()
+            with self.subTest(form=template):
+                audit.manifest_paths("Cargo.toml", registration, names, added=False, require_tracked_paths=False)
+                with self.assertRaises(ValueError):
+                    audit.manifest_paths("Cargo.toml", registration, names, added=False)
+            for value in ("../outside", "/private/outside", "C:/outside"):
+                for tracked in (False, True):
+                    with self.subTest(form=template, path=value, require_tracked=tracked), self.assertRaises(ValueError):
+                        audit.manifest_paths("Cargo.toml", template.replace("PATH", value).encode(), names,
+                                             added=False, require_tracked_paths=tracked)
 
     def test_archive_and_package_traversal_and_private_files_fail(self):
         for value in ("../secret", "/absolute", "a/../secret", "a\\secret", "a//secret"):

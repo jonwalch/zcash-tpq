@@ -131,7 +131,7 @@ def resolve_path(origin, value):
     return "/".join(parts)
 
 
-def manifest_paths(path, data, names, *, added, require_workspace_members=True):
+def manifest_paths(path, data, names, *, added, require_tracked_paths=True):
     manifest = tomllib.loads(data.decode("utf8"))
     package = manifest.get("package", {})
     if added and package:
@@ -140,7 +140,9 @@ def manifest_paths(path, data, names, *, added, require_workspace_members=True):
     build = package.get("build", False)
     require(build is False or isinstance(build, str), "invalid package build path")
     if isinstance(build, str):
-        require(resolve_path(path, build) in names, "package build script outside tracked source")
+        target = resolve_path(path, build)
+        if require_tracked_paths:
+            require(target in names, "package build script outside tracked source")
     workspace = manifest.get("workspace", {})
     for field in ("members", "default-members", "exclude"):
         values = workspace.get(field, [])
@@ -149,7 +151,7 @@ def manifest_paths(path, data, names, *, added, require_workspace_members=True):
             target = resolve_path(path, value)
             # Cargo permits glob patterns and excludes with no current match.
             # Every form must stay inside the checkout, even when unmatched.
-            if field != "exclude" and require_workspace_members:
+            if field != "exclude" and require_tracked_paths:
                 pattern = target + "/Cargo.toml" if target else "Cargo.toml"
                 require(any(fnmatch.fnmatchcase(name, pattern) for name in names), "workspace member not tracked")
 
@@ -166,7 +168,8 @@ def manifest_paths(path, data, names, *, added, require_workspace_members=True):
                             require("zcash-transparent-pq" not in specification["git"], "research Git dependency")
                         if "path" in specification:
                             target = resolve_path(path, specification["path"]) + "/Cargo.toml"
-                            require(target in names, "untracked/outside dependency: " + target)
+                            if require_tracked_paths:
+                                require(target in names, "untracked/outside dependency: " + target)
             walk(item)
     walk(manifest)
     # Includes patches/replacements, package build scripts and workspace membership.
@@ -175,7 +178,8 @@ def manifest_paths(path, data, names, *, added, require_workspace_members=True):
             for key, item in value.items():
                 if key == "path" and isinstance(item, str):
                     target = resolve_path(path, item)
-                    require(target in names or target + "/Cargo.toml" in names, "manifest path missing: " + target)
+                    if require_tracked_paths:
+                        require(target in names or target + "/Cargo.toml" in names, "manifest path missing: " + target)
                 if key == "git" and isinstance(item, str):
                     require("zcash-transparent-pq" not in item, "research Git source")
                 paths(item)
@@ -223,11 +227,11 @@ def history(root, base, allowed):
             if path in state:
                 require(state[path][0] in ("100644", "100755"), "historical product symlink: " + path)
                 if path.endswith("Cargo.toml"):
-                    # A registration-only commit can precede the member source
+                    # A registration-only commit can precede its target source
                     # merge. Historical paths must remain bounded; final-tree
-                    # membership existence is enforced by verify_paths above.
+                    # path existence is enforced by verify_paths above.
                     manifest_paths(path, blob(root, state[path][2]), state, added=path not in base,
-                                   require_workspace_members=False)
+                                   require_tracked_paths=False)
         paths.update(touched)
     return {"commits": len(revisions), "changed_paths": len(paths), "commits_sha256": sha(canonical(sorted(revisions)))}
 
