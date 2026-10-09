@@ -2875,7 +2875,7 @@
         "tests/slh-dsa-b128s/release-content/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "e64c2ba7eb0bbf2bc40de7a5f7e42b7b691da6c3ff2dde1f345498857fde5527"
+      "sha256": "a794307576100601da4fb59883e9dd86cbe00ecd4764bad71991cb029fa45210"
     },
     {
       "disposition": "new",
@@ -2885,7 +2885,7 @@
         "tests/slh-dsa-b128s/release-content/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "9ebfebf10d115bba9be3e0e1175dde013d93d59f6cf281a42fc5d8da8ba05926"
+      "sha256": "0cbbe25b2af1c7d32136520416453a08bb18ff1170c4c74663bdeff868d493a5"
     },
     {
       "disposition": "new",
