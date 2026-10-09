@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+  "source_revision": "85f75af3f70cc292918a013b280ed06426b6fa98",
+  "license": "MIT OR Apache-2.0",
+  "files": [
+    {
+      "target": "src/keys.rs",
+      "target_sha256": "f34f7972c46ff8e89161049cfe940e44701ed396946db0bf52c3e8f6feaafff3",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/lib.rs",
+          "sha256": "e9ae41cd1373c212e84df85d5f8aa74f984f9060dee75a9e8042ded46f44d7a3",
+          "sections": [
+            "Role",
+            "KeyPath",
+            "Wallet::seed"
+          ]
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retain literal HKDF-SHA256 salt/info/order/account0/Regtest/path layout; change suite to f7 and output length to48; thin non-enrolled root facade with fallible generation while H2 existing wallet flows remain pending."
+    },
+    {
+      "target": "src/lib.rs",
+      "target_sha256": "46c1ed24d4a3f02157e4d15a358c0ae9e0231ef485b20e8e241845011b212792",
+      "sources": [],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Default-off feature and explicit support refusal; no storage/payment API invented."
+    },
+    {
+      "target": "src/keys/tests.rs",
+      "target_sha256": "461e358c5e9f847764a25a1df18ab0847af496a00e91a56e7a553ac174897b36",
+      "sources": [],
+      "classification": "new conformance tests",
+      "adaptation": "Compare six fixed independently generated public seeds/roots/bothHKDFblocks, suite separation and fallible root entropy."
+    }
+  ],
+  "licenses": [
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+    }
+  ]
+}
