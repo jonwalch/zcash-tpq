@@ -8,12 +8,15 @@ in the 18 prescribed public artifacts using the separately pinned
 cryptographic verdicts never call the production implementation. The fixture
 host is only an optional comparison target after the independent computation.
 
-It also runs 55 negative controls with explicit expected interface stages or
+It also runs 60 negative controls with explicit expected interface stages or
 native rejection codes, plus independent old-domain and double-Pure-framing
 controls. Mutation cases reconstruct redundant hashes/digests/messages when
 exercising native rejection. Separate mismatch cases test those correspondence
 checks. Structural errors are checked before any signature work. The 17-check
 case is natively valid and fails only the explicit 16-check test profile.
+Context rejection still checks every raw-decodable authorization against its
+metadata. Unknown or version-ineligible branch IDs and all-zero outpoint hashes
+fail wire decoding before native evaluation.
 The interface, initial recipes and bounds are defined in
 [transaction fixtures](../../../docs/slh-dsa-b128s/transaction-fixtures.md).
 
@@ -43,7 +46,7 @@ comparison and is not a substitute for the complete G2 gate. Later source
 changes make old producer hashes differ intentionally; verify the recorded
 committed source checkpoint when reproducing the original gate.
 
-The nine cheap unit tests use explicitly synthetic zero signatures to exercise
+The thirteen cheap unit tests use explicitly synthetic zero signatures to exercise
 schemas, all 120 policy shapes, bounds, correspondence and failure precedence.
 Their callbacks do not establish primitive validity. Only the separate full
 checker runs real independent verification. Neither workflow runs key generation,

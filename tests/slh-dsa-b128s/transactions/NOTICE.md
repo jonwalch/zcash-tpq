@@ -12,6 +12,9 @@ research catalog or dependency on the source checkout is imported.
 The ZIP 244/229 BLAKE2b digest input ordering and personalizations are unchanged.
 Adaptations enforce this public interface's input/output/script and amount-sum
 bounds, reject duplicate/coinbase outpoints, and remove unused fee calculations.
+The branch/version allowlist and rejection of every null outpoint hash match
+the pinned upstream decoder's wire validity rules, independently of the later
+NU7-only native SLH context check.
 The source is available at
 [its pinned revision](https://github.com/jonwalch/zcash-transparent-pq/blob/0dce78ab42cc4afbd26b5c3474748f7a4a1db3ba/experiments/hash-four-payments/wire.py).
 The repository's [MIT](../../../LICENSE-MIT) and
@@ -24,6 +27,8 @@ the Rust library under comparison. Its tests exercise strict JSON, required
 nullable fields, all 120 policy shapes, complete wire consumption, digest field
 sensitivity/exclusion, coherent negative controls and structural-before-crypto
 precedence. It does not copy production Rust codec or digest implementations.
+Context failures retain checks of every decodable authorization's metadata;
+only digest/message correspondence that native context cannot derive is skipped.
 
 Cryptographic verification reuses the existing checked
 [Python/portable-C reference](../reference/NOTICE.md) without modifying its

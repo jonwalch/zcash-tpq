@@ -187,7 +187,7 @@ def validate_schema(a):
     array(a["inputs"], 1, 32)
     for item in a["inputs"]:
         fields(item, INPUT)
-        number(item["input_index"], 31)
+        number(item["input_index"])
         number(item["sequence"])
         fields(item["outpoint"], "txid_display_hex index wire_hex")
         hexadecimal(item["outpoint"]["txid_display_hex"], size=32)
@@ -209,7 +209,7 @@ def validate_schema(a):
     array(a["outputs"], 1, 64)
     for item in a["outputs"]:
         fields(item, "output_index value_zat script_hex")
-        number(item["output_index"], 63)
+        number(item["output_index"])
         number(item["value_zat"], MONEY)
         hexadecimal(item["script_hex"], maximum=10000)
     require(sum(i["spent_output"]["value_zat"] for i in a["inputs"]) <= MONEY, "schema", "input_sum")
@@ -350,13 +350,14 @@ def evaluate(raw, verify_signature):
     for index, (item, actual) in enumerate(zip(a["outputs"], tx["outputs"])):
         require(item["output_index"] == index and item["value_zat"] == actual["value"]
                 and bytes.fromhex(item["script_hex"]) == actual["script"], "correspondence", "output")
-    if tx["branch"] != NU7:
-        return a, observation("context", "consensus_branch")
+    context_failure = tx["branch"] != NU7
     previous = [{"value": item["spent_output"]["value_zat"], "script": bytes.fromhex(item["spent_output"]["script_hex"])} for item in a["inputs"]]
     parsed, first_failure = [], None
     for index, (item, actual, spent) in enumerate(zip(a["inputs"], tx["inputs"], previous)):
-        digest, framed = message(tx, a["network"], previous, index)
-        require(digest.hex() == item["sighash_all_digest_hex"] and framed.hex() == item["message_hex"], "correspondence", "digest_message")
+        framed = None
+        if not context_failure:
+            digest, framed = message(tx, a["network"], previous, index)
+            require(digest.hex() == item["sighash_all_digest_hex"] and framed.hex() == item["message_hex"], "correspondence", "digest_message")
         decoded, parse_error = None, None
         try:
             decoded = decode_authorization(actual["script"])
@@ -365,6 +366,11 @@ def evaluate(raw, verify_signature):
         if decoded is not None:
             descriptor, records = decoded
             require(descriptor.hex() == item["descriptor_hex"] and records == item["records"], "correspondence", "authorization")
+        # Raw authorization fields remain computable when native context fails.
+        # Only their correspondence matters here; context still precedes native
+        # structural failures and signature verification.
+        if context_failure:
+            continue
         try:
             script = spent["script"]
             if len(script) != 35 or script[:2] != b"\x53\x20" or script[-1:] != b"\xc0":
@@ -381,6 +387,8 @@ def evaluate(raw, verify_signature):
         except NativeFailure as error:
             if first_failure is None:
                 first_failure = observation("authorization", error.reason, index)
+    if context_failure:
+        return a, observation("context", "consensus_branch")
     if first_failure is not None:
         return a, first_failure
     count = sum(len(records) for _, records, _ in parsed)

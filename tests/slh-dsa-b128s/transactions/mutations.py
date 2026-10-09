@@ -78,6 +78,19 @@ def controls(artifacts):
     a, tx = fresh()
     tx["branch"] = 0x37a5165b  # Known v5/v6 NU6.3, distinct from trusted NU7.
     add("wrong-branch", refresh(a, tx), oracle.observation("context", "consensus_branch"))
+    for version, field in ((5, "descriptor_hex"), (6, "records")):
+        a, tx = fresh(f"v{version}-1of1")
+        tx["branch"] = 0x37a5165b
+        refresh(a, tx)
+        a["inputs"][0][field] = "00" if field == "descriptor_hex" else []
+        add(f"wrong-branch-v{version}-{field}-mismatch", a, failure="correspondence")
+    for name, version, branch in (("unknown-branch", 5, 0), ("v6-pre-nu6_3-branch", 6, 0xc2d6d0b4)):
+        a, tx = fresh(f"v{version}-1of1")
+        tx["branch"] = branch
+        add(name, refresh(a, tx), failure="correspondence")
+    a, tx = fresh("v6-1of1")
+    tx["inputs"][0]["outpoint"] = bytes(32) + wire.le32(1)
+    add("null-outpoint-hash", refresh(a, tx), failure="correspondence")
     for change in ("template", "policy-commitment", "key-commitment", "nonsigning-participant"):
         a, tx = fresh("v5-2of3" if change == "nonsigning-participant" else "v5-1of1")
         descriptor, records = oracle.decode_authorization(tx["inputs"][0]["script"])

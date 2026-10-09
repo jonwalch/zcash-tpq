@@ -5,6 +5,14 @@ No candidate or production digest imports.
 """
 import hashlib
 VERSIONS = {5: (0x80000005, 0x26A7270A), 6: (0x80000006, 0xD884B698)}
+# Branches decodable by the pinned upstream build, without its zfuture cfg.
+# V5 starts at NU5; v6 starts at NU6.3. Native SLH context separately requires NU7.
+BRANCH_IDS = {
+    5: {0xc2d6d0b4, 0xc8e71055, 0x4dec4df0, 0x5437f330, 0x37a5165b, 0x77190ad9},
+    6: {0x37a5165b, 0x77190ad9},
+}
+
+
 def le32(value):
     return value.to_bytes(4, "little")
 
@@ -64,15 +72,18 @@ def parse_transaction(raw):
     version = header & 0x7FFFFFFF
     if header >> 31 != 1 or version not in VERSIONS or r.u32() != VERSIONS[version][1]:
         raise ValueError("unsupported transaction header")
-    tx = {"version": version, "header": header, "branch": r.u32(), "lock_time": r.u32(),
+    branch = r.u32()
+    if branch not in BRANCH_IDS[version]:
+        raise ValueError("unsupported consensus branch for transaction version")
+    tx = {"version": version, "header": header, "branch": branch, "lock_time": r.u32(),
           "expiry": r.u32(), "inputs": [], "outputs": []}
     count = r.compact()
     if not 1 <= count <= 32:
         raise ValueError("input cap")
     for _ in range(count):
         prevout = r.take(36)
-        if prevout == bytes(32) + b"\xff" * 4:
-            raise ValueError("coinbase input")
+        if prevout[:32] == bytes(32):
+            raise ValueError("coinbase or null outpoint hash")
         script = r.script(131072)
         tx["inputs"].append({"outpoint": prevout, "script": script, "sequence": r.u32()})
     if len({i["outpoint"] for i in tx["inputs"]}) != count:

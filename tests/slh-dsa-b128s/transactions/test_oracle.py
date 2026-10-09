@@ -176,6 +176,79 @@ class OracleTests(unittest.TestCase):
             oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
         self.assertEqual(caught.exception.stage, "correspondence")
 
+    def test_context_failure_still_checks_every_decodable_authorization(self):
+        for version in (5, 6):
+            a = copy.deepcopy(self.artifacts[f"v{version}-16checks"])
+            tx = wire.parse_transaction(bytes.fromhex(a["transaction_hex"]))
+            tx["branch"] = 0x37a5165b
+            # Context rejection precedes an undecodable first authorization,
+            # while the second input's raw fields remain available to compare.
+            tx["inputs"][0]["script"] += b"\0"
+            mutations.refresh(a, tx)
+            for item in a["inputs"]:
+                item["sighash_all_digest_hex"] = "00" * 32
+                item["message_hex"] = "00" * 101
+            a["artifact_sha256"] = oracle.artifact_hash(a)
+            _, observed = oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+            self.assertEqual(observed, oracle.observation("context", "consensus_branch"))
+            for field, value in (("descriptor_hex", "00"), ("records", [])):
+                changed = copy.deepcopy(a)
+                changed["inputs"][1][field] = value
+                changed["artifact_sha256"] = oracle.artifact_hash(changed)
+                with self.subTest(version=version, field=field), self.assertRaises(oracle.InterfaceFailure) as caught:
+                    oracle.evaluate(oracle.canonical(changed), lambda *args: self.fail("unexpected crypto"))
+                self.assertEqual((caught.exception.stage, caught.exception.reason), ("correspondence", "authorization"))
+
+    def test_wire_rejects_unknown_and_version_ineligible_branches(self):
+        branches = {
+            5: (0xc2d6d0b4, 0xc8e71055, 0x4dec4df0, 0x5437f330, 0x37a5165b, oracle.NU7),
+            6: (0x37a5165b, oracle.NU7),
+        }
+        for version in (5, 6):
+            artifact = self.artifacts[f"v{version}-1of1"]
+            original = wire.parse_transaction(bytes.fromhex(artifact["transaction_hex"]))
+            for branch in branches[version]:
+                tx = copy.deepcopy(original)
+                tx["branch"] = branch
+                with self.subTest(version=version, valid_branch=branch):
+                    self.assertEqual(wire.parse_transaction(wire.serialize(tx))["branch"], branch)
+                    if branch != oracle.NU7:
+                        a = mutations.refresh(copy.deepcopy(artifact), tx)
+                        _, observed = oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+                        self.assertEqual(observed, oracle.observation("context", "consensus_branch"))
+            invalid = [0, 0xffffffff, 0xfffffffd, 0xe9ff75a6]
+            if version == 6:
+                invalid += [0xc2d6d0b4, 0xc8e71055, 0x4dec4df0, 0x5437f330]
+            for branch in invalid:
+                tx = copy.deepcopy(original)
+                tx["branch"] = branch
+                a = mutations.refresh(copy.deepcopy(artifact), tx)
+                with self.subTest(version=version, invalid_branch=branch), self.assertRaises(oracle.InterfaceFailure) as caught:
+                    oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+                self.assertEqual((caught.exception.stage, caught.exception.reason), ("correspondence", "transaction_decode"))
+
+    def test_wire_rejects_null_txid_with_every_index_class(self):
+        for version in (5, 6):
+            for index in (0, 1, 0xffffffff):
+                a = copy.deepcopy(self.artifacts[f"v{version}-1of1"])
+                tx = wire.parse_transaction(bytes.fromhex(a["transaction_hex"]))
+                tx["inputs"][0]["outpoint"] = bytes(32) + wire.le32(index)
+                mutations.refresh(a, tx)
+                with self.subTest(version=version, index=index), self.assertRaises(oracle.InterfaceFailure) as caught:
+                    oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+                self.assertEqual((caught.exception.stage, caught.exception.reason), ("correspondence", "transaction_decode"))
+
+    def test_metadata_indices_use_u32_schema_then_wire_correspondence(self):
+        for version in (5, 6):
+            for owner, field, first_invalid_position in (("inputs", "input_index", 32), ("outputs", "output_index", 64)):
+                for value in (first_invalid_position, 0xffffffff, 0x100000000):
+                    a = copy.deepcopy(self.artifacts[f"v{version}-1of1"])
+                    a[owner][0][field] = value
+                    a["artifact_sha256"] = oracle.artifact_hash(a)
+                    with self.subTest(version=version, field=field, value=value), self.assertRaises(oracle.InterfaceFailure) as caught:
+                        oracle.evaluate(oracle.canonical(a), lambda *args: self.fail("unexpected crypto"))
+                    self.assertEqual(caught.exception.stage, "schema" if value > 0xffffffff else "correspondence")
+
 
 if __name__ == "__main__":
     unittest.main()
