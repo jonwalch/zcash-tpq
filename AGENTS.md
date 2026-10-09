@@ -6,6 +6,11 @@ Read `docs/slh-dsa-b128s/protocol.md`. Preserve canonical encoding, trusted UTXO
 resolution, existing classical/shielded behavior, source pins and attribution.
 Reuse existing code and tests with the smallest necessary adaptations. Record
 the reason and regression coverage for new behavior or rewritten modules.
+Use the coordinator's pinned research source as the first reference for modules,
+APIs, command flows and tests. Preserve coherent working mechanisms where they
+fit; record source mappings and justify necessary SLH adaptations. Attribution
+does not authorize importing research notes, history or alternate backends, or a
+runtime dependency on a research checkout.
 
 Focus implementation and review fixes on failures and regressions introduced by
 this SLH extension. Check suspected inherited issues against pinned upstream
