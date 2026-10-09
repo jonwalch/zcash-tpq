@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+  "source_commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+  "source_license": "MIT OR Apache-2.0",
+  "scope": "SLH-only CLI and trusted loopback RPC; no research checkout runtime dependency or old backend import",
+  "files": [
+    {
+      "source_path": "crates/pq-cli/src/main.rs",
+      "source_sha256": "ff6e8013101cfeec54f0f25d3c3468d580212cfd3085c2fcd4d57a772a754143",
+      "target_path": "crates/pq-cli/src/main.rs",
+      "target_sha256": "f0f756f1b6f638577f37e26bd016064ddb1b170752dc57e7ffe9fdffd05cdde6",
+      "classification": "adapted",
+      "adaptations": "Default-off SLH-only wrapper and create-slh-exp; existing dispatch extended to public enrollment and J recovery; original insecurely incomplete restore replaced by J APIs."
+    },
+    {
+      "source_path": "crates/pq-cli/src/discovery.rs",
+      "source_sha256": "ae163fe45eb458b021264893cc95c8da4779851a3d549d694953b5c5a222afaa",
+      "target_path": "crates/pq-cli/src/discovery.rs",
+      "target_sha256": "ae163fe45eb458b021264893cc95c8da4779851a3d549d694953b5c5a222afaa",
+      "classification": "byte-identical",
+      "adaptations": "Rustfmt only where not byte-identical; retained command or terminal/password logic."
+    },
+    {
+      "source_path": "crates/pq-cli/src/history.rs",
+      "source_sha256": "10b03e0b690b3fdd157c0ce64024dd14c9b36756208d418a9ddd5a98274e4d23",
+      "target_path": "crates/pq-cli/src/history.rs",
+      "target_sha256": "10b03e0b690b3fdd157c0ce64024dd14c9b36756208d418a9ddd5a98274e4d23",
+      "classification": "byte-identical",
+      "adaptations": "Rustfmt only where not byte-identical; retained command or terminal/password logic."
+    },
+    {
+      "source_path": "crates/pq-cli/src/password.rs",
+      "source_sha256": "31cb0821cfa7a79017d4ee36d98bc5d486fabc4adf507d0637d3c3e7bbda1071",
+      "target_path": "crates/pq-cli/src/password.rs",
+      "target_sha256": "31cb0821cfa7a79017d4ee36d98bc5d486fabc4adf507d0637d3c3e7bbda1071",
+      "classification": "byte-identical",
+      "adaptations": "Rustfmt only where not byte-identical; retained command or terminal/password logic."
+    },
+    {
+      "source_path": "crates/pq-cli/src/payments.rs",
+      "source_sha256": "56aa08789b23103bbdc6bb627e98e5c34c536521f73e2ea71bf541e51ce01b89",
+      "target_path": "crates/pq-cli/src/payments.rs",
+      "target_sha256": "96a3bdc2c8e7a77c7109b14e9ba1e7f7ffdb709fe81064fa7e45462e0ac5ef10",
+      "classification": "adapted",
+      "adaptations": "Retain command flows; SLH-only help; bounded per-input threshold partial collection up to 225 with duplicate and subquorum refusal before primitive work."
+    },
+    {
+      "source_path": "crates/pq-wallet/src/rpc.rs",
+      "source_sha256": "92757a9e1b391053fa456bcf3eebc6ed972b52f2b531f1de761208fc7ace75ff",
+      "target_path": "crates/pq-wallet/src/rpc.rs",
+      "target_sha256": "f9813142b98844a07f7cc99f71983d509b03e2bffd5885ce8df061e378b6eb0f",
+      "classification": "adapted",
+      "adaptations": "Public API docs and rustfmt only; existing bounded loopback framing, authenticated block/UTXO and submission logic retained."
+    },
+    {
+      "source_path": "crates/pq-wallet/src/rpc/tests/payment.rs",
+      "source_sha256": "f298b4ffb6f29569cc6174e3586d50f66938cc1f4f9341aa6deaa1137bd32590",
+      "target_path": "crates/pq-wallet/src/rpc/tests/payment.rs",
+      "target_sha256": "b8285709cc9d16981caa68a976e1b45490595200eb2f2ac25ea88f94c14e4193",
+      "classification": "adapted",
+      "adaptations": "Keep fake loopback controls; add SLH maximum transaction/HTTP bounds and remote endpoint rejection."
+    },
+    {
+      "target_path": "crates/pq-cli/src/enrollment.rs",
+      "target_sha256": "02018a729e1fa842608319b95c8ad8b7b715a57b017f9cfd0bb4da0426002009",
+      "classification": "new adapter",
+      "reference_paths": [
+        "crates/pq-wallet/src/receiving.rs",
+        "crates/pq-wallet/src/manifest.rs"
+      ],
+      "adaptations": "Public key/origin exchange and canonical pairing fingerprints feed native Policy, Manifest.check_update and existing enroll command. Needed to expose promised multisig enrollment without hand-authored descriptors."
+    },
+    {
+      "target_path": "crates/pq-cli/src/recovery.rs",
+      "target_sha256": "ee50c8ff9cd5f3ee9601c93bb32bf2ebb5da422237c3d63f056aeafb13739b60",
+      "classification": "new adapter",
+      "reference_paths": [
+        "crates/pq-cli/src/main.rs"
+      ],
+      "adaptations": "Thin command adapters to existing J snapshot/restore APIs, explicit trust and allocator-retirement assertion; no new backup encryption or journal format."
+    }
+  ],
+  "new_dependencies": "Only optional already-pinned serde/sha2/native/terminal crates. No registry package/version changes. Default CLI normal/build graph is empty.",
+  "validation": "Parser/public-format/fake-loopback tests pending at source checkpoint. Human terminal/live/payment/recovery/discovery and node builds are never implied by these unit tests."
+}
