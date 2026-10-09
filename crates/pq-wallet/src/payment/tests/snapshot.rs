@@ -218,3 +218,115 @@ fn snapshot_rejects_dropped_historical_proposal_alias() {
         Err(Error::JournalCorrupt)
     ));
 }
+
+#[test]
+fn operational_restore_preserves_signed_authority_and_unknown_mode_refuses_spending() {
+    use crate::recovery::{restore_operational_snapshot, SnapshotTrust};
+    let _serial = crate::tests::BACKUPS.lock().unwrap();
+    let owners = wallets(1, 1, 1);
+    let wallet = &owners[0];
+    let temp = tempfile::tempdir().unwrap();
+    let working = temp.path().join("working");
+    let mut store = create(&working, wallet.manifest(), WatchMode::Allocator);
+    let mut source = Source::funded(wallet, &[2_000_000]);
+    let approved = intent(6);
+    let (proposal, review) = store
+        .prepare_payment(wallet, &mut source, &approved)
+        .unwrap();
+    let id = review.proposal_id;
+    store.migrate_payment_journal().unwrap();
+    let partials = store
+        .sign_payment(wallet, &mut source, &proposal, &approved, id)
+        .unwrap();
+    let signed = store
+        .assemble_payment(wallet, &mut source, &proposal, &approved, &partials)
+        .unwrap();
+    let backup = temp.path().join("keys.tpq");
+    let password = b"public test password for signed recovery";
+    wallet.save_backup(&backup, password).unwrap();
+    let snapshot = temp.path().join("snapshot");
+    let receipt = store
+        .save_operational_snapshot(&backup, password, &snapshot)
+        .unwrap();
+    drop(store);
+    fs::remove_dir_all(&working).unwrap();
+    fs::remove_file(&backup).unwrap();
+    let mut unknown = restore_operational_snapshot(
+        &snapshot,
+        password,
+        &profile(),
+        SnapshotTrust::Unknown,
+        &temp.path().join("unknown"),
+    )
+    .unwrap();
+    assert_eq!(unknown.watch.payments().unwrap()[0].partials, partials);
+    assert_eq!(
+        unknown.watch.payments().unwrap()[0].signed_transaction_hex,
+        Some(hex::encode(&signed))
+    );
+    assert!(!unknown.watch.status().unwrap().complete_at_checkpoint);
+    assert!(
+        unknown
+            .watch
+            .sync(&mut source, 10)
+            .unwrap()
+            .complete_at_checkpoint
+    );
+    assert!(matches!(
+        unknown
+            .watch
+            .sign_payment(&unknown.wallet, &mut source, &proposal, &approved, id),
+        Err(Error::MonitorOnly)
+    ));
+    assert!(matches!(
+        unknown
+            .watch
+            .submit_payment(&unknown.wallet, &mut source, id),
+        Err(Error::MonitorOnly)
+    ));
+    assert!(source.sent.is_empty());
+    let restored_path = temp.path().join("known");
+    let mut known = restore_operational_snapshot(
+        &snapshot,
+        password,
+        &profile(),
+        SnapshotTrust::KnownAuthority {
+            trusted_receipt: receipt.fingerprint().unwrap(),
+        },
+        &restored_path,
+    )
+    .unwrap();
+    assert!(!known.watch.status().unwrap().complete_at_checkpoint);
+    assert_eq!(known.watch.payments().unwrap()[0].partials, partials);
+    assert_eq!(
+        known.watch.payments().unwrap()[0].signed_transaction_hex,
+        Some(hex::encode(&signed))
+    );
+    assert!(known
+        .watch
+        .journal_reserved(
+            proposal.points().unwrap()[0],
+            4,
+            None,
+            &mut crate::journal::ReadBudget::new(4096).unwrap()
+        )
+        .unwrap());
+    source.unavailable = true;
+    assert!(matches!(
+        known.watch.submit_payment(&known.wallet, &mut source, id),
+        Err(Error::HistoryUnavailable)
+    ));
+    assert!(source.sent.is_empty());
+    source.unavailable = false;
+    source.journal = Some(restored_path.join("watch/state.json"));
+    known
+        .watch
+        .submit_payment(&known.wallet, &mut source, id)
+        .unwrap();
+    assert_eq!(source.sent, [signed]);
+    source.mine();
+    assert_eq!(
+        known.watch.reconcile_payments(&mut source).unwrap(),
+        [PaymentState::Confirmed]
+    );
+}
