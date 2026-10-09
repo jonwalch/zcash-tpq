@@ -18,7 +18,7 @@
     },
     {
       "target": "src/lib.rs",
-      "target_sha256": "d9d0a02d5248e046d2e1b4362db2c7dfa6d053d564ad601d6425b27d2b3959cb",
+      "target_sha256": "7c7d50aa3bb7456663c68716bc12504402902f65638929ddc4cbd0522feffc45",
       "sources": [
         {
           "path": "crates/pq-wallet/src/lib.rs",
@@ -26,7 +26,7 @@
         }
       ],
       "classification": "necessary SLH adaptation",
-      "adaptation": "Preserve creation, identity, enrollment, backup, retirement and trusted-context APIs; restrict to f7, reuse the shared 48-byte derivation and OS-entropy operational signer. Register payment, journal, watch and recovery modules; retain strict recovery schema and regenerate all local commitments on restore."
+      "adaptation": "Preserve creation, identity, enrollment, backup, retirement and trusted-context APIs; restrict to f7, reuse the shared 48-byte derivation and OS-entropy operational signer. Register payment, journal, watch and recovery modules; retain strict recovery schema and regenerate all local commitments on restore. Register the reused trusted loopback RPC module for the CLI."
     },
     {
       "target": "src/suite.rs",
