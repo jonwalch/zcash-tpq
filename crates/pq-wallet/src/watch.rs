@@ -22,7 +22,9 @@ const MAX_STATE: usize = 32 * 1024 * 1024;
 #[serde(rename_all = "lowercase")]
 /// The public watcher role; only an allocator can issue receivers.
 pub enum WatchMode {
+    /// Observe public inventory without allocating or signing.
     Monitor,
+    /// Own the single locked local receiver and payment allocator.
     Allocator,
 }
 

@@ -27,14 +27,14 @@
     },
     {
       "target": "src/scan.rs",
-      "target_sha256": "1e081b0cee50c75ab4ff0ca688db46e2abf0c1575e9f52ef3129c2bb4be776f8",
+      "target_sha256": "2ccc5bf6db7e5307b6e835f946d3630545202000191cd74d4bbe8d539dddbbce",
       "source": "crates/pq-wallet/src/scan.rs",
       "source_sha256": "ed0a7c41a6581ea93d6f999146446efd9a8158de2e0bd13b31bc3d308243276b",
       "adaptation": "Preserved trusted node context, exact enrolled script matching, incomplete history and reorg semantics; target public API documentation only."
     },
     {
       "target": "src/watch.rs",
-      "target_sha256": "218b22c417870596ffe81d8bd60b06db14353f74e731efa1317a5d88690919a6",
+      "target_sha256": "2deafda197bdef62cefa649936d65151fc813d29f5328df075ae9f5d370325d9",
       "source": "crates/pq-wallet/src/watch.rs",
       "source_sha256": "65ce0f0065a4bf0b6069b47678626d9a071a234e969cae116a40929e08f6457f",
       "adaptation": "Preserved locked allocator/monitor, monotonic issuance and cached discovery; added explicit recovery inventory rotation hook that retains reservations and invalidates cached completeness; module registration and API documentation."

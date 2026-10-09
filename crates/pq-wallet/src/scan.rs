@@ -62,7 +62,9 @@ impl NodeContext {
 /// Missing/pruned blocks MUST be errors. PQ configuration is independently
 /// approved by the operator because the existing RPC does not advertise it.
 pub trait ChainSource {
+    /// Read the trusted node tip and upgrade context.
     fn context(&mut self) -> Result<NodeContext, Error>;
+    /// Read the trusted main-chain block hash at the requested height.
     fn block_hash(&mut self, height: u32) -> Result<Hex<32>, Error>;
     /// Read a complete block; unavailable or pruned history is an error.
     fn block_bytes(&mut self, hash: Hex<32>) -> Result<Vec<u8>, Error>;
