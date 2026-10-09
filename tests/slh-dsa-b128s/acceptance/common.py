@@ -51,7 +51,9 @@ def read_json(path, maximum=MAX_JSON):
 
 def write_json(path, value, *, fresh=True):
     path = Path(path)
-    data = canonical(value) + b"\n"
+    # Wallet Profile/Manifest/Intent decoders require these exact canonical
+    # bytes. Receipts use the same encoding; no implicit terminal newline.
+    data = canonical(value)
     require(len(data) <= MAX_JSON, "artifact_size")
     flags = os.O_WRONLY | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
     flags |= os.O_EXCL if fresh else os.O_TRUNC
@@ -99,6 +101,8 @@ def identity_expected(enabled, supported):
 def validate_identity(identity, enabled, *, runtime_required=False):
     require(type(identity) is dict and type(identity.get("runtime_supported")) is bool,
             "verifier_identity_schema")
+    require(type(identity.get("schema_version")) is int
+            and type(identity.get("verifier_compiled")) is bool, "verifier_identity_schema")
     supported = identity["runtime_supported"]
     require(identity == identity_expected(enabled, supported), "verifier_identity_mismatch")
     require(not supported or enabled, "disabled_runtime_identity")
@@ -108,7 +112,8 @@ def validate_identity(identity, enabled, *, runtime_required=False):
 def validate_build(record, binary, kind, *, root=ROOT, runtime_required=False):
     fields = {"schema_version", "contract", "kind", "complete", "source", "command",
               "features", "binary_sha256", "identity", "rustc", "cargo", "environment"}
-    require(type(record) is dict and set(record) == fields and record["schema_version"] == 1
+    require(type(record) is dict and set(record) == fields and type(record["schema_version"]) is int
+            and record["schema_version"] == 1
             and record["complete"] is True and record["contract"] == CONTRACT
             and record["kind"] == kind, "build_receipt_schema")
     require(kind in ("node-default", "node-slh", "wallet-default", "wallet-slh", "host", "signer"), "build_kind")
@@ -117,6 +122,14 @@ def validate_build(record, binary, kind, *, root=ROOT, runtime_required=False):
     if enabled:
         features.append(FEATURE)
     require(record["features"] == features, "build_features")
+    # Verify the exact supported recipe, including a fresh per-receipt target.
+    from build import command
+    argv = record["command"]
+    require(type(argv) is list and all(type(value) is str for value in argv)
+            and argv.count("--target-dir") == 1, "build_command")
+    index = argv.index("--target-dir")
+    require(index + 1 < len(argv), "build_command")
+    require(argv == command(kind, Path(argv[index + 1]))[0], "build_command")
     require(record["source"] == source_state(root), "stale_build_source")
     require(record["binary_sha256"] == sha256(binary), "stale_build_binary")
     if kind.startswith("node-"):
@@ -158,7 +171,7 @@ class Node:
         # Never use proxy environment variables for trusted loopback RPC.
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-    def rpc(self, method, *params):
+    def response(self, method, *params):
         body = canonical({"jsonrpc": "2.0", "id": 1, "method": method, "params": list(params)})
         request = urllib.request.Request(self.url, body, {"Content-Type": "application/json"})
         with self.opener.open(request, timeout=45) as response:
@@ -172,8 +185,19 @@ class Node:
                 "request_sha256": hashlib.sha256(body).hexdigest(),
                 "response_sha256": hashlib.sha256(raw).hexdigest()}) + b"\n")
             self.events.flush()
+        return reply
+
+    def rpc(self, method, *params):
+        reply = self.response(method, *params)
         require(reply.get("error") is None and "result" in reply, "rpc_rejected_" + method)
         return reply["result"]
+
+    def reject(self, method, reason, *params):
+        reply = self.response(method, *params)
+        require(type(reply.get("error")) is dict and reason.lower() in
+                json.dumps(reply["error"], sort_keys=True).lower(), "unexpected_rejection_reason")
+        return {"reason_contains": reason,
+                "error_sha256": hashlib.sha256(canonical(reply["error"])).hexdigest()}
 
     def tip(self):
         info = self.rpc("getblockchaininfo")
