@@ -99,8 +99,5 @@ fn root_entropy_failure_returns_no_root() {
 fn operational_roots_are_independent() {
     let first = Root::generate().unwrap();
     let second = Root::generate().unwrap();
-    assert_ne!(
-        first.bytes.as_ref() as &[u8],
-        second.bytes.as_ref() as &[u8]
-    );
+    assert_ne!(&first.bytes[..], &second.bytes[..]);
 }
