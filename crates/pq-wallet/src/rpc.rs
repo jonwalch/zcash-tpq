@@ -328,6 +328,7 @@ impl crate::payment::PaymentSource for LocalRpc {
 
 #[cfg(test)]
 mod tests {
+    mod discovery;
     mod payment;
     use super::*;
     #[test]
