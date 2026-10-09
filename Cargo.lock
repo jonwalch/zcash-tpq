@@ -5594,15 +5594,20 @@ name = "slh-dsa-b128s-fixture-host"
 version = "0.1.0"
 dependencies = [
  "hex",
+ "rand 0.10.2",
  "ripemd 0.1.3",
  "secp256k1",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "zakura-chain",
+ "zakura-orchard",
  "zakura-pq-slh-dsa-b-exp",
  "zakura-pq-test-support",
  "zakura-pq-tx-context",
+ "zakura-proofs",
+ "zakura-protocol",
+ "zakura-sapling-crypto",
 ]
 
 [[package]]
