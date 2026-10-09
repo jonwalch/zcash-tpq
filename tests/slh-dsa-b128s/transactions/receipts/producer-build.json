@@ -1,0 +1,42 @@
+{
+  "binary_sha256": {
+    "host": "b749da1781791bb3251cbb890808f6429f35f7442092c48dea30e2a564ef93e9",
+    "signer": "57e15db7aa5c7c2b8a49ee1af929eaf9e24513498e5f9139b8e30e84e6bd01ff"
+  },
+  "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
+  "commands": [
+    [
+      "cargo",
+      "build",
+      "--manifest-path",
+      "tests/slh-dsa-b128s/fixture-signer/Cargo.toml",
+      "--release",
+      "--locked"
+    ],
+    [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "slh-dsa-b128s-fixture-host"
+    ]
+  ],
+  "compiler_environment_sha256": {
+    "CARGO_BUILD_TARGET": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "RUSTC_WORKSPACE_WRAPPER": null,
+    "RUSTC_WRAPPER": null,
+    "RUSTFLAGS": null
+  },
+  "configuration_files_sha256": {
+    ".cargo/config.toml": "da252b8ca275eb20b900165a9f1d3c7feb5e998d98eeb743717f3c9b7805451c",
+    "Cargo.toml": "1a90711c2b7329a1eeb37dbded6782a695d454e7fb5e29605e7d673e13a6d05e",
+    "rust-toolchain.toml": "e5cc0545f232bde807bd9394c2433322d1cd2cf42b060ceab2ac7329bc9cdaa2",
+    "tests/slh-dsa-b128s/fixture-signer/Cargo.toml": "ee139a708aef5622e65787cc569d1417003ae160bc1e7363b17feb8a0d077324"
+  },
+  "kind": "bounded-offline-fixture-builds",
+  "rustc_verbose": "rustc 1.98.0 (88d9e12ae 2026-08-18)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8",
+  "schema_version": 1,
+  "scope": "No node/container build, live integration or performance validation.",
+  "source_commit": "324a9311ec499f981d06addcb203678ffff2a1ae"
+}

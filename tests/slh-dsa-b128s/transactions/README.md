@@ -53,3 +53,13 @@ Coverage is transparent-only. Shielded digest effects/exclusions, consensus,
 relay/mining, operational wallet/CLI/backup/recovery and human live acceptance
 remain separate pending gates. Public fixtures contain only public test material
 and synthetic previous outputs; they do not authenticate real UTXOs.
+
+The [initial G2 receipt](receipts/g2-initial.json) records independent agreement
+for all 18 artifacts, 146 signatures, 55 typed mutations, two message controls
+and 105 official portable-C BLAKE3 controls. The accompanying
+[production receipt](receipts/production.json) records deterministic generation,
+source inventories and raw artifact hashes; the
+[build record](receipts/producer-build.json) identifies the compiler,
+configuration, locks and exact invoked binaries. All three bind producer source
+checkpoint `324a9311ec499f981d06addcb203678ffff2a1ae`. This is bounded native
+conformance evidence, with the pending coverage above unchanged.
