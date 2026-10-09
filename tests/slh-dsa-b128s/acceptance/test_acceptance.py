@@ -113,6 +113,21 @@ class BuildReceiptTests(unittest.TestCase):
             self.assertIs(record["complete"], False)
             self.assertEqual(record["failure"], "missing_receipt")
 
+    def test_toolchain_probes_and_build_share_the_repository_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            args = SimpleNamespace(kind="host", artifacts=Path(temporary) / "build")
+            def cargo(argv, **kwargs):
+                target = Path(argv[argv.index("--target-dir") + 1]) / "release"
+                target.mkdir(parents=True)
+                (target / "slh-dsa-b128s-fixture-host").write_bytes(b"mock executable")
+            with patch.object(build, "source_state", return_value={"pin": "same"}), \
+                    patch.object(build.subprocess, "check_output", return_value="mock toolchain") as probe, \
+                    patch.object(build.subprocess, "run", side_effect=cargo) as compile_process, \
+                    patch("sys.stdout", io.StringIO()):
+                build.build(args)
+            self.assertTrue(all(call.kwargs["cwd"] == common.ROOT for call in probe.call_args_list))
+            self.assertEqual(compile_process.call_args.kwargs["cwd"], common.ROOT)
+
 
 class FundingNode:
     def __init__(self):
@@ -189,6 +204,58 @@ class FundingAndRpcTests(unittest.TestCase):
 
 
 class WalletFlowTests(unittest.TestCase):
+    def test_complete_mocked_enrollment_payment_recovery_and_following_payment(self):
+        from fake_cli import FakeCli
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            node = SimpleNamespace(address="127.0.0.1:8232", tip=Mock(return_value=(110, "aa" * 32)))
+            profile = common.write_json(directory / "profile.json", wallet_live.profile("00" * 32))
+            demo = wallet_live.Demo(Path("mock-cli"), profile, directory, [node, node], b"mock-password")
+            fake = FakeCli([node, node])
+            demo.cli = fake
+            # Actual driver methods run; every CLI/process boundary is replaced.
+            group = demo.group(directory / "owners", 2, 3)
+            self.assertTrue(all(signer.manifest["revision"] == 4 for signer in group))
+            self.assertEqual(fake.calls.count("enroll"), 12)
+            self.assertEqual(fake.calls.count("enroll-prepare"), 12)
+            first_receiver = demo.cli("receive", group[0].store)
+            self.assertNotEqual(demo.cli("receive", group[0].store), first_receiver)
+            demo.cli("receive", group[0].store, success=False)
+            demo.replenish_receive(group)
+            self.assertNotEqual(demo.cli("receive", group[0].store), first_receiver)
+            demo.cli("receive", group[0].store, success=False)
+            recipient = demo.oracle.receiver(bytes.fromhex(group[0].manifest["entries"][1]["policy_hex"]))
+            first = demo.payment(group, recipient, 5, 1, directory / "first")
+            self.assertEqual(first["review"]["checks"], 2)
+            restored, receipts = demo.recover(group, first, directory / "recovery")
+            self.assertEqual(len(restored), 2)  # third independent root actually removed
+            self.assertEqual(len(receipts), 2)
+            self.assertTrue(all(not signer.backup.exists() for signer in group))
+            node.tip.return_value = (110, "bb" * 32)
+            refreshed = demo.refresh(restored, first, directory / "refresh")
+            self.assertNotEqual(refreshed["old_id"], refreshed["new_id"])
+            for signer in restored:
+                fake.watches[signer.store]["balance"] = 500_000
+            following = demo.payment(restored, recipient, 6, 1, directory / "following", all_value=500_000)
+            self.assertEqual(following["review"]["change_value"], 0)
+            self.assertEqual(following["review"]["checks"], 2)
+            self.assertEqual(fake.calls.count("snapshot-restore"), 3)
+
+    def test_budget_controls_refuse_unrelated_cli_failures(self):
+        from fake_cli import FakeCli
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            node = SimpleNamespace(address="127.0.0.1:8232", tip=lambda: (110, "aa" * 32))
+            demo = wallet_live.Demo(Path("mock-cli"), directory / "profile", directory, [node, node], b"mock")
+            demo.cli = FakeCli([node, node])
+            group = demo.group(directory / "owners", 2, 3)
+            demo.cli = Mock(return_value=b"RPC unavailable")
+            with self.assertRaisesRegex(common.AcceptanceError, "unexpected_budget_rejection"):
+                demo.payment(group, "recipient", 5, 9, directory / "bad", reject=True)
+            demo.cli.return_value = b"insufficient eligible funds within the payment limits"
+            result = demo.payment(group, "recipient", 5, 9, directory / "good", reject=True)
+            self.assertEqual(result["rejected_checks"], 18)
+
     def partial(self, directory, index=0, slot=14):
         public = "11" * 32
         owner = "22" * 16

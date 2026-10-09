@@ -152,12 +152,14 @@ class Demo:
                                                       threshold, destination, *exchanges))
                     require(prepared["inventory"] == candidate and destination.read_bytes() == canonical(candidate)
                             and prepared["fingerprint"] == fingerprint(candidate), "prepared_enrollment")
+                    enrolled = root.parent / f"wallet-{generation}.tpq"
+                    self.cli("enroll", root, destination, fingerprint(candidate), enrolled, secret=True)
+                    root.unlink()
+                    roots[slot] = enrolled
                     current[slot], inventories[slot] = candidate, destination
         group = []
         for root, inventory, public in zip(roots, current, inventories):
-            backup = root.parent / "wallet.tpq"
-            self.cli("enroll", root, public, fingerprint(inventory), backup, secret=True)
-            root.unlink()
+            backup = root
             store = root.parent / "watch"
             self.cli("watch-create", public, fingerprint(inventory), store, "allocator")
             actual = object_output(self.cli("inspect", backup, secret=True))
@@ -171,6 +173,81 @@ class Demo:
         self.cli("watch-create", inventory, fingerprint(participant.manifest), destination, "monitor")
         self.cli("receive", destination, success=False)
         return destination
+
+    def replenish_receive(self, group):
+        """Use the public exchange/enrollment flow to extend the finite range."""
+        index = group[0].manifest["receive_end"]
+        exchanges, keys = [], []
+        for signer in group:
+            key_path = signer.backup.parent / "replenishment-key.json"
+            response = object_output(self.cli("key-export", signer.backup, "receive", index, key_path, secret=True))
+            key = response["exchange"]
+            digest = hashlib.sha256(b"ZcashTransparentPQ/experimental/slh-dsa-b-128s/key-exchange/v1\0"
+                                    + canonical(key)).hexdigest()
+            require(response["fingerprint"] == digest, "replenishment_key_fingerprint")
+            exchanges.extend([key_path, digest])
+            keys.append((key_commitment(bytes.fromhex(key["public_key_hex"])),
+                         {"account": 0, "index": index, "wallet_id": key["wallet_id"]}))
+        keys.sort(key=lambda row: row[0])
+        policy = bytes.fromhex(group[0].manifest["entries"][0]["policy_hex"])
+        entry = {"role": 0, "origins": [origin for _, origin in keys],
+                 "policy_hex": (bytes([1, 247, policy[2], policy[3]]) + b"".join(key for key, _ in keys)).hex()}
+        for signer in group:
+            current = write_json(signer.backup.parent / "before-replenishment.json", signer.manifest)
+            candidate = signer.backup.parent / "replenished.json"
+            response = object_output(self.cli("enroll-prepare", current, "receive", policy[2], candidate, *exchanges))
+            expected = dict(signer.manifest, receive_end=index + 1, revision=signer.manifest["revision"] + 1,
+                            entries=sorted([*signer.manifest["entries"], entry], key=lambda item: (item["role"],
+                                next(origin["index"] for origin in item["origins"]
+                                     if origin["wallet_id"] == signer.manifest["wallet_id"]))))
+            require(response["inventory"] == expected and response["fingerprint"] == fingerprint(expected),
+                    "replenishment_policy")
+            self.oracle.check_manifest_update(signer.manifest, expected)
+            backup = signer.backup.parent / "replenished.tpq"
+            self.cli("enroll", signer.backup, candidate, fingerprint(expected), backup, secret=True)
+            self.cli("watch-import", signer.store, candidate, fingerprint(expected))
+            signer.backup, signer.manifest = backup, expected
+
+    def refresh(self, group, payment, directory):
+        """Pinned tip-only refresh flow; old bytes survive renewed local approval."""
+        directory.mkdir(mode=0o700)
+        owner = group[0]
+        old_id = payment["review"]["proposal_id"]
+        proposal = directory / "refreshed.json"
+        review = object_output(self.cli("refresh-propose", owner.backup, owner.store,
+                                        self.nodes[0].address, old_id, proposal, secret=True))
+        decoded = read_json(proposal, 262144)
+        require(review["proposal_id"] != old_id
+                and decoded["transaction_hex"] == payment["proposal"]["transaction_hex"]
+                and review["expiry_height"] == payment["review"]["expiry_height"], "tip_only_refresh")
+        collected = directory / "partials"
+        collected.mkdir(mode=0o700)
+        for index, signer in enumerate(group):
+            endpoint = self.nodes[index % 2].address
+            before = self.export(signer, old_id, directory / f"before-{index}")
+            independent = object_output(self.cli("refresh-review", signer.backup, signer.store,
+                                                endpoint, old_id, proposal, secret=True))
+            require({key: value for key, value in independent.items() if key != "local_change"}
+                    == {key: value for key, value in review.items() if key != "local_change"}, "refresh_review")
+            self.cli("refresh-approve", signer.backup, signer.store, endpoint, old_id, proposal,
+                     old_id, secret=True, success=False)
+            approved = object_output(self.cli("refresh-approve", signer.backup, signer.store, endpoint,
+                                             old_id, proposal, review["proposal_id"], secret=True))
+            require(approved == independent, "refresh_approval")
+            partials = directory / f"signed-{index}"
+            self.cli("sign", signer.backup, signer.store, endpoint, payment["intent_path"], proposal,
+                     review["proposal_id"], partials, secret=True)
+            for path in partials.iterdir():
+                original, updated = read_json(before / path.name), read_json(path)
+                require(dict(original, proposal_id=review["proposal_id"]) == updated, "refresh_cached_partial_bytes")
+                shutil.copyfile(path, collected / path.name)
+                (collected / path.name).chmod(0o600)
+        self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, payment["intent_path"],
+                 proposal, collected, secret=True)
+        exported = self.export(owner, review["proposal_id"], directory / "export")
+        require((exported / "signed-transaction.hex").read_text() == payment["raw"], "refresh_saved_transaction")
+        payment.update(review=review, proposal=decoded, proposal_path=proposal)
+        return {"old_id": old_id, "new_id": review["proposal_id"], "exact_bytes": True}
 
     def sync(self, store, node=0):
         response = object_output(self.cli("sync", store, self.nodes[node].address, 1000))
@@ -199,6 +276,8 @@ class Demo:
         response = self.cli("propose", owner.backup, owner.store, self.nodes[0].address,
                             intent, proposal_path, secret=True, success=not reject)
         if reject:
+            require(b"insufficient eligible funds within the payment limits" in response,
+                    "unexpected_budget_rejection")
             require(not proposal_path.exists(), "rejected_budget_published_proposal")
             return {"rejected_checks": threshold * inputs, "transaction_limit": TX_LIMIT}
         review = object_output(response)
@@ -230,8 +309,10 @@ class Demo:
             else:
                 require(local is None, "unexpected_no_change_advancement")
             refused = directory / f"refused-{index}"
-            self.cli("sign", signer.backup, signer.store, endpoint, intent, proposal_path,
-                     "00" * 32, refused, secret=True, success=False)
+            rejected = self.cli("sign", signer.backup, signer.store, endpoint, intent, proposal_path,
+                                "00" * 32, refused, secret=True, success=False)
+            require(b"proposal, approved intent or partial authorization does not match" in rejected,
+                    "unexpected_approval_rejection")
             require(not refused.exists(), "unapproved_signature_export")
             partial_dir = directory / f"signed-{index}"
             self.cli("sign", signer.backup, signer.store, endpoint, intent, proposal_path,
@@ -254,8 +335,10 @@ class Demo:
         for path in sorted(collected.iterdir())[:max(0, threshold - 1)]:
             shutil.copyfile(path, insufficient / path.name)
             (insufficient / path.name).chmod(0o600)
-        self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, intent, proposal_path,
-                 insufficient, secret=True, success=False)
+        rejected = self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, intent, proposal_path,
+                            insufficient, secret=True, success=False)
+        require(b"not enough distinct partials for every input threshold" in rejected,
+                "unexpected_subquorum_rejection")
         rejected_export = self.export(owner, review["proposal_id"], directory / "subquorum-export")
         require(not (rejected_export / "signed-transaction.hex").exists(), "subquorum_assembled_transaction")
         self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, intent, proposal_path,
@@ -365,6 +448,16 @@ def execute(args, artifacts, receipt):
             issued = demo.cli("receive", group[0].store).decode("ascii").strip()
             require(issued == demo.oracle.receiver(bytes.fromhex(entry_at(group[0].manifest, 0, 0)["policy_hex"])),
                     "issued_receiver")
+            second_receiver = demo.cli("receive", group[0].store).decode("ascii").strip()
+            require(second_receiver != issued, "durable_receiver_allocation")
+            demo.cli("receive", group[0].store, success=False)
+            demo.replenish_receive(group)
+            updated_inventory = write_json(private / "monitor-update.json", group[0].manifest)
+            demo.cli("watch-import", monitor, updated_inventory, fingerprint(group[0].manifest))
+            replenished_receiver = demo.cli("receive", group[0].store).decode("ascii").strip()
+            require(replenished_receiver not in (issued, second_receiver), "replenished_receiver")
+            demo.cli("receive", group[0].store, success=False)
+            receipt["watch_issuance"] = {"finite_range_exhaustion": True, "backed_up_replenishment": True}
             parent = authenticate_coinbase(network.nodes, 1, information["script_hex"])
             funding = host_call(args.host, "classical-spend", recipe={
                 "kind": args.classical, "transaction_version": args.version,
@@ -398,13 +491,26 @@ def execute(args, artifacts, receipt):
                         == args.inputs * FUNDING_VALUE, "funded_wallet_balance")
             require(demo.sync(monitor)["scan"]["confirmed_zatoshis"] == args.inputs * FUNDING_VALUE,
                     "watch_balance_parity")
+            network.mine()  # forkable proposal tip after the confirmed funding
             over = args.threshold * args.inputs > TX_LIMIT
             payment = demo.payment(group, recipient, args.version, args.inputs, private / "payment", reject=over)
             if over:
                 receipt["budget_rejection"] = payment
             else:
                 group, receipt["recovery"] = demo.recover(group, payment, private / "recovery")
+                receipt["quorum"] = {"participants": args.participants, "surviving_roots": len(group),
+                                     "working_roots_deleted": args.participants}
                 receipt["restart"] = network.restart()
+                old_tip = payment["review"]["tip"]
+                for node in network.nodes:
+                    node.rpc("invalidateblock", old_tip["hash"])
+                wait_for(lambda: all(node.tip()[0] == old_tip["height"] - 1 for node in network.nodes),
+                         "wallet_proposal_tip_rollback")
+                replacement = network.mine()[0]
+                require(replacement != old_tip["hash"], "wallet_replacement_tip")
+                demo.cli("submit", group[0].backup, group[0].store, network.a.address,
+                         payment["review"]["proposal_id"], secret=True, success=False)
+                receipt["refresh"] = demo.refresh(group, payment, private / "refresh")
                 receipt["payment"] = submit(demo, network, group[0], payment)
                 proposal_id = payment["review"]["proposal_id"]
                 demo.cli("payment-archive", group[0].backup, group[0].store,
