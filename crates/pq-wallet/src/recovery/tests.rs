@@ -364,3 +364,53 @@ fn every_local_root_is_checked_and_retirement_is_monotonic() {
         Err(Error::RecoveryIncomplete)
     ));
 }
+
+#[test]
+fn interrupted_v2_migration_directories_and_orphans_survive_capture_and_restore() {
+    let _serial = BACKUPS.lock().unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let wallet = wallet();
+    let backup = directory.path().join("key.tpq");
+    wallet.save_backup(&backup, PASSWORD).unwrap();
+    for with_objects in [false, true] {
+        let original = directory.path().join(format!("working-{with_objects}"));
+        let mut watch = store(&original, &wallet);
+        create_directory(&original.join("journal")).unwrap();
+        if with_objects {
+            create_directory(&original.join("journal/objects")).unwrap();
+            write_private(
+                &original.join("journal/objects/.object-retained"),
+                b"old incomplete migration",
+            )
+            .unwrap();
+        }
+        let snapshot = directory.path().join(format!("snapshot-{with_objects}"));
+        let receipt = watch
+            .save_operational_snapshot(&backup, PASSWORD, &snapshot)
+            .unwrap();
+        assert_eq!(receipt.generation(), None);
+        drop(watch);
+        fs::remove_dir_all(&original).unwrap();
+        let destination = directory.path().join(format!("restored-{with_objects}"));
+        let restored = restore_operational_snapshot(
+            &snapshot,
+            PASSWORD,
+            &profile(),
+            SnapshotTrust::Unknown,
+            &destination,
+        )
+        .unwrap();
+        assert_eq!(restored.watch.mode(), WatchMode::Monitor);
+        assert!(destination.join("watch/journal").is_dir());
+        assert_eq!(
+            destination.join("watch/journal/objects").exists(),
+            with_objects
+        );
+        if with_objects {
+            assert_eq!(
+                fs::read(destination.join("watch/journal/objects/.object-retained")).unwrap(),
+                b"old incomplete migration"
+            );
+        }
+    }
+}
