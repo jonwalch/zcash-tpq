@@ -185,6 +185,8 @@ class CaptureDriverTests(unittest.TestCase):
                 stack.enter_context(patch.object(capture, name, side_effect=replacement))
             stack.enter_context(patch.object(transparent_controls, "host_call", side_effect=state.host))
             stack.enter_context(patch.object(transparent_controls, "signer_call", side_effect=state.signer))
+            stack.enter_context(patch.object(transparent_controls, "restart_with_backups",
+                                             side_effect=state.restart_backed))
             stack.enter_context(patch.object(observations, "source_state", return_value=SOURCE))
             stack.enter_context(patch.object(observations, "validate_build"))
             # Fail immediately in a mock on a no-op lifecycle rather than waiting a minute.
@@ -201,6 +203,9 @@ class CaptureDriverTests(unittest.TestCase):
         state = ObservedLedger()
         receipt, reports, attempts = self.run_flow(state)
         self.assertEqual(state.restarts, [110, 108])
+        self.assertEqual([len(hashes) for hashes in state.backup_checks], [1, 3])
+        self.assertEqual(receipt["reorg"]["backup"]["excluded_block_hashes"], state.backup_checks[0])
+        self.assertEqual(receipt["rollback"]["backup"]["excluded_block_hashes"], state.backup_checks[1])
         self.assertEqual(receipt["final_tip"]["height"], 110)
         self.assertEqual(len(reports), 12)
         self.assertEqual([len(node.observation_captures) for node in state.nodes], [3, 3])
@@ -232,6 +237,16 @@ class CaptureDriverTests(unittest.TestCase):
         self.assertEqual(len(reports), 12)
         self.assertEqual(receipt["final_tip"]["height"], 110)
         self.assertTrue(all(recipe["transaction_version"] == 6 for recipe in state.mixed_recipes))
+
+    def test_rollback_receipt_requires_exact_prior_height_and_hash(self):
+        for field, value in (("height", 0), ("hash", identity("wrong-reopened-tip"))):
+            def changed(network, block, height):
+                return dict(transparent_controls.rollback(network, block, height), **{field: value})
+            with self.subTest(field=field), self.assertRaisesRegex(AcceptanceError, "capture_reorg_no_rollback"):
+                state = ObservedLedger()
+                self.run_flow(state, lambda stack: stack.enter_context(
+                    patch.object(capture, "rollback", side_effect=changed)))
+            self.assertEqual(state.restarts, [110])
 
     def test_missing_subject_manifest_and_noop_analysis_cannot_complete(self):
         original = capture.mixed_artifacts

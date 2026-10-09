@@ -339,7 +339,8 @@ def execute(args, artifacts, receipt):
                 if stage == "active":
                     tip = stages[-1]["replay"]["after"]
                     restored = rollback(network, tip["hash"], tip["height"] - 1)
-                    require(restored == stages[-1]["replay"]["before"], "capture_reorg_no_rollback")
+                    require({"height": restored["height"], "hash": restored["hash"]}
+                            == stages[-1]["replay"]["before"], "capture_reorg_no_rollback")
                     receipt["reorg"] = restored
                 elif stage == "reorg":
                     boundary = network.a.rpc("getblockhash", SLH_HEIGHT - 1)
