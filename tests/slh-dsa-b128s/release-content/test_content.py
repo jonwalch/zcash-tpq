@@ -85,6 +85,17 @@ class PathTests(unittest.TestCase):
                         with self.assertRaises(ValueError):
                             audit.manifest_paths("Cargo.toml", data, names, added=False)
 
+    def test_historical_registration_can_precede_source_but_cannot_escape(self):
+        names = {"Cargo.toml"}
+        registration = b'[workspace]\nmembers=["tests/public-host"]\n'
+        audit.manifest_paths("Cargo.toml", registration, names, added=False, require_workspace_members=False)
+        with self.assertRaisesRegex(ValueError, "workspace member not tracked"):
+            audit.manifest_paths("Cargo.toml", registration, names, added=False)
+        for value in ("../outside", "/private/outside", "C:/outside"):
+            with self.subTest(path=value), self.assertRaises(ValueError):
+                audit.manifest_paths("Cargo.toml", registration.replace(b"tests/public-host", value.encode()),
+                                     names, added=False, require_workspace_members=False)
+
     def test_archive_and_package_traversal_and_private_files_fail(self):
         for value in ("../secret", "/absolute", "a/../secret", "a\\secret", "a//secret"):
             with self.subTest(path=value), self.assertRaises(ValueError):
