@@ -7,6 +7,20 @@
 [![codecov](https://codecov.io/gh/zakura-core/zakura/branch/main/graph/badge.svg)](https://codecov.io/gh/zakura-core/zakura)
 ![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)
 
+## Experimental SLH extension
+
+This checkout adds **SLH-DSA-B-128s only** to pinned upstream Zakura, with an
+optional Regtest node verifier and a separate wallet/CLI, watch-only inventory
+and recovery tooling. Support is off by default. It is not a Mainnet/Testnet
+activation, an assigned address type, or a completed live acceptance result.
+
+Start with the [SLH guide](docs/slh-dsa-b128s/README.md) for the feature,
+configuration, wallet/recovery entry points and validation limits. The
+[packaging guide](docs/slh-dsa-b128s/packaging.md) explains source provenance,
+the content guard and publication safeguards. The upstream installer, Docker
+images, badges and release instructions below describe upstream Zakura; they do
+not distribute or validate this experimental extension.
+
 - [Getting Started](#getting-started)
   - [Installer](#installer)
   - [Docker](#docker)

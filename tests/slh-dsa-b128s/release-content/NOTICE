@@ -1,0 +1,14 @@
+MIT OR Apache-2.0, consistent with the containing project.
+
+The exact-source/record association and narrowly scoped reviewed-difference
+pattern are adapted from jonwalch/zcash-transparent-pq, commit
+e759cb86a06510893f8e7d1eb986b7025401c8c9,
+node/tests/pq_node_provenance.py. The public import ledger selects source/path,
+license and adaptation facts from the existing module provenance records;
+private handoffs, validation diaries and research history are not imported.
+
+check.py directly reuses canonical and strict_json from the product's existing
+tests/slh-dsa-b128s/fixtures/generate_transactions.py, whose attribution remains
+beside that module. The content/history/archive/path/package checks and focused
+regressions are new glue required for the curated repository boundary. No
+production serialization or cryptographic implementation is replaced.

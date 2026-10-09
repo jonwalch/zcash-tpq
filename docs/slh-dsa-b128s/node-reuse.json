@@ -1,0 +1,232 @@
+{
+  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes.",
+  "schema_version": 1,
+  "sources": [
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-chain/src/parameters/network.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "5a2fe76870a4d89c63a14c7f5464ea2c23fe5e7fc407b87266c8458886616d7f",
+      "target_path": "crates/zakura-chain/src/parameters/network.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-chain/src/parameters/network/error.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "e75824b4657bf87ca2d602e339c2e7f9f213515b3009f84c88fa5eb2e6fba245",
+      "target_path": "crates/zakura-chain/src/parameters/network/error.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-chain/src/parameters/network/testnet.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "4695fbe20b79ce90876e8d4ea97386a61adc11f2a75d96c7aba76233aa891158",
+      "target_path": "crates/zakura-chain/src/parameters/network/testnet.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-chain/src/parameters/network/tests/vectors.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "37e2011adf2046b74fb1148bb2c1b12b84a439b7bd9ae906b2f1bdd49646600e",
+      "target_path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-network/src/config.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "38a57afec413df565d6243cb2ff720dd21ab152b2b01a88b28b3f36184cd9c1a",
+      "target_path": "crates/zakura-network/src/config.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-network/src/config/tests/vectors.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "4e09e4755d062ef5e4096b84b54a6adef5b2b7e968281b81220ffa0505a92689",
+      "target_path": "crates/zakura-network/src/config/tests/vectors.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-state/src/config.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "9b72e0553c86bc0e84473b94f1ecd19f9395c69a98f5f2665acee6c5992e0041",
+      "target_path": "crates/zakura-state/src/config.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-state/src/service/chain_tip.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "0c5f9d099cef582ca62bfe3150223509d6c76144d0a8424faa8b251602097b1a",
+      "target_path": "crates/zakura-state/src/service/chain_tip.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakura-state/src/service/chain_tip/tests/vectors.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "992fb991d07b50127e4f348e153f4f47886e39888bea011899737e8845cba273",
+      "target_path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs"
+    },
+    {
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
+      "source_path": "node/zakura/crates/zakurad/src/commands/start.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "53bab3d15be0b87aa40d150de1189b0121adf3c6dfac4d301a39064f9f948127",
+      "target_path": "crates/zakurad/src/commands/start.rs"
+    },
+    {
+      "adaptation": "Retain generic atomic budget implementation; remove other suites; substitute explicit SLH limits/errors and frozen16/64 functional boundary controls.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-consensus/src/transaction/pq.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "a25d28a3a6d6e507e82386f7c0211cc86adf6f747c58ba56e54a4c8c0f693984",
+      "target_path": "crates/zakura-consensus/src/transaction/pq.rs"
+    },
+    {
+      "adaptation": "Reuse ordered reservation and Rayon find_map_first N1 prefix verification; SLH native facade and boxed signatures.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-consensus/src/transaction.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "75a337a0e86db4d07d5a5d6014f9c6fb24d8a0fd34cd9df3ffe0df78b51234a8",
+      "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
+    },
+    {
+      "adaptation": "Selective AsyncChecks success accounting, CPU task integration, trusted dispatch, shared output allocation and success-only publication; retain upstream ordered resolver and original fee ordering.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-consensus/src/transaction.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "75a337a0e86db4d07d5a5d6014f9c6fb24d8a0fd34cd9df3ffe0df78b51234a8",
+      "target_path": "crates/zakura-consensus/src/transaction.rs"
+    },
+    {
+      "adaptation": "Reuse private accounting fields, authorization ID, transaction/output Arc identity and network/upgrade rule binding; only SLH and boxed optional metadata.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-chain/src/transaction/unmined/pq.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "eecfbc221dd1305563dca3c4ad61f230cd025452fe68b0cfcb1b1b6b699ceddc",
+      "target_path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s.rs"
+    },
+    {
+      "adaptation": "Reuse two suite-independent metadata tests. Omit alternate suites and invalid-for-SLH pre-NU7 activation scenario.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-chain/src/transaction/unmined/pq/tests.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "5f6084bd0f2c7443f05cca6926115bd536428c0a2f663ad4a0028f628c37082e",
+      "target_path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s/tests.rs"
+    },
+    {
+      "adaptation": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-consensus/src/transaction/tests/pq/accounting.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "1b167b8173830ea580db3841e1e48c5cfa9c51da2118360f468de0e545b9e4f4",
+      "target_path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs"
+    },
+    {
+      "adaptation": "Reuse cache lookup+insertion gate and focused inactive/active tests; SLH-only activation parameters.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-consensus/src/block/prepared.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "cc84effdaf4f10c1d10c75217f2006efd97eea27079ad39cd6cd16e2ca2e9013",
+      "target_path": "crates/zakura-consensus/src/block/prepared.rs"
+    },
+    {
+      "adaptation": "Add shared_previous_outputs accessor only to retain exact trusted allocation; no FFI behavior changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-script/src/lib.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "abf244e67f07ab2f4a56c27ac371a579a2d0681599fa323d395363b66f18cbf4",
+      "target_path": "crates/zakura-script/src/lib.rs"
+    },
+    {
+      "adaptation": "Exact three-line generic success-result type adaptation to existing spawn_fifo_and_convert; preserves queue, channel and boxed-error behavior; existing callers infer unit.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
+      "source_path": "node/zakura/crates/zakura-consensus/src/primitives.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "7cb53aa5c9271fe34128f4fedc5b0508f7c0b52e54ba6161692407089a79fe89",
+      "target_path": "crates/zakura-consensus/src/primitives.rs"
+    },
+    {
+      "adaptation": "Retain single-suite dust formula and output policy; substitute SLH recognition, 7,973-byte minimum input and policy-only errors.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakura-consensus/src/transaction/check.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "c184339daf6efb9784ea1d91396886ceca7e191a2b1483e426d3b96e12b239b6",
+      "target_path": "crates/zakura-consensus/src/transaction/check.rs"
+    },
+    {
+      "adaptation": "Retain candidate-height network context, structural/verified equality and exact-output bypass. Preserve upstream inactive storage policy unchanged instead of importing stricter unrelated legacy checks.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakurad/src/components/mempool/storage.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "9cb434ea0b7315f7e37468d01854a8d47c1eb1a31f85aa8477610cc09830ccb8",
+      "target_path": "crates/zakurad/src/components/mempool/storage.rs"
+    },
+    {
+      "adaptation": "Reuse existing network-aware storage construction pattern through chain_tip_change.network(); no new state or reset path.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakurad/src/components/mempool.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "b609f1431001f99374973415da0a5c9a70bd1bc4bd740604369e7991b303cc04",
+      "target_path": "crates/zakurad/src/components/mempool.rs"
+    },
+    {
+      "adaptation": "Retain separate native allowance, metadata validation and atomic all-resource prechecks; SLH only, plus active structural/verified count agreement.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakura-rpc/src/methods/types/get_block_template/zip317.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "97e7bc006f9ebe06cad6e622837c269e28ed15887422f4b697873404917d0a09",
+      "target_path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317.rs"
+    },
+    {
+      "adaptation": "Adapt resource, freshness, zero-cost and dependency-order tests to SLH 16/64 and retained public corpus; no runtime signing or alternate suites.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/pq.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "999bf34537d7da45a3b8d5a3a5f79049bead05185be034aeec97277f35a7f0f4",
+      "target_path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/pq.rs"
+    },
+    {
+      "adaptation": "Adapt funding dust/context tests to SLH candidate height and 2,402/2,403/2,404; add wrong-count/overflow/unauthorized controls.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "source_path": "node/zakura/crates/zakurad/src/components/mempool/storage/tests/pq.rs",
+      "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "source_sha256": "ff4ac80c291b55ce83d78a5aa6248fd01b047a02b5a664e1f07f2270214a3bb2",
+      "target_path": "crates/zakurad/src/components/mempool/storage/tests/pq.rs"
+    }
+  ],
+  "upstream_commit": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
+}
