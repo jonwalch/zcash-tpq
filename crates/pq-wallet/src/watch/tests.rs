@@ -193,7 +193,9 @@ impl ChainSource for Chain {
         if self.missing.contains(&(height as u32)) {
             return Err(Error::HistoryUnavailable);
         }
-        Ok(block.zcash_serialize_to_vec().unwrap())
+        Ok(block
+            .zcash_serialize_to_vec()
+            .expect("synthetic blocks have serializable fields"))
     }
 }
 

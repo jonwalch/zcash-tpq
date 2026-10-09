@@ -181,7 +181,9 @@ impl PaymentSource for Source {
         if self.pool.values().any(|t| t.inputs().iter().any(|i| matches!(i, Input::PrevOut { outpoint, .. } if proposal::point(*outpoint) == point))) { return Ok(None); }
         if self.corrupt_value {
             if let Some(input) = &mut found {
-                input.output.value = (u64::from(input.output.value) + 1).try_into().unwrap();
+                input.output.value = (u64::from(input.output.value) + 1)
+                    .try_into()
+                    .expect("synthetic amounts leave room for the corruption offset");
             }
         }
         Ok(found)
@@ -191,7 +193,9 @@ impl PaymentSource for Source {
         for (height, block) in self.chain.blocks.iter().enumerate() {
             if let Some(tx) = block.transactions.iter().find(|t| txid(t) == id) {
                 return Ok(Some(LocatedTransaction {
-                    bytes: tx.zcash_serialize_to_vec().unwrap(),
+                    bytes: tx
+                        .zcash_serialize_to_vec()
+                        .expect("synthetic transactions have serializable fields"),
                     block: Some(crate::Checkpoint {
                         height: height as u32,
                         hash: Hex(block.hash().bytes_in_display_order()),
@@ -200,7 +204,9 @@ impl PaymentSource for Source {
             }
         }
         Ok(self.pool.get(&id).map(|tx| LocatedTransaction {
-            bytes: tx.zcash_serialize_to_vec().unwrap(),
+            bytes: tx
+                .zcash_serialize_to_vec()
+                .expect("synthetic transactions have serializable fields"),
             block: None,
         }))
     }

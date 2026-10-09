@@ -41,7 +41,7 @@
     },
     {
       "target": "src/watch/tests.rs",
-      "target_sha256": "c9e56f0a8c090e421156ec6e9ccc4f7d549b014c2919e71176b41827e877117b",
+      "target_sha256": "6414a8533ddc2c87420c1db912679b0a500ea17f227bc77c64145d75861fae47",
       "source": "crates/pq-wallet/src/watch/tests.rs",
       "source_sha256": "17c4eaf4abdbdf7e52467691058368dabfa112fbcd8d25b69e18980f4165fccc",
       "adaptation": "Reused synthetic node, enrollment, persistence and reorg tests; replace crypto backend/corpus with SLH and all120 independent receiver answers. RPC transport test deferred with unavailable RPC/CLI lane."

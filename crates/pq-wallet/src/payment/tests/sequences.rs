@@ -103,6 +103,8 @@ impl Trace {
             submissions: vec![],
         }
     }
+    // Retain reproducible failure diagnostics from the pinned test harness.
+    #[allow(clippy::print_stderr)]
     fn step(&mut self, name: impl Into<String>, action: impl FnOnce(&mut Self)) {
         self.steps.push(name.into());
         let result = catch_unwind(AssertUnwindSafe(|| {
@@ -672,7 +674,8 @@ fn signing_returns_no_partial_when_final_publication_fails_then_retries_after_re
         }
         fn try_fill_bytes(&mut self, bytes: &mut [u8]) -> Result<(), rand_core::Error> {
             assert_eq!(self.calls, 0);
-            fs::rename(&self.from, &self.to).unwrap();
+            fs::rename(&self.from, &self.to)
+                .expect("the test owns an existing private watcher at the original path");
             self.calls += 1;
             self.rng.try_fill_bytes(bytes)
         }
