@@ -677,8 +677,14 @@ fn input_and_final_size_limits_are_not_hidden_by_fund_selection() {
     assert!(review::estimate(&tx, &[entry; 8]).unwrap().0 <= MAX_TRANSACTION);
     let input = tx.inputs()[0].clone();
     review::inputs_mut(&mut tx).unwrap().push(input);
+    assert_eq!(review::estimate(&tx, &[entry; 9]).unwrap().0, 143_493);
+    // The raised byte cap is independent of the proposal's fifteen-input cap.
+    for _ in 9..17 {
+        let input = tx.inputs()[0].clone();
+        review::inputs_mut(&mut tx).unwrap().push(input);
+    }
     assert!(matches!(
-        review::estimate(&tx, &[entry; 9]),
+        review::estimate(&tx, &[entry; 17]),
         Err(Error::Limits)
     ));
 }

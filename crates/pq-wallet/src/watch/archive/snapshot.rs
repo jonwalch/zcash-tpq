@@ -70,6 +70,7 @@ impl WatchStore {
             root_fingerprint: Hex(hash.finalize().into()),
         };
         let Some(root) = self.state.journal.clone() else {
+            (metadata.retained_bytes, metadata.retained_objects) = Journal::orphan_usage(self)?;
             return Ok(metadata);
         };
         root.descriptor.validate(root.active.len())?;
@@ -188,6 +189,7 @@ fn check_alias(
 /// bounds malicious chains. Existing readers bound each capability to 1 MiB.
 fn capability_chain(
     journal: &mut Journal<'_>,
+    descriptor: &Descriptor,
     hash: Hex<32>,
     manifest: &Manifest,
     change_next: u64,
@@ -205,6 +207,28 @@ fn capability_chain(
             break;
         }
         if !reachable.insert(current_hash) || reachable.len() as u64 > journal.object_limit() {
+            return Err(Error::JournalCorrupt);
+        }
+        // Every distinct approved proposal ID remains addressable after tip
+        // refresh. Its alias can point at a newer capability with the same ID,
+        // but can neither disappear nor refer to an older/different lineage.
+        let mut budget = ReadBudget::new(4096)?;
+        let Some(Value::Alias {
+            capability: alias_hash,
+            lineage_id,
+            revision,
+        }) = journal.get(
+            &descriptor.snapshot(Kind::Aliases),
+            &Key::id(current.proposal.id()?),
+            &mut budget,
+        )?
+        else {
+            return Err(Error::JournalCorrupt);
+        };
+        if lineage_id != current.lineage_id
+            || revision < current.revision
+            || (revision == current.revision && alias_hash != current_hash)
+        {
             return Err(Error::JournalCorrupt);
         }
         checked.insert((current.lineage_id, current.revision), current_hash);
@@ -248,7 +272,15 @@ fn validate_entry(
             },
             Kind::Lineages,
         ) => {
-            let cap = capability_chain(journal, *hash, manifest, change_next, checked, reachable)?;
+            let cap = capability_chain(
+                journal,
+                descriptor,
+                *hash,
+                manifest,
+                change_next,
+                checked,
+                reachable,
+            )?;
             if entry.key != Key::id(cap.lineage_id)
                 || *revision != cap.revision
                 || *proposal_id != cap.proposal.id()?
@@ -298,7 +330,15 @@ fn validate_entry(
             },
             Kind::Aliases,
         ) => {
-            let cap = capability_chain(journal, *hash, manifest, change_next, checked, reachable)?;
+            let cap = capability_chain(
+                journal,
+                descriptor,
+                *hash,
+                manifest,
+                change_next,
+                checked,
+                reachable,
+            )?;
             if cap.lineage_id != *lineage_id
                 || cap.revision != *revision
                 || entry.key != Key::id(cap.proposal.id()?)
@@ -317,7 +357,15 @@ fn validate_entry(
         (Value::Reservation, Kind::Reservations) => {
             let (point, expiry, lineage) = entry.key.reservation_parts()?;
             let (hash, _, id, revision) = latest(journal, descriptor, lineage)?;
-            let cap = capability_chain(journal, hash, manifest, change_next, checked, reachable)?;
+            let cap = capability_chain(
+                journal,
+                descriptor,
+                hash,
+                manifest,
+                change_next,
+                checked,
+                reachable,
+            )?;
             if cap.lineage_id != lineage
                 || cap.revision != revision
                 || cap.proposal.id()? != id
@@ -336,7 +384,15 @@ fn validate_entry(
             },
             Kind::History,
         ) => {
-            let cap = capability_chain(journal, *hash, manifest, change_next, checked, reachable)?;
+            let cap = capability_chain(
+                journal,
+                descriptor,
+                *hash,
+                manifest,
+                change_next,
+                checked,
+                reachable,
+            )?;
             archived_without_history.remove(&(*lineage_id, *hash));
             if entry.key != Key::sequence(sequence)
                 || cap.lineage_id != *lineage_id

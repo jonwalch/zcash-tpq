@@ -42,6 +42,51 @@ pub(crate) struct Journal<'a> {
     pub(super) cache: VecDeque<(Hash, Page)>,
 }
 impl<'a> Journal<'a> {
+    /// A failed first migration can retain non-authoritative journal files
+    /// beneath an otherwise valid v2 root. Count them under the same default
+    /// quotas without inventing a journal ID or creating missing directories.
+    pub(crate) fn orphan_usage(watch: &mut WatchStore) -> Result<(u64, u64)> {
+        let root = watch
+            .journal_path()
+            .map_err(|_| Error::ReopenRequired)?
+            .join("journal");
+        match fs::symlink_metadata(&root) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok((0, 0)),
+            Err(error) => return Err(error.into()),
+            Ok(_) => (),
+        }
+        private_directory(&root)?;
+        let mut has_objects = false;
+        for item in fs::read_dir(&root)? {
+            if item?.file_name() != "objects" {
+                return Err(Error::Corrupt);
+            }
+            has_objects = true;
+        }
+        // Failure at CreateObjects can leave the empty journal directory.
+        if !has_objects {
+            return Ok((0, 0));
+        }
+        let path = root.join("objects");
+        private_directory(&path)?;
+        let limits = Limits::default();
+        let mut bytes = 0u64;
+        let mut objects = 0u64;
+        for item in fs::read_dir(path)? {
+            objects = objects.checked_add(1).ok_or(Error::ObjectLimit)?;
+            if objects > limits.objects {
+                return Err(Error::ObjectLimit);
+            }
+            let metadata = fs::symlink_metadata(item?.path())?;
+            check_file(&metadata)?;
+            bytes = bytes.checked_add(metadata.len()).ok_or(Error::Quota)?;
+            if bytes > limits.bytes {
+                return Err(Error::Quota);
+            }
+        }
+        Ok((bytes, objects))
+    }
+
     /// Initialize only before the first authoritative v3 root. Opening an
     /// existing v3 store must use `open`, which never creates missing directories.
     pub fn create(

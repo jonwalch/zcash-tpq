@@ -18,13 +18,13 @@ mod snapshot;
 pub use history::{
     PaymentDetails, PaymentHistoryEntry, PaymentHistoryPage, PaymentLocation, PaymentObservation,
 };
-pub(crate) use snapshot::{JournalSnapshot, JournalSnapshotMetadata};
+pub(crate) use snapshot::JournalSnapshotMetadata;
 
 use rand_core::{OsRng, RngCore};
 use serde::Deserializer;
 use std::collections::BTreeSet;
 
-pub(super) const MAX_V3: usize = MAX_STATE + 16 * 1024;
+pub(crate) const MAX_V3: usize = MAX_STATE + 16 * 1024;
 const FORMAT: &str = "ZcashTransparentPQ/watch-state/v3";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

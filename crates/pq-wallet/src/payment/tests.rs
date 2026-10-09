@@ -866,11 +866,11 @@ fn maturity_activation_monitor_and_check_limits_fail_closed() {
 #[test]
 fn input_check_and_final_size_boundaries_are_independent() {
     for (n, limit, values, amount, expected_inputs) in [
-        (1, 15, vec![200_000; 15], 2_840_000, Some(15)),
-        (1, 15, vec![200_000; 16], 3_030_000, None),
-        (3, 14, vec![400_000; 8], 3_030_000, None),
-        (3, 16, vec![400_000; 8], 3_030_000, Some(8)),
-        (3, 20, vec![400_000; 9], 3_400_000, None),
+        (1, 15, vec![200_000; 15], 2_600_000, Some(15)),
+        (1, 15, vec![200_000; 16], 2_810_000, None),
+        (3, 14, vec![400_000; 8], 2_840_000, None),
+        (3, 16, vec![400_000; 8], 2_840_000, Some(8)),
+        (3, 16, vec![400_000; 9], 3_200_000, None),
     ] {
         let mut wallets = wallets(n, 1, 1);
         let wallet = &mut wallets[0];
