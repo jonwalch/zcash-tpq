@@ -518,10 +518,16 @@ fn reopen(request: &Request) {
     ));
     source.journal = Some(path.join("state.json"));
     source.fail_submit = true;
+    // The public API records uncertainty before submission and wraps the
+    // synthetic source's transport error, as in the retained retry tests.
     assert!(matches!(
         store.submit_payment(&wallet, &mut source, proposal.id().unwrap()),
-        Err(Error::HistoryUnavailable)
+        Err(Error::SubmissionUnknown)
     ));
+    assert_eq!(
+        store.payments().unwrap()[0].state,
+        PaymentState::SubmissionUnknown
+    );
     source.fail_submit = false;
     store
         .submit_payment(&wallet, &mut source, proposal.id().unwrap())

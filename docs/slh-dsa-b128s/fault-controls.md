@@ -80,6 +80,8 @@ This is not an exhaustive test of every object.
 Each reopened case checks exact saved payment records and retained reservations or cursors.
 Cached signing and assembly must preserve bytes.
 Two submissions around a synthetic unavailable-node response must use the same saved transaction.
+The public API must return `SubmissionUnknown` after it records that state durably.
+The synthetic source returns `HistoryUnavailable`; that error is not the public API result.
 Cached signing must make zero calls to a deliberately failing pre-sign RNG.
 A conflicting payment must remain ineligible.
 The next receiver must match the next unissued coordinate.
