@@ -6,6 +6,8 @@ import socket
 import subprocess
 import urllib.error
 
+import observations
+
 from common import (AcceptanceError, Node, common_tip, require, sha256, wait_for,
                     write_json)
 
@@ -58,12 +60,19 @@ filter = "info"
 
 
 class ManagedNode(Node):
-    def __init__(self, binary, directory, label, miner, p2p, peer=None):
+    def __init__(self, binary, directory, label, miner, p2p, peer=None, *, observation_token=None):
         self.directory = directory / label
         self.directory.mkdir(mode=0o700)
         self.config = self.directory / "node.toml"
         address = f"127.0.0.1:{port()}"
         self.config.write_text(configuration(address, p2p, peer, self.directory / "state", miner))
+        self.observation_token = observation_token
+        if observation_token is not None:
+            observations.valid_token(observation_token)
+            self.config.write_text(self.config.read_text().replace('filter = "info"',
+                                  'filter = "info,slh_primitive=info"'))
+        self.observation_captures = []
+        self._observation_start = None
         self.binary = binary
         self.process = None
         self.log = None
@@ -73,8 +82,16 @@ class ManagedNode(Node):
     def start(self):
         require(self.process is None, "node_already_running")
         self.log = (self.directory / "node.log").open("ab")
+        if self.observation_token is not None:
+            try:
+                self._observation_start = observations.begin(self.directory / "node.log", self.binary,
+                                                            self.config, self.observation_token)
+            except BaseException:
+                self.log.close()
+                raise
         self.process = subprocess.Popen([str(self.binary), "--config", str(self.config), "start"],
-                                        stdout=self.log, stderr=subprocess.STDOUT)
+                                        stdout=self.log, stderr=subprocess.STDOUT,
+                                        env=observations.environment(self.observation_token))
         def ready():
             require(self.process.poll() is None, "node_startup_failed")
             try:
@@ -85,6 +102,7 @@ class ManagedNode(Node):
 
     def stop(self):
         if self.process is not None:
+            pid = self.process.pid
             self.process.terminate()
             try:
                 status = self.process.wait(timeout=30)
@@ -97,6 +115,13 @@ class ManagedNode(Node):
                 self.log.close()
             self.stops.append(status)
             require(status == 0, "node_shutdown_failed")
+            if self._observation_start is not None:
+                capture = observations.finish(self._observation_start, self.directory / "node.log",
+                                              self.binary, self.config, pid, status)
+                name = f"observation-{len(self.observation_captures)}.json"
+                path = write_json(self.directory / name, capture)
+                self.observation_captures.append({"file": name, "sha256": sha256(path)})
+                self._observation_start = None
 
     def close(self):
         try:
@@ -106,10 +131,12 @@ class ManagedNode(Node):
 
 
 class Network:
-    def __init__(self, binary, directory, miner):
+    def __init__(self, binary, directory, miner, *, observation_token=None):
         first, second = port(), port()
-        self.nodes = [ManagedNode(binary, directory, "node-a", miner, first, second),
-                      ManagedNode(binary, directory, "node-b", miner, second, first)]
+        self.nodes = [ManagedNode(binary, directory, "node-a", miner, first, second,
+                                  observation_token=observation_token),
+                      ManagedNode(binary, directory, "node-b", miner, second, first,
+                                  observation_token=observation_token)]
         self.a, self.b = self.nodes
 
     def __enter__(self):
@@ -156,7 +183,10 @@ class Network:
 
     def metadata(self):
         return [{"config_sha256": sha256(node.config), "config": node.config.name,
-                 "endpoint": node.address, "shutdown_exit_codes": node.stops}
+                 "endpoint": node.address, "shutdown_exit_codes": node.stops,
+                 **({"primitive_observation": {"token": node.observation_token,
+                         "captures": node.observation_captures}}
+                    if node.observation_token is not None else {})}
                 for node in self.nodes]
 
 

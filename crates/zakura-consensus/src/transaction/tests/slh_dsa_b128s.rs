@@ -646,3 +646,108 @@ async fn slh_relay_structural_precheck_precedes_worker_n1_ordering() {
         );
     }
 }
+
+#[cfg(feature = "slh-test-observer")]
+#[test]
+fn slh_diagnostics_match_actual_primitive_entries_and_authorization_identity() {
+    use crate::transaction::slh_dsa_b128s::verify_observed_inputs_for_test;
+    use std::sync::Mutex;
+    use zakura_pq_slh_dsa_b_exp::test_observer::{self, Event};
+    let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    for version in [5, 6] {
+        for case in ["1of1", "1of15-index14", "16checks"] {
+            for condition in ["valid", "bad-signature", "bad-encoding", "budget"] {
+                let mut fixture = fixture(version, case);
+                let original = fixture.transaction.txid_and_auth_digest();
+                match condition {
+                    "bad-signature" => corrupt_signature(&mut fixture.transaction, 0),
+                    "bad-encoding" => {
+                        install(&mut fixture.transaction, 0, transparent::Script::new(&[]))
+                    }
+                    _ => {}
+                }
+                let expected_identity = fixture.transaction.txid_and_auth_digest();
+                if condition == "bad-signature" {
+                    assert_eq!(original.0, expected_identity.0);
+                    assert_ne!(original.1, expected_identity.1);
+                }
+                let native = Arc::new(Mutex::new(Vec::new()));
+                let native_events = native.clone();
+                let lines = Arc::new(Mutex::new(Vec::new()));
+                let captured = lines.clone();
+                let budget = SlhDsaB128sBlockBudget::new(limits);
+                if condition == "budget" {
+                    SlhDsaB128sTransactionBudget::new(limits, Some(budget.clone()))
+                        .reserve(16)
+                        .unwrap();
+                    for _ in 0..3 {
+                        SlhDsaB128sTransactionBudget::new(limits, Some(budget.clone()))
+                            .reserve(16)
+                            .unwrap();
+                    }
+                }
+                let result = test_observer::observe(
+                    Arc::new(move |event| native_events.lock().unwrap().push(event)),
+                    || {
+                        verify_observed_inputs_for_test(
+                            &fixture.transaction,
+                            NetworkDomain::Regtest,
+                            NetworkUpgrade::Nu7,
+                            fixture.previous.clone(),
+                            &(0..fixture.previous.len()).collect::<Vec<_>>(),
+                            SlhDsaB128sTransactionBudget::new(limits, Some(budget.clone())),
+                            Arc::new(move |line| captured.lock().unwrap().push(line)),
+                        )
+                    },
+                );
+                assert_eq!(result.is_ok(), condition == "valid");
+                let native = native.lock().unwrap();
+                let started = native
+                    .iter()
+                    .filter(|event| **event == Event::CryptoStarted)
+                    .count();
+                let finished = native
+                    .iter()
+                    .filter(|event| matches!(event, Event::CryptoFinished { .. }))
+                    .count();
+                let lines = lines.lock().unwrap();
+                assert_eq!(lines.len(), started);
+                assert_eq!(started, finished);
+                if matches!(condition, "bad-encoding" | "budget") {
+                    assert_eq!(started, 0);
+                } else {
+                    assert!(started > 0);
+                    let mut sequences = Vec::new();
+                    for line in lines.iter() {
+                        assert!(line.starts_with(
+                            "slh_primitive_v1 token=0123456789abcdef0123456789abcdef "
+                        ));
+                        assert!(line.contains(&format!(
+                            "txid={} auth_digest={}",
+                            expected_identity.0,
+                            expected_identity.1.unwrap()
+                        )));
+                        assert!(
+                            line.ends_with("backend=portable-rust contract=slh-dsa-b-128s-exp-v1")
+                        );
+                        let sequence = line
+                            .split_whitespace()
+                            .find_map(|field| field.strip_prefix("seq="))
+                            .unwrap()
+                            .parse::<usize>()
+                            .unwrap();
+                        sequences.push(sequence);
+                        if case == "1of15-index14" {
+                            assert!(
+                                line.contains("input=0 check=0 "),
+                                "ordinal is not policy signer index14"
+                            );
+                        }
+                    }
+                    sequences.sort_unstable();
+                    assert_eq!(sequences, (1..=started).collect::<Vec<_>>());
+                }
+            }
+        }
+    }
+}

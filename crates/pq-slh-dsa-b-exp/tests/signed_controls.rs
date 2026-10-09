@@ -478,3 +478,67 @@ fn successful_reserved_checks_keep_their_observer_on_another_thread() {
         ]
     );
 }
+
+#[test]
+fn signed_primitive_observation_counts_attempts_without_replacing_results() {
+    for version in [5, 6] {
+        for valid in [true, false] {
+            let mut fixture = fixture(version, "1of1");
+            if !valid {
+                fixture.authorizations[0].records[0].signature[0] ^= 1;
+                install(
+                    &mut fixture.transaction,
+                    0,
+                    Script::new(&fixture.authorizations[0].encode()),
+                );
+            }
+            let context = context(&fixture.transaction, fixture.previous);
+            let reserved = context.reserve_input(0, |_| Ok(())).unwrap();
+            let calls = Cell::new(0);
+            let result =
+                reserved.checks()[0].verify_with_observation(|| calls.set(calls.get() + 1));
+            assert_eq!(calls.get(), 1);
+            assert_eq!(
+                result,
+                if valid {
+                    Ok(())
+                } else {
+                    Err(Rejection::Signature)
+                }
+            );
+            assert_eq!(reserved.checks()[0].verify(), result);
+        }
+    }
+}
+
+#[test]
+fn signed_observation_cannot_run_before_binding_and_reservation() {
+    for version in [5, 6] {
+        for malformed in [false, true] {
+            let mut fixture = fixture(version, "1of1");
+            if malformed {
+                install(&mut fixture.transaction, 0, Script::new(&[]));
+            }
+            let context = context(&fixture.transaction, fixture.previous);
+            let reservations = Cell::new(0);
+            let entries = Cell::new(0);
+            let result = context.reserve_input(0, |_| {
+                reservations.set(reservations.get() + 1);
+                Err(Rejection::VerificationBudget)
+            });
+            let result = result.and_then(|reserved| {
+                reserved.checks()[0].verify_with_observation(|| entries.set(entries.get() + 1))
+            });
+            assert_eq!(entries.get(), 0);
+            assert_eq!(reservations.get(), usize::from(!malformed));
+            assert_eq!(
+                result,
+                Err(if malformed {
+                    Rejection::Encoding
+                } else {
+                    Rejection::VerificationBudget
+                })
+            );
+        }
+    }
+}

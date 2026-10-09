@@ -22,11 +22,21 @@ pub use crate::Rejection;
 /// This is the real primitive, with its length bounds, and never a replacement
 /// hook. Input authorization also requires structural binding and reservation.
 pub fn verify_signature(public_key: &[u8], signature: &[u8], message: &[u8]) -> bool {
+    verify_signature_observed(public_key, signature, message, || {})
+}
+
+fn verify_signature_observed(
+    public_key: &[u8],
+    signature: &[u8],
+    message: &[u8],
+    observe: impl FnOnce(),
+) -> bool {
     if message.len() != MESSAGE_SIZE {
         return false;
     }
     #[cfg(feature = "test-observer")]
     crate::test_observer::emit(crate::test_observer::Event::CryptoStarted);
+    observe();
     let valid = zakura_pq_slh_dsa_b_verify::verify(public_key, signature, message, &[]).is_ok();
     #[cfg(feature = "test-observer")]
     crate::test_observer::emit(crate::test_observer::Event::CryptoFinished { valid });
@@ -169,10 +179,24 @@ pub struct SignatureCheck {
 impl SignatureCheck {
     /// Run the real fixed-profile verifier with external Pure framing once.
     pub fn verify(&self) -> Result<(), Rejection> {
+        self.verify_with_observation(|| {})
+    }
+
+    /// Observe entry to the real primitive after structural binding/reservation.
+    ///
+    /// The callback receives no key, signature or message and cannot replace the
+    /// verifier or its result. It reports an attempt, never successful validation.
+    /// Callers should keep diagnostic callbacks infallible and inexpensive.
+    pub fn verify_with_observation(&self, observe: impl FnOnce()) -> Result<(), Rejection> {
         let verify = || {
-            verify_signature(&self.public_key, self.signature.as_ref(), &self.message)
-                .then_some(())
-                .ok_or(Rejection::Signature)
+            verify_signature_observed(
+                &self.public_key,
+                self.signature.as_ref(),
+                &self.message,
+                observe,
+            )
+            .then_some(())
+            .ok_or(Rejection::Signature)
         };
         #[cfg(feature = "test-observer")]
         if let Some(observer) = &self.observer {

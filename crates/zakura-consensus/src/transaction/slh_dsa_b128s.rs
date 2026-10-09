@@ -4,6 +4,8 @@
 mod worker;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 pub(super) use worker::verify_experimental_slh_dsa_b128s_inputs;
+#[cfg(all(test, feature = "slh-test-observer"))]
+pub(in crate::transaction) use worker::verify_observed_inputs_for_test;
 
 use crate::error::TransactionError;
 use zakura_chain::{transaction::Transaction, transparent};
