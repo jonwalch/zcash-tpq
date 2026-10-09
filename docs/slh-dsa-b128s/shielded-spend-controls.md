@@ -44,6 +44,9 @@ the host additionally enforces its stricter raw-block, transaction and commitmen
 bounds. The host reconstructs canonical linked history, decrypts notes with the
 fixed public fixture identities, finds their actual positions and witnesses,
 and matches every selected root to the node treestate.
+Sapling comparisons use the node's existing RPC display-order conversion while
+retaining canonical witness/tree/path equality internally. Note metadata keeps
+the exact RPC root; Orchard and Ironwood retain their existing byte order.
 
 These are trusted-node observations and bounded witness reconstruction, not an
 independent consensus verifier. Requested amounts never replace authenticated

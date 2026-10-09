@@ -514,7 +514,7 @@
       "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse the current node_live one-origin publication pattern: submit only to node-a, retain its public RPC reply, and boundedly authenticate the exact saved bytes in both mempools/templates before mining; causal delayed-gossip mocks reject the previous eager duplicate-submission path.",
       "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
       "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
-      "sha256": "bb9dce6593bbffff7ce1986791829d09e80039577fb7becb4aa2c297f5142694",
+      "sha256": "7cfbb54efa06e61818b3457025724d262bab41060a09aec1827f941138d2f51d",
       "sources": [
         "shielded_spend_fixture_python",
         "shielded_spend_fixture_tests",
@@ -880,14 +880,14 @@
       "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
-      "sha256": "4d65eda2d57ca4564717a555d875b9d043ac3bf4eb235f9f43c705777735c82f",
+      "sha256": "8e3bb76173762ba7ebf6e0c9ef03553bf6f8d77faf2da550b5440b403762a140",
       "sources": []
     },
     {
       "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_SCHEMA.md",
-      "sha256": "de13fd2420a414b243bd5862d44ac92d7baf4807bd7fc36a0aab2e5739ee4e6a",
+      "sha256": "c8ef3538f30acd12276c20f660ad70c5aeb323df57045bc5d6dfeec82f8e4904",
       "sources": []
     },
     {
@@ -937,19 +937,19 @@
       ]
     },
     {
-      "adaptation": "Pinned real-spend construction generalized to ten pool/version subsets, independent parents, current host bundle/digest/authorization helpers, pre-NU6.3 Orchard deposit, same-effect isolated spend-auth/binding/proof controls; no crypto rewrite.",
+      "adaptation": "Pinned real-spend construction generalized to ten pool/version subsets, independent parents, current host bundle/digest/authorization helpers, pre-NU6.3 Orchard deposit, same-effect isolated spend-auth/binding/proof controls; no crypto rewrite. Sapling finalization compares the shared anchor with preserved RPC-display metadata using the pinned Zakura conversion; Orchard/Ironwood encodings and authorization boundaries are unchanged.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend.rs",
-      "sha256": "0e87310f052c77b6439cb755cca2ab8478a181d1e01033038a89e306aeb9e50a",
+      "sha256": "2e04bcc48346cff0060b8890927f906f54d774695564723c8e43b00231ce7d72",
       "sources": [
         "shielded_spend_fixture"
       ]
     },
     {
-      "adaptation": "Pinned canonical contiguous trusted-node history and ordered prevouts, fixed public note decryption and positions/witnesses; extended to Sapling/Orchard and strict bounded duplicate/UTXO/nullifier/root checks. New ciphertext-only placeholder tests are not consensus fixtures.",
+      "adaptation": "Pinned canonical contiguous trusted-node history and ordered prevouts, fixed public note decryption and positions/witnesses; extended to Sapling/Orchard and strict bounded duplicate/UTXO/nullifier/root checks. New ciphertext-only placeholder tests are not consensus fixtures. The Sapling adaptation reuses pinned Zakura bytes_in_display_order at the RPC boundary while preserving canonical witness/tree/path equality; causal tests use actual RPC-format roots and refuse wrong-order roots.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend/history.rs",
-      "sha256": "c6a7bbffab31c1ec9c32b5bff0216e4c3d82629d16150ebd01eeb6fd42b4baff",
+      "sha256": "2da258c080d08ce385768f4dc677fada49b2aa2eec48910cb635b1ec54c1c94d",
       "sources": [
         "shielded_spend_history"
       ]

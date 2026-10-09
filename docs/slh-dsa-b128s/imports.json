@@ -1946,6 +1946,15 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-sapling-rpc-root.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse pinned Zakura Sapling RPC display-order conversion at the fixture history and finalization metadata boundary; preserve canonical witness/tree/path equality and action-pool encodings. Causal regressions reject internal-order RPC roots and changed transaction anchors; no inherited RPC or consensus change.",
+      "sha256": "fb7e4e7f7d79e6f80f9f0d7654127c0c86520cac4b33c8b88edfe704ff410a4d"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/slh-shielded-controls.md",
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
@@ -2194,7 +2203,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
-      "sha256": "bb9dce6593bbffff7ce1986791829d09e80039577fb7becb4aa2c297f5142694"
+      "sha256": "7cfbb54efa06e61818b3457025724d262bab41060a09aec1827f941138d2f51d"
     },
     {
       "disposition": "new",
@@ -2402,7 +2411,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "5e3481bd88917dcccb0cb856b8928d3d41bf0936490075f865aa71d8b1052572"
+      "sha256": "a8ecd2eee4bce4b38cb06b10f5a3cf0c58ea4b1367380c5fd12783f77f29b565"
     },
     {
       "disposition": "new",
@@ -2994,7 +3003,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "4d65eda2d57ca4564717a555d875b9d043ac3bf4eb235f9f43c705777735c82f"
+      "sha256": "8e3bb76173762ba7ebf6e0c9ef03553bf6f8d77faf2da550b5440b403762a140"
     },
     {
       "disposition": "new",
@@ -3003,7 +3012,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "de13fd2420a414b243bd5862d44ac92d7baf4807bd7fc36a0aab2e5739ee4e6a"
+      "sha256": "c8ef3538f30acd12276c20f660ad70c5aeb323df57045bc5d6dfeec82f8e4904"
     },
     {
       "disposition": "new",
@@ -3061,7 +3070,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "0e87310f052c77b6439cb755cca2ab8478a181d1e01033038a89e306aeb9e50a"
+      "sha256": "2e04bcc48346cff0060b8890927f906f54d774695564723c8e43b00231ce7d72"
     },
     {
       "disposition": "adapted",
@@ -3070,7 +3079,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "c6a7bbffab31c1ec9c32b5bff0216e4c3d82629d16150ebd01eeb6fd42b4baff"
+      "sha256": "2da258c080d08ce385768f4dc677fada49b2aa2eec48910cb635b1ec54c1c94d"
     },
     {
       "disposition": "new",
