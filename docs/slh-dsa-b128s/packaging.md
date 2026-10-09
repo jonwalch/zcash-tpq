@@ -69,10 +69,18 @@ does not change their covered inputs or establish target execution.
 Create a temporary ordinary clone of the selected committed branch using
 `git clone --no-local --single-branch --no-tags`. Confirm there is no Git object
 alternate, symlink to another checkout, worktree dependency or Cargo path outside
-the clone. Use an empty Cargo home/target for package listings; no node build is
-needed. The bounded guard tests, archive audit and package lists must succeed
-there without a research checkout or source download. Keep the resulting
-source/command/output hashes in the release validation record.
+the clone. Start with an empty Cargo home/target; no node build is needed. The
+bounded guard tests and archive audit must succeed without a research checkout
+or source download. Cargo's offline `package --list` also requires registry index
+metadata even though it does not compile or need crate source payloads. Record
+an empty-cache failure as a missing metadata prerequisite. For offline listings,
+an existing registry index can be copied into the isolated Cargo home: record
+its original registry URL and every copied file hash, and exclude crate archives,
+extracted sources, binaries and target caches. Keep the package-list receipt
+separate from the empty-cache source audit; do not claim empty-cache package
+success. If source bytes are also required, report that exact prerequisite
+instead of silently downloading them. Keep all source/command/output hashes in
+the release validation record.
 
 The audit is allowed to fail on missing source objects, missing toolchains or a
 package-list prerequisite. Report that specific limit; do not compensate by
