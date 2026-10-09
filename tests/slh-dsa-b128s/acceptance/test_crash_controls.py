@@ -80,6 +80,9 @@ class World(Ledger):
             self.transactions[raw] = dict(row, **result)
             return result
         assert operation == "control-block", operation
+        # Match the actual host controls.rs boundary, including empty rejection.
+        if not 1 <= len(recipe["transactions"]) <= 5:
+            raise AcceptanceError("control_block_shape")
         node = self.all_nodes[recipe["template"]["mock_node"]]
         raws = [tx["transaction_hex"] for tx in recipe["transactions"]]
         for raw in raws:
@@ -406,6 +409,13 @@ class CrashTests(unittest.TestCase):
                         execute.assert_not_called()
                 receipt = common.read_json(args.artifacts / "execution.json")
                 self.assertEqual(receipt["complete"], fault is None)
+
+    def test_control_block_mock_preserves_real_nonempty_host_boundary(self):
+        world = World()
+        with self.assertRaisesRegex(AcceptanceError, "control_block_shape"):
+            world.host("host", "control-block", recipe={"transactions": []})
+        source = (common.ROOT / "tests/slh-dsa-b128s/fixtures/host/src/controls.rs").read_text()
+        self.assertIn("(1..=5).contains(&recipe.transactions.len())", source)
 
 
 if __name__ == "__main__":

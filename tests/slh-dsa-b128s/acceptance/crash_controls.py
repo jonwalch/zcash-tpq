@@ -10,7 +10,6 @@ import hashlib
 from pathlib import Path
 import secrets
 import signal
-from types import SimpleNamespace
 
 from common import (ROOT, CONTRACT, AcceptanceError, canonical, common_tip, read_json,
                     require, sha256, source_state, validate_build, wait_for, write_json, zat)
@@ -261,16 +260,18 @@ def reorg(args, artifacts, network, miner, ancestor, orphan, transactions, label
         require(all(fork.rpc("getblockhash", block["height"]) == block["hash"]
                     and fork.rpc("getblock", block["hash"], 0) == block["raw"] for block in ancestor),
                 "crash_fork_replay_bytes")
-        control = Controls(args, artifacts, SimpleNamespace(a=fork, nodes=[fork]))
-        control.nonce = 20_000 if label == "classical" else 30_000
-        for index in range(2):
-            candidate = control.block(f"{label}-replacement-{index}", [], [])
-            require(fork.rpc("getblocktemplate", {"mode": "proposal", "data": candidate["block_hex"]}) is None,
-                    "crash_fork_proposal")
-            block = {"height": candidate["height"], "hash": candidate["block_hash"],
-                     "raw": candidate["block_hex"], "parent": fork.tip()[1]}
-            replay_block(fork, block)
-            rows.append(block)
+        require(fork.rpc("getrawmempool") == [], "crash_fork_mempool")
+        hashes = fork.rpc("generate", 2)
+        require(type(hashes) is list and len(hashes) == 2 and len(set(hashes)) == 2,
+                "crash_fork_mining_count")
+        for index, block_hash in enumerate(hashes):
+            height = ancestor[-1]["height"] + index + 1
+            require(fork.rpc("getblockhash", height) == block_hash
+                    and len(fork.rpc("getblock", block_hash, 1)["tx"]) == 1, "crash_fork_not_empty")
+            rows.append({"height": height, "hash": block_hash,
+                         "raw": fork.rpc("getblock", block_hash, 0),
+                         "parent": ancestor[-1]["hash"] if index == 0 else hashes[index - 1]})
+        require(fork.tip() == (rows[-1]["height"], rows[-1]["hash"]), "crash_fork_mining_no_progress")
         require(rows[0]["hash"] != orphan["hash"] and rows[-1]["height"] == orphan["height"] + 1,
                 "crash_not_competing_longer_branch")
         for node in network.nodes:
