@@ -66,3 +66,11 @@ source inventories and raw artifact hashes; the
 configuration, locks and exact invoked binaries. All three bind producer source
 checkpoint `324a9311ec499f981d06addcb203678ffff2a1ae`. This is bounded native
 conformance evidence, with the pending coverage above unchanged.
+
+The [adapter review receipt](receipts/g2-review-2026-10-09.json) compares the
+corrected host and oracle at `feee7e6352e6e3251369240cb4114ac23548a7ed` against
+the same 18 artifacts, with 60 mutation controls. It records the original
+artifact producer separately from the current comparison target. The original
+artifact bytes and production/build/initial acceptance receipts remain unchanged;
+no signatures were regenerated. This distinguishes verification of existing
+fixtures from a claim that the updated host produced them.

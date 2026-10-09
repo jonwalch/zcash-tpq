@@ -1,0 +1,5345 @@
+{
+  "artifact_producer_and_comparison_target_are_distinct": true,
+  "artifact_producer_verification": {
+    "claims": {
+      "algorithm_revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+      "blake3_version": "1.8.5",
+      "host_binary_sha256": "b749da1781791bb3251cbb890808f6429f35f7442092c48dea30e2a564ef93e9",
+      "host_lock_sha256": "7811238b2214ea9e1faa4b29c02c58c530606fd33daf12f597085406838d5433",
+      "host_source_inventory_sha256": "a8e54e95fc2c13c6577c276080709a3fa691d970435869902233c221f55fddb5",
+      "signer_binary_sha256": "57e15db7aa5c7c2b8a49ee1af929eaf9e24513498e5f9139b8e30e84e6bd01ff",
+      "signer_lock_sha256": "10b25f7cafe7e8ea72cf8f2eaa864bb8322090ef9d538c9526c7966041d4e8d6",
+      "signer_source_inventory_sha256": "51b8bffb1c1984e15be3fdded161b88df349fd247a996eabccad31d719d6020f",
+      "zakura_revision": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
+    },
+    "host_source_inventory": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "1a90711c2b7329a1eeb37dbded6782a695d454e7fb5e29605e7d673e13a6d05e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md",
+        "sha256": "68d48bd8a5df3c309b2a970cbea7e952565e7242f420acd9cb5a717baf0ec701"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/Cargo.toml",
+        "sha256": "55f9d1afb821868669fe7c65dfc183a6f0ba5afe55b259aea02572c3511c7138"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/README.md",
+        "sha256": "2f57813f910ec754a5b417895307cf31a9844013ed3371d036f189b5d1d10a55"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/codec.rs",
+        "sha256": "e89a9ad2cdf0f9e97cd59d13fe70bae451b587fc373b4e651fc8f4e640ccf273"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/contract.rs",
+        "sha256": "ad97af46b1d46d71cd5ea9175b4197ed88010934322cee3c29cd0816fe81ac22"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/lib.rs",
+        "sha256": "26a440f732cb22a3f548eecc97cd778420609aba53536bda97cc4b1fd68a0f55"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/profile.rs",
+        "sha256": "0ece11d2a0e85c53c727876277df814ac2f4950e8bf26281558ea0a5278b396c"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/rejection.rs",
+        "sha256": "7c340c720a7e45949b5dcc39ba862155a5cebfbd69f0c7ef36c0755cbc792b67"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/signing_context.rs",
+        "sha256": "da4d38a2cabb6baabc3b5788b1551acfada3ee7dccf6b7d3ba4e793a579b4359"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/test_observer.rs",
+        "sha256": "eb1d691b6a67fa6679e1c8fb2e877f9c54e58eb6619e6653c494e48610c9afe0"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/verifier.rs",
+        "sha256": "a6f811f57d3c2db937184a16cef60c21d38918655f3318ad87ff87a2f10136ac"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+        "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/tests/context.rs",
+        "sha256": "312b5f28a05eeb077b9fc31e7172d94eb00fdd75fd4438434d51a41c72675e9f"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+        "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/Cargo.toml",
+        "sha256": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/NOTICE.md",
+        "sha256": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "sha256": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/README.md",
+        "sha256": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/examples/compare.rs",
+        "sha256": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+        "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+        "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+        "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/lib.rs",
+        "sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+        "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+        "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json",
+        "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+        "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+      },
+      {
+        "path": "crates/pq-test-support/ATTRIBUTION.md",
+        "sha256": "72752bed082fb69a88edb5cf3fa23a0dee55cdc70ec841e1a34fced7d456e9a5"
+      },
+      {
+        "path": "crates/pq-test-support/Cargo.toml",
+        "sha256": "b5b87a8a1585a484850e399f1477682bdea607bfc485c5f50ba41c2b220dd166"
+      },
+      {
+        "path": "crates/pq-test-support/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-test-support/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-test-support/README.md",
+        "sha256": "8367719d1270972ca4f70deb5926dbe4781387c600643d8f884a97a994b0fc9d"
+      },
+      {
+        "path": "crates/pq-test-support/src/lib.rs",
+        "sha256": "c229e9458e325a76aa265adf147f50adf7dc656882ae0720229decbc8c07d4c1"
+      },
+      {
+        "path": "crates/pq-test-support/tests/recipes.rs",
+        "sha256": "f65167a354556244e5d4443dd2060e71f7fd93346f495cecbf91cec10523faed"
+      },
+      {
+        "path": "crates/pq-tx-context/ATTRIBUTION.md",
+        "sha256": "eca8fd15b43eed8950711beeb48e611cfc66e8ac0b7b3c32abc5d4b5c55568a9"
+      },
+      {
+        "path": "crates/pq-tx-context/Cargo.toml",
+        "sha256": "031481de5640fb7cd0ce1121f7c4cbb3951c45cf9c67bd58ec04e41950043ad5"
+      },
+      {
+        "path": "crates/pq-tx-context/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-tx-context/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-tx-context/README.md",
+        "sha256": "5edf4fc6e6b88493da8b6b2c9bdf385d65a0a4401fc03b0989589796100a2907"
+      },
+      {
+        "path": "crates/pq-tx-context/src/accounting.rs",
+        "sha256": "778bbd80853ff008284d4d60e8386b44ce88fc3052b9fe4a725f1d9c15710177"
+      },
+      {
+        "path": "crates/pq-tx-context/src/compatibility.rs",
+        "sha256": "b95f58844c4e956f929f07283679573d7a27ed79c2e5601068c74b829151a49f"
+      },
+      {
+        "path": "crates/pq-tx-context/src/error.rs",
+        "sha256": "0e55ff682109dbd5e7997a8cdb8b6585ad4b78d1f4b8370f13797be0f7634bee"
+      },
+      {
+        "path": "crates/pq-tx-context/src/lib.rs",
+        "sha256": "aa8f26a6c617fa21c19661b28e32af19a3cc3d55294dd9cb49b24ed1cd7279f0"
+      },
+      {
+        "path": "crates/zakura-chain/Cargo.toml",
+        "sha256": "b834f4f9f63abfdcefd43be583281d777c904d1ec6027194e0877bef34ac709f"
+      },
+      {
+        "path": "crates/zakura-chain/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/zakura-chain/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/zakura-chain/benches/block.rs",
+        "sha256": "bb1f639aab2779aa1020dcd9c388f9420fc4881a740f786c90854cc828788466"
+      },
+      {
+        "path": "crates/zakura-chain/benches/note_commitment_hash.rs",
+        "sha256": "172531be4e56dfe500e4a54d4f1c86e614435f0052e6f3a1e5aeaff3a94a1b4f"
+      },
+      {
+        "path": "crates/zakura-chain/benches/redpallas.rs",
+        "sha256": "01c5ded18626a15dc1f61573f1e58a3ad486637f2ee9e05851c8782fcd7c5e51"
+      },
+      {
+        "path": "crates/zakura-chain/benches/transaction.rs",
+        "sha256": "8a0ecf65321614d5c4483c765b9cec0c9255ffeb65db70dfd8fe98af9edd5ee9"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/block/tests.txt",
+        "sha256": "65208d1a1a651a8c2eabe045b864c94c1abd88b4e54f0c77549c6ad1f01b8335"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/keys/sapling/tests.txt",
+        "sha256": "fdbf85faa70e3af4489d051c7a852432da8d8702e572001c34419c0a197dc855"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/keys/sprout.txt",
+        "sha256": "a252bafc3ff64527f33697e01c98b92098655458ae23748c44e06665f5e6df2b"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/orchard/keys/tests.txt",
+        "sha256": "280d516e351568c43df44a977388f7b270308d18bcb8f6249f41ad7e80839c04"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/parameters/network/tests/prop.txt",
+        "sha256": "f7a1f9a3b588d1c89712360a8d0ffabedb41782b3d376754b6e03bdb43029b55"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/primitives/redpallas/tests/prop.txt",
+        "sha256": "7bce4bad8bbab9e64be7ece2484c264693bd990784cda9a377e8ba6e751ea5d6"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/serialization.txt",
+        "sha256": "baf130bb38c66f0af1c17c3bb9a1ef0f06772fc325e96e54554e45fed369e06c"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/transaction/tests.txt",
+        "sha256": "7f8393c1dad23b2a23af77ba7329c37cf91114d0f3b42e0ce596858406e88441"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/types.txt",
+        "sha256": "b7112dde4ab13098ddbe9f10e4cd6e31224e71b26733d39d184623160271e3eb"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/value_balance/tests/prop.txt",
+        "sha256": "286478a7f665b6fa5f2e6bc6dc58eb826c9b54799d57a5eede3b51e30508ea00"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/work/tests/prop.txt",
+        "sha256": "b6c9fcb57be6591b79fb8a48b59bbc1c89321e7d18859056a202c68afdf77695"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount.rs",
+        "sha256": "8c73b2037aabcc2a617352f917f0f4adb35cf67516539152efa1de82fe273bbb"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/arbitrary.rs",
+        "sha256": "aa32760cc0157fc35a503adbe2b568cc17bf1eaae0a97723d40147f10748dd9d"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/tests.rs",
+        "sha256": "db23352fb72892c7fbd2dc42ba204fa65a9c69ca5d116076398a5f4162354a8d"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/tests/prop.rs",
+        "sha256": "1eb12cf02e6b8e738386dcac8632c7f707961a06dca5e97a5534810c390657b1"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/tests/vectors.rs",
+        "sha256": "bb78c5bb1be949b4e10ecfe3d9beda385a2daa7bd135ed59f2ea42968470c2d9"
+      },
+      {
+        "path": "crates/zakura-chain/src/block.rs",
+        "sha256": "04179a0a069b105f04945d550e8fa7dba9f27ad7d4ac89e26b9a1c7bbe48ddba"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/arbitrary.rs",
+        "sha256": "fcb11e16f43b435b8bf787820d29d00489d2d38401cacd066c7c6a1a05edf703"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/commitment.rs",
+        "sha256": "df3a255fd1b2a5cff4e663a61f3b24a134dad4125d7ec11180c14cac59f6c36c"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/error.rs",
+        "sha256": "a4b8243c60f155e0034561d8f001f711e2b6199984582b318ea15ce337d384b3"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/genesis.rs",
+        "sha256": "4b9028a0c6e7d6a1572d9626d80f7ff968ed984ab2e8b6d34108bc3ac41dfa21"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/genesis/block-regtest-0-000-000.txt",
+        "sha256": "7310c83e1f29800028a4897da8a8f56e9d211a46f8a1e3960b0195e87912135d"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/hash.rs",
+        "sha256": "ca00b4348b24744c4601a13d9e6957770718f3420b2fb245877fffff3f27b8a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/header.rs",
+        "sha256": "95cd7d0e6ffff332ff321bdf7350686aa0fbc9ca77b896db9a8c29e71d7c5030"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/height.rs",
+        "sha256": "eecc53138a505f5d25a43767d0b6f44413448b366efd16ac9154bf6754b154db"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/height/json_conversion.rs",
+        "sha256": "1fa73aa793ecf9186042e1c2f8e087f1c22cdb405a5bd6d7a38504fadeb9683e"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/merkle.rs",
+        "sha256": "b03673b3b62e280873ea4d90d4870e996b4dd13cf145e04d0d9fb1de7dbfdbc3"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/serialize.rs",
+        "sha256": "ea250a0f11f54af0e7712adb8b9e3aad975590f09df5a966d746f9876e2bfbd9"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests.rs",
+        "sha256": "6b886f8a01708bc7da138e3787f192e3d5add54db0de222beaddac663efc5a65"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/generate.rs",
+        "sha256": "439d38ce7fa6e333fd10cc0cc3258bd38dcb46c2bec8fa9a8803ed2280fb43c1"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/preallocate.rs",
+        "sha256": "149871f156284c9c60f25319a07f6cfde5371175efbba25e9a1020d34e5a48aa"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/prop.rs",
+        "sha256": "88fe68d8301c8f9f937bb8a0fea7b7fbe34ba56af502722e257e5db1aa1ba0b1"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/vectors.rs",
+        "sha256": "4787fd520136306f205e44234708edce230170b0130c75f294c0f5cb302928e4"
+      },
+      {
+        "path": "crates/zakura-chain/src/block_info.rs",
+        "sha256": "4beefa42b13e2c438e0428d87809b183dea12853b6962a72f4124931794e8358"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_sync_status.rs",
+        "sha256": "b95881d999d704f40e1d96ab5839c2771e222ccbbddd883cc0b90a92cad6f318"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_sync_status/mock.rs",
+        "sha256": "36a21322f4b5a99a0093e89ee05dde7b99ddd210a86528b996f18d0c858998fe"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip.rs",
+        "sha256": "c7d06487e69f7e0c007bc3b60a3acfcc7a2c444bbcd0bdf47ee0524eb1229d10"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/mock.rs",
+        "sha256": "ee59ec57f1eb77fb0333f0e5a470ea7b1e392c01e5a7ae7cb553bc0c68072c45"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/network_chain_tip_height_estimator.rs",
+        "sha256": "e447433bf0b9f8773e8b263f5f7de12d7e7e88c22244b2cee215e4d9ec69a0f6"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/tests/prop.rs",
+        "sha256": "8c3edd659c0dea463dfd9633adc08d9eaf114e6eb8e3936646c3d242c7043925"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/tests/vectors.rs",
+        "sha256": "5d2fbc236b772caa1da5b66bd21528c5e21854efa02a7f6591756e9f911f34ea"
+      },
+      {
+        "path": "crates/zakura-chain/src/common.rs",
+        "sha256": "bd0083c1e07666169a91b3bffa0eccfd3341fc82f865342a1a72e6031026b913"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic.rs",
+        "sha256": "0b13fcc316b8309bacc996fb88f42ce8e98b14334b67b7cc25f2395c359aca2e"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic/task.rs",
+        "sha256": "0265858a459153dcb9620469bd90a74910ffebbf3346aa42338d00206085ac05"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic/task/future.rs",
+        "sha256": "c4f60b66e98e330d1279ca1c8103a4ebbaa845a9a90083d051883fdc6d9a3b1c"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic/task/thread.rs",
+        "sha256": "bfb237a9097aa8e063103160a07cf1336bc00cf7d0d6f513b640cc0741654be1"
+      },
+      {
+        "path": "crates/zakura-chain/src/error.rs",
+        "sha256": "c6ea0210ca0974b20827eedb91f94d78b9a1610e9ed97c051682c2a080f88ae7"
+      },
+      {
+        "path": "crates/zakura-chain/src/fmt.rs",
+        "sha256": "4da4e06d8c9649a4a2f1a4a6878891242641e652563688aebf11c6bfc9a48b1f"
+      },
+      {
+        "path": "crates/zakura-chain/src/fmt/time.rs",
+        "sha256": "1649f9d937e997da7d23a08efcc5263447c16147812462da5386198971515831"
+      },
+      {
+        "path": "crates/zakura-chain/src/history_tree.rs",
+        "sha256": "180d295ad9a13b875ec0e886a87954a745b972946a390c85165efc383d43d1f6"
+      },
+      {
+        "path": "crates/zakura-chain/src/history_tree/tests.rs",
+        "sha256": "f1343638309f2a80f6d360980eff558a169da4576d23bd8029ff2b67e839eb59"
+      },
+      {
+        "path": "crates/zakura-chain/src/history_tree/tests/vectors.rs",
+        "sha256": "750fb4180d7dd7b4db181d0f5f5ecfb63293e51ff2156199ae09d1105b85d06f"
+      },
+      {
+        "path": "crates/zakura-chain/src/ironwood.rs",
+        "sha256": "be13280793bb389cc4898b85900ff831abd2a447f3516670ebe237d9b617ae8b"
+      },
+      {
+        "path": "crates/zakura-chain/src/lib.rs",
+        "sha256": "233b085a67ccb10f505ee2af12f73126e31e9299424951eea7ac743e4d652532"
+      },
+      {
+        "path": "crates/zakura-chain/src/local_genesis.rs",
+        "sha256": "9a60710863fb9a38ae3a3247cbc42f0eab78f138748433ca0cab35905ccd5a79"
+      },
+      {
+        "path": "crates/zakura-chain/src/memory.rs",
+        "sha256": "ba430578dd51d6f029ca7aa28ecc0dc2da3b874a1b5377fe3540d66d1a21d870"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard.rs",
+        "sha256": "4c3c43a181f059c84f4fb5e0b3fdbfabc313c76eff628ddf8595744a895f24d0"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/action.rs",
+        "sha256": "c5068a760712065f44b778c4ccdb4533bb457d78b4b9d6011a68ebf13a1922aa"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/address.rs",
+        "sha256": "257fc309060e5636708c22dc699845f5dcef46d3f22685684c30986f26bc98c2"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/arbitrary.rs",
+        "sha256": "ecb0a2fc68974e498fc1ec49b3e0f87b4f9e79d266d5469316f0fd7a927bb61d"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/commitment.rs",
+        "sha256": "4c8303a012fb07c6b93eefcd2102c10fc758bb3f8c71967c1a9b38468fd3b4ea"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/keys.rs",
+        "sha256": "c90ec47f7b6bd93b362d65a19e9a21964aa207dc656de9b13b8b17dc4f6f4b69"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note.rs",
+        "sha256": "00ec03d26df996b8e035d9aa378ab8f320436306681e36076b12b82e6208669c"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note/arbitrary.rs",
+        "sha256": "6bee4793cf9dfbc26d2067f79b7e6e13342987045cd2bf77d968603e0d5fcd01"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note/ciphertexts.rs",
+        "sha256": "2d3abe2d9eca3fd61afe80e437e478473cb7bbbe1fa5a25b4728821b87411595"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note/nullifiers.rs",
+        "sha256": "03df8a232a1b86e118e7556434d7488476f94c66ab15decf86852fe0ca05566b"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/shielded_data.rs",
+        "sha256": "c4d5f1813900fa01df06719f274f6e6f5c3fe17f48fadebd2d1066fda51139cf"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/sinsemilla.rs",
+        "sha256": "466824a981654f498241b00b54da81793ad1f280ca4b6ed962c44413a4308f5a"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests.rs",
+        "sha256": "d923783c2d39e2fc2d1bfa245a2ad63b398ddd12cbdb689ee2ae14f34f9b88a9"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/preallocate.rs",
+        "sha256": "5ccd8a856b34e1a7b4e1545bcf91ff732bf13a3dee8581c58c55bb714dd3dffc"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/proof_size.rs",
+        "sha256": "7676bf354b0b7d39f75f812b6f7309aba59366d435619bd06bf65253fa4e5315"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/prop.rs",
+        "sha256": "db743821171687459cb8269e9a9187cee5038e4d1c7dd5ee88db368afa777269"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/tree.rs",
+        "sha256": "428f84e70ac95f2265acc984b329e0b24b1535cbb9c3f8c3aaf9f0c8a557dc92"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors.rs",
+        "sha256": "134dee178baee438fb36909cdf64bf95b5b0655c6147dd7de06ed2059d386b48"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/group_hash.rs",
+        "sha256": "3930db5cae7057e81295ef4b646d875e7cbdf8eb8e7f444d36ae7c6ff8bba54b"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/key_components.rs",
+        "sha256": "d6e274e454b5bdefc2e887f81e3310f37f316306eb9f91a3323f29daceacf505"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/sinsemilla.rs",
+        "sha256": "a889738fbc4760157131d99c5270c31421121fb9dfeb8a46f6a3f06f33c4c501"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/tree.rs",
+        "sha256": "d45d825d0809891122a94f09b5b9c49fe669292708da992e26ba3e2b3b981123"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tree.rs",
+        "sha256": "e4a20c02eb134f33188778b7a130925b574c6988a795515cbcb6af2c53ee22b5"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tree/legacy.rs",
+        "sha256": "258771be5efaae5745acc0db5e4930f67e38bd5896a00e522e5ab65487ef777d"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel.rs",
+        "sha256": "086d122bc6b5fb93e6f77926bd74208db8c608b1742a129c49395d3ba355c7d5"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/batch_frontier.rs",
+        "sha256": "ed4319004428b50d9c79f386d72aab76c8e12405442e5076effd981e56df8fa8"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/commitment_aux.rs",
+        "sha256": "03ea913c012fd184a3e6e2df9ccf262a1d44c415bf5190d38dde300c4c27b774"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/commitment_aux_verify.rs",
+        "sha256": "e70e26018304b926a4a833e27fb6062a5bc282c735148b9907f229e2d20cfcca"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/tree.rs",
+        "sha256": "f3c758c431b7890e2d9876b6206b0dc5b788d984d072bf4e066a5d017487f073"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters.rs",
+        "sha256": "1cdd1362e2726d56079c2661f268a8b1d3227c2d5a2e7c01676bc0e5e443db4b"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/arbitrary.rs",
+        "sha256": "cecc583defaafb340c01650c2d21b04f7b58c565a9f5f89a6f70996c7f74853f"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint.rs",
+        "sha256": "d97706dd4dba16c13c9dc94b127bb0dcc2963d2f03181b195957878b1bc83147"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/README.md",
+        "sha256": "96b46e20efa9f20c51325878e0c69322e51af1dcfb58751f486a9c76686031e5"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/constants.rs",
+        "sha256": "9481efdb1d73e10fd04e41e0307e248858b62a85368a55eddf75485d28b12035"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/list.rs",
+        "sha256": "1d6c3f28a722b52e7b2c9f353adc0fde0d14c6c7242151b4fa9eeffae6a1b70c"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/list/tests.rs",
+        "sha256": "baabc1d7f051dec4a0e087f6842f3ac126174d5851ccdf8d2f74248a45b61013"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/main-checkpoints.txt",
+        "sha256": "ecaa3c71f7b4cd7e9e1855462e0c68ae3d1a48a260aeabc30f2cfe625fc2f75e"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/test-checkpoints.txt",
+        "sha256": "0db69e27ea336ea870b13d2d5774ac9bf165ed2d66029007782013b7c55073b0"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/constants.rs",
+        "sha256": "7b50fa3724074ad5045733b8e3fbff1277f1e9f54d88b62d8bfc4cb17cd9c0f4"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/genesis.rs",
+        "sha256": "ac7ed04e2281411a4871bdc40c64b66055a3e348f492d86adf26e5ece0774e5f"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network.rs",
+        "sha256": "f0dd1dc862ab48b14dfa7cf1841671429f521af1cb76d97d08c2499542f7cb37"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/error.rs",
+        "sha256": "204e719a92e763b781ca6439e350f8185e3a1116771b34126822670e5d47b978"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/magic.rs",
+        "sha256": "3b48027ea9c578ae0a91af7590e577fd02ff9203354de03a6252e030cec835f4"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy.rs",
+        "sha256": "d4775f8d3b04bd49094c12d6d70cfc226a8d8a516d537d12e3a214df3cc1f687"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/constants.rs",
+        "sha256": "6de7ab3b989a2e4de299d3dc67fc581dcca5eb440dbc7349498f008653f61be2"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/constants/mainnet.rs",
+        "sha256": "528d68052ebe82e50311efb285415804510ba426b56df2cf48cc7f40d67483f1"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/constants/testnet.rs",
+        "sha256": "427beff87a60f9f9f1ae98f8caa12e8b6d0728cafe7d38831af71802ee379994"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/fees.rs",
+        "sha256": "76340208c80e34f6a7bccbb7da37d79429e0a2abad17cb16b2f8618a780d0206"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/fees/tests.rs",
+        "sha256": "9e790daa3ac6013859b13448d3629fce1667925c27c3a508a3c201884e42b51a"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/tests.rs",
+        "sha256": "86f9404f04f6a5e2b8b0a513834ca9fd071efb43523be75f648758707316bbdc"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/testnet.rs",
+        "sha256": "3231c4cb45458455799090e6b80a6582bc924c45727fbcd56285ce13e5cc2762"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests.rs",
+        "sha256": "5215c17bb255f4c219aef2802585b3ec2f6acebf595a61008737447860112c3b"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/prop.rs",
+        "sha256": "1a77eae6a6b070429e8024ee3012a08797a27e8061e9e21c057ce22fcaf4c0a5"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs",
+        "sha256": "a6c04001533ef713fafd05397c5cd346b29458eb9fd4d82236fbb98f78bbcfdc"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/zip218_funding_streams.rs",
+        "sha256": "ded84582c95c72fd5183683c3b0abebc46df8c523f29bc1294f32457ed40dd59"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/zip218_rounding.rs",
+        "sha256": "f36670924c5e17dd6473faa1fdaecdf7bc069508c1f2b005b40b648209b913a6"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network_upgrade.rs",
+        "sha256": "e054577b3774f2fef3e73782b1c0176c8d61c777454c488eb6a9d11fa2178db3"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/tests.rs",
+        "sha256": "d0af21085b6959832027ac26b97252a83e9307c32fa3f0f2529ffbc3a7aece2a"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/transaction.rs",
+        "sha256": "f0b3473484b99c45fd2b4d9dc66d47df07d8924f28bed95d429bd9ea2f0de59c"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives.rs",
+        "sha256": "ac08248210a1b0715d3addffbbceefb58af2364f902a00b1b24b4167c81c4340"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/address.rs",
+        "sha256": "bd85189ce010e318f734647d19920ec08d255660f947bbe2100863d3fbb28a86"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/byte_array.rs",
+        "sha256": "773e9af39b36d8f5e14420a17d216aa8a233ca411644c030af9144c535887020"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs.rs",
+        "sha256": "06c9bbb9a03f9043302e7a3aee5bc52271bcb9be54cd5f31508a4f656a1b87f3"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs/bctv14.rs",
+        "sha256": "1c47358444f620a39dfb63b0f568e61da03c0332dac7c7d47a31b8af8522e028"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs/groth16.rs",
+        "sha256": "18533ba477cd2f05b647fa47bcd97973d77b6544263fa63d39783db0a6075d1e"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs/halo2.rs",
+        "sha256": "8d099e24b371dd6f71ccba106cdec0d114b3acf0d383573586d972d7fd77162e"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_history.rs",
+        "sha256": "9934ff0578e3978a0fe3e02366992e82b1d1d31bff4f0728fd408bd542c152d3"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_history/tests.rs",
+        "sha256": "ab8edce66c5db5369edb547609ad84f9bd28d736a58611d946156ddda90f17be"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_history/tests/vectors.rs",
+        "sha256": "64daf99f8e0b4a658c40485fd6cd4ad1374dc9fb3b3be23e87dfea0284dfc809"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_note_encryption.rs",
+        "sha256": "46722eb55265516c1c2af3b48402360a708113dedcffd30fa2efd111cabaf06a"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_primitives.rs",
+        "sha256": "fda98926ccc418f009ff8b984ca24f896533490952282c3a63bad48ee3862c7c"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling.rs",
+        "sha256": "d202bb5f4174e69bf69c9b1041fa71d6c0b4ab445b8d7abf2ddbec65a0355c0f"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/arbitrary.rs",
+        "sha256": "e952ca1c77bc261047d39dad5f235836b69b14580bc2e8d8d37526ae7f53b4fc"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/commitment.rs",
+        "sha256": "4869f11a2f59410609d44c48f2111918012dcaee332434255a83cfcea9376750"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/commitment/test_vectors.rs",
+        "sha256": "bf89eacf1a778d95ac191dcbc621664fd42db138fb70c363ab990e26ba1c5048"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/keys.rs",
+        "sha256": "346db252d11618d1462d16e17f784ceeeb3f623a2f8b5798f618a82c2142aae6"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note.rs",
+        "sha256": "d1db3178c99eccefdcfb6da5c795e3e875cbf8d413a8284afe6f379d769e2cca"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note/arbitrary.rs",
+        "sha256": "6bee4793cf9dfbc26d2067f79b7e6e13342987045cd2bf77d968603e0d5fcd01"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note/ciphertexts.rs",
+        "sha256": "9dcfc65fd3425503ddac9f10d311c57419e0fe4f2c5a97b0ebcf6eba6e07f5ca"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note/nullifiers.rs",
+        "sha256": "cae53d6498a61d058c58a60ce7c3e7e51585556e31fba7b3304a6109dde41da9"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/output.rs",
+        "sha256": "5adfaee9a2e6f2bde8b428bdb3c1f865bf0fd72f579fe56d72fc7cadc4a7aeeb"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/shielded_data.rs",
+        "sha256": "6ffbf38dd3713db8c101570df777ab849d78731d6cf1413a2ce4406efc087809"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/spend.rs",
+        "sha256": "a55ed7cba9f6d2bb985acd32e84d4250739edf10ffcd56f05605bf4b86f536d0"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tests.rs",
+        "sha256": "dc5aa1fe54a8f942f9d7d16a30ac669b86843b04dc702d58dfcb004121716810"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tests/preallocate.rs",
+        "sha256": "02db220acb21552c93f67035ca761894d26202e960dc943aab3a7583b5ea8e8e"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tests/prop.rs",
+        "sha256": "25b760628fbc0ff1fde50d8a460794761e743af163083c7e9158b1c1a775e7a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tree.rs",
+        "sha256": "c7458d9cd6ccca4830f82a397ba20cb942225db892538907c9dde2081ae2c8f9"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tree/legacy.rs",
+        "sha256": "8d13e720180681dd31955acec27207a13f668ca964ae81d150fe2b996a89e08a"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization.rs",
+        "sha256": "904779859a9298c4de4a1ae849f0c10e7b35534be3eda13e92e60e6946a69234"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/arbitrary.rs",
+        "sha256": "c37535489130833fb7b8560ccfc10e4ac09020f9692f83d09b82befe00418940"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/compact_size.rs",
+        "sha256": "ab72b87ea7bc6fa4f1209d6e5755a81b72655c845d259e8e04b4696002c05d89"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/constraint.rs",
+        "sha256": "7205b3b6d684ae47b18bd4ef31bdf02e98b94ddb4d49244c3770218443063f19"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/date_time.rs",
+        "sha256": "e4c61f5163ba964e0c8c2b30a01ec5e2166641311859e6a8fb5cd9ba85f1828e"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/display_order.rs",
+        "sha256": "6f9eef415a1e46bf2a2847466e65feeb59d8e2d60efe8552577713fa03fda8aa"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/error.rs",
+        "sha256": "537ab791197d9fe0e0c2d38156e43567dda686f342829748320cdc1920da3c4f"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/read_zcash.rs",
+        "sha256": "62670e1401bdca94f4d9f6cd2b6c3c85c7584dcbb3831379a7d33429e50baf40"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/serde_helpers.rs",
+        "sha256": "8c99449a279a4ebfbbec19e29db59948d4b3a5372027b31fe0645771f2c2028e"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/sha256d.rs",
+        "sha256": "306e0848f2592e1a4e1561bfd960aa13adb99e5135969e00456f267cd0c7d8fc"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/tests.rs",
+        "sha256": "ef55e7d1c6d8f85959032fbe0368de38f4c4d830ea02406e5f9892a763cc2233"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/tests/preallocate.rs",
+        "sha256": "348fc011f5701844d8c7f76e45937efe690c01c1826f0de848de6691634e3eea"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/tests/prop.rs",
+        "sha256": "250ec6767979b0d97d1ca81c97e1b6b76adf61f12eec08b847bb0c08d405394e"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/write_zcash.rs",
+        "sha256": "4efa398b718d08fd2eaadfb532243c17c43fe488fbe0ce3d52049de3982dabb3"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/zcash_deserialize.rs",
+        "sha256": "c51700ac81deb545a74d716df13c64d1577ad16ab4f490e48e1c478d06f0a5a7"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/zcash_serialize.rs",
+        "sha256": "55c9faa8ecd0891ca27af3d89f246d0d5fdd6988e7d9fcc56004909bac40eb97"
+      },
+      {
+        "path": "crates/zakura-chain/src/shutdown.rs",
+        "sha256": "01b43125129536b7d964368d5a40dae892bd9bb74b456eead8afc0540df70a10"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout.rs",
+        "sha256": "254934f55c9a00039513643ef9df4e66af9d437f89e9349ff96233675f9c27cb"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/arbitrary.rs",
+        "sha256": "f60e27780ae48066f427d32c054ae0d14eeb341a101987799ee3a3a03cbfd0d0"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/commitment.rs",
+        "sha256": "60b6ed484ee6f5f1f38bafd22a71c1d11b2bce70abe33731e3123ae9c933e687"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/joinsplit.rs",
+        "sha256": "225314a0c4d61733ecda0df7371e4d1402c4d9dc5c3c5bcf61607d1551a50cc9"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/keys.rs",
+        "sha256": "ae215808e68ef32bde73763b47088ca8e1b152ef536a841649f6f4781283a341"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note.rs",
+        "sha256": "51fa6b70f5a319bb492d019c85dc48e7aa3fddaa66ebb5df5ab22445b3a799d8"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/arbitrary.rs",
+        "sha256": "69dee95b10e0716bb56fcd3bf6afcbd88c094b46eab666a3fc430941ba805675"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/ciphertexts.rs",
+        "sha256": "2758b8fd0cf3c9dbc97cd0b92253c6b19c542bc79654addda9142ef89150468d"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/mac.rs",
+        "sha256": "a21e86a1105814f54ad84a92574b86698165c6dd0d1d7ed4cabedd2dafd0415f"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/nullifiers.rs",
+        "sha256": "0d64e64a4822b3ddd1725a0c0b287964104e7d13e5023a048cfec614d04f97d7"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests.rs",
+        "sha256": "8af43295797e494e2e1396a52f966a87875b2922968489374884320f8e434761"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests/preallocate.rs",
+        "sha256": "d80c41361292a134fa123100bdcee513896abc7340eff8a79b247e952fda3646"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests/test_vectors.rs",
+        "sha256": "d4722f81cabb4702a08f1263e960325b77e39e8776de1f99dbc2c0ce50c15ecf"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests/tree.rs",
+        "sha256": "6648dcc64ef2ab84565128fd22b52a618d8517cb9d9c56372be754004655bc9d"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tree.rs",
+        "sha256": "996c2fd30b1ca8082bf871119305068d14cdd04eec9c7d3df5894eb496ff94cc"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tree/legacy.rs",
+        "sha256": "4032a5bc7c51e428314399c8334015176847871b722271887585703e48ada6b5"
+      },
+      {
+        "path": "crates/zakura-chain/src/subtree.rs",
+        "sha256": "4dbe0b16ea003164a1d1f48b218baf494117836b1fdc5eead9814363fac906a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/subtree_verify.rs",
+        "sha256": "16e3dca0f1412980d5abbaf7d6680793cecbb79b43414b435d08e7948132007e"
+      },
+      {
+        "path": "crates/zakura-chain/src/tests.rs",
+        "sha256": "a724c416bac3ebc0490a555bc0444f5c0a41f22df14f5b96790584eedc0c6656"
+      },
+      {
+        "path": "crates/zakura-chain/src/tests/vectors.rs",
+        "sha256": "f7e4458ffbad912b5eabb814aa74609ba9e1d78c87056898e4df97118f23b338"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction.rs",
+        "sha256": "8407c9493edfb2ada67d86154a12e200f954e260359735994ced0a1996beee5d"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/arbitrary.rs",
+        "sha256": "2fc0bc500d94411a69a334e395d2f7209b2dd727da9d3e0795437437bc029037"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/auth_digest.rs",
+        "sha256": "cf9501bea51f9f2cab2b62ced7091daef9a9ecc46080d81caeb4014d22df00fe"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/hash.rs",
+        "sha256": "7747d16bbf241c48296176d7844ef9bc3913c9a42d609ea2f7e1b955a2806f79"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/joinsplit.rs",
+        "sha256": "793272d7c69e8f5f673ebbcc43adf742be8ee553a242bad9327c6bf555ced364"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/lock_time.rs",
+        "sha256": "dae806f6fda11960bdd9057da307f62155f5385bdc134388b343187820745544"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/memo.rs",
+        "sha256": "55702a78b004aa266a2abb1d1dac2d83664cbf801686b482f1d6cfdaa0adb53f"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/serialize.rs",
+        "sha256": "7048a0094d907aba175e0041f8a8e685df2161fa113c7ee4e245c10365a3afb8"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/sighash.rs",
+        "sha256": "7d47a180b7229ccc398e2ddf170661a3e9bc55ffc2accfd5b193a617c8d19489"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/sighash/v4.rs",
+        "sha256": "6bd3252a7a242a16fe9546b57a3ee3682adc7eeecc022af53889d2e17450a5f5"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests.rs",
+        "sha256": "c88db99d484fa028c1bcaa3a5405ea35e59d1306faaf304bccae25722cc83ddd"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/ironwood_v6_tx_hash.rs",
+        "sha256": "04906be181931d26c173d16962da67dbe04ca54deeec6b094c8b54065fb96b0f"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/preallocate.rs",
+        "sha256": "94b391740113cf6e1acbf45883875c6947e49fa2190f992b7b1b04f899b9e92c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/prop.rs",
+        "sha256": "fc4a3d1be6a5e1065615270e6f90e30d87634df0aacfb772becc541302e61993"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/vectors.rs",
+        "sha256": "3db7a5c88997c1dd48b59da87289eeca465b2087058a3ac1c06e5f44c91a26f9"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/txid.rs",
+        "sha256": "3f85de146bfa22bd230c5845aede32e5e156d170637fafdfc514559637f8bd44"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/unmined.rs",
+        "sha256": "7eeb76423261ef6a67cfad0ec97f303f664116b748191aca10e203b901590619"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/unmined/zip317.rs",
+        "sha256": "775aa93797441ff43fa5ddb504b9bba92c140309433ef126ebf4a044495a09f2"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/unmined/zip317/tests.rs",
+        "sha256": "8372196de8ea8958b0da734816f8f43a9ac30b0125417d11eab99ba27648aa44"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/zip244.rs",
+        "sha256": "cdffb81b6811f6168187688c7e5507a42c63e0262afe17f90ca11f63b0b89d3c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent.rs",
+        "sha256": "6e1f1fdb4efdd6ebc51e791ddb1bc7fc7e5214ad17eaec3bc8b6e43c2913a7d2"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/address.rs",
+        "sha256": "b1ee3e3a365743fd8a3ee23674cff4dd0c815161da4e342e14c37498234ff7b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/arbitrary.rs",
+        "sha256": "9be4a12a5f30af236055a2ac52a1b95b844df6429e8a7685240dcade94c9ce6c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/keys.rs",
+        "sha256": "88ba431df453bf5fe71627394e61f4246e4cc3f1e66944562a8df27009a506bc"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/opcodes.rs",
+        "sha256": "d45a159a18bb94c33394c54b2e2a4c3cec812702ebf6002e48cba16f13a12f32"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/script.rs",
+        "sha256": "50877cf88c00478e272b1ab87c4031fe59cc0278eb64e8dc6f2096cb1535d4c5"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/serialize.rs",
+        "sha256": "51e0ce8f6c61ce71238133b6b62eac9fd17d4696557b424bdb472701395c06a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/tests/prop.rs",
+        "sha256": "197cbaf1591a87267af9db94fd6e18b6a7dbb2670fbae9594d881a097d491dea"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/tests/vectors.rs",
+        "sha256": "d76b8ca5377d1feffe4c7ec5f99dad8ffa35d2744d47dd1814352bcbd2a5ff0c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/utxo.rs",
+        "sha256": "2a3ec457219c682baf8bb7ec4d1166a310220c1e7b5ffd40b226e93548b0bc7d"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance.rs",
+        "sha256": "1b7bcf06961230cacde2743c369f1079b1bfc490db7754a9ac9fd16271ec56a3"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance/arbitrary.rs",
+        "sha256": "1f9df9d1471fceeab24eb066fc262b4698384079df8af5c336c6696cf423096f"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance/tests.rs",
+        "sha256": "2f1126ad2a741bf0b2ba2f4a4e3a4f182f55963697299f12e90d448e6e064b1f"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance/tests/prop.rs",
+        "sha256": "393933a0a784774d151d2808b3b3073e35508202cd502f92b04ab5d5f1ecbfb4"
+      },
+      {
+        "path": "crates/zakura-chain/src/work.rs",
+        "sha256": "09c782cfa1b6b6b997f5666cca8e54e2ef01d4ea01b2b8356f4aed1176b18ac5"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/arbitrary.rs",
+        "sha256": "3b187c27d5a165cdca00f04c5484a15788c22a90863a75d0ec7ae3e98200bd17"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty.rs",
+        "sha256": "6effbaa713582bc38f94801f5f0dbd06b76ddf4826cb13cae61a1c4504d3e074"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/arbitrary.rs",
+        "sha256": "cc1ca6bfb4f2ca5d97873d4dae982d65460e2342101103ff5ea785c125a12dcd"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/tests/prop.rs",
+        "sha256": "26ebc126ceb3890002b765702f1cbe216de42b0821aef1148c340fef3197e676"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/tests/vectors.rs",
+        "sha256": "c4d7081ab9109dc600b1b6605cd24b9e94048d3f61fe636b486cc05c5ece55f8"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/equihash.rs",
+        "sha256": "a799f307003d70a9e0fe126afb3491828c4d184df098e63c4972c4aee1a116f8"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/tests/prop.rs",
+        "sha256": "d825718dc00992e16d94b7d584dd78aeff6cb6cf78aaacc0fd72ac9f622fcbfd"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/tests/vectors.rs",
+        "sha256": "a377bfba9b6d664dd03c25f156170e7898ee6723d9b5de83a3f20ecf4fe4ed1b"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/u256.rs",
+        "sha256": "c8910a34d6e3763ca7bbedeec080e790533903a50ab1300b1674d7b2c56b2bc9"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+        "sha256": "cde18e133bf47a317e383fc363243b4710dc11cc07898171f02ac7a366828621"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "sha256": "c0915f8fbfd932fd5021c7507c8cfd7f27846f426e0bda7631c061392da07472"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
+        "sha256": "a0a4fb559c5e6c725b802d0f129347fff3d5b1d71cc676484e514d54f626b38b"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
+        "sha256": "85b39092ed7b1c19424c7bbc34597636aa799c79dfcb913a1f10bbe4f8bcc2c2"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
+        "sha256": "6a80834e9cd927c74e2c3c701ef5d05066cf52fbcbb0934fd7bdd5b50c8fc2c9"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
+        "sha256": "1ea260f688b7b80a6959ce6f203780837127904fb86ec17dd756287a26585892"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/src/strict.rs",
+        "sha256": "db01aa09a9c9b10b5a554df1c65a8a6d29b211e188fe71775c2f35a589b9f724"
+      }
+    ],
+    "signer_source_inventory": [
+      {
+        "path": "crates/pq-slh-dsa-b-verify/Cargo.toml",
+        "sha256": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/NOTICE.md",
+        "sha256": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "sha256": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/README.md",
+        "sha256": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/examples/compare.rs",
+        "sha256": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+        "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+        "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+        "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/lib.rs",
+        "sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+        "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+        "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json",
+        "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+        "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/Cargo.toml",
+        "sha256": "ee139a708aef5622e65787cc569d1417003ae160bc1e7363b17feb8a0d077324"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/NOTICE.md",
+        "sha256": "2b12f65125e0f2e21486cfaaa4cc93afdca71b8f7b0813b353b8db1f334a8106"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/PROVENANCE.json",
+        "sha256": "1c94cec0b5a71f4ae33a1c5eb21cc548a35299b4274169cf3867d9f239706f3a"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/README.md",
+        "sha256": "f63b5adbf3b1076ab644f855ddee0b2b03bce48f57e54ec63b5a446a0fed90cf"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/src/main.rs",
+        "sha256": "bf6be5f1740bbc23388e7537cf1afc38b17e70660a48160fc2f1f331ee7b9565"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/tests/public-keygen.json",
+        "sha256": "1cfb24a2b3f0c44185301a94e63074fba94336412ac16138fdb9d022663ac478"
+      }
+    ],
+    "source_commit": "419fd09e766bd42074bf5da208412a43c7d41db7"
+  },
+  "candidate_build": {
+    "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "slh-dsa-b128s-fixture-host"
+    ],
+    "configuration_files_sha256": {
+      ".cargo/config.toml": "da252b8ca275eb20b900165a9f1d3c7feb5e998d98eeb743717f3c9b7805451c",
+      "Cargo.lock": "7811238b2214ea9e1faa4b29c02c58c530606fd33daf12f597085406838d5433",
+      "Cargo.toml": "1a90711c2b7329a1eeb37dbded6782a695d454e7fb5e29605e7d673e13a6d05e",
+      "rust-toolchain.toml": "e5cc0545f232bde807bd9394c2433322d1cd2cf42b060ceab2ac7329bc9cdaa2"
+    },
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)"
+  },
+  "cases": [
+    {
+      "artifact_sha256": "e0773f311a963d4dd168132a4d7d6c1f1b6a6dbdb97ba9671067f6037fec7ee7",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 10
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-10of10",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 10
+      }
+    },
+    {
+      "artifact_sha256": "c44fa18e03182a9ba1b89de0685faa2024375eed3df7f860740424b20d216942",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 15
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-15of15",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 15
+      }
+    },
+    {
+      "artifact_sha256": "236bf1da0393acc076341fa02dfb616c1ce06d89b37a3041fc9248fbcce48f46",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 16
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-16checks",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 16
+      }
+    },
+    {
+      "artifact_sha256": "bc4b419b0cf929fe78a86d95799fe385766facbcd372755b6457319491ce11e2",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "reject",
+              "stage": "transaction_budget",
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 17
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-17checks",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "reject",
+          "stage": "transaction_budget",
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 17
+      }
+    },
+    {
+      "artifact_sha256": "a15b843e2627aa5768cc3cf544660720745ccfe291d0a5d343b3564cbd2a2196",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-1of1",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 1
+      }
+    },
+    {
+      "artifact_sha256": "d9596e72af82445df4d961e47d2f765bf4914925cf3f5df93c972718b35360c8",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-1of15-index14",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 1
+      }
+    },
+    {
+      "artifact_sha256": "656d7b63d2400050b42c92d44fb3e7a70d1e1dbcdcdd3217f33482fe6822fefb",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 2
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-2of3",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 2
+      }
+    },
+    {
+      "artifact_sha256": "984552584cbf0782106aef91d5313093a6cdd48cf81cd44154cfb0b38d9de851",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 3
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-3of5",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 3
+      }
+    },
+    {
+      "artifact_sha256": "c04b6e046f25a14b51779cbf81412d8e4a1befbb7af600c4492f60eeab3edfe1",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 8
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v5-8of10",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 8
+      }
+    },
+    {
+      "artifact_sha256": "3169e2976539acb50f81cb8604738531164b4f07e896b9a3936b02452d46429a",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 10
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-10of10",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 10
+      }
+    },
+    {
+      "artifact_sha256": "5588ed4e950c32dec942d2d0a3e67b659187a43e50d82d3c6e3aeb281d96ee44",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 15
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-15of15",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 15
+      }
+    },
+    {
+      "artifact_sha256": "4357d8cb85d74743634168b03a3cf698460ec515730680e4c8cbcca628912459",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 16
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-16checks",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 16
+      }
+    },
+    {
+      "artifact_sha256": "bca4c7b4835adeccb67867316f169a3027e34ed6690deae0c7a0d1e16ffc1107",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "reject",
+              "stage": "transaction_budget",
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 17
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-17checks",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "reject",
+          "stage": "transaction_budget",
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 17
+      }
+    },
+    {
+      "artifact_sha256": "cce47d2264c2612db9e5a097ca5d3a1cb2779cfde550115ea9889fbf7915ee26",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-1of1",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 1
+      }
+    },
+    {
+      "artifact_sha256": "5fad477f004b356964740ffe7233e907e1f64d19a316d4e18e02f596c23838d1",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-1of15-index14",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 1
+      }
+    },
+    {
+      "artifact_sha256": "c8ab78d2b30f8a8d9f2fc3ee38164c0c178c3267a625b36128037835f22cf115",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 2
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-2of3",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 2
+      }
+    },
+    {
+      "artifact_sha256": "ede3ea20b998132916792f4869d9c1635435f65026868da82c34fd476bf945e3",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 3
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-3of5",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 3
+      }
+    },
+    {
+      "artifact_sha256": "53717f58107020191163dd59643099ed1b3858da707cce5556a77fdefba5328e",
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "accept",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "accept",
+            "native_rejection": null,
+            "signature_checks": 8
+          }
+        },
+        "schema_version": 1
+      },
+      "case_id": "v6-8of10",
+      "independent": {
+        "functional_profile": {
+          "block_limit": 64,
+          "result": "accept",
+          "stage": null,
+          "transaction_limit": 16
+        },
+        "native_authorization": "accept",
+        "native_rejection": null,
+        "signature_checks": 8
+      }
+    }
+  ],
+  "checker_files": {
+    "check.py": "fa6cb198a8fbedce671055e9edfe5a2ee320002cc6c72e0eea22ff809a11ebf1",
+    "mutations.py": "428c6c805ea099a24f056522deba77ee9e5fc154f9244921749c0830a9c07550",
+    "oracle.py": "cdf3f2b0991b8f3fed5991192bb57f807449685b452135ba71c89600fe337ac3",
+    "test_oracle.py": "32ce5d9669c67c1e554caa9195c4d216813d02f6fb3898c9d1b75a77c608fdb3",
+    "wire.py": "94f721ba69acb5cb273373c723724884df7bd716e01f51725b4e67b9931bafbf"
+  },
+  "comparison_target_verification": {
+    "claims": {
+      "algorithm_revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+      "blake3_version": "1.8.5",
+      "host_binary_sha256": "ffac342ca6e023f92129824a0bd91b81149e96f4771b75278a4714b08c7a33f2",
+      "host_lock_sha256": "7811238b2214ea9e1faa4b29c02c58c530606fd33daf12f597085406838d5433",
+      "host_source_inventory_sha256": "f4a4403a0c61a64c192727f2c2a1578e3c3b83ea6b3e5c7d434e688cda20533d",
+      "signer_binary_sha256": "57e15db7aa5c7c2b8a49ee1af929eaf9e24513498e5f9139b8e30e84e6bd01ff",
+      "signer_lock_sha256": "10b25f7cafe7e8ea72cf8f2eaa864bb8322090ef9d538c9526c7966041d4e8d6",
+      "signer_source_inventory_sha256": "51b8bffb1c1984e15be3fdded161b88df349fd247a996eabccad31d719d6020f",
+      "zakura_revision": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
+    },
+    "host_source_inventory": [
+      {
+        "path": "Cargo.toml",
+        "sha256": "1a90711c2b7329a1eeb37dbded6782a695d454e7fb5e29605e7d673e13a6d05e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md",
+        "sha256": "68d48bd8a5df3c309b2a970cbea7e952565e7242f420acd9cb5a717baf0ec701"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/Cargo.toml",
+        "sha256": "55f9d1afb821868669fe7c65dfc183a6f0ba5afe55b259aea02572c3511c7138"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/README.md",
+        "sha256": "2f57813f910ec754a5b417895307cf31a9844013ed3371d036f189b5d1d10a55"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/codec.rs",
+        "sha256": "e89a9ad2cdf0f9e97cd59d13fe70bae451b587fc373b4e651fc8f4e640ccf273"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/contract.rs",
+        "sha256": "ad97af46b1d46d71cd5ea9175b4197ed88010934322cee3c29cd0816fe81ac22"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/lib.rs",
+        "sha256": "26a440f732cb22a3f548eecc97cd778420609aba53536bda97cc4b1fd68a0f55"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/profile.rs",
+        "sha256": "0ece11d2a0e85c53c727876277df814ac2f4950e8bf26281558ea0a5278b396c"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/rejection.rs",
+        "sha256": "7c340c720a7e45949b5dcc39ba862155a5cebfbd69f0c7ef36c0755cbc792b67"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/signing_context.rs",
+        "sha256": "da4d38a2cabb6baabc3b5788b1551acfada3ee7dccf6b7d3ba4e793a579b4359"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/test_observer.rs",
+        "sha256": "eb1d691b6a67fa6679e1c8fb2e877f9c54e58eb6619e6653c494e48610c9afe0"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/src/verifier.rs",
+        "sha256": "a6f811f57d3c2db937184a16cef60c21d38918655f3318ad87ff87a2f10136ac"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+        "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/tests/context.rs",
+        "sha256": "312b5f28a05eeb077b9fc31e7172d94eb00fdd75fd4438434d51a41c72675e9f"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+        "sha256": "5e38854702468a19f53b8e380b93f001d09b809f8a507a7582c4bc5b65f35c77"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/Cargo.toml",
+        "sha256": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/NOTICE.md",
+        "sha256": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "sha256": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/README.md",
+        "sha256": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/examples/compare.rs",
+        "sha256": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+        "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+        "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+        "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/lib.rs",
+        "sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+        "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+        "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json",
+        "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+        "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+      },
+      {
+        "path": "crates/pq-test-support/ATTRIBUTION.md",
+        "sha256": "72752bed082fb69a88edb5cf3fa23a0dee55cdc70ec841e1a34fced7d456e9a5"
+      },
+      {
+        "path": "crates/pq-test-support/Cargo.toml",
+        "sha256": "b5b87a8a1585a484850e399f1477682bdea607bfc485c5f50ba41c2b220dd166"
+      },
+      {
+        "path": "crates/pq-test-support/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-test-support/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-test-support/README.md",
+        "sha256": "8367719d1270972ca4f70deb5926dbe4781387c600643d8f884a97a994b0fc9d"
+      },
+      {
+        "path": "crates/pq-test-support/src/lib.rs",
+        "sha256": "c229e9458e325a76aa265adf147f50adf7dc656882ae0720229decbc8c07d4c1"
+      },
+      {
+        "path": "crates/pq-test-support/tests/recipes.rs",
+        "sha256": "f65167a354556244e5d4443dd2060e71f7fd93346f495cecbf91cec10523faed"
+      },
+      {
+        "path": "crates/pq-tx-context/ATTRIBUTION.md",
+        "sha256": "eca8fd15b43eed8950711beeb48e611cfc66e8ac0b7b3c32abc5d4b5c55568a9"
+      },
+      {
+        "path": "crates/pq-tx-context/Cargo.toml",
+        "sha256": "031481de5640fb7cd0ce1121f7c4cbb3951c45cf9c67bd58ec04e41950043ad5"
+      },
+      {
+        "path": "crates/pq-tx-context/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-tx-context/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-tx-context/README.md",
+        "sha256": "5edf4fc6e6b88493da8b6b2c9bdf385d65a0a4401fc03b0989589796100a2907"
+      },
+      {
+        "path": "crates/pq-tx-context/src/accounting.rs",
+        "sha256": "778bbd80853ff008284d4d60e8386b44ce88fc3052b9fe4a725f1d9c15710177"
+      },
+      {
+        "path": "crates/pq-tx-context/src/compatibility.rs",
+        "sha256": "b95f58844c4e956f929f07283679573d7a27ed79c2e5601068c74b829151a49f"
+      },
+      {
+        "path": "crates/pq-tx-context/src/error.rs",
+        "sha256": "0e55ff682109dbd5e7997a8cdb8b6585ad4b78d1f4b8370f13797be0f7634bee"
+      },
+      {
+        "path": "crates/pq-tx-context/src/lib.rs",
+        "sha256": "aa8f26a6c617fa21c19661b28e32af19a3cc3d55294dd9cb49b24ed1cd7279f0"
+      },
+      {
+        "path": "crates/zakura-chain/Cargo.toml",
+        "sha256": "b834f4f9f63abfdcefd43be583281d777c904d1ec6027194e0877bef34ac709f"
+      },
+      {
+        "path": "crates/zakura-chain/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/zakura-chain/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/zakura-chain/benches/block.rs",
+        "sha256": "bb1f639aab2779aa1020dcd9c388f9420fc4881a740f786c90854cc828788466"
+      },
+      {
+        "path": "crates/zakura-chain/benches/note_commitment_hash.rs",
+        "sha256": "172531be4e56dfe500e4a54d4f1c86e614435f0052e6f3a1e5aeaff3a94a1b4f"
+      },
+      {
+        "path": "crates/zakura-chain/benches/redpallas.rs",
+        "sha256": "01c5ded18626a15dc1f61573f1e58a3ad486637f2ee9e05851c8782fcd7c5e51"
+      },
+      {
+        "path": "crates/zakura-chain/benches/transaction.rs",
+        "sha256": "8a0ecf65321614d5c4483c765b9cec0c9255ffeb65db70dfd8fe98af9edd5ee9"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/block/tests.txt",
+        "sha256": "65208d1a1a651a8c2eabe045b864c94c1abd88b4e54f0c77549c6ad1f01b8335"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/keys/sapling/tests.txt",
+        "sha256": "fdbf85faa70e3af4489d051c7a852432da8d8702e572001c34419c0a197dc855"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/keys/sprout.txt",
+        "sha256": "a252bafc3ff64527f33697e01c98b92098655458ae23748c44e06665f5e6df2b"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/orchard/keys/tests.txt",
+        "sha256": "280d516e351568c43df44a977388f7b270308d18bcb8f6249f41ad7e80839c04"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/parameters/network/tests/prop.txt",
+        "sha256": "f7a1f9a3b588d1c89712360a8d0ffabedb41782b3d376754b6e03bdb43029b55"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/primitives/redpallas/tests/prop.txt",
+        "sha256": "7bce4bad8bbab9e64be7ece2484c264693bd990784cda9a377e8ba6e751ea5d6"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/serialization.txt",
+        "sha256": "baf130bb38c66f0af1c17c3bb9a1ef0f06772fc325e96e54554e45fed369e06c"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/transaction/tests.txt",
+        "sha256": "7f8393c1dad23b2a23af77ba7329c37cf91114d0f3b42e0ce596858406e88441"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/types.txt",
+        "sha256": "b7112dde4ab13098ddbe9f10e4cd6e31224e71b26733d39d184623160271e3eb"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/value_balance/tests/prop.txt",
+        "sha256": "286478a7f665b6fa5f2e6bc6dc58eb826c9b54799d57a5eede3b51e30508ea00"
+      },
+      {
+        "path": "crates/zakura-chain/proptest-regressions/work/tests/prop.txt",
+        "sha256": "b6c9fcb57be6591b79fb8a48b59bbc1c89321e7d18859056a202c68afdf77695"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount.rs",
+        "sha256": "8c73b2037aabcc2a617352f917f0f4adb35cf67516539152efa1de82fe273bbb"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/arbitrary.rs",
+        "sha256": "aa32760cc0157fc35a503adbe2b568cc17bf1eaae0a97723d40147f10748dd9d"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/tests.rs",
+        "sha256": "db23352fb72892c7fbd2dc42ba204fa65a9c69ca5d116076398a5f4162354a8d"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/tests/prop.rs",
+        "sha256": "1eb12cf02e6b8e738386dcac8632c7f707961a06dca5e97a5534810c390657b1"
+      },
+      {
+        "path": "crates/zakura-chain/src/amount/tests/vectors.rs",
+        "sha256": "bb78c5bb1be949b4e10ecfe3d9beda385a2daa7bd135ed59f2ea42968470c2d9"
+      },
+      {
+        "path": "crates/zakura-chain/src/block.rs",
+        "sha256": "04179a0a069b105f04945d550e8fa7dba9f27ad7d4ac89e26b9a1c7bbe48ddba"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/arbitrary.rs",
+        "sha256": "fcb11e16f43b435b8bf787820d29d00489d2d38401cacd066c7c6a1a05edf703"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/commitment.rs",
+        "sha256": "df3a255fd1b2a5cff4e663a61f3b24a134dad4125d7ec11180c14cac59f6c36c"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/error.rs",
+        "sha256": "a4b8243c60f155e0034561d8f001f711e2b6199984582b318ea15ce337d384b3"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/genesis.rs",
+        "sha256": "4b9028a0c6e7d6a1572d9626d80f7ff968ed984ab2e8b6d34108bc3ac41dfa21"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/genesis/block-regtest-0-000-000.txt",
+        "sha256": "7310c83e1f29800028a4897da8a8f56e9d211a46f8a1e3960b0195e87912135d"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/hash.rs",
+        "sha256": "ca00b4348b24744c4601a13d9e6957770718f3420b2fb245877fffff3f27b8a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/header.rs",
+        "sha256": "95cd7d0e6ffff332ff321bdf7350686aa0fbc9ca77b896db9a8c29e71d7c5030"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/height.rs",
+        "sha256": "eecc53138a505f5d25a43767d0b6f44413448b366efd16ac9154bf6754b154db"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/height/json_conversion.rs",
+        "sha256": "1fa73aa793ecf9186042e1c2f8e087f1c22cdb405a5bd6d7a38504fadeb9683e"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/merkle.rs",
+        "sha256": "b03673b3b62e280873ea4d90d4870e996b4dd13cf145e04d0d9fb1de7dbfdbc3"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/serialize.rs",
+        "sha256": "ea250a0f11f54af0e7712adb8b9e3aad975590f09df5a966d746f9876e2bfbd9"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests.rs",
+        "sha256": "6b886f8a01708bc7da138e3787f192e3d5add54db0de222beaddac663efc5a65"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/generate.rs",
+        "sha256": "439d38ce7fa6e333fd10cc0cc3258bd38dcb46c2bec8fa9a8803ed2280fb43c1"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/preallocate.rs",
+        "sha256": "149871f156284c9c60f25319a07f6cfde5371175efbba25e9a1020d34e5a48aa"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/prop.rs",
+        "sha256": "88fe68d8301c8f9f937bb8a0fea7b7fbe34ba56af502722e257e5db1aa1ba0b1"
+      },
+      {
+        "path": "crates/zakura-chain/src/block/tests/vectors.rs",
+        "sha256": "4787fd520136306f205e44234708edce230170b0130c75f294c0f5cb302928e4"
+      },
+      {
+        "path": "crates/zakura-chain/src/block_info.rs",
+        "sha256": "4beefa42b13e2c438e0428d87809b183dea12853b6962a72f4124931794e8358"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_sync_status.rs",
+        "sha256": "b95881d999d704f40e1d96ab5839c2771e222ccbbddd883cc0b90a92cad6f318"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_sync_status/mock.rs",
+        "sha256": "36a21322f4b5a99a0093e89ee05dde7b99ddd210a86528b996f18d0c858998fe"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip.rs",
+        "sha256": "c7d06487e69f7e0c007bc3b60a3acfcc7a2c444bbcd0bdf47ee0524eb1229d10"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/mock.rs",
+        "sha256": "ee59ec57f1eb77fb0333f0e5a470ea7b1e392c01e5a7ae7cb553bc0c68072c45"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/network_chain_tip_height_estimator.rs",
+        "sha256": "e447433bf0b9f8773e8b263f5f7de12d7e7e88c22244b2cee215e4d9ec69a0f6"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/tests/prop.rs",
+        "sha256": "8c3edd659c0dea463dfd9633adc08d9eaf114e6eb8e3936646c3d242c7043925"
+      },
+      {
+        "path": "crates/zakura-chain/src/chain_tip/tests/vectors.rs",
+        "sha256": "5d2fbc236b772caa1da5b66bd21528c5e21854efa02a7f6591756e9f911f34ea"
+      },
+      {
+        "path": "crates/zakura-chain/src/common.rs",
+        "sha256": "bd0083c1e07666169a91b3bffa0eccfd3341fc82f865342a1a72e6031026b913"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic.rs",
+        "sha256": "0b13fcc316b8309bacc996fb88f42ce8e98b14334b67b7cc25f2395c359aca2e"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic/task.rs",
+        "sha256": "0265858a459153dcb9620469bd90a74910ffebbf3346aa42338d00206085ac05"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic/task/future.rs",
+        "sha256": "c4f60b66e98e330d1279ca1c8103a4ebbaa845a9a90083d051883fdc6d9a3b1c"
+      },
+      {
+        "path": "crates/zakura-chain/src/diagnostic/task/thread.rs",
+        "sha256": "bfb237a9097aa8e063103160a07cf1336bc00cf7d0d6f513b640cc0741654be1"
+      },
+      {
+        "path": "crates/zakura-chain/src/error.rs",
+        "sha256": "c6ea0210ca0974b20827eedb91f94d78b9a1610e9ed97c051682c2a080f88ae7"
+      },
+      {
+        "path": "crates/zakura-chain/src/fmt.rs",
+        "sha256": "4da4e06d8c9649a4a2f1a4a6878891242641e652563688aebf11c6bfc9a48b1f"
+      },
+      {
+        "path": "crates/zakura-chain/src/fmt/time.rs",
+        "sha256": "1649f9d937e997da7d23a08efcc5263447c16147812462da5386198971515831"
+      },
+      {
+        "path": "crates/zakura-chain/src/history_tree.rs",
+        "sha256": "180d295ad9a13b875ec0e886a87954a745b972946a390c85165efc383d43d1f6"
+      },
+      {
+        "path": "crates/zakura-chain/src/history_tree/tests.rs",
+        "sha256": "f1343638309f2a80f6d360980eff558a169da4576d23bd8029ff2b67e839eb59"
+      },
+      {
+        "path": "crates/zakura-chain/src/history_tree/tests/vectors.rs",
+        "sha256": "750fb4180d7dd7b4db181d0f5f5ecfb63293e51ff2156199ae09d1105b85d06f"
+      },
+      {
+        "path": "crates/zakura-chain/src/ironwood.rs",
+        "sha256": "be13280793bb389cc4898b85900ff831abd2a447f3516670ebe237d9b617ae8b"
+      },
+      {
+        "path": "crates/zakura-chain/src/lib.rs",
+        "sha256": "233b085a67ccb10f505ee2af12f73126e31e9299424951eea7ac743e4d652532"
+      },
+      {
+        "path": "crates/zakura-chain/src/local_genesis.rs",
+        "sha256": "9a60710863fb9a38ae3a3247cbc42f0eab78f138748433ca0cab35905ccd5a79"
+      },
+      {
+        "path": "crates/zakura-chain/src/memory.rs",
+        "sha256": "ba430578dd51d6f029ca7aa28ecc0dc2da3b874a1b5377fe3540d66d1a21d870"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard.rs",
+        "sha256": "4c3c43a181f059c84f4fb5e0b3fdbfabc313c76eff628ddf8595744a895f24d0"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/action.rs",
+        "sha256": "c5068a760712065f44b778c4ccdb4533bb457d78b4b9d6011a68ebf13a1922aa"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/address.rs",
+        "sha256": "257fc309060e5636708c22dc699845f5dcef46d3f22685684c30986f26bc98c2"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/arbitrary.rs",
+        "sha256": "ecb0a2fc68974e498fc1ec49b3e0f87b4f9e79d266d5469316f0fd7a927bb61d"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/commitment.rs",
+        "sha256": "4c8303a012fb07c6b93eefcd2102c10fc758bb3f8c71967c1a9b38468fd3b4ea"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/keys.rs",
+        "sha256": "c90ec47f7b6bd93b362d65a19e9a21964aa207dc656de9b13b8b17dc4f6f4b69"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note.rs",
+        "sha256": "00ec03d26df996b8e035d9aa378ab8f320436306681e36076b12b82e6208669c"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note/arbitrary.rs",
+        "sha256": "6bee4793cf9dfbc26d2067f79b7e6e13342987045cd2bf77d968603e0d5fcd01"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note/ciphertexts.rs",
+        "sha256": "2d3abe2d9eca3fd61afe80e437e478473cb7bbbe1fa5a25b4728821b87411595"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/note/nullifiers.rs",
+        "sha256": "03df8a232a1b86e118e7556434d7488476f94c66ab15decf86852fe0ca05566b"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/shielded_data.rs",
+        "sha256": "c4d5f1813900fa01df06719f274f6e6f5c3fe17f48fadebd2d1066fda51139cf"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/sinsemilla.rs",
+        "sha256": "466824a981654f498241b00b54da81793ad1f280ca4b6ed962c44413a4308f5a"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests.rs",
+        "sha256": "d923783c2d39e2fc2d1bfa245a2ad63b398ddd12cbdb689ee2ae14f34f9b88a9"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/preallocate.rs",
+        "sha256": "5ccd8a856b34e1a7b4e1545bcf91ff732bf13a3dee8581c58c55bb714dd3dffc"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/proof_size.rs",
+        "sha256": "7676bf354b0b7d39f75f812b6f7309aba59366d435619bd06bf65253fa4e5315"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/prop.rs",
+        "sha256": "db743821171687459cb8269e9a9187cee5038e4d1c7dd5ee88db368afa777269"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/tree.rs",
+        "sha256": "428f84e70ac95f2265acc984b329e0b24b1535cbb9c3f8c3aaf9f0c8a557dc92"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors.rs",
+        "sha256": "134dee178baee438fb36909cdf64bf95b5b0655c6147dd7de06ed2059d386b48"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/group_hash.rs",
+        "sha256": "3930db5cae7057e81295ef4b646d875e7cbdf8eb8e7f444d36ae7c6ff8bba54b"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/key_components.rs",
+        "sha256": "d6e274e454b5bdefc2e887f81e3310f37f316306eb9f91a3323f29daceacf505"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/sinsemilla.rs",
+        "sha256": "a889738fbc4760157131d99c5270c31421121fb9dfeb8a46f6a3f06f33c4c501"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tests/vectors/tree.rs",
+        "sha256": "d45d825d0809891122a94f09b5b9c49fe669292708da992e26ba3e2b3b981123"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tree.rs",
+        "sha256": "e4a20c02eb134f33188778b7a130925b574c6988a795515cbcb6af2c53ee22b5"
+      },
+      {
+        "path": "crates/zakura-chain/src/orchard/tree/legacy.rs",
+        "sha256": "258771be5efaae5745acc0db5e4930f67e38bd5896a00e522e5ab65487ef777d"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel.rs",
+        "sha256": "086d122bc6b5fb93e6f77926bd74208db8c608b1742a129c49395d3ba355c7d5"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/batch_frontier.rs",
+        "sha256": "ed4319004428b50d9c79f386d72aab76c8e12405442e5076effd981e56df8fa8"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/commitment_aux.rs",
+        "sha256": "03ea913c012fd184a3e6e2df9ccf262a1d44c415bf5190d38dde300c4c27b774"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/commitment_aux_verify.rs",
+        "sha256": "e70e26018304b926a4a833e27fb6062a5bc282c735148b9907f229e2d20cfcca"
+      },
+      {
+        "path": "crates/zakura-chain/src/parallel/tree.rs",
+        "sha256": "f3c758c431b7890e2d9876b6206b0dc5b788d984d072bf4e066a5d017487f073"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters.rs",
+        "sha256": "1cdd1362e2726d56079c2661f268a8b1d3227c2d5a2e7c01676bc0e5e443db4b"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/arbitrary.rs",
+        "sha256": "cecc583defaafb340c01650c2d21b04f7b58c565a9f5f89a6f70996c7f74853f"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint.rs",
+        "sha256": "d97706dd4dba16c13c9dc94b127bb0dcc2963d2f03181b195957878b1bc83147"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/README.md",
+        "sha256": "96b46e20efa9f20c51325878e0c69322e51af1dcfb58751f486a9c76686031e5"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/constants.rs",
+        "sha256": "9481efdb1d73e10fd04e41e0307e248858b62a85368a55eddf75485d28b12035"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/list.rs",
+        "sha256": "1d6c3f28a722b52e7b2c9f353adc0fde0d14c6c7242151b4fa9eeffae6a1b70c"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/list/tests.rs",
+        "sha256": "baabc1d7f051dec4a0e087f6842f3ac126174d5851ccdf8d2f74248a45b61013"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/main-checkpoints.txt",
+        "sha256": "ecaa3c71f7b4cd7e9e1855462e0c68ae3d1a48a260aeabc30f2cfe625fc2f75e"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/checkpoint/test-checkpoints.txt",
+        "sha256": "0db69e27ea336ea870b13d2d5774ac9bf165ed2d66029007782013b7c55073b0"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/constants.rs",
+        "sha256": "7b50fa3724074ad5045733b8e3fbff1277f1e9f54d88b62d8bfc4cb17cd9c0f4"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/genesis.rs",
+        "sha256": "ac7ed04e2281411a4871bdc40c64b66055a3e348f492d86adf26e5ece0774e5f"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network.rs",
+        "sha256": "f0dd1dc862ab48b14dfa7cf1841671429f521af1cb76d97d08c2499542f7cb37"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/error.rs",
+        "sha256": "204e719a92e763b781ca6439e350f8185e3a1116771b34126822670e5d47b978"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/magic.rs",
+        "sha256": "3b48027ea9c578ae0a91af7590e577fd02ff9203354de03a6252e030cec835f4"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy.rs",
+        "sha256": "d4775f8d3b04bd49094c12d6d70cfc226a8d8a516d537d12e3a214df3cc1f687"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/constants.rs",
+        "sha256": "6de7ab3b989a2e4de299d3dc67fc581dcca5eb440dbc7349498f008653f61be2"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/constants/mainnet.rs",
+        "sha256": "528d68052ebe82e50311efb285415804510ba426b56df2cf48cc7f40d67483f1"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/constants/testnet.rs",
+        "sha256": "427beff87a60f9f9f1ae98f8caa12e8b6d0728cafe7d38831af71802ee379994"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/fees.rs",
+        "sha256": "76340208c80e34f6a7bccbb7da37d79429e0a2abad17cb16b2f8618a780d0206"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/fees/tests.rs",
+        "sha256": "9e790daa3ac6013859b13448d3629fce1667925c27c3a508a3c201884e42b51a"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/subsidy/tests.rs",
+        "sha256": "86f9404f04f6a5e2b8b0a513834ca9fd071efb43523be75f648758707316bbdc"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/testnet.rs",
+        "sha256": "3231c4cb45458455799090e6b80a6582bc924c45727fbcd56285ce13e5cc2762"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests.rs",
+        "sha256": "5215c17bb255f4c219aef2802585b3ec2f6acebf595a61008737447860112c3b"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/prop.rs",
+        "sha256": "1a77eae6a6b070429e8024ee3012a08797a27e8061e9e21c057ce22fcaf4c0a5"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs",
+        "sha256": "a6c04001533ef713fafd05397c5cd346b29458eb9fd4d82236fbb98f78bbcfdc"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/zip218_funding_streams.rs",
+        "sha256": "ded84582c95c72fd5183683c3b0abebc46df8c523f29bc1294f32457ed40dd59"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network/tests/zip218_rounding.rs",
+        "sha256": "f36670924c5e17dd6473faa1fdaecdf7bc069508c1f2b005b40b648209b913a6"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/network_upgrade.rs",
+        "sha256": "e054577b3774f2fef3e73782b1c0176c8d61c777454c488eb6a9d11fa2178db3"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/tests.rs",
+        "sha256": "d0af21085b6959832027ac26b97252a83e9307c32fa3f0f2529ffbc3a7aece2a"
+      },
+      {
+        "path": "crates/zakura-chain/src/parameters/transaction.rs",
+        "sha256": "f0b3473484b99c45fd2b4d9dc66d47df07d8924f28bed95d429bd9ea2f0de59c"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives.rs",
+        "sha256": "ac08248210a1b0715d3addffbbceefb58af2364f902a00b1b24b4167c81c4340"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/address.rs",
+        "sha256": "bd85189ce010e318f734647d19920ec08d255660f947bbe2100863d3fbb28a86"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/byte_array.rs",
+        "sha256": "773e9af39b36d8f5e14420a17d216aa8a233ca411644c030af9144c535887020"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs.rs",
+        "sha256": "06c9bbb9a03f9043302e7a3aee5bc52271bcb9be54cd5f31508a4f656a1b87f3"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs/bctv14.rs",
+        "sha256": "1c47358444f620a39dfb63b0f568e61da03c0332dac7c7d47a31b8af8522e028"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs/groth16.rs",
+        "sha256": "18533ba477cd2f05b647fa47bcd97973d77b6544263fa63d39783db0a6075d1e"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/proofs/halo2.rs",
+        "sha256": "8d099e24b371dd6f71ccba106cdec0d114b3acf0d383573586d972d7fd77162e"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_history.rs",
+        "sha256": "9934ff0578e3978a0fe3e02366992e82b1d1d31bff4f0728fd408bd542c152d3"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_history/tests.rs",
+        "sha256": "ab8edce66c5db5369edb547609ad84f9bd28d736a58611d946156ddda90f17be"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_history/tests/vectors.rs",
+        "sha256": "64daf99f8e0b4a658c40485fd6cd4ad1374dc9fb3b3be23e87dfea0284dfc809"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_note_encryption.rs",
+        "sha256": "46722eb55265516c1c2af3b48402360a708113dedcffd30fa2efd111cabaf06a"
+      },
+      {
+        "path": "crates/zakura-chain/src/primitives/zcash_primitives.rs",
+        "sha256": "fda98926ccc418f009ff8b984ca24f896533490952282c3a63bad48ee3862c7c"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling.rs",
+        "sha256": "d202bb5f4174e69bf69c9b1041fa71d6c0b4ab445b8d7abf2ddbec65a0355c0f"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/arbitrary.rs",
+        "sha256": "e952ca1c77bc261047d39dad5f235836b69b14580bc2e8d8d37526ae7f53b4fc"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/commitment.rs",
+        "sha256": "4869f11a2f59410609d44c48f2111918012dcaee332434255a83cfcea9376750"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/commitment/test_vectors.rs",
+        "sha256": "bf89eacf1a778d95ac191dcbc621664fd42db138fb70c363ab990e26ba1c5048"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/keys.rs",
+        "sha256": "346db252d11618d1462d16e17f784ceeeb3f623a2f8b5798f618a82c2142aae6"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note.rs",
+        "sha256": "d1db3178c99eccefdcfb6da5c795e3e875cbf8d413a8284afe6f379d769e2cca"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note/arbitrary.rs",
+        "sha256": "6bee4793cf9dfbc26d2067f79b7e6e13342987045cd2bf77d968603e0d5fcd01"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note/ciphertexts.rs",
+        "sha256": "9dcfc65fd3425503ddac9f10d311c57419e0fe4f2c5a97b0ebcf6eba6e07f5ca"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/note/nullifiers.rs",
+        "sha256": "cae53d6498a61d058c58a60ce7c3e7e51585556e31fba7b3304a6109dde41da9"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/output.rs",
+        "sha256": "5adfaee9a2e6f2bde8b428bdb3c1f865bf0fd72f579fe56d72fc7cadc4a7aeeb"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/shielded_data.rs",
+        "sha256": "6ffbf38dd3713db8c101570df777ab849d78731d6cf1413a2ce4406efc087809"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/spend.rs",
+        "sha256": "a55ed7cba9f6d2bb985acd32e84d4250739edf10ffcd56f05605bf4b86f536d0"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tests.rs",
+        "sha256": "dc5aa1fe54a8f942f9d7d16a30ac669b86843b04dc702d58dfcb004121716810"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tests/preallocate.rs",
+        "sha256": "02db220acb21552c93f67035ca761894d26202e960dc943aab3a7583b5ea8e8e"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tests/prop.rs",
+        "sha256": "25b760628fbc0ff1fde50d8a460794761e743af163083c7e9158b1c1a775e7a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tree.rs",
+        "sha256": "c7458d9cd6ccca4830f82a397ba20cb942225db892538907c9dde2081ae2c8f9"
+      },
+      {
+        "path": "crates/zakura-chain/src/sapling/tree/legacy.rs",
+        "sha256": "8d13e720180681dd31955acec27207a13f668ca964ae81d150fe2b996a89e08a"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization.rs",
+        "sha256": "904779859a9298c4de4a1ae849f0c10e7b35534be3eda13e92e60e6946a69234"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/arbitrary.rs",
+        "sha256": "c37535489130833fb7b8560ccfc10e4ac09020f9692f83d09b82befe00418940"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/compact_size.rs",
+        "sha256": "ab72b87ea7bc6fa4f1209d6e5755a81b72655c845d259e8e04b4696002c05d89"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/constraint.rs",
+        "sha256": "7205b3b6d684ae47b18bd4ef31bdf02e98b94ddb4d49244c3770218443063f19"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/date_time.rs",
+        "sha256": "e4c61f5163ba964e0c8c2b30a01ec5e2166641311859e6a8fb5cd9ba85f1828e"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/display_order.rs",
+        "sha256": "6f9eef415a1e46bf2a2847466e65feeb59d8e2d60efe8552577713fa03fda8aa"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/error.rs",
+        "sha256": "537ab791197d9fe0e0c2d38156e43567dda686f342829748320cdc1920da3c4f"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/read_zcash.rs",
+        "sha256": "62670e1401bdca94f4d9f6cd2b6c3c85c7584dcbb3831379a7d33429e50baf40"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/serde_helpers.rs",
+        "sha256": "8c99449a279a4ebfbbec19e29db59948d4b3a5372027b31fe0645771f2c2028e"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/sha256d.rs",
+        "sha256": "306e0848f2592e1a4e1561bfd960aa13adb99e5135969e00456f267cd0c7d8fc"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/tests.rs",
+        "sha256": "ef55e7d1c6d8f85959032fbe0368de38f4c4d830ea02406e5f9892a763cc2233"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/tests/preallocate.rs",
+        "sha256": "348fc011f5701844d8c7f76e45937efe690c01c1826f0de848de6691634e3eea"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/tests/prop.rs",
+        "sha256": "250ec6767979b0d97d1ca81c97e1b6b76adf61f12eec08b847bb0c08d405394e"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/write_zcash.rs",
+        "sha256": "4efa398b718d08fd2eaadfb532243c17c43fe488fbe0ce3d52049de3982dabb3"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/zcash_deserialize.rs",
+        "sha256": "c51700ac81deb545a74d716df13c64d1577ad16ab4f490e48e1c478d06f0a5a7"
+      },
+      {
+        "path": "crates/zakura-chain/src/serialization/zcash_serialize.rs",
+        "sha256": "55c9faa8ecd0891ca27af3d89f246d0d5fdd6988e7d9fcc56004909bac40eb97"
+      },
+      {
+        "path": "crates/zakura-chain/src/shutdown.rs",
+        "sha256": "01b43125129536b7d964368d5a40dae892bd9bb74b456eead8afc0540df70a10"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout.rs",
+        "sha256": "254934f55c9a00039513643ef9df4e66af9d437f89e9349ff96233675f9c27cb"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/arbitrary.rs",
+        "sha256": "f60e27780ae48066f427d32c054ae0d14eeb341a101987799ee3a3a03cbfd0d0"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/commitment.rs",
+        "sha256": "60b6ed484ee6f5f1f38bafd22a71c1d11b2bce70abe33731e3123ae9c933e687"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/joinsplit.rs",
+        "sha256": "225314a0c4d61733ecda0df7371e4d1402c4d9dc5c3c5bcf61607d1551a50cc9"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/keys.rs",
+        "sha256": "ae215808e68ef32bde73763b47088ca8e1b152ef536a841649f6f4781283a341"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note.rs",
+        "sha256": "51fa6b70f5a319bb492d019c85dc48e7aa3fddaa66ebb5df5ab22445b3a799d8"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/arbitrary.rs",
+        "sha256": "69dee95b10e0716bb56fcd3bf6afcbd88c094b46eab666a3fc430941ba805675"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/ciphertexts.rs",
+        "sha256": "2758b8fd0cf3c9dbc97cd0b92253c6b19c542bc79654addda9142ef89150468d"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/mac.rs",
+        "sha256": "a21e86a1105814f54ad84a92574b86698165c6dd0d1d7ed4cabedd2dafd0415f"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/note/nullifiers.rs",
+        "sha256": "0d64e64a4822b3ddd1725a0c0b287964104e7d13e5023a048cfec614d04f97d7"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests.rs",
+        "sha256": "8af43295797e494e2e1396a52f966a87875b2922968489374884320f8e434761"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests/preallocate.rs",
+        "sha256": "d80c41361292a134fa123100bdcee513896abc7340eff8a79b247e952fda3646"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests/test_vectors.rs",
+        "sha256": "d4722f81cabb4702a08f1263e960325b77e39e8776de1f99dbc2c0ce50c15ecf"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tests/tree.rs",
+        "sha256": "6648dcc64ef2ab84565128fd22b52a618d8517cb9d9c56372be754004655bc9d"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tree.rs",
+        "sha256": "996c2fd30b1ca8082bf871119305068d14cdd04eec9c7d3df5894eb496ff94cc"
+      },
+      {
+        "path": "crates/zakura-chain/src/sprout/tree/legacy.rs",
+        "sha256": "4032a5bc7c51e428314399c8334015176847871b722271887585703e48ada6b5"
+      },
+      {
+        "path": "crates/zakura-chain/src/subtree.rs",
+        "sha256": "4dbe0b16ea003164a1d1f48b218baf494117836b1fdc5eead9814363fac906a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/subtree_verify.rs",
+        "sha256": "16e3dca0f1412980d5abbaf7d6680793cecbb79b43414b435d08e7948132007e"
+      },
+      {
+        "path": "crates/zakura-chain/src/tests.rs",
+        "sha256": "a724c416bac3ebc0490a555bc0444f5c0a41f22df14f5b96790584eedc0c6656"
+      },
+      {
+        "path": "crates/zakura-chain/src/tests/vectors.rs",
+        "sha256": "f7e4458ffbad912b5eabb814aa74609ba9e1d78c87056898e4df97118f23b338"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction.rs",
+        "sha256": "8407c9493edfb2ada67d86154a12e200f954e260359735994ced0a1996beee5d"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/arbitrary.rs",
+        "sha256": "2fc0bc500d94411a69a334e395d2f7209b2dd727da9d3e0795437437bc029037"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/auth_digest.rs",
+        "sha256": "cf9501bea51f9f2cab2b62ced7091daef9a9ecc46080d81caeb4014d22df00fe"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/hash.rs",
+        "sha256": "7747d16bbf241c48296176d7844ef9bc3913c9a42d609ea2f7e1b955a2806f79"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/joinsplit.rs",
+        "sha256": "793272d7c69e8f5f673ebbcc43adf742be8ee553a242bad9327c6bf555ced364"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/lock_time.rs",
+        "sha256": "dae806f6fda11960bdd9057da307f62155f5385bdc134388b343187820745544"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/memo.rs",
+        "sha256": "55702a78b004aa266a2abb1d1dac2d83664cbf801686b482f1d6cfdaa0adb53f"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/serialize.rs",
+        "sha256": "7048a0094d907aba175e0041f8a8e685df2161fa113c7ee4e245c10365a3afb8"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/sighash.rs",
+        "sha256": "7d47a180b7229ccc398e2ddf170661a3e9bc55ffc2accfd5b193a617c8d19489"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/sighash/v4.rs",
+        "sha256": "6bd3252a7a242a16fe9546b57a3ee3682adc7eeecc022af53889d2e17450a5f5"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests.rs",
+        "sha256": "c88db99d484fa028c1bcaa3a5405ea35e59d1306faaf304bccae25722cc83ddd"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/ironwood_v6_tx_hash.rs",
+        "sha256": "04906be181931d26c173d16962da67dbe04ca54deeec6b094c8b54065fb96b0f"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/preallocate.rs",
+        "sha256": "94b391740113cf6e1acbf45883875c6947e49fa2190f992b7b1b04f899b9e92c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/prop.rs",
+        "sha256": "fc4a3d1be6a5e1065615270e6f90e30d87634df0aacfb772becc541302e61993"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/tests/vectors.rs",
+        "sha256": "3db7a5c88997c1dd48b59da87289eeca465b2087058a3ac1c06e5f44c91a26f9"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/txid.rs",
+        "sha256": "3f85de146bfa22bd230c5845aede32e5e156d170637fafdfc514559637f8bd44"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/unmined.rs",
+        "sha256": "7eeb76423261ef6a67cfad0ec97f303f664116b748191aca10e203b901590619"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/unmined/zip317.rs",
+        "sha256": "775aa93797441ff43fa5ddb504b9bba92c140309433ef126ebf4a044495a09f2"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/unmined/zip317/tests.rs",
+        "sha256": "8372196de8ea8958b0da734816f8f43a9ac30b0125417d11eab99ba27648aa44"
+      },
+      {
+        "path": "crates/zakura-chain/src/transaction/zip244.rs",
+        "sha256": "cdffb81b6811f6168187688c7e5507a42c63e0262afe17f90ca11f63b0b89d3c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent.rs",
+        "sha256": "6e1f1fdb4efdd6ebc51e791ddb1bc7fc7e5214ad17eaec3bc8b6e43c2913a7d2"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/address.rs",
+        "sha256": "b1ee3e3a365743fd8a3ee23674cff4dd0c815161da4e342e14c37498234ff7b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/arbitrary.rs",
+        "sha256": "9be4a12a5f30af236055a2ac52a1b95b844df6429e8a7685240dcade94c9ce6c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/keys.rs",
+        "sha256": "88ba431df453bf5fe71627394e61f4246e4cc3f1e66944562a8df27009a506bc"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/opcodes.rs",
+        "sha256": "d45a159a18bb94c33394c54b2e2a4c3cec812702ebf6002e48cba16f13a12f32"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/script.rs",
+        "sha256": "50877cf88c00478e272b1ab87c4031fe59cc0278eb64e8dc6f2096cb1535d4c5"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/serialize.rs",
+        "sha256": "51e0ce8f6c61ce71238133b6b62eac9fd17d4696557b424bdb472701395c06a8"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/tests/prop.rs",
+        "sha256": "197cbaf1591a87267af9db94fd6e18b6a7dbb2670fbae9594d881a097d491dea"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/tests/vectors.rs",
+        "sha256": "d76b8ca5377d1feffe4c7ec5f99dad8ffa35d2744d47dd1814352bcbd2a5ff0c"
+      },
+      {
+        "path": "crates/zakura-chain/src/transparent/utxo.rs",
+        "sha256": "2a3ec457219c682baf8bb7ec4d1166a310220c1e7b5ffd40b226e93548b0bc7d"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance.rs",
+        "sha256": "1b7bcf06961230cacde2743c369f1079b1bfc490db7754a9ac9fd16271ec56a3"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance/arbitrary.rs",
+        "sha256": "1f9df9d1471fceeab24eb066fc262b4698384079df8af5c336c6696cf423096f"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance/tests.rs",
+        "sha256": "2f1126ad2a741bf0b2ba2f4a4e3a4f182f55963697299f12e90d448e6e064b1f"
+      },
+      {
+        "path": "crates/zakura-chain/src/value_balance/tests/prop.rs",
+        "sha256": "393933a0a784774d151d2808b3b3073e35508202cd502f92b04ab5d5f1ecbfb4"
+      },
+      {
+        "path": "crates/zakura-chain/src/work.rs",
+        "sha256": "09c782cfa1b6b6b997f5666cca8e54e2ef01d4ea01b2b8356f4aed1176b18ac5"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/arbitrary.rs",
+        "sha256": "3b187c27d5a165cdca00f04c5484a15788c22a90863a75d0ec7ae3e98200bd17"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty.rs",
+        "sha256": "6effbaa713582bc38f94801f5f0dbd06b76ddf4826cb13cae61a1c4504d3e074"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/arbitrary.rs",
+        "sha256": "cc1ca6bfb4f2ca5d97873d4dae982d65460e2342101103ff5ea785c125a12dcd"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/tests/prop.rs",
+        "sha256": "26ebc126ceb3890002b765702f1cbe216de42b0821aef1148c340fef3197e676"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/difficulty/tests/vectors.rs",
+        "sha256": "c4d7081ab9109dc600b1b6605cd24b9e94048d3f61fe636b486cc05c5ece55f8"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/equihash.rs",
+        "sha256": "a799f307003d70a9e0fe126afb3491828c4d184df098e63c4972c4aee1a116f8"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/tests.rs",
+        "sha256": "e252bd879789056f7f8e790b77dd46bac7f3c4a72a68cc4f2aa081868056c8b7"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/tests/prop.rs",
+        "sha256": "d825718dc00992e16d94b7d584dd78aeff6cb6cf78aaacc0fd72ac9f622fcbfd"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/tests/vectors.rs",
+        "sha256": "a377bfba9b6d664dd03c25f156170e7898ee6723d9b5de83a3f20ecf4fe4ed1b"
+      },
+      {
+        "path": "crates/zakura-chain/src/work/u256.rs",
+        "sha256": "c8910a34d6e3763ca7bbedeec080e790533903a50ab1300b1674d7b2c56b2bc9"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+        "sha256": "cde18e133bf47a317e383fc363243b4710dc11cc07898171f02ac7a366828621"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "sha256": "c0915f8fbfd932fd5021c7507c8cfd7f27846f426e0bda7631c061392da07472"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
+        "sha256": "a0a4fb559c5e6c725b802d0f129347fff3d5b1d71cc676484e514d54f626b38b"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
+        "sha256": "85b39092ed7b1c19424c7bbc34597636aa799c79dfcb913a1f10bbe4f8bcc2c2"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
+        "sha256": "87edab74ae91686af538fa97d414b97cdbe0b1f4398851a6ddb92b11fa17a455"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
+        "sha256": "1ea260f688b7b80a6959ce6f203780837127904fb86ec17dd756287a26585892"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixtures/host/src/strict.rs",
+        "sha256": "db01aa09a9c9b10b5a554df1c65a8a6d29b211e188fe71775c2f35a589b9f724"
+      }
+    ],
+    "signer_source_inventory": [
+      {
+        "path": "crates/pq-slh-dsa-b-verify/Cargo.toml",
+        "sha256": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/NOTICE.md",
+        "sha256": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "sha256": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/README.md",
+        "sha256": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/examples/compare.rs",
+        "sha256": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+        "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+        "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+        "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/lib.rs",
+        "sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+        "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+        "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json",
+        "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+        "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/Cargo.toml",
+        "sha256": "ee139a708aef5622e65787cc569d1417003ae160bc1e7363b17feb8a0d077324"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/NOTICE.md",
+        "sha256": "2b12f65125e0f2e21486cfaaa4cc93afdca71b8f7b0813b353b8db1f334a8106"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/PROVENANCE.json",
+        "sha256": "1c94cec0b5a71f4ae33a1c5eb21cc548a35299b4274169cf3867d9f239706f3a"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/README.md",
+        "sha256": "f63b5adbf3b1076ab644f855ddee0b2b03bce48f57e54ec63b5a446a0fed90cf"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/src/main.rs",
+        "sha256": "bf6be5f1740bbc23388e7537cf1afc38b17e70660a48160fc2f1f331ee7b9565"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/fixture-signer/tests/public-keygen.json",
+        "sha256": "1cfb24a2b3f0c44185301a94e63074fba94336412ac16138fdb9d022663ac478"
+      }
+    ],
+    "source_commit": "feee7e6352e6e3251369240cb4114ac23548a7ed"
+  },
+  "completed_at_utc": "2026-10-09T14:47:39.454311+00:00",
+  "corpus_files": {
+    "v5-10of10.json": "6e9f8176b3e51e1a10471bd3afaddd4804e4761a5d4f7f87a0a8f660742ffed5",
+    "v5-15of15.json": "803dad371569a64bc4e58305a1b9877bd0c7e12d14666009bea87b89e7f0a2f2",
+    "v5-16checks.json": "eeb40caa025b489bdc84280fceb13fda7d4770509f64110ccac5a007bb106c80",
+    "v5-17checks.json": "bcdbe68477fd3405be9706b5feb04b1a077fbfe807d100d6784a0d2ec5971ce1",
+    "v5-1of1.json": "923f3ca784629144f1754adebfff6fb7496f19af8f15df3bda53f59843fcb2b0",
+    "v5-1of15-index14.json": "519786d9e01825bf45fb669b765b3659cabd59143d937c4e4e6002943c304450",
+    "v5-2of3.json": "9141b0a2a5d8b086ed22a00288a7c28e8f10e89dae84c5a022ea56041dd15729",
+    "v5-3of5.json": "ffe71851c44f0931c69f21f73cd156de3371c45515ca08098547c053c2bbac94",
+    "v5-8of10.json": "36b8b84f75a00fcfb0eb7a3893329d922685a2af80924109563b34b90eddbe12",
+    "v6-10of10.json": "54d3941f2a82f0bfe8faeb7bd679aa9e228b147aa8d245536c591572da72431d",
+    "v6-15of15.json": "a0d27cc03405fbf6f1694969bd8e1ddd50edbdab8956cea204d7ec2fba2aa912",
+    "v6-16checks.json": "42e6513d2bc8165e13b4d0874010945abfeffc56bd00839afad0fa95809c1587",
+    "v6-17checks.json": "51fb5bc32f0a00fc9d4d09d37175edbd789e8a689ce16b018bba1d5ab0e159d2",
+    "v6-1of1.json": "6e69104801797232b3b308cb77a95656c2fb1e8d4af81c47ee88e9e9bb736cfb",
+    "v6-1of15-index14.json": "d54c8f4b50e9a3a2c0d6fb6fe4f314f59ecc17179707b408da3094e68a23a633",
+    "v6-2of3.json": "7e2cd9184424782f714ca45ab64eb9048bb5d5321684be0cecdfdb61a4b20818",
+    "v6-3of5.json": "f0d3f92fca1512cd209554ec697bbc4bd9cc919790ea796690b16a16b8ed2945",
+    "v6-8of10.json": "3c60da52573f89ea79192d401a9c84918e53b806ba50f728f4558385820767b4"
+  },
+  "historical_receipts_unchanged": true,
+  "mutations": [
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "signature-region-0",
+      "request_sha256": "a54096d48d94165a57e1b4805424396d920bcb9478bc3d6ecf1dc3fdb9ff585c"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "signature-region-16",
+      "request_sha256": "f66762ee54916ba93d446a78662cfc504c9b51aca1a7ca9753b62de823b8813e"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "signature-region-2927",
+      "request_sha256": "c7f76c466a67de947a50549d4ba90059b38ad75ac1ad10d7801c46fd86c57690"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "signature-region-2928",
+      "request_sha256": "1671ad76f49185fa2d4f5267e21d71fb3ea4e4ad9c8e15b857b98b244fed43ec"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "signature-region-3488",
+      "request_sha256": "28e15396807a0852dd8b14a2b63e163156c4771aef4aba28ed12d69a7b70134d"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "signature-region-7855",
+      "request_sha256": "87f5276b8a1c1c48bcaef4cd0e76ba1961503dbd7fd01c323b4f5aab92a46488"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-network",
+      "request_sha256": "469e9c8388bda3e5c4e8ae8dc748f7d3e06c30c55b5dce26e1ded951e22e83a8"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-outpoint",
+      "request_sha256": "d6180c21c064c0fb455a7d667b489c36f060bc47bb33e81272d88f668f322323"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-amount",
+      "request_sha256": "05ab81264cf5d5fc9389d88975f659d7f6341694c5459a8456ddc0cace1aaf32"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-sequence",
+      "request_sha256": "d96efd96815acb2113ab52544155128f7fbbcc2d77cb7586d0d01828a6f7281b"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-output",
+      "request_sha256": "9c0bd0beb15c7122310e8683858ab8c23544ef7e6d67807df4d96d4752f6db1b"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-lock-time",
+      "request_sha256": "0bba36c0378c13b515666118f57d54888db873f5bf7bc43c07e8508f9b41ba07"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 1
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 1
+        }
+      },
+      "name": "coherent-expiry",
+      "request_sha256": "79f0e0ad6377ee51e520c48dfe3dfc71a2e73c136d1a32effba3cbc291ce8cd4"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": null,
+              "reason": "consensus_branch",
+              "stage": "context"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": null,
+            "reason": "consensus_branch",
+            "stage": "context"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "wrong-branch",
+      "request_sha256": "a5e448dcf011ddb04bf541d3fbb71059cfef01e2330f793425f87b992770da37"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "authorization_fields",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "authorization",
+          "stage": "correspondence"
+        }
+      },
+      "name": "wrong-branch-v5-descriptor_hex-mismatch",
+      "request_sha256": "b382bf5eb76a73b87497322e0b5232ad69a77ee550d86ba5673a234f9602ebd7"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "authorization_fields",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "authorization",
+          "stage": "correspondence"
+        }
+      },
+      "name": "wrong-branch-v6-records-mismatch",
+      "request_sha256": "60936ed26f424825065b4ec3e3d03a4265332e15a6bff0e19de30576a2ad121b"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "transaction_encoding",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "transaction_decode",
+          "stage": "correspondence"
+        }
+      },
+      "name": "unknown-branch",
+      "request_sha256": "d4e81cd1959b5b0b29e15504fe694eb9093fabc019f6aa0e4a68afee2962d951"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "transaction_encoding",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "transaction_decode",
+          "stage": "correspondence"
+        }
+      },
+      "name": "v6-pre-nu6_3-branch",
+      "request_sha256": "f3dbf8a23b100b66fb1d5a989eee14f0ff76ca0783f8a1c7fd676b2d335c6b93"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "transaction_encoding",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "transaction_decode",
+          "stage": "correspondence"
+        }
+      },
+      "name": "null-outpoint-hash",
+      "request_sha256": "19de72d55bd31aad2aaae509327219fa4028223b1e6f7cee92fe94b478fc5790"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "output_template",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "output_template",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "template",
+      "request_sha256": "ba2a6525772dd22a7dcb60c1e1cb84994610f888f23ef84d7f10233d00c9d8d2"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "output_commitment",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "output_commitment",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "policy-commitment",
+      "request_sha256": "0fd18f7902ef14d853ea2fd79fcb5b5c0dbfcfe6748e886841529f29937880fa"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "key_commitment",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "key_commitment",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "key-commitment",
+      "request_sha256": "89d818137d88237c0e7751b52d65d95f4502c0d5d9bf89ce909c084f8c4288cc"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 2
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 2
+        }
+      },
+      "name": "nonsigning-participant",
+      "request_sha256": "0fa2ba87fa909abb6f153dfe61f923aa9ae7ac3df5ee0780adc04656a1986203"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "encoding",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "encoding",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "nonminimal-key-push",
+      "request_sha256": "8b02c060c167f61b50aa3c529ed70c32c465233ad9fd9d967f4c6a148e37ccc2"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "encoding",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "encoding",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "trailing",
+      "request_sha256": "f0e7a8bcdf44e6499b88c300965525e35ddaaaa0da5803d4f2ff74dabce1cbb5"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "encoding",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "encoding",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "sighash-suffix",
+      "request_sha256": "71a97c961345b5f49a6afd0ce252bb393c07306620ff18e06c42cbced7338d66"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "unsupported_policy",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "unsupported_policy",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "descriptor-version",
+      "request_sha256": "55bf4226836594eee187ad044fa0aefb8f950163a99507bdd7049c870d03b1d4"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "unsupported_policy",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "unsupported_policy",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "descriptor-suite",
+      "request_sha256": "5688cef60eaff1d741be6ea0280d1bbf0a2af6352c8af2ee112bc76564b9ced6"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "threshold",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "threshold",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "threshold-zero",
+      "request_sha256": "5f871fd6a937de7717f41bf5d38849f357d5f472e32eb5d759f7767558daa5ea"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature_count",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature_count",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "missing-record",
+      "request_sha256": "c88c80f66697424a1de65833832433301c84408739777cf70753da0c9915bb2e"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signer_index",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signer_index",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "signer-index",
+      "request_sha256": "1fb71266e0ed500814fd3235c08c4f8397e3e12ab6c4a4b5edee5b53b2b81462"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signer_index",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signer_index",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "signer-order",
+      "request_sha256": "e81abd50f5d427b42bcdbb57f96c5e3952092ace415e43e89e53e0beec60b63f"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "key_order",
+              "stage": "authorization"
+            },
+            "signature_checks": null
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "key_order",
+            "stage": "authorization"
+          },
+          "signature_checks": null
+        }
+      },
+      "name": "duplicate-commitment",
+      "request_sha256": "0e62ffa3afce86bafb992c7c5b08e52a5d3cd6780b224abdb592d4c1042893da"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "ok": true,
+        "op": "check",
+        "public_fixture": true,
+        "result": {
+          "expectation_match": true,
+          "observed": {
+            "functional_profile": {
+              "block_limit": 64,
+              "result": "not_evaluated",
+              "stage": null,
+              "transaction_limit": 16
+            },
+            "native_authorization": "reject",
+            "native_rejection": {
+              "input_index": 0,
+              "reason": "signature",
+              "stage": "signature"
+            },
+            "signature_checks": 16
+          }
+        },
+        "schema_version": 1
+      },
+      "independent": {
+        "observed": {
+          "functional_profile": {
+            "block_limit": 64,
+            "result": "not_evaluated",
+            "stage": null,
+            "transaction_limit": 16
+          },
+          "native_authorization": "reject",
+          "native_rejection": {
+            "input_index": 0,
+            "reason": "signature",
+            "stage": "signature"
+          },
+          "signature_checks": 16
+        }
+      },
+      "name": "input-position-and-order",
+      "request_sha256": "cdc90bc10a543bdf49eefd53e9616f5ac029693f9d0371f423857bae91982d70"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "input_wire",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "input",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-outpoint-display",
+      "request_sha256": "5b77e9a8ac74cee703556c939b9bad08d610d8d1f016e6624272558938e1d584"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "message_digest",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "digest_message",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-digest",
+      "request_sha256": "626eb5199224d11ae2a9d0f8e50069c64d70e6fb9653c5618205bb3221aa73da"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "message_digest",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "digest_message",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-message",
+      "request_sha256": "332c6f7940a3bc8dc1e122372272c539ad77d347cb27fd3fc070bbd2362b27e6"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "message_digest",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "digest_message",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-old-domain-message",
+      "request_sha256": "95703e8803576e3f715f1be4939ba28b81316b1a783146db6c19957a7feee289"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "authorization_fields",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "authorization",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-record",
+      "request_sha256": "f51caa71b1d6c36e3b04d4b57430bb8946f3bdd3324c868eae45b6635a3e3486"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "input_wire",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "input",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-input-index",
+      "request_sha256": "4a43d3b0fb8b902d4da0f5dd16ffc1fbbce0a770718e126a689b724d01855775"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "output_wire",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "output",
+          "stage": "correspondence"
+        }
+      },
+      "name": "mismatch-output-value",
+      "request_sha256": "32ff945b1ae63172dc74a5de040e6585af71acb1675cf6833b3f9265a6437c7b"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "authorization_size",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "transaction_decode",
+          "stage": "correspondence"
+        }
+      },
+      "name": "authorization-over-guard",
+      "request_sha256": "276ea6b4e2786b800aab14d6d1a2984401d33f29a3f4539c36f5accd0cb2018e"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "transaction_encoding",
+          "stage": "correspondence"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "transaction_decode",
+          "stage": "correspondence"
+        }
+      },
+      "name": "nonminimal-compactsize",
+      "request_sha256": "239707135e1027716162fde1885380f014c2a2122d0cebca3ddad419ca6f5bed"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "json",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "unknown",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "duplicate_key",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-duplicate-key",
+      "request_sha256": "9bb26cf2f75b1f8019a76bd5e14e841120065aa6f5c3e2012070713631355156"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-unknown-key",
+      "request_sha256": "fa484f1d451f6bea94a5928e4f9470b79a8c7b3789336a9ba60154ae74663f42"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "json",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "unknown",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "number",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-float",
+      "request_sha256": "d1d80fbdc888680ee3d110d02914b2fcb5000ddcb56b4efce594caa99e5c794a"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "numeric_token",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "unknown",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "integer",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-negative-zero",
+      "request_sha256": "68a2064cb5f39fd804cf8f285acaffea823e78dd007a86290f83a2466d92ac01"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "contract",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-boolean-integer",
+      "request_sha256": "7688b18496978ba1030289837d1ca32c4239da401a78be1750fbfc721ff20e7b"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "hex",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "hex",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-uppercase-hex",
+      "request_sha256": "bafe29c676b5613c1bbcc51f4479abd27367b6876fe29bc4ec00c95899a0a13c"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "json",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "unknown",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "ascii",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-non-ascii",
+      "request_sha256": "c45c228eef009a156fcf074abf94d7225f3f094d08da97d6000188b6100dd73b"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "json",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "unknown",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "integer",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-u64-overflow",
+      "request_sha256": "dca2934ad5f7a2538c97290c021dedcbab982c6695fbce893ad0c5a9e991b5db"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "nesting",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "unknown",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "nesting",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-depth",
+      "request_sha256": "9141f69529e96caa8db6218b357f341abff4e6b56a7ba2405ff3a9ec457405f9"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-missing-native_rejection",
+      "request_sha256": "2c834527ab2e9221431a10176632cfcdaed953578d3e52af937e9a339b7532da"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-missing-signature_checks",
+      "request_sha256": "df386f19ddd3b94e4f0d4fba95aef2c968b9d4e52d2a136784a45c4a6031ff7f"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-missing-profile-stage",
+      "request_sha256": "3f8561b321d1b23babfd605146a484e9964ea2522711a334c443193fef87f5c0"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-missing-rejection-input-index",
+      "request_sha256": "49b1255724be5b7ef39ab5ca7ab30735e6e75c94effd1a30538ca4469b15e6a6"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "native_rejection",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-reason-array",
+      "request_sha256": "3418e2fbbc4725ba4f5aca6dbbb00a3eb0b258a6c86de1d6e012906ae8e36daa"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "fields",
+          "stage": "schema"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "native_rejection",
+          "stage": "schema"
+        }
+      },
+      "name": "schema-reason-object",
+      "request_sha256": "bed1646c5fad014bbe326fca14dcb7ed19aa6a68b170de574e9ab7797f96e876"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "artifact_hash",
+          "stage": "integrity"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "artifact_hash",
+          "stage": "integrity"
+        }
+      },
+      "name": "artifact-hash",
+      "request_sha256": "a62e0b3ddf7c283530f3296380d00c3a010692cdeab081a05d0227e8636eb6cc"
+    },
+    {
+      "candidate": {
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "error": {
+          "reason": "transaction_hash",
+          "stage": "integrity"
+        },
+        "ok": false,
+        "op": "check",
+        "public_fixture": true,
+        "schema_version": 1
+      },
+      "independent": {
+        "error": {
+          "reason": "transaction_hash",
+          "stage": "integrity"
+        }
+      },
+      "name": "transaction-hash",
+      "request_sha256": "8f718932c7f3e7fb32f5121a667bfeec18110fad0bcaf7d8367b89a60501bc74"
+    }
+  ],
+  "official_blake3_controls": 105,
+  "portable_hash_build": {
+    "compiler_sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2",
+    "library_sha256": "a7be63755e2ff239acc58594cd3afd2cb3eb764d6402933a172a9abe5d012c6c",
+    "shim_sha256": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438",
+    "sources_sha256": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed"
+  },
+  "primitive_message_controls": {
+    "double_pure_framing": false,
+    "old_message_domain": false
+  },
+  "reference_glue_files": {
+    "check.py": "cd6b05e747d839beef0b346894dd09d02e4dbe668068d11080879fff62ab6c4b",
+    "prepare.py": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f",
+    "reference.py": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9",
+    "test_checker.py": "130564ae653811ed7efd2ae4cfc68c1dc51412ab65c97e7e9959eea6a81e835e"
+  },
+  "reference_sources": {
+    "blake3_c": {
+      "commit": "f55849f89cd85083c1c9daa2c5de20766f309c00",
+      "files": [
+        {
+          "path": "c/blake3.c",
+          "sha256": "b118ddf7cf9e6e5ef3fded72dcb1acf9dfdc4ea923cbe4605900ad6ee9afe1af"
+        },
+        {
+          "path": "c/blake3.h",
+          "sha256": "81bbb11ad1909341565dce4914cc0e5c29718eca27e6950b28f9226a91aaf8c5"
+        },
+        {
+          "path": "c/blake3_impl.h",
+          "sha256": "d388dca3574602c8849805ea3c8c0a12d082ac0e428756f305e111942f099af4"
+        },
+        {
+          "path": "c/blake3_portable.c",
+          "sha256": "2bc25b0dad67b4329d0b49cfa075ab2b0d04e424addbddc4e9c389c52a192524"
+        },
+        {
+          "path": "c/blake3_dispatch.c",
+          "sha256": "134f21550138c0af6312925c988aeee35df287e4119e8ad1d206fccdb2238fe3"
+        },
+        {
+          "path": "test_vectors/test_vectors.json",
+          "sha256": "dcb91ea8accc77e6d6e632af7cdc1a99a9f3ae78cf648da595c7d064db32f624"
+        },
+        {
+          "path": "LICENSE_A2",
+          "sha256": "00fcc7a934ddbc9ece2a7cc063ac788e284b703b1d705ccbba72d462aa97921e"
+        },
+        {
+          "path": "LICENSE_CC0",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        }
+      ],
+      "license": "Apache-2.0 OR CC0-1.0",
+      "repository": "https://github.com/BLAKE3-team/BLAKE3"
+    },
+    "reference": {
+      "commit": "588ea1028003bf5608a92bae1d8d76abaa7274a2",
+      "files": [
+        {
+          "path": "slhdsa/lowlevel/__init__.py",
+          "sha256": "5d3de856bad888b409c27f14c6b3af9dd77d1eeab02aa48f30ff32b04d182b20"
+        },
+        {
+          "path": "slhdsa/lowlevel/_utils.py",
+          "sha256": "9920aeb9c644f55bc5003f9dfa7ad893ec2ccb5c580ca48195f605a31fa7410e"
+        },
+        {
+          "path": "slhdsa/lowlevel/addresses.py",
+          "sha256": "14c169eeab5f598be9a025a4ba31300c4536802a6ab1c5140595ab970eb7fc78"
+        },
+        {
+          "path": "slhdsa/lowlevel/fors.py",
+          "sha256": "4401b4cd4a49982222bbd43e61a323ca3a232dc84188e99c26ab6388b2f0de50"
+        },
+        {
+          "path": "slhdsa/lowlevel/hypertree.py",
+          "sha256": "55fe5af5e0c86bdd4f8bd8d2e75c509972dc62222462aab6545b577603ea200a"
+        },
+        {
+          "path": "slhdsa/lowlevel/parameters.py",
+          "sha256": "b54fa4b438cea285ce1ac7e6059221e6fdabc67d935f6ec081f6d704b0c1e015"
+        },
+        {
+          "path": "slhdsa/lowlevel/slhdsa.py",
+          "sha256": "f548f2f143601087612ba301d36f7b84cfad3d74cf97b15f6ca90aad2f9e4efa"
+        },
+        {
+          "path": "slhdsa/lowlevel/wots.py",
+          "sha256": "92ab8e5292e49c81be756dc0c14948089008489f95a4e32c8f95fb140f406bcd"
+        },
+        {
+          "path": "slhdsa/lowlevel/xmss.py",
+          "sha256": "cd4e0d4bb92ed137d486fea715d150b249747faf9cdd1d436dd5dd1a4abb5058"
+        },
+        {
+          "path": "COPYING.LESSER",
+          "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b"
+        },
+        {
+          "path": "COPYING",
+          "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+        }
+      ],
+      "license": "LGPL-3.0-or-later",
+      "repository": "https://github.com/colinxu2020/slhdsa"
+    }
+  },
+  "schema_version": 1,
+  "scope": "Corrected test adapters: transparent native conformance only; no new signing or node/wallet acceptance"
+}
