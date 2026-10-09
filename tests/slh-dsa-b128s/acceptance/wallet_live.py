@@ -261,7 +261,7 @@ class Demo:
                 "incomplete_payment_export")
         return directory
 
-    def payment(self, group, recipient, version, inputs, directory, *, all_value=None, reject=False):
+    def payment(self, group, recipient, version, inputs, directory, *, all_value=None, reject=False, incomplete_quorum=False):
         directory.mkdir(mode=0o700)
         threshold = bytes.fromhex(group[0].manifest["entries"][0]["policy_hex"])[2]
         participants = bytes.fromhex(group[0].manifest["entries"][0]["policy_hex"])[3]
@@ -341,6 +341,10 @@ class Demo:
                 "unexpected_subquorum_rejection")
         rejected_export = self.export(owner, review["proposal_id"], directory / "subquorum-export")
         require(not (rejected_export / "signed-transaction.hex").exists(), "subquorum_assembled_transaction")
+        if incomplete_quorum:
+            require(len(group) < threshold, "missing_key_control_has_quorum")
+            return {"threshold": threshold, "available_private_roots": len(group), "assembled": False,
+                    "diagnostic": "not enough distinct partials for every input threshold"}
         self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, intent, proposal_path,
                  collected, secret=True)
         exported = self.export(owner, review["proposal_id"], directory / "export")
@@ -376,6 +380,9 @@ class Demo:
         require(response["mode"] == "monitor" and response["authority"] == "unknown", "unknown_authority")
         self.sync(unknown / "watch")
         self.cli("receive", unknown / "watch", success=False)
+        rejected = self.cli("submit", unknown / "backup-restored.tpq", unknown / "watch",
+                            self.nodes[0].address, payment["review"]["proposal_id"], secret=True, success=False)
+        require(b"this watcher does not own the receiver allocator" in rejected, "unknown_authority_submission")
         # The receipts above were retained independently in this driver before
         # destroying the only test working copies. No later signing occurs.
         for signer in group:
@@ -405,8 +412,69 @@ class Demo:
         return restored, [{"receipt_fingerprint": receipt["receipt_fingerprint"],
                            "generation": receipt["receipt"]["journal"]["generation"]} for receipt in receipts]
 
+    def recovery_controls(self, snapshot, directory):
+        directory.mkdir(mode=0o700)
+        backup = snapshot / "backup.tpq"
+        response = self.cli("inspect", backup, prompts=[(b"Backup password: ", b"deliberately-wrong-password")],
+                            success=False)
+        require(b"backup authentication failed" in response, "wrong_password_control")
+        corrupt = directory / "corrupted.tpq"
+        raw = bytearray(backup.read_bytes())
+        require(bool(raw), "empty_backup")
+        raw[-1] ^= 1
+        corrupt.write_bytes(raw)
+        corrupt.chmod(0o600)
+        response = self.cli("inspect", corrupt, secret=True, success=False)
+        require(b"backup authentication failed" in response, "corrupted_backup_control")
+        missing = directory / "missing-state"
+        shutil.copytree(snapshot, missing)
+        (missing / "watch/state.json").unlink()
+        destination = directory / "rejected-missing"
+        response = self.cli("snapshot-restore", missing, destination, "unknown", secret=True, success=False)
+        require(b"wallet storage operation failed" in response and not destination.exists(),
+                "missing_snapshot_state_control")
+        destination = directory / "rejected-trust"
+        response = self.cli("snapshot-restore", snapshot, destination, "known", "00" * 32,
+                            "--retired-old-allocators", secret=True, success=False)
+        require(b"inventory fingerprint does not match the independently approved fingerprint" in response
+                and not destination.exists(), "wrong_snapshot_trust_control")
+        destination = directory / "existing"
+        destination.mkdir(mode=0o700)
+        marker = destination / "keep"
+        marker.write_bytes(b"existing state must survive")
+        response = self.cli("snapshot-restore", snapshot, destination, "unknown", secret=True, success=False)
+        require(b"wallet storage operation failed" in response
+                and marker.read_bytes() == b"existing state must survive", "restore_no_clobber_control")
+        return {"wrong_password": True, "corrupted_backup": True, "missing_state": True,
+                "untrusted_receipt": True, "existing_destination_preserved": True}
 
-def submit(demo, network, owner, payment):
+    def missing_required_key(self, group, directory):
+        """Lose one required all-of-n root before any authorization exists."""
+        directory.mkdir(mode=0o700)
+        snapshots = []
+        for index, signer in enumerate(group[:-1]):
+            require(json.loads(self.cli("payments", signer.store, self.nodes[index % 2].address)) == [],
+                    "missing_key_control_has_saved_authority")
+            source = directory / f"snapshot-{index}"
+            receipt = object_output(self.cli("snapshot-save", signer.backup, signer.store, source, secret=True))
+            snapshots.append((source, receipt["receipt_fingerprint"]))
+        for signer in group:
+            shutil.rmtree(signer.backup.parent)
+        restored = []
+        for index, (source, trusted) in enumerate(snapshots):
+            destination = directory / f"restored-{index}"
+            response = object_output(self.cli("snapshot-restore", source, destination, "known", trusted,
+                                             "--retired-old-allocators", secret=True))
+            require(response["mode"] == "allocator", "missing_key_restore_authority")
+            backup = destination / "backup-restored.tpq"
+            manifest = object_output(self.cli("inspect", backup, secret=True))
+            participant = Participant(backup, destination / "watch", manifest)
+            self.sync(participant.store, index % 2)
+            restored.append(participant)
+        return restored
+
+
+def submit(demo, network, owner, payment, *, snapshot=None):
     proposal_id, raw = payment["review"]["proposal_id"], payment["raw"]
     output = demo.cli("submit", owner.backup, owner.store, network.a.address, proposal_id, secret=True)
     txid = output.decode("ascii").split()[-1]
@@ -416,6 +484,9 @@ def submit(demo, network, owner, payment):
         require(node.rpc("getrawtransaction", txid, 0) == raw, "relayed_bytes")
         entries = node.rpc("getblocktemplate")["transactions"]
         require(any(row["hash"] == txid and row["data"] == raw for row in entries), "template_bytes")
+    captured = None
+    if snapshot is not None:
+        captured = object_output(demo.cli("snapshot-save", owner.backup, owner.store, snapshot, secret=True))
     network.mine()
     for node in network.nodes:
         confirmed = node.rpc("getrawtransaction", txid, 1)
@@ -423,9 +494,58 @@ def submit(demo, network, owner, payment):
     rows = json.loads(demo.cli("payments", owner.store, network.a.address))
     require(any(row["proposal_id"] == proposal_id and row["state"] == "confirmed" for row in rows),
             "wallet_confirmation")
+    if snapshot is not None:
+        restored = snapshot.with_name(snapshot.name + "-unknown")
+        response = object_output(demo.cli("snapshot-restore", snapshot, restored, "unknown", secret=True))
+        require(response["mode"] == "monitor", "submitted_snapshot_authority")
+        participant = Participant(restored / "backup-restored.tpq", restored / "watch", {})
+        exported = demo.export(participant, proposal_id, snapshot.with_name(snapshot.name + "-export"))
+        require((exported / "signed-transaction.hex").read_text() == raw, "submitted_snapshot_exact_bytes")
+        demo.sync(participant.store)
     return {"txid": txid, "transaction_sha256": hashlib.sha256(bytes.fromhex(raw)).hexdigest(),
             "fee": payment["review"]["fee"], "final_bytes": len(bytes.fromhex(raw)),
-            "checks": payment["review"]["checks"], "tip": common_tip(network.nodes)}
+            "checks": payment["review"]["checks"], "tip": common_tip(network.nodes),
+            "submitted_snapshot": None if captured is None else captured["receipt_fingerprint"]}
+
+
+def late_receipt_reorg(demo, network, group, monitor, recipient, original_funding, args, private, artifacts):
+    """Spend a receipt arriving at a retired address after controlled recovery."""
+    index = args.inputs  # the classical helper's final change output
+    expected = original_funding["outputs"][index]
+    for node in network.nodes:
+        output = node.rpc("gettxout", original_funding["txid"], index, False)
+        require(output is not None and output["confirmations"] >= 1 and not output["coinbase"]
+                and output["scriptPubKey"]["hex"] == expected["script_hex"]
+                and zat(output["value"]) == expected["value_zat"], "late_classical_change_context")
+        require(node.rpc("getrawtransaction", original_funding["txid"], 0) == original_funding["transaction_hex"],
+                "late_parent_bytes")
+    manifest = group[0].manifest
+    require(manifest["retired_receive_end"] == manifest["receive_end"], "late_range_not_retired")
+    entry = entry_at(manifest, 0, manifest["receive_end"] - 1)
+    funding = host_call(args.host, "classical-spend", recipe={"kind": args.classical,
+        "transaction_version": args.version, "lock_time": 0, "expiry_height": network.a.tip()[0] + 20,
+        "parent_hex": original_funding["transaction_hex"], "output_index": index,
+        "outputs": [{"value_zat": 1_000_000, "script_hex": lock_script(entry)}], "fee_zat": 20_000})
+    require(network.a.rpc("sendrawtransaction", funding["transaction_hex"]) == funding["txid"], "late_funding_submission")
+    wait_for(lambda: funding["txid"] in network.b.rpc("getrawmempool"), "late_funding_relay")
+    block = network.mine()[0]
+    tip = common_tip(network.nodes)
+    require(demo.sync(group[0].store)["scan"]["confirmed_zatoshis"] == 1_000_000
+            and demo.sync(monitor)["scan"]["confirmed_zatoshis"] == 1_000_000, "retired_receipt_discovery")
+    for node in network.nodes:
+        node.rpc("invalidateblock", block)
+    wait_for(lambda: all(node.tip()[0] == tip["height"] - 1 for node in network.nodes), "watch_reorg_tip")
+    require(demo.sync(group[0].store)["scan"]["confirmed_zatoshis"] == 0
+            and demo.sync(monitor)["scan"]["confirmed_zatoshis"] == 0, "watch_reorg_undo")
+    for node in network.nodes:
+        node.rpc("reconsiderblock", block)
+    wait_for(lambda: all(node.tip() == (tip["height"], tip["hash"]) for node in network.nodes), "watch_reconsider_tip")
+    require(demo.sync(group[0].store)["scan"]["confirmed_zatoshis"] == 1_000_000
+            and demo.sync(monitor)["scan"]["confirmed_zatoshis"] == 1_000_000, "watch_reorg_recovery")
+    write_json(artifacts / "late-funding.json", funding)
+    payment = demo.payment(group, recipient, args.version, 1, private / "late-payment", all_value=1_000_000)
+    return {"funding_txid": funding["txid"], "retired_receive_index": manifest["receive_end"] - 1,
+            "reorg_undo_and_reconsider": True, "subsequent_spend": submit(demo, network, group[0], payment)}
 
 
 def execute(args, artifacts, receipt):
@@ -493,11 +613,19 @@ def execute(args, artifacts, receipt):
                     "watch_balance_parity")
             network.mine()  # forkable proposal tip after the confirmed funding
             over = args.threshold * args.inputs > TX_LIMIT
-            payment = demo.payment(group, recipient, args.version, args.inputs, private / "payment", reject=over)
-            if over:
+            if args.missing_required_key:
+                group = demo.missing_required_key(group, private / "missing-key")
+                receipt["missing_required_key"] = demo.payment(group, recipient, args.version, 1,
+                    private / "subquorum-payment", all_value=FUNDING_VALUE, incomplete_quorum=True)
+                receipt["working_roots_deleted"] = args.participants
+            elif over:
+                payment = demo.payment(group, recipient, args.version, args.inputs, private / "payment", reject=True)
                 receipt["budget_rejection"] = payment
             else:
+                payment = demo.payment(group, recipient, args.version, args.inputs, private / "payment")
                 group, receipt["recovery"] = demo.recover(group, payment, private / "recovery")
+                receipt["recovery_controls"] = demo.recovery_controls(private / "recovery/snapshot-0",
+                                                                       private / "recovery-controls")
                 receipt["quorum"] = {"participants": args.participants, "surviving_roots": len(group),
                                      "working_roots_deleted": args.participants}
                 receipt["restart"] = network.restart()
@@ -511,23 +639,37 @@ def execute(args, artifacts, receipt):
                 demo.cli("submit", group[0].backup, group[0].store, network.a.address,
                          payment["review"]["proposal_id"], secret=True, success=False)
                 receipt["refresh"] = demo.refresh(group, payment, private / "refresh")
-                receipt["payment"] = submit(demo, network, group[0], payment)
+                receipt["payment"] = submit(demo, network, group[0], payment, snapshot=private / "submitted-snapshot")
                 proposal_id = payment["review"]["proposal_id"]
                 demo.cli("payment-archive", group[0].backup, group[0].store,
                          network.a.address, proposal_id, secret=True)
                 archived = demo.export(group[0], proposal_id, private / "archived-export")
                 require((archived / "signed-transaction.hex").read_text() == payment["raw"], "archived_exact_bytes")
+                archived_snapshot = private / "archived-snapshot"
+                captured = object_output(demo.cli("snapshot-save", group[0].backup, group[0].store,
+                                                   archived_snapshot, secret=True))
+                restored_archive = private / "archived-unknown"
+                response = object_output(demo.cli("snapshot-restore", archived_snapshot, restored_archive,
+                                                 "unknown", secret=True))
+                require(response["mode"] == "monitor", "archived_snapshot_authority")
+                archive_monitor = Participant(restored_archive / "backup-restored.tpq", restored_archive / "watch", {})
+                archived_again = demo.export(archive_monitor, proposal_id, private / "archive-restored-export")
+                require((archived_again / "signed-transaction.hex").read_text() == payment["raw"],
+                        "archived_snapshot_exact_bytes")
                 demo.cli("payment-resume", group[0].backup, group[0].store,
                          network.a.address, proposal_id, secret=True)
                 resumed = demo.export(group[0], proposal_id, private / "resumed-export")
                 require((resumed / "signed-transaction.hex").read_text() == payment["raw"], "resumed_exact_bytes")
-                receipt["archive_resume"] = {"proposal_id": proposal_id, "exact_bytes": True}
+                receipt["archive_resume"] = {"proposal_id": proposal_id, "exact_bytes": True,
+                                              "snapshot_receipt": captured["receipt_fingerprint"]}
                 balance = demo.sync(group[0].store)["scan"]["confirmed_zatoshis"]
                 require(balance == payment["review"]["change_value"], "restored_change_balance")
                 following = demo.payment(group, recipient, args.version, 1, private / "after-recovery", all_value=balance)
                 receipt["post_recovery_payment"] = submit(demo, network, group[0], following)
                 require(demo.sync(group[0].store)["scan"]["confirmed_zatoshis"] == 0, "post_recovery_balance")
                 require(demo.sync(monitor)["scan"]["confirmed_zatoshis"] == 0, "watch_post_recovery_parity")
+                receipt["late_receipt"] = late_receipt_reorg(demo, network, group, monitor, recipient,
+                    funding, args, private, artifacts)
             receipt["final_tip"] = common_tip(network.nodes)
         receipt["private_material_deleted"] = True
     receipt["nodes"] = network.metadata()
@@ -545,15 +687,19 @@ def parser():
     result.add_argument("--inputs", type=int, default=1)
     result.add_argument("--version", type=int, choices=(5, 6), required=True)
     result.add_argument("--classical", choices=("single", "multisig"), default="single")
+    result.add_argument("--missing-required-key", action="store_true",
+                        help="all-of-n only: lose one root before signing, restore n-1 and require subquorum refusal")
     return result
 
 
 def main(args):
     require(1 <= args.threshold <= args.participants <= 15 and 1 <= args.inputs <= 15, "case_shape")
+    require(not args.missing_required_key or (args.inputs == 1 and 2 <= args.threshold == args.participants),
+            "missing_key_case_shape")
     artifacts = args.artifacts.resolve()
     artifacts.mkdir(mode=0o700, parents=False, exist_ok=False)
     receipt = {"schema_version": 1, "contract": CONTRACT, "complete": False,
-               "case": {key: getattr(args, key) for key in ("threshold", "participants", "inputs", "version", "classical")}}
+               "case": {key: getattr(args, key) for key in ("threshold", "participants", "inputs", "version", "classical", "missing_required_key")}}
     write_json(artifacts / "execution.json", receipt)
     try:
         receipt["builds"] = {role: validate_build(read_json(getattr(args, role + "_build")),

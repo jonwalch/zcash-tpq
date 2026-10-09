@@ -43,7 +43,7 @@ class FakeCli:
                     "watch-create": 4, "propose": 5, "review": 5, "sign": 7, "assemble": 6,
                     "payment-history-export": 3, "snapshot-save": 3, "restore": 3,
                     "sync": 3, "receive": 1, "status": 1, "watch-import": 3,
-                    "refresh-propose": 5, "refresh-review": 5, "refresh-approve": 6}
+                    "refresh-propose": 5, "refresh-review": 5, "refresh-approve": 6, "submit": 4, "payments": 2}
         if command in expected:
             require(len(args) == expected[command], "fake_cli_arity_" + command)
         elif command == "enroll-prepare":
@@ -112,6 +112,13 @@ class FakeCli:
             require(args[2] == fingerprint(candidate), "fake_import_fingerprint")
             watch["manifest"] = candidate
             return b"imported"
+        if command == "submit":
+            require(self.watches[Path(args[1])]["mode"] == "monitor" and not success,
+                    "fake_monitor_submission")
+            return b"this watcher does not own the receiver allocator"
+        if command == "payments":
+            require(self.watches[Path(args[0])]["proposal"] is None, "fake_missing_key_has_authorization")
+            return b"[]"
         if command in ("propose", "review"):
             manifest = self.wallets[Path(args[0])]
             intent = self.canonical_file(args[3])
