@@ -6,6 +6,8 @@ mod controls;
 mod model;
 #[cfg(feature = "shielded-fixtures")]
 mod shielded;
+#[cfg(feature = "shielded-fixtures")]
+mod shielded_spend;
 mod strict;
 mod transparent;
 
@@ -665,6 +667,54 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
 fn execute(request: Request) -> Result<(&'static str, Value)> {
     match request {
         #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedSpendPrepare {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("shielded-spend-prepare", shielded_spend::prepare(&recipe)?))
+        }
+        #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedSpendFinalize {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+            transaction_hex,
+            record,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok((
+                "shielded-spend-finalize",
+                shielded_spend::finalize(&recipe, &transaction_hex, record.as_ref())?,
+            ))
+        }
+        #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedSpendFunding {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("shielded-spend-funding", shielded_spend::funding(&recipe)?))
+        }
+        #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedSpendBlock {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok((
+                "shielded-spend-block",
+                controls::shielded_spend_block(&recipe)?,
+            ))
+        }
+        #[cfg(feature = "shielded-fixtures")]
         Request::ShieldedPrepare {
             schema_version,
             contract,
@@ -903,6 +953,10 @@ fn handle(bytes: &[u8]) -> Value {
                     "control-block",
                     "control-funding",
                     "control-authorization",
+                    "shielded-spend-prepare",
+                    "shielded-spend-finalize",
+                    "shielded-spend-funding",
+                    "shielded-spend-block",
                     "shielded-prepare",
                     "shielded-finalize",
                     "shielded-block",

@@ -23,13 +23,13 @@ const DEPOSIT: u64 = 50_000;
 const FEE: u64 = 100_000;
 const POOLS: [&str; 3] = ["sapling", "orchard", "ironwood"];
 
-fn converted<T, E>(value: std::result::Result<T, E>) -> Result<T> {
+pub(super) fn converted<T, E>(value: std::result::Result<T, E>) -> Result<T> {
     value.map_err(|_| Failure {
         stage: "shielded",
         reason: "construction",
     })
 }
-fn needed<T>(value: Option<T>) -> Result<T> {
+pub(super) fn needed<T>(value: Option<T>) -> Result<T> {
     value.ok_or(Failure {
         stage: "shielded",
         reason: "missing_bundle",
@@ -40,7 +40,7 @@ fn deposit(pools: &[String]) -> u64 {
         * u64::try_from(pools.iter().filter(|p| p.as_str() != "orchard").count())
             .expect("three bounded pools")
 }
-fn validate_shape(recipe: &ShieldedRecipe) -> Result<()> {
+pub(super) fn validate_shape(recipe: &ShieldedRecipe) -> Result<()> {
     require(recipe.human_run, "schema", "human_run_required")?;
     require(
         matches!(recipe.transaction_version, 5 | 6)
@@ -87,7 +87,7 @@ fn validate_shape(recipe: &ShieldedRecipe) -> Result<()> {
     }
     Ok(())
 }
-fn context(
+pub(super) fn context(
     recipe: &ShieldedRecipe,
 ) -> Result<(Transaction, Arc<Vec<ChainOutput>>, Option<Policy>)> {
     validate_shape(recipe)?;
@@ -162,7 +162,7 @@ fn parameter_bytes(path: &str, expected: &str) -> Result<Vec<u8>> {
     )?;
     Ok(bytes)
 }
-fn prover(parameters: &SaplingParameters) -> Result<LocalTxProver> {
+pub(super) fn prover(parameters: &SaplingParameters) -> Result<LocalTxProver> {
     let spend = parameter_bytes(&parameters.spend_path, &parameters.spend_sha256)?;
     let output = parameter_bytes(&parameters.output_path, &parameters.output_sha256)?;
     // The pinned parser additionally checks the established parameter hashes.
@@ -171,7 +171,9 @@ fn prover(parameters: &SaplingParameters) -> Result<LocalTxProver> {
         LocalTxProver::from_bytes(&spend, &output)
     }))
 }
-fn sapling_slot(tx: &mut Transaction) -> &mut Option<sapling::ShieldedData<SharedAnchor>> {
+pub(super) fn sapling_slot(
+    tx: &mut Transaction,
+) -> &mut Option<sapling::ShieldedData<SharedAnchor>> {
     match tx {
         Transaction::V5 {
             sapling_shielded_data,
@@ -184,7 +186,7 @@ fn sapling_slot(tx: &mut Transaction) -> &mut Option<sapling::ShieldedData<Share
         _ => unreachable!("version checked"),
     }
 }
-fn action_slot<'a>(tx: &'a mut Transaction, pool: &str) -> &'a mut Option<ShieldedData> {
+pub(super) fn action_slot<'a>(tx: &'a mut Transaction, pool: &str) -> &'a mut Option<ShieldedData> {
     match tx {
         Transaction::V5 {
             orchard_shielded_data,
@@ -204,7 +206,7 @@ fn action_slot<'a>(tx: &'a mut Transaction, pool: &str) -> &'a mut Option<Shield
         _ => unreachable!("pool/version checked"),
     }
 }
-fn chain_action(bundle: &Bundle<Authorized, ZatBalance>) -> Result<ShieldedData> {
+pub(super) fn chain_action(bundle: &Bundle<Authorized, ZatBalance>) -> Result<ShieldedData> {
     let actions = bundle
         .actions()
         .iter()
@@ -232,14 +234,9 @@ fn chain_action(bundle: &Bundle<Authorized, ZatBalance>) -> Result<ShieldedData>
         binding_sig: <[u8; 64]>::from(bundle.authorization().binding_signature()).into(),
     })
 }
-fn chain_sapling(
+pub(super) fn chain_sapling(
     bundle: &sapling_crypto::Bundle<sapling_crypto::bundle::Authorized, ZatBalance>,
 ) -> Result<sapling::ShieldedData<SharedAnchor>> {
-    require(
-        bundle.shielded_spends().is_empty(),
-        "shielded",
-        "output_only",
-    )?;
     let outputs = bundle
         .shielded_outputs()
         .iter()
@@ -254,20 +251,46 @@ fn chain_sapling(
             Ok(converted(OutputInTransactionV4::zcash_deserialize(bytes.as_slice()))?.0)
         })
         .collect::<Result<Vec<_>>>()?;
+    let spends = bundle
+        .shielded_spends()
+        .iter()
+        .map(|spend| {
+            let mut bytes = Vec::new();
+            bytes.extend(spend.cv().to_bytes());
+            bytes.extend(spend.nullifier().0);
+            bytes.extend(<[u8; 32]>::from(*spend.rk()));
+            Ok(sapling::Spend::from_v5_parts(
+                converted(sapling::SpendPrefixInTransactionV5::zcash_deserialize(
+                    bytes.as_slice(),
+                ))?,
+                zakura_chain::primitives::Groth16Proof(*spend.zkproof()),
+                <[u8; 64]>::from(*spend.spend_auth_sig()).into(),
+            ))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let transfers = if let Some(first) = bundle.shielded_spends().first() {
+        TransferData::SpendsAndMaybeOutputs {
+            shared_anchor: converted(first.anchor().to_bytes().try_into())?,
+            spends: converted(spends.try_into())?,
+            maybe_outputs: outputs,
+        }
+    } else {
+        TransferData::JustOutputs {
+            outputs: converted(outputs.try_into())?,
+        }
+    };
     Ok(sapling::ShieldedData {
         value_balance: converted(i64::from(*bundle.value_balance()).try_into())?,
-        transfers: TransferData::JustOutputs {
-            outputs: converted(outputs.try_into())?,
-        },
+        transfers,
         binding_sig: <[u8; 64]>::from(bundle.authorization().binding_sig).into(),
     })
 }
-fn digest(tx: &Transaction, previous: Arc<Vec<ChainOutput>>) -> Result<[u8; 32]> {
+pub(super) fn digest(tx: &Transaction, previous: Arc<Vec<ChainOutput>>) -> Result<[u8; 32]> {
     Ok(converted(tx.sighasher(NetworkUpgrade::Nu7, previous))?
         .sighash(HashType::ALL, None)
         .0)
 }
-fn checks(
+pub(super) fn checks(
     tx: &Transaction,
     previous: Arc<Vec<ChainOutput>>,
     prover: Option<&LocalTxProver>,
@@ -297,7 +320,7 @@ fn checks(
     }
     Ok(Value::Object(result))
 }
-fn wire(tx: &Transaction, previous: Arc<Vec<ChainOutput>>) -> Result<Value> {
+pub(super) fn wire(tx: &Transaction, previous: Arc<Vec<ChainOutput>>) -> Result<Value> {
     let bytes = converted(tx.zcash_serialize_to_vec())?;
     require(
         bytes.len() <= 262_144 && decode_transaction(&bytes)? == *tx,
@@ -550,31 +573,13 @@ pub(super) fn finalize(
             break;
         } // No Ironwood slot exists in v5.
     }
-    if let Some(policy) = policy {
-        let context = converted(InputSigningContext::new(
-            &tx,
-            NetworkDomain::Regtest,
-            NetworkUpgrade::Nu7,
-            previous.clone(),
-            0,
-            &policy,
-        ))?;
-        let authorization = converted(context.authorization(vec![record(needed(entry)?)?]))?;
-        install(&mut tx, 0, Script::new(&authorization.encode()));
-        converted(
-            TransactionContext::new(
-                &tx,
-                NetworkDomain::Regtest,
-                NetworkUpgrade::Nu7,
-                previous.clone(),
-            )
-            .and_then(|context| context.verify_input(0)),
-        )?;
-    } else {
-        require(entry.is_none(), "schema", "classical_record")?;
-        let signature = classical::signature(&tx, previous.clone(), &recipe.authorization, 0)?;
-        install(&mut tx, 0, signature);
-    }
+    authorize(
+        &mut tx,
+        previous.clone(),
+        policy.as_ref(),
+        &recipe.authorization,
+        entry,
+    )?;
     let mut result = wire(&tx, previous)?;
     result["slh_checks"] = json!(usize::from(recipe.authorization == "slh"));
     result["ecdsa_checks"] = json!(match recipe.authorization.as_str() {
@@ -585,6 +590,41 @@ pub(super) fn finalize(
     result["fee_zat"] = json!(FEE);
     result["deposit_zat"] = json!(deposit(&recipe.pools));
     Ok(result)
+}
+
+pub(super) fn authorize(
+    tx: &mut Transaction,
+    previous: Arc<Vec<ChainOutput>>,
+    policy: Option<&Policy>,
+    kind: &str,
+    entry: Option<&Record>,
+) -> Result<()> {
+    if let Some(policy) = policy {
+        let context = converted(InputSigningContext::new(
+            tx,
+            NetworkDomain::Regtest,
+            NetworkUpgrade::Nu7,
+            previous.clone(),
+            0,
+            policy,
+        ))?;
+        let authorization = converted(context.authorization(vec![record(needed(entry)?)?]))?;
+        install(tx, 0, Script::new(&authorization.encode()));
+        converted(
+            TransactionContext::new(
+                tx,
+                NetworkDomain::Regtest,
+                NetworkUpgrade::Nu7,
+                previous.clone(),
+            )
+            .and_then(|context| context.verify_input(0)),
+        )?;
+    } else {
+        require(entry.is_none(), "schema", "classical_record")?;
+        let signature = classical::signature(tx, previous.clone(), kind, 0)?;
+        install(tx, 0, signature);
+    }
+    Ok(())
 }
 
 #[cfg(test)]

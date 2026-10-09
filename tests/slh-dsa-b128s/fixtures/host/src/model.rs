@@ -12,6 +12,41 @@ fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
 #[serde(tag = "op", rename_all = "lowercase", deny_unknown_fields)]
 pub enum Request {
     #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-spend-prepare")]
+    ShieldedSpendPrepare {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ShieldedSpendRecipe,
+    },
+    #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-spend-finalize")]
+    ShieldedSpendFinalize {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ShieldedSpendRecipe,
+        transaction_hex: String,
+        #[serde(deserialize_with = "required_option")]
+        record: Option<Record>,
+    },
+    #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-spend-funding")]
+    ShieldedSpendFunding {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ShieldedSpendFundingRecipe,
+    },
+    #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-spend-block")]
+    ShieldedSpendBlock {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ControlBlockRecipe,
+    },
+    #[cfg(feature = "shielded-fixtures")]
     #[serde(rename = "shielded-prepare")]
     ShieldedPrepare {
         schema_version: u64,
@@ -113,6 +148,49 @@ pub enum Request {
 #[cfg(feature = "shielded-fixtures")]
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct ShieldedSpendRecipe {
+    pub human_run: bool,
+    pub transaction_version: u8,
+    pub pools: Vec<String>,
+    pub parent_hex: String,
+    pub output_index: u32,
+    pub expiry_height: u32,
+    pub authorization: String,
+    #[serde(deserialize_with = "required_option")]
+    pub public_key_hex: Option<String>,
+    #[serde(deserialize_with = "required_option")]
+    pub sapling_parameters: Option<SaplingParameters>,
+    pub history: ShieldedHistory,
+    pub funding_txids: Vec<ShieldedFundingId>,
+}
+#[cfg(feature = "shielded-fixtures")]
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShieldedHistory {
+    pub blocks: Vec<String>,
+    pub treestate: serde_json::Value,
+}
+#[cfg(feature = "shielded-fixtures")]
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShieldedFundingId {
+    pub pool: String,
+    pub txid: String,
+}
+#[cfg(feature = "shielded-fixtures")]
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShieldedSpendFundingRecipe {
+    pub human_run: bool,
+    pub parent_hex: String,
+    pub output_index: u32,
+    pub expiry_height: u32,
+    pub kind: String,
+}
+
+#[cfg(feature = "shielded-fixtures")]
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ShieldedRecipe {
     pub human_run: bool,
     pub transaction_version: u8,
@@ -128,7 +206,7 @@ pub struct ShieldedRecipe {
 }
 
 #[cfg(feature = "shielded-fixtures")]
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SaplingParameters {
     pub spend_path: String,
