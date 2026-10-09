@@ -34,6 +34,12 @@ cross-address transfers preserve pinned upstream NU6.3/NU7 rules. Spend/anchor
 construction remains outside this adapter. The independent shielded digest corpus
 is unchanged and is not used as an accepting real-proof fixture.
 
+The Orchard output-only adapter requires a two-action bundle with no requested
+outputs, using the pinned builder's paired zero-value dummy padding. Ordinary
+`add_output` is forbidden by Orchard v3's cross-address restriction even at zero
+value; the new proof-free regression checks that refusal and the actual padding
+path. Ironwood retains the research precursor's ordinary 50,000-zatoshi output.
+
 `controls.rs` adds one explicit feature-gated `shielded-block` entry to its existing
 header/fee/auth-root construction, limited to one transparent input and bounded
 output-only bundles. The original `control-block` remains transparent-only.

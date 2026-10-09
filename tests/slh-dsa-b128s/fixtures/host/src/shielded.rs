@@ -347,38 +347,50 @@ pub(super) fn wire(tx: &Transaction, previous: Arc<Vec<ChainOutput>>) -> Result<
     )
 }
 
+fn action_builder(pool: &str) -> Result<Builder> {
+    let (version, bundle_type) = if pool == "orchard" {
+        (
+            BundleVersion::orchard_v3(),
+            BundleType::Transactional {
+                bundle_required: true,
+                pad_to_minimum: Some(2),
+            },
+        )
+    } else {
+        (BundleVersion::ironwood_v3(), BundleType::DEFAULT)
+    };
+    let flags = needed(Flags::from_byte(
+        if pool == "orchard" { 2 } else { 6 },
+        version,
+    ))?;
+    let mut builder = converted(Builder::new(
+        bundle_type,
+        version,
+        flags,
+        Anchor::empty_tree(),
+    ))?;
+    // Orchard v3 rejects even zero-valued ordinary outputs when cross-address
+    // transfers are disabled. Its required bundle uses paired dummy padding only.
+    if pool != "orchard" {
+        let recipient =
+            FullViewingKey::from(&SpendingKey::from_bytes([42; 32]).expect("fixed public key"))
+                .address_at(0u32, Scope::External);
+        converted(builder.add_output(None, recipient, NoteValue::from_raw(DEPOSIT), [0; 512]))?;
+    }
+    Ok(builder)
+}
+
 pub(super) fn prepare(recipe: &ShieldedRecipe) -> Result<Value> {
     let (mut tx, previous, _) = context(recipe)?; // All bounds/parents checked before proving.
     let sapling_prover = recipe.sapling_parameters.as_ref().map(prover).transpose()?;
     let mut rng = rand_10::rng();
     let pk = ProvingKey::build(OrchardCircuitVersion::PostNu6_3);
     let vk = pk.verifying_key();
-    let recipient =
-        FullViewingKey::from(&SpendingKey::from_bytes([42; 32]).expect("fixed public key"))
-            .address_at(0u32, Scope::External);
     let prove_action = |pool: &str, rng: &mut rand_10::rngs::ThreadRng| {
-        let version = if pool == "orchard" {
-            BundleVersion::orchard_v3()
-        } else {
-            BundleVersion::ironwood_v3()
-        };
-        let flags = needed(Flags::from_byte(
-            if pool == "orchard" { 2 } else { 6 },
-            version,
-        ))?;
-        let mut builder = converted(Builder::new(
-            BundleType::DEFAULT,
-            version,
-            flags,
-            Anchor::empty_tree(),
-        ))?;
-        converted(builder.add_output(
-            None,
-            recipient,
-            NoteValue::from_raw(if pool == "orchard" { 0 } else { DEPOSIT }),
-            [0; 512],
-        ))?;
-        let unsigned = needed(converted(builder.build::<ZatBalance>(&mut *rng))?)?.0;
+        let unsigned = needed(converted(
+            action_builder(pool)?.build::<ZatBalance>(&mut *rng),
+        )?)?
+        .0;
         converted(unsigned.create_proof(&pk, rng))
     };
     let mut actions = Vec::new();
@@ -630,6 +642,52 @@ pub(super) fn authorize(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn orchard_outputs_use_paired_dummy_padding_without_proving() {
+        let mut rng = rand_10::rng();
+        let version = BundleVersion::orchard_v3();
+        let flags = Flags::from_byte(2, version).unwrap();
+        let recipient = FullViewingKey::from(&SpendingKey::from_bytes([42; 32]).unwrap())
+            .address_at(0u32, Scope::External);
+        let mut ordinary =
+            Builder::new(BundleType::DEFAULT, version, flags, Anchor::empty_tree()).unwrap();
+        assert!(matches!(
+            ordinary.add_output(None, recipient, NoteValue::ZERO, [0; 512]),
+            Err(orchard::builder::OutputError::CrossAddressDisabled)
+        ));
+
+        let (bundle, metadata) = action_builder("orchard")
+            .unwrap()
+            .build_for_pczt(&mut rng)
+            .unwrap();
+        assert_eq!(bundle.flag_byte(), 2);
+        assert_eq!(bundle.actions().len(), 2);
+        assert_eq!(i64::try_from(*bundle.value_sum()).unwrap(), 0);
+        assert_eq!(*bundle.anchor(), Anchor::empty_tree());
+        assert!(bundle.zkproof().is_none());
+        assert!(metadata.output_action_index(0).is_none());
+        bundle.verify_cross_address_restriction().unwrap();
+        for action in bundle.actions() {
+            assert!(action.spend().dummy_sk().is_some());
+            assert_eq!(action.spend().value(), &Some(NoteValue::ZERO));
+            assert_eq!(action.output().value(), &Some(NoteValue::ZERO));
+            assert_eq!(action.spend().recipient(), action.output().recipient());
+        }
+
+        for (pool, flag_byte, balance) in [("orchard", 2, 0), ("ironwood", 6, -50_000)] {
+            let (unsigned, _) = action_builder(pool)
+                .unwrap()
+                .build::<ZatBalance>(&mut rng)
+                .unwrap()
+                .unwrap();
+            assert_eq!(unsigned.actions().len(), 2);
+            assert_eq!(unsigned.flag_byte(), flag_byte);
+            assert_eq!(i64::from(*unsigned.value_balance()), balance);
+            assert_eq!(*unsigned.anchor(), Anchor::empty_tree());
+        }
+    }
+
     fn recipe(version: u8, pools: &[&str]) -> ShieldedRecipe {
         ShieldedRecipe {
             human_run: true,
