@@ -1,0 +1,748 @@
+{
+  "schema_version": 1,
+  "scope": "G1 fixed-profile external Pure verification; no signing/keygen, native transaction, node or wallet acceptance",
+  "completed_at_utc": "2026-10-09T13:45:55.438701+00:00",
+  "comparisons": 60,
+  "positive_cases": 3,
+  "negative_cases": 57,
+  "official_blake3_controls": 105,
+  "python": "3.14.8 (main, Sep 30 2026, 17:55:09) [Clang 21.0.0 (clang-2100.3.34.2)]",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "candidate_commit": "5c429d41aa6dfeccec873e5aabc23ebde8bddf90",
+  "candidate_binary_sha256": "ca8d4af7963ee69862d23682b4be5f2aa0e97e83300bdba2d56c0e864a08f6e9",
+  "candidate_source_files": {
+    "Cargo.lock": "5649fd4a57a90099d991140e133ed73dc2370d69c385ff5cc51155d987e509bd",
+    "Cargo.toml": "a0f5e50c7d9be93bdba10c81b7cb49c5081eb8c1782834103be613f6b5b16ade",
+    "crates/pq-slh-dsa-b-verify/Cargo.toml": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf",
+    "crates/pq-slh-dsa-b-verify/LICENSE-APACHE": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6",
+    "crates/pq-slh-dsa-b-verify/LICENSE-MIT": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680",
+    "crates/pq-slh-dsa-b-verify/NOTICE.md": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38",
+    "crates/pq-slh-dsa-b-verify/PROVENANCE.json": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43",
+    "crates/pq-slh-dsa-b-verify/README.md": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8",
+    "crates/pq-slh-dsa-b-verify/examples/compare.rs": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623",
+    "crates/pq-slh-dsa-b-verify/src/address.rs": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368",
+    "crates/pq-slh-dsa-b-verify/src/hash.rs": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356",
+    "crates/pq-slh-dsa-b-verify/src/hypertree.rs": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768",
+    "crates/pq-slh-dsa-b-verify/src/lib.rs": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954",
+    "crates/pq-slh-dsa-b-verify/src/util.rs": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa",
+    "crates/pq-slh-dsa-b-verify/tests/conformance.rs": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e",
+    "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+  },
+  "known_answers_sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21",
+  "checker_files": {
+    "check.py": "cd6b05e747d839beef0b346894dd09d02e4dbe668068d11080879fff62ab6c4b",
+    "reference.py": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9",
+    "prepare.py": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f",
+    "hash_shim.c": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438",
+    "sources.json": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed"
+  },
+  "reference_sources": {
+    "reference": {
+      "repository": "https://github.com/colinxu2020/slhdsa",
+      "commit": "588ea1028003bf5608a92bae1d8d76abaa7274a2",
+      "license": "LGPL-3.0-or-later",
+      "files": [
+        {
+          "path": "slhdsa/lowlevel/__init__.py",
+          "sha256": "5d3de856bad888b409c27f14c6b3af9dd77d1eeab02aa48f30ff32b04d182b20"
+        },
+        {
+          "path": "slhdsa/lowlevel/_utils.py",
+          "sha256": "9920aeb9c644f55bc5003f9dfa7ad893ec2ccb5c580ca48195f605a31fa7410e"
+        },
+        {
+          "path": "slhdsa/lowlevel/addresses.py",
+          "sha256": "14c169eeab5f598be9a025a4ba31300c4536802a6ab1c5140595ab970eb7fc78"
+        },
+        {
+          "path": "slhdsa/lowlevel/fors.py",
+          "sha256": "4401b4cd4a49982222bbd43e61a323ca3a232dc84188e99c26ab6388b2f0de50"
+        },
+        {
+          "path": "slhdsa/lowlevel/hypertree.py",
+          "sha256": "55fe5af5e0c86bdd4f8bd8d2e75c509972dc62222462aab6545b577603ea200a"
+        },
+        {
+          "path": "slhdsa/lowlevel/parameters.py",
+          "sha256": "b54fa4b438cea285ce1ac7e6059221e6fdabc67d935f6ec081f6d704b0c1e015"
+        },
+        {
+          "path": "slhdsa/lowlevel/slhdsa.py",
+          "sha256": "f548f2f143601087612ba301d36f7b84cfad3d74cf97b15f6ca90aad2f9e4efa"
+        },
+        {
+          "path": "slhdsa/lowlevel/wots.py",
+          "sha256": "92ab8e5292e49c81be756dc0c14948089008489f95a4e32c8f95fb140f406bcd"
+        },
+        {
+          "path": "slhdsa/lowlevel/xmss.py",
+          "sha256": "cd4e0d4bb92ed137d486fea715d150b249747faf9cdd1d436dd5dd1a4abb5058"
+        },
+        {
+          "path": "COPYING.LESSER",
+          "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b"
+        },
+        {
+          "path": "COPYING",
+          "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+        }
+      ]
+    },
+    "blake3_c": {
+      "repository": "https://github.com/BLAKE3-team/BLAKE3",
+      "commit": "f55849f89cd85083c1c9daa2c5de20766f309c00",
+      "license": "Apache-2.0 OR CC0-1.0",
+      "files": [
+        {
+          "path": "c/blake3.c",
+          "sha256": "b118ddf7cf9e6e5ef3fded72dcb1acf9dfdc4ea923cbe4605900ad6ee9afe1af"
+        },
+        {
+          "path": "c/blake3.h",
+          "sha256": "81bbb11ad1909341565dce4914cc0e5c29718eca27e6950b28f9226a91aaf8c5"
+        },
+        {
+          "path": "c/blake3_impl.h",
+          "sha256": "d388dca3574602c8849805ea3c8c0a12d082ac0e428756f305e111942f099af4"
+        },
+        {
+          "path": "c/blake3_portable.c",
+          "sha256": "2bc25b0dad67b4329d0b49cfa075ab2b0d04e424addbddc4e9c389c52a192524"
+        },
+        {
+          "path": "c/blake3_dispatch.c",
+          "sha256": "134f21550138c0af6312925c988aeee35df287e4119e8ad1d206fccdb2238fe3"
+        },
+        {
+          "path": "test_vectors/test_vectors.json",
+          "sha256": "dcb91ea8accc77e6d6e632af7cdc1a99a9f3ae78cf648da595c7d064db32f624"
+        },
+        {
+          "path": "LICENSE_A2",
+          "sha256": "00fcc7a934ddbc9ece2a7cc063ac788e284b703b1d705ccbba72d462aa97921e"
+        },
+        {
+          "path": "LICENSE_CC0",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        }
+      ]
+    }
+  },
+  "portable_hash_build": {
+    "library_sha256": "a7be63755e2ff239acc58594cd3afd2cb3eb764d6402933a172a9abe5d012c6c",
+    "compiler_sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2",
+    "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix",
+    "flags": [
+      "-O2",
+      "-shared",
+      "-fPIC",
+      "-DBLAKE3_USE_NEON=0",
+      "-DBLAKE3_NO_SSE2",
+      "-DBLAKE3_NO_SSE41",
+      "-DBLAKE3_NO_AVX2",
+      "-DBLAKE3_NO_AVX512"
+    ]
+  },
+  "results": [
+    {
+      "label": "kat-0",
+      "request_sha256": "3686bdb5b9ab959a4b05da072d828d60efa9441893821253a4971d268445e5fa",
+      "expected": true,
+      "independent": true,
+      "candidate": {
+        "error": null,
+        "valid": true
+      }
+    },
+    {
+      "label": "kat-0-public_key-0",
+      "request_sha256": "83ed07d0a74a60cdd144d7146fbab54b1b799e319cd5a6c69e6f354a4e84214f",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-public_key-16",
+      "request_sha256": "45285c6745af6fd55b9015119b59f8f5faed3d57b3055ebbf0f6fa278ead1f3d",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-0",
+      "request_sha256": "3519b281cbd0879cc1da2d95788a92c429bea03a791732d7e7a7ca1906e75248",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-16",
+      "request_sha256": "8337b0f47db5e75f133d37a62859c39b672fe9a535d4316d9b0c85d36488310f",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-2927",
+      "request_sha256": "b4c69e58c65056ef9b3202740e8549e79d9c4e2afd8b0e7caa4d2b6278e2a4d2",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-2928",
+      "request_sha256": "1739b93c7cb3f85e7662ece08d4b4a44bc420568afbd1cc1e807b5d3a5bf44ee",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-3488",
+      "request_sha256": "18d81beb75eab0f615eba0cbbaf7812309dfb4f8a2adcbceb5c53474319bab8f",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-7855",
+      "request_sha256": "3514074dd8b5f61408e34270e4aa1d720ea6e98ccdd42e34a44fc7d977bb1154",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-message",
+      "request_sha256": "badca0a382d5529cc659e787ae5d39b935152e3ee2c804cc33a366110da479cd",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-context",
+      "request_sha256": "5547c244611c34690e0e9a45cac2847bba12e1f80cae44359d8e297806415e74",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-short",
+      "request_sha256": "8867cf4779c7aefbd311d6937b41107d23bb27044ad8d0aa6174ac1a7b3acd37",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-signature-long",
+      "request_sha256": "698e25cb7f3a5d4cce3d328a74ef84f3dd3016a204ca3c0a9e12919e26b42ea0",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-public_key-short",
+      "request_sha256": "06f58231f9343da26d1884c332b125ccc9ff74f0ab105421608739094785e24d",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-public_key-long",
+      "request_sha256": "c2bea26267f449aa5228db5b0c39b85d86bfe8155ae824350e28a674ea96b1e6",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-context-256",
+      "request_sha256": "350dd364ae06dbc8bf065ae0ad798e93e8d733829ce02f71542832022b585e12",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "ContextTooLong",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-message-65537",
+      "request_sha256": "169caca46aaa02b407f151559d7e91c1e37af59d495f2c0cc5d8cf10716c06d0",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "MessageTooLong",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-0-double-pure-frame",
+      "request_sha256": "4db5ccd14108a045ad2a62ca18258f52810ee4507a80fe4b6ee242a88b9456a5",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1",
+      "request_sha256": "4150c900a977a08cd77898fe306decf30fd6fc211bbb1cfc9106040f00437d31",
+      "expected": true,
+      "independent": true,
+      "candidate": {
+        "error": null,
+        "valid": true
+      }
+    },
+    {
+      "label": "kat-1-public_key-0",
+      "request_sha256": "440163707defa305eb3394498fee1896aa330e231a6116b1af005c11a8411dde",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-public_key-16",
+      "request_sha256": "fb0465519dcffc0e0134a5be2985fedeb65441ba68b10ddda6c5c9b932affb81",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-0",
+      "request_sha256": "d6e40056c1c250bc00ee46f170f776495385dc817bb7183a0cb85cffdffd0253",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-16",
+      "request_sha256": "25252f54dcfbb589d2417b299c995e800c2a9687cd81c32c8d7f219a6655c107",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-2927",
+      "request_sha256": "5b9b806c123145668356110ef96be71bedb0268730f15813413ed461186d6abd",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-2928",
+      "request_sha256": "b8ed242409b6275d9cce0d4ac1e272aff7b2353827b4e024dc3e352bacf36597",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-3488",
+      "request_sha256": "abd81089d693c0cef4a21095babd7e6003e5f8dab9e47b2804f7c6766d1e74cf",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-7855",
+      "request_sha256": "3ef4b2111eb5218b2770cd6923eeac56d4af2b50d23f7e2131a5b61058661d9b",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-message",
+      "request_sha256": "0fe5a4351a942facab164723bcb138ea76d033b9f990fca9c4b99f4aecdf7f8d",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-context",
+      "request_sha256": "420b849de6d9317f1e8685b7f5ef002e98947903e8efa28c969ca79723fb3a84",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-short",
+      "request_sha256": "6b5f9c201f02f2e0da0b4f98d2f865945e38cbc3e5f330bb7a80a7d89d42e84b",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-signature-long",
+      "request_sha256": "a5acf428ceb00251a65eaf7135bf9f938305ec24876ecce154e4198ed8f4a50c",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-public_key-short",
+      "request_sha256": "c49c2595910ff8f3b4ead9f1624a06052667e2c9df5c0b35b80d2e071c810b88",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-public_key-long",
+      "request_sha256": "8fe16ef1b2d5b1b90a39870b72c18d29bef7d373038823b36d52229d7018fd5a",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-context-256",
+      "request_sha256": "9d39c230b075708f5668630cd46762597793d983c95f506537fe41ab1b683b97",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "ContextTooLong",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-message-65537",
+      "request_sha256": "7b9ce9fafccc745770936b7400ad354160174ad59605cfd067ff24a0d2ceb3d2",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "MessageTooLong",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-1-double-pure-frame",
+      "request_sha256": "45e522af9015229e27559b4a7a5e62cd525c621d9d8b6d9fd1b503f95a6809a8",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2",
+      "request_sha256": "c37dead4413d48e7328b936cf9a29c6131279dfcdbb47832438883b6746c24e5",
+      "expected": true,
+      "independent": true,
+      "candidate": {
+        "error": null,
+        "valid": true
+      }
+    },
+    {
+      "label": "kat-2-public_key-0",
+      "request_sha256": "8259de84c0edcd1d94eaed0c6cab7173de861ca9ef22b5028e7e26734201ce17",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-public_key-16",
+      "request_sha256": "0467b0864dfc8c24fb7714f1f3bece51890a0a14f1119e0072fb3bd086c0e488",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-0",
+      "request_sha256": "2a878c31e240c5de0831e3bcfe6af1770204f36ab8b498dd241f7e41a341da14",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-16",
+      "request_sha256": "e462e36951ee2d3b9582dd8d501b62db7195cb78c1cdba6b15febad26664ea82",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-2927",
+      "request_sha256": "a3ea4e31972210ef859d33bffc9bc8d0ad125908f31f39ee6f657d16f1b4e51e",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-2928",
+      "request_sha256": "574221fea4f091bfe64df1050c8fb478488c292c61a3580f094c5f969e0a49f4",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-3488",
+      "request_sha256": "83d189b0e5a671a774a8563407f1bdcad079fc38b3cc04add61a12443d0d995d",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-7855",
+      "request_sha256": "a06cb29aae0141bbcb9e187195b9edcd50ca6aedeedf2b3d07a55dce7e0be82f",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-message",
+      "request_sha256": "413d7ad14916d4c86d8ee8d0b4bfaaadb77c6d277e5a7afccb23d8a4090adcf2",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-context",
+      "request_sha256": "ade6ac7b2feeaad9c42971654b0d7af2e25cb8fd41c4043c9b2aa498617cdbbd",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-short",
+      "request_sha256": "8ccb21e47702e4c1e0bc9ab8c4872fa0636792725320318f532b7a9865a2173e",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-signature-long",
+      "request_sha256": "20132cb588d183b3ab3fd7627f5a68f6b6459306f7e7d2b2c3a91b9734b62957",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-public_key-short",
+      "request_sha256": "83f393ff7982fae22c14e7c3830d19b5feac08eb91d634ddf4e2c50c4fe51c30",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-public_key-long",
+      "request_sha256": "8c0cffce4024ab34ed77731e7a78863bb3e2104b844aca81323063f64514e9d8",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-context-256",
+      "request_sha256": "eb626e7e2078f24a4ebb81e22752f96d068aaa1cd91487b46fb09162aa853a79",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "ContextTooLong",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-message-65537",
+      "request_sha256": "ef887540d287a1e333b3a2b67835279a66062683d729fa2f0f639f5724e71691",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "MessageTooLong",
+        "valid": false
+      }
+    },
+    {
+      "label": "kat-2-double-pure-frame",
+      "request_sha256": "709e90c830da87738e640fcc089186b684e0bc5d023cbddb37d75b2a9f8122ee",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "message-at-maximum",
+      "request_sha256": "566badcebd839221b45d8fa77bc67372a05960d02fecedd936532fe688cf5327",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "context-at-maximum",
+      "request_sha256": "fe00a3b2789988367bb2a9b6769a3fa4fa3f00d9252c38b450587842c6f2c5d0",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "empty-public-key",
+      "request_sha256": "02662c20ba8ead5da5b879ef3be3f9b660d75c3bcd873ec748af3541fd5145e8",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "PublicKeyLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "empty-signature",
+      "request_sha256": "7d678c77096bd34ed47230d4beee99c4db98760408e98892aa77757240faf2a4",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "SignatureLength",
+        "valid": false
+      }
+    },
+    {
+      "label": "zero-public-key",
+      "request_sha256": "c7ed3a529530245099f462dbac07b2a9ddf0dfd53e7a972d4b81c0ce72ba353f",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    },
+    {
+      "label": "zero-signature",
+      "request_sha256": "d7456cf4afed68901172f6b378f9625a3e5363867f713e54a503ccd134a91bf0",
+      "expected": false,
+      "independent": false,
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      }
+    }
+  ]
+}
