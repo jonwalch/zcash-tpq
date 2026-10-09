@@ -1,0 +1,18 @@
+[package]
+name = "slh-dsa-b128s-fixture-host"
+version = "0.1.0"
+publish = false
+edition = "2021"
+rust-version = "1.97"
+license = "MIT OR Apache-2.0"
+description = "Bounded public SLH transaction conformance adapter"
+
+[dependencies]
+hex = "0.4.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+zakura-chain = { path = "../../../../crates/zakura-chain" }
+zakura-pq-tx-context = { path = "../../../../crates/pq-tx-context" }
+zakura-pq-slh-dsa-b-exp = { path = "../../../../crates/pq-slh-dsa-b-exp" }
+zakura-pq-test-support = { path = "../../../../crates/pq-test-support" }
