@@ -60,6 +60,19 @@ class PathTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "can publish"):
                 audit.manifest_paths("Cargo.toml", ('[package]\nname="zakura-pq-wallet"\npublish='+value).encode(), {}, added=True)
 
+    def test_workspace_globs_excludes_and_build_scripts_stay_in_checkout(self):
+        names = {"Cargo.toml", "crates/a/Cargo.toml", "build.rs"}
+        good = b'[workspace]\nmembers=["crates/*"]\ndefault-members=["crates/a"]\nexclude=["unused/*"]\n[package]\nbuild="build.rs"\n'
+        audit.manifest_paths("Cargo.toml", good, names, added=False)
+        for field in ("members", "default-members", "exclude"):
+            for value in ("../outside", "/private/outside", "C:/outside"):
+                data = ('[workspace]\n'+field+'=["'+value+'"]\n').encode()
+                with self.subTest(field=field, path=value), self.assertRaises(ValueError):
+                    audit.manifest_paths("Cargo.toml", data, names, added=False)
+        for value in ("../outside/build.rs", "untracked.rs", "/private/build.rs"):
+            with self.subTest(build=value), self.assertRaises(ValueError):
+                audit.manifest_paths("Cargo.toml", ('[package]\nbuild="'+value+'"').encode(), names, added=False)
+
     def test_archive_and_package_traversal_and_private_files_fail(self):
         for value in ("../secret", "/absolute", "a/../secret", "a\\secret", "a//secret"):
             with self.subTest(path=value), self.assertRaises(ValueError):

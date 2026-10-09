@@ -5,6 +5,7 @@ Reuse: pinned research pq_node_provenance's exact source/input association and
 the product fixture module's bounded strict JSON and canonical hashing. See NOTICE.
 """
 import argparse
+import fnmatch
 import hashlib
 import json
 import os
@@ -117,7 +118,8 @@ def validate_ledger(record, base, current, root):
 
 
 def resolve_path(origin, value):
-    require(type(value) is str and value and not Path(value).is_absolute() and "\\" not in value,
+    require(type(value) is str and value and not Path(value).is_absolute() and "\\" not in value
+            and re.match(r"^[A-Za-z]:", value) is None,
             "absolute or invalid dependency path")
     parts = list(PurePosixPath(origin).parent.parts)
     for part in value.split("/"):
@@ -135,6 +137,21 @@ def manifest_paths(path, data, names, *, added):
     if added and package:
         require(package.get("name") in PRODUCT_PACKAGES, "unapproved product crate: " + str(package.get("name")))
         require(package.get("publish") is False, "experimental crate can publish: " + path)
+    build = package.get("build", False)
+    require(build is False or isinstance(build, str), "invalid package build path")
+    if isinstance(build, str):
+        require(resolve_path(path, build) in names, "package build script outside tracked source")
+    workspace = manifest.get("workspace", {})
+    for field in ("members", "default-members", "exclude"):
+        values = workspace.get(field, [])
+        require(type(values) is list, "workspace path list")
+        for value in values:
+            target = resolve_path(path, value)
+            # Cargo permits glob patterns and excludes with no current match.
+            # Every form must stay inside the checkout, even when unmatched.
+            if field != "exclude":
+                pattern = target + "/Cargo.toml" if target else "Cargo.toml"
+                require(any(fnmatch.fnmatchcase(name, pattern) for name in names), "workspace member not tracked")
 
     def walk(value):
         if not isinstance(value, dict):
