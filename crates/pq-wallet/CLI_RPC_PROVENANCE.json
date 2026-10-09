@@ -63,7 +63,7 @@
     },
     {
       "target_path": "crates/pq-cli/src/enrollment.rs",
-      "target_sha256": "7af775fb9a894edddc3d3a08dc450d09c2392c84d2e155ff8f2391a79c3bca0e",
+      "target_sha256": "b2d0445fcf4384eb39e2891c2c29d686ddee4e5d1ee8918e18232ea4aa6d3cdf",
       "classification": "new adapter",
       "reference_paths": [
         "crates/pq-wallet/src/receiving.rs",
@@ -91,5 +91,5 @@
     }
   ],
   "new_dependencies": "Only optional already-pinned serde/sha2/native/terminal crates. No registry package/version changes. Default CLI normal/build graph is empty.",
-  "validation": "Parser/public-format/fake-loopback tests pending at source checkpoint. Human terminal/live/payment/recovery/discovery and node builds are never implied by these unit tests."
+  "validation": "Focused enabled CLI parser/password-byte/public-enrollment/partial-collection tests and scripted loopback RPC/payment/discovery tests pass. Default CLI/wallet feature refusal, enabled/default all-target Clippy and package formatting pass. No human terminal/live/payment/recovery/discovery or node-build acceptance is claimed."
 }

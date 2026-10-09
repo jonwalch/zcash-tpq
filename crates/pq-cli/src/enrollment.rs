@@ -93,7 +93,7 @@ pub fn validate_arguments(args: &[String]) -> Result<()> {
         if threshold == 0 || usize::from(threshold) > participants || participants > 15 {
             return Err("expected 1 <= threshold <= participants <= 15".into());
         }
-        for pair in args[6..].chunks_exact(2) {
+        for pair in args[6..].as_chunks::<2>().0 {
             id(&pair[1])?;
         }
     } else if args[0] == "key-export" {
@@ -214,7 +214,7 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
     } else {
         let manifest = Manifest::from_json(&read_inventory(Path::new(&args[2]))?)?;
         let mut keys = Vec::new();
-        for pair in args[6..].chunks_exact(2) {
+        for pair in args[6..].as_chunks::<2>().0 {
             let key = KeyExchange::from_json(&read_transfer(Path::new(&pair[0]), MAX_KEY)?)?;
             if key.fingerprint()? != id(&pair[1])? {
                 return Err("public key pairing fingerprint mismatch".into());
