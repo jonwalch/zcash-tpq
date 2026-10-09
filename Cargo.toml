@@ -1,5 +1,6 @@
 [workspace]
 members = [
+        "crates/pq-cli",
         "crates/pq-slh-dsa-b-sign",
         "crates/pq-wallet",
         "tests/slh-dsa-b128s/fixtures/host",

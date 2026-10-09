@@ -41,6 +41,7 @@ mod block;
 mod checkpoint;
 mod primitives;
 mod script;
+mod slh_identity;
 
 pub mod config;
 pub mod error;
@@ -65,6 +66,9 @@ pub use primitives::{ed25519, groth16, halo2, redjubjub, redpallas, sapling::sap
 #[doc(hidden)]
 pub use primitives::clear_shielded_verification_caches;
 pub use router::RouterError;
+pub use slh_identity::{
+    experimental_slh_dsa_b128s_verifier_identity, ExperimentalSlhDsaB128sVerifierIdentity,
+};
 
 /// A boxed [`std::error::Error`].
 pub type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
