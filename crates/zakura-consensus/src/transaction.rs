@@ -595,6 +595,7 @@ where
                 // doing expensive script verification, to avoid DoS attacks on
                 // the script interpreter.
                 let active = req.is_experimental_slh_dsa_b128s_active(&network);
+                check::mempool_slh_dsa_b128s_output_policy(tx.as_ref(), active)?;
                 let structural_checks = check::mempool_standard_input_scripts_with_slh_dsa_b128s(
                     tx.as_ref(), &spent_outputs, active,
                 )?;

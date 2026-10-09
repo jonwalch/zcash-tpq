@@ -283,6 +283,12 @@ pub enum TransactionError {
     #[error("mempool transaction has non-standard transparent inputs")]
     NonStandardInputs,
 
+    #[error("mempool transaction output {output_index} uses SLH before activation")]
+    NonStandardSlhDsaB128sOutput { output_index: usize },
+
+    #[error("mempool transaction output {output_index} is below the SLH dust threshold")]
+    NonStandardSlhDsaB128sDust { output_index: usize },
+
     #[error("transaction uses an incorrect consensus branch id")]
     WrongConsensusBranchId,
 
@@ -530,6 +536,8 @@ impl TransactionError {
             | Self::NonStandardScriptSigSize { .. }
             | Self::NonStandardScriptSigNotPushOnly { .. }
             | Self::NonStandardInputs
+            | Self::NonStandardSlhDsaB128sOutput { .. }
+            | Self::NonStandardSlhDsaB128sDust { .. }
             | Self::WrongConsensusBranchIdNu6_3GracePeriod => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::VerifierUnavailable)
             }

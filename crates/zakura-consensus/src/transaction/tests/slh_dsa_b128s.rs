@@ -2,6 +2,8 @@
 //! The production service resolves outputs through mock trusted chain/mempool services.
 //! No signing, live node, proof generation or performance workload is used.
 
+mod policy;
+
 use super::*;
 use crate::transaction::{
     pq::SlhDsaB128sTransactionBudget, slh_dsa_b128s::verify_experimental_slh_dsa_b128s_inputs,

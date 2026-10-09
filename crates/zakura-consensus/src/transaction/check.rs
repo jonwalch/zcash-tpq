@@ -931,6 +931,37 @@ pub fn is_slh_dsa_b128s_output(output: &transparent::Output) -> bool {
     super::slh_dsa_b128s::is_output(output)
 }
 
+/// Minimum SLH output value at the existing dust rate, using its smallest
+/// canonical input: a 7,930-byte 1-of-1 authorization plus a 36-byte outpoint,
+/// three-byte CompactSize length and four-byte sequence. This is relay policy,
+/// not a consensus minimum or a spending-cost promise for hidden policies.
+pub const SLH_DSA_B128S_DUST_THRESHOLD: u32 = (transparent::ONE_THIRD_DUST_THRESHOLD_RATE
+    .checked_mul(44 + 7_973)
+    .expect("fixed SLH output and minimum input sizes fit the dust-rate product")
+    / 1_000)
+    .checked_mul(3)
+    .expect("fixed SLH dust threshold fits u32");
+
+/// SLH funding policy shared by relay prechecks and storage. Exact SLH outputs
+/// are nonstandard before activation and below the SLH dust floor. Classical
+/// authorization remains mandatory, including when funding these outputs.
+pub fn mempool_slh_dsa_b128s_output_policy(
+    tx: &Transaction,
+    active: bool,
+) -> Result<(), TransactionError> {
+    for (output_index, output) in tx.outputs().iter().enumerate() {
+        if is_slh_dsa_b128s_output(output) {
+            if !active {
+                return Err(TransactionError::NonStandardSlhDsaB128sOutput { output_index });
+            }
+            if output.value.zatoshis() < i64::from(SLH_DSA_B128S_DUST_THRESHOLD) {
+                return Err(TransactionError::NonStandardSlhDsaB128sDust { output_index });
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Checks the `nConsensusBranchId` field.
 ///
 /// # Consensus

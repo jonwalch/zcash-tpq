@@ -2,6 +2,9 @@
 
 #![allow(clippy::unwrap_in_result)]
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+mod slh_dsa_b128s;
+
 use zcash_keys::address::Address;
 use zcash_transparent::address::TransparentAddress;
 
@@ -444,6 +447,9 @@ mod zip218_template_limits {
 
     fn nu7_template_limits() -> BlockTemplateLimits {
         BlockTemplateLimits {
+            network: Network::Mainnet,
+            height: Height(1_000_000),
+            remaining_slh_dsa_b128s_checks: 0,
             remaining_bytes: usize::MAX,
             remaining_sigops: u32::MAX,
             remaining_unpaid_actions: u32::MAX,
