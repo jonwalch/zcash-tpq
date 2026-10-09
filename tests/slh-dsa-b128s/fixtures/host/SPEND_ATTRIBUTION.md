@@ -19,6 +19,14 @@ APIs. It accepts separate real note and transparent funding transactions so
 nullifier controls can use an independently available transparent parent.
 History is supplied by a trusted node export, not treated as independent consensus
 verification. It never accepts caller amount/script fields as chain authority.
+The research helper handles Ironwood only. The Sapling adaptation also reuses
+the pinned node's `sapling::tree::Root::bytes_in_display_order`, as used by
+`zakura-rpc/src/methods.rs::z_get_treestate`, to compare RPC-display roots during
+recovery and finalization. Sapling reverses canonical anchor bytes for this RPC;
+the research Ironwood convention is unchanged. Proof-free regressions use the
+actual per-pool RPC conversions and reject internal-order or altered Sapling
+roots, while exercising v5/v6 finalization correspondence with explicit invalid
+shielded proof/signature placeholders.
 
 `shielded_spend.rs` generalizes the research Ironwood construction to the supported
 v5/v6 pool subsets. It reuses current `shielded.rs` canonical bundle adapters,

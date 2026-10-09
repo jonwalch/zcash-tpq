@@ -93,6 +93,11 @@ works when commitments repeat. Nullifiers are derived from the actual note/key
 (and Sapling position), then checked against the full exported chain. Missing,
 already spent or mismatched notes and roots fail before parameters or proving
 keys are loaded. This is observed public-chain state, not internal DB membership.
+The supplied `finalRoot` and returned note `anchor` retain the node RPC's display
+order. Sapling's display order reverses its canonical anchor bytes; Orchard and
+Ironwood use the canonical order. Recovery and finalization reuse the node's
+`bytes_in_display_order` conversion for Sapling while witness/path comparisons
+continue to use canonical anchor bytes. The opposite RPC byte order is rejected.
 
 Each selected pool spends one real 50,000-zatoshi note. Sapling has one spend
 and two padded outputs; each action pool has two actions including padding.

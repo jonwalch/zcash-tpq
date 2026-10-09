@@ -361,9 +361,10 @@ pub(super) fn recover(history: &History, request: &ShieldedSpendRecipe) -> Resul
         let (note, nullifier) = match note {
             EitherNote::Sapling(note) => {
                 let (path, anchor) = sapling_witness(&leaves, position)?;
+                // Sapling RPC roots reverse the canonical witness anchor bytes.
                 require(
-                    anchor.to_bytes() == root
-                        && <[u8; 32]>::from(sapling_tree.root()) == root
+                    anchor.to_bytes() == <[u8; 32]>::from(sapling_tree.root())
+                        && sapling_tree.root().bytes_in_display_order() == root
                         && sapling_crypto::Anchor::from(
                             path.root(sapling_crypto::Node::from_cmu(&note.cmu())),
                         ) == anchor,
@@ -556,11 +557,15 @@ mod tests {
         assert!(history.previous(&tx, 110).is_err());
     }
     #[test]
-    fn encrypted_public_notes_recover_from_canonical_history_without_proofs() {
+    fn encrypted_public_notes_recover_and_finalize_rpc_roots_without_proofs() {
         // Builders only create ciphertext/effecting data here. Zero authorization
         // and proof bytes are explicit placeholders, never passed to a verifier.
         let mut request = exported();
         let mut blocks = parse(&request).unwrap().blocks;
+        let Transaction::V1 { outputs, .. } = Arc::make_mut(&mut blocks[4].transactions[0]) else {
+            unreachable!("synthetic coinbase is v1")
+        };
+        outputs[0].lock_script = classical::scripts("single").unwrap().0;
         let mut sources = Vec::new();
         let mut rng = rand_10::rng();
         for (index, pool) in ["sapling", "orchard", "ironwood"].into_iter().enumerate() {
@@ -685,9 +690,9 @@ mod tests {
             }
         }
         for (pool, root) in [
-            ("sapling", <[u8; 32]>::from(sapling.root())),
-            ("orchard", <[u8; 32]>::from(orchard.root())),
-            ("ironwood", <[u8; 32]>::from(ironwood.root())),
+            ("sapling", sapling.root().bytes_in_display_order()),
+            ("orchard", orchard.root().bytes_in_display_order()),
+            ("ironwood", ironwood.root().bytes_in_display_order()),
         ] {
             request.treestate[pool] = json!({"commitments":{"finalRoot":hex::encode(root)}});
         }
@@ -695,21 +700,32 @@ mod tests {
             human_run: true,
             transaction_version: 6,
             pools: vec!["sapling".into(), "orchard".into(), "ironwood".into()],
-            parent_hex: String::new(),
+            parent_hex: hex::encode(blocks[4].transactions[0].zcash_serialize_to_vec().unwrap()),
             output_index: 0,
             expiry_height: 210,
             authorization: "single".into(),
             public_key_hex: None,
-            sapling_parameters: None,
+            // Finalization must not load parameters or create proofs.
+            sapling_parameters: Some(SaplingParameters {
+                spend_path: "/unused/spend.params".into(),
+                spend_sha256: "11".repeat(32),
+                output_path: "/unused/output.params".into(),
+                output_sha256: "22".repeat(32),
+            }),
             history: request,
             funding_txids: sources,
         };
         let history = parse(&recipe.history).unwrap();
         let notes = recover(&history, &recipe).unwrap();
         assert_eq!(notes.len(), 3);
+        let mut spend_tx = context(&recipe).unwrap().tx;
         for note in &notes {
             assert_eq!(note.metadata["value_zat"], NOTE_VALUE);
             assert_eq!(note.metadata["commitment_count"], 2);
+            assert_eq!(
+                note.metadata["anchor"],
+                recipe.history.treestate[&note.pool]["commitments"]["finalRoot"]
+            );
             match &note.note {
                 Note::Sapling(funding) => {
                     let mut builder = sapling_crypto::builder::Builder::new(
@@ -749,6 +765,7 @@ mod tests {
                         },
                     );
                     assert_eq!(chain_sapling(&fake).unwrap().spends().count(), 1);
+                    *sapling_slot(&mut spend_tx) = Some(chain_sapling(&fake).unwrap());
                 }
                 Note::Action(funding) => {
                     let version = if note.pool == "orchard" {
@@ -775,9 +792,94 @@ mod tests {
                         hex::encode(unsigned.actions()[real].nullifier().to_bytes()),
                         note.metadata["nullifier"]
                     );
+                    let fake = unsigned.map_authorization(
+                        &mut (),
+                        |_, _, _| [0; 64].into(),
+                        |_, _| {
+                            orchard::bundle::Authorized::from_parts(
+                                orchard::Proof::new(vec![
+                                    0;
+                                    orchard::Proof::expected_proof_size(2)
+                                ]),
+                                [0; 64].into(),
+                            )
+                        },
+                    );
+                    *action_slot(&mut spend_tx, &note.pool) = Some(chain_action(&fake).unwrap());
                 }
             }
         }
+        for version in [5, 6] {
+            let final_recipe = ShieldedSpendRecipe {
+                human_run: true,
+                transaction_version: version,
+                pools: recipe
+                    .pools
+                    .iter()
+                    .filter(|pool| version == 6 || *pool != "ironwood")
+                    .cloned()
+                    .collect(),
+                parent_hex: recipe.parent_hex.clone(),
+                output_index: 0,
+                expiry_height: 210,
+                authorization: "single".into(),
+                public_key_hex: None,
+                sapling_parameters: recipe.sapling_parameters.clone(),
+                history: ShieldedHistory {
+                    blocks: recipe.history.blocks.clone(),
+                    treestate: recipe.history.treestate.clone(),
+                },
+                funding_txids: recipe
+                    .funding_txids
+                    .iter()
+                    .filter(|source| version == 6 || source.pool != "ironwood")
+                    .map(|source| ShieldedFundingId {
+                        pool: source.pool.clone(),
+                        txid: source.txid.clone(),
+                    })
+                    .collect(),
+            };
+            let mut tx = context(&final_recipe).unwrap().tx;
+            *sapling_slot(&mut tx) = sapling_slot(&mut spend_tx).clone();
+            for pool in final_recipe.pools.iter().filter(|pool| *pool != "sapling") {
+                *action_slot(&mut tx, pool) = action_slot(&mut spend_tx, pool).clone();
+            }
+            let raw = hex::encode(tx.zcash_serialize_to_vec().unwrap());
+            // This only checks finalization correspondence and classical signing;
+            // the deliberate zero shielded proofs/signatures remain invalid.
+            let finalized = finalize(&final_recipe, &raw, None).unwrap();
+            assert_eq!(finalized["ecdsa_checks"], 1);
+            let TransferData::SpendsAndMaybeOutputs { shared_anchor, .. } =
+                &mut sapling_slot(&mut tx).as_mut().unwrap().transfers
+            else {
+                unreachable!("one Sapling spend")
+            };
+            assert_ne!(
+                hex::encode(<[u8; 32]>::from(*shared_anchor)),
+                notes[0].metadata["anchor"]
+            );
+            assert_eq!(
+                hex::encode(shared_anchor.bytes_in_display_order()),
+                notes[0].metadata["anchor"]
+            );
+            *shared_anchor = sapling_crypto::Anchor::empty_tree()
+                .to_bytes()
+                .try_into()
+                .unwrap();
+            let changed = hex::encode(tx.zcash_serialize_to_vec().unwrap());
+            assert_eq!(
+                finalize(&final_recipe, &changed, None).unwrap_err().reason,
+                "sapling_spend"
+            );
+        }
+        // The RPC convention is exact: accepting both byte orders would weaken
+        // the exported-root guard and conceal this adapter error.
+        recipe.history.treestate["sapling"]["commitments"]["finalRoot"] =
+            json!(hex::encode(<[u8; 32]>::from(sapling.root())));
+        assert_eq!(
+            recover(&history, &recipe).err().unwrap().reason,
+            "root_mismatch"
+        );
         recipe.history.treestate["sapling"]["commitments"]["finalRoot"] = json!("00".repeat(32));
         assert_eq!(
             recover(&history, &recipe).err().unwrap().reason,

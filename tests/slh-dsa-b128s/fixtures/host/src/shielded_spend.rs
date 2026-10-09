@@ -478,7 +478,7 @@ pub(super) fn finalize(
             };
             require(
                 i64::from(data.value_balance) == 50_000
-                    && <[u8; 32]>::from(*shared_anchor) == anchor
+                    && shared_anchor.bytes_in_display_order() == anchor
                     && spends.len() == 1
                     && maybe_outputs.len() == 2
                     && <[u8; 32]>::from(spends.iter().next().expect("one spend checked").nullifier)
