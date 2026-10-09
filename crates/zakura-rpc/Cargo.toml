@@ -23,6 +23,9 @@ categories = [
 exclude = ["*.proto"]
 
 [features]
+# Experimental SLH library consumers; complete runtime support remains disabled.
+experimental-slh-dsa-b128s = ["zakura-consensus/experimental-slh-dsa-b128s"]
+
 # Production features that activate extra dependencies, or extra features in
 # dependencies
 
