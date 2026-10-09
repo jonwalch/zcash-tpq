@@ -65,23 +65,24 @@ impl Root {
     }
 
     fn seed(&self, path: KeyPath) -> Zeroizing<[u8; SEED_BYTES]> {
-        // Preserve the existing HKDF/HMAC limitation: the owned output clears,
-        // but these pinned implementations do not expose internal-state clearing.
-        let hkdf = Hkdf::<Sha256>::new(
-            Some(b"ZcashTransparentPQ/wallet-root/v1\0"),
-            self.bytes.as_ref(),
-        );
-        let mut info = b"ZcashTransparentPQ/wallet-key/v1\0".to_vec();
-        info.extend([1, 2, 0xf7]);
-        info.extend(0u32.to_le_bytes());
-        // Role is repr(u8) with only 0 and 1, so this conversion is lossless.
-        info.push(path.role as u8);
-        info.extend(path.index.to_le_bytes());
-        let mut seed = Zeroizing::new([0; SEED_BYTES]);
-        hkdf.expand(&info, seed.as_mut())
-            .expect("48 bytes is within HKDF-SHA-256's output limit");
-        seed
+        derive_seed(&self.bytes, path)
     }
+}
+
+pub(crate) fn derive_seed(root: &[u8; 32], path: KeyPath) -> Zeroizing<[u8; SEED_BYTES]> {
+    // Preserve the existing HKDF/HMAC limitation: the owned output clears,
+    // but these pinned implementations do not expose internal-state clearing.
+    let hkdf = Hkdf::<Sha256>::new(Some(b"ZcashTransparentPQ/wallet-root/v1\0"), root.as_ref());
+    let mut info = b"ZcashTransparentPQ/wallet-key/v1\0".to_vec();
+    info.extend([1, 2, 0xf7]);
+    info.extend(0u32.to_le_bytes());
+    // Role is repr(u8) with only 0 and 1, so this conversion is lossless.
+    info.push(path.role as u8);
+    info.extend(path.index.to_le_bytes());
+    let mut seed = Zeroizing::new([0; SEED_BYTES]);
+    hkdf.expand(&info, seed.as_mut())
+        .expect("48 bytes is within HKDF-SHA-256's output limit");
+    seed
 }
 
 #[cfg(test)]

@@ -1,32 +1,104 @@
 {
   "schema_version": 1,
   "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
-  "source_revision": "85f75af3f70cc292918a013b280ed06426b6fa98",
+  "source_revision": "da638d4045074f7957aec3fb3fb018bd66b96d05",
   "license": "MIT OR Apache-2.0",
   "files": [
     {
       "target": "src/keys.rs",
-      "target_sha256": "02753e66c8842f5279d024e57cd319240a637dfd0a7a52db4ad200b1ba42e173",
+      "target_sha256": "64a9b0ec556fbae23bdd955daf80be9b4c9449498377b661f017123e9e5d605d",
       "sources": [
         {
           "path": "crates/pq-wallet/src/lib.rs",
-          "sha256": "e9ae41cd1373c212e84df85d5f8aa74f984f9060dee75a9e8042ded46f44d7a3",
-          "sections": [
-            "Role",
-            "KeyPath",
-            "Wallet::seed"
-          ]
+          "sha256": "e9ae41cd1373c212e84df85d5f8aa74f984f9060dee75a9e8042ded46f44d7a3"
         }
       ],
       "classification": "necessary SLH adaptation",
-      "adaptation": "Retain literal HKDF-SHA256 salt/info/order/account0/Regtest/path layout; change suite to f7 and output length to48; thin non-enrolled root facade with fallible generation while H2 existing wallet flows remain pending."
+      "adaptation": "H1 exact48-byteHKDF retained; extract common crate-private helper so Root and Wallet cannot diverge."
     },
     {
       "target": "src/lib.rs",
-      "target_sha256": "46c1ed24d4a3f02157e4d15a358c0ae9e0231ef485b20e8e241845011b212792",
-      "sources": [],
+      "target_sha256": "f0417bd29b34907b00154534e6b738b69584e66e9b161f622f44dd96ed4b0caa",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/lib.rs",
+          "sha256": "e9ae41cd1373c212e84df85d5f8aa74f984f9060dee75a9e8042ded46f44d7a3"
+        }
+      ],
       "classification": "necessary SLH adaptation",
-      "adaptation": "Default-off feature and explicit support refusal; no storage/payment API invented."
+      "adaptation": "Preserve core creation/identity/enrolled-policy/trusted-context APIs; singlef7suite, reuseH1keyderivation, OS-entropy signing via separate signer and native local partial check. Defer backup/enrollment/retirement consumer methods."
+    },
+    {
+      "target": "src/suite.rs",
+      "target_sha256": "018c588287cb4d108e1ec7b6a0a2339b5180e5c7c74363228a356c6c7e0a470a",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/suite.rs",
+          "sha256": "d2c5c147e1b704181474bfcf57e320d4563a78d3320a87b0911a4b50536c8236"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retain suite/policy/partial/context abstraction; onlyf7, delegateall120shapes and sizes to nativecodec, boxed signatures; retained private suite/context interfaces, complete input-count guard."
+    },
+    {
+      "target": "src/canonical.rs",
+      "target_sha256": "049e5109d893275b1c10f23dde5ed0c65f2fbbd8db45a2e570777b5256322ce9",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/canonical.rs",
+          "sha256": "049e5109d893275b1c10f23dde5ed0c65f2fbbd8db45a2e570777b5256322ce9"
+        }
+      ],
+      "classification": "byte-identical reuse",
+      "adaptation": "No changes."
+    },
+    {
+      "target": "src/error.rs",
+      "target_sha256": "4dff31aad5b1a6166a62dbca3568d5c35685d6824b2a3370c9f48bcecd297ef3",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/error.rs",
+          "sha256": "46d95aac4109d0a4641e731e764a719741698fae84308da8a30c929c67edb49d"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Preserve error categories; SLH native/signer sources replace alternatecrypto types; entropy category retained; API documentation only."
+    },
+    {
+      "target": "src/manifest.rs",
+      "target_sha256": "bcf13aae244cebe64b123163b690510bbed53f2f861112f888cb94f204b1a324",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/manifest.rs",
+          "sha256": "c434fe4fd72eea2aa8537c9af4569cfbf18fcf049fac2a3ea515f1e2771d6b32"
+        }
+      ],
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Preserve exact version1schemas/canonicalencoding/caps/history/profile; f7only, origins1..15 and allnativepolicyshapes; API documentation only elsewhere."
+    },
+    {
+      "target": "src/wallet_tests.rs",
+      "target_sha256": "e74643c1d0cf0f3634b375aca157d2dc4a6bd70fa6ea3167277da6f5ab4af97d",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/tests.rs",
+          "sha256": "889ca9cd9dd0d6dc281ed96e5f784327c15258f744ecddc73b19745160d23bd6"
+        }
+      ],
+      "classification": "adapted regression tests",
+      "adaptation": "Reuse fallible creation RNG controls; focused canonical/inventory shape and low-level signing controls with synthetic private enrollment, not durable acceptance."
+    },
+    {
+      "target": "src/suite/tests.rs",
+      "target_sha256": "1884a31511d8933775a1fc337397c25caa75bb524e2abb4e747356488d2d2ac4",
+      "sources": [
+        {
+          "path": "crates/pq-wallet/src/suite.rs",
+          "sha256": "d2c5c147e1b704181474bfcf57e320d4563a78d3320a87b0911a4b50536c8236"
+        }
+      ],
+      "classification": "adapted regression tests",
+      "adaptation": "Suite identity controls adapted; new allshape/nativecapacity and retained independent v5/v6partial fixture checks, mutation and completeverification-count regression."
     },
     {
       "target": "src/keys/tests.rs",
