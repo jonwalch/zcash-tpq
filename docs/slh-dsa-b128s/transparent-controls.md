@@ -49,6 +49,9 @@ After one block, candidate 110 must reject the same controls under the SLH mixed
 Missing parents, expiry, and unrelated RPC errors cannot satisfy these checks.
 
 An earlier reorg removes the separate classical and SLH payments.
+Before either rollback restart, the driver waits for complete ordinary backups
+of the remaining chain and removal of every invalidated block backup.
+It reuses the node driver's backup observer and does not force the writer to flush.
 After restart, authorization controls run against restored parents.
 The saved-byte helper then submits and mines the valid transactions again.
 Rejected variants share their TXIDs but have different authorization digests.

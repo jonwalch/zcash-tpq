@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from common import AcceptanceError
 import transparent_controls as controls
+from nodes import Network
 
 
 def identity(value):
@@ -27,6 +28,7 @@ class Ledger:
         self.chain = {0: "genesis"}
         self.blocks, self.transactions, self.known, self.pool = {}, {}, {}, []
         self.calls, self.restarts, self.mixed_recipes = [], [], []
+        self.backup_checks, self.removed = [], []
         self.serial = 0
         self.nodes = [FakeNode(self), FakeNode(self)]
         self.a, self.b = self.nodes
@@ -93,6 +95,11 @@ class Ledger:
         self.pool.clear()
         self.restarts.append(self.height)
         return {"height": self.height, "hash": self.chain[self.height]}
+
+    def restart_backed(self, network, *, excluded):
+        assert network is self and excluded == self.removed
+        self.backup_checks.append(list(excluded))
+        return {**self.restart(), "backup": {"mock": True, "excluded_block_hashes": list(excluded)}}
 
     def metadata(self):
         assert self.closed
@@ -233,6 +240,7 @@ class FakeNode:
         if method == "invalidateblock":
             if args[0] in state.chain.values():
                 height = next(h for h, value in state.chain.items() if value == args[0])
+                state.removed = [state.chain[h] for h in range(height, state.height + 1)]
                 state.chain = {h: value for h, value in state.chain.items() if h < height}
                 state.height = height - 1
             return None
@@ -271,7 +279,8 @@ class TransparentDriverTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
             for name, replacement in {"Network": lambda *_: state, "host_call": state.host,
                     "signer_call": state.signer, "authenticate_coinbase": state.coinbase,
-                    "single_artifact": state.slh, "producer_identity": lambda *_: ({}, {})}.items():
+                    "single_artifact": state.slh, "producer_identity": lambda *_: ({}, {}),
+                    "restart_with_backups": state.restart_backed}.items():
                 stack.enter_context(patch.object(controls, name, side_effect=replacement))
             controls.execute(args, Path(directory), receipt)
         return receipt
@@ -284,6 +293,9 @@ class TransparentDriverTests(unittest.TestCase):
         self.assertEqual(len(receipt["separate_transactions_same_block"]["txids"]), 2)
         self.assertFalse(receipt["positive_preflight"]["published"])
         self.assertEqual(state.restarts, [111, 108])
+        self.assertEqual([len(hashes) for hashes in state.backup_checks], [1, 4])
+        self.assertEqual(receipt["reorg_restart"]["backup"]["excluded_block_hashes"], state.backup_checks[0])
+        self.assertEqual(receipt["activation_rollback_restart"]["backup"]["excluded_block_hashes"], state.backup_checks[1])
         self.assertEqual(receipt["final_tip"]["height"], 110)
         self.assertEqual([(r["kind"], r["classical_first"]) for r in state.mixed_recipes],
             [(kind, first) for kind in ("multisig", "unsupported51", "unsupported52") for first in (True, False)])
@@ -334,6 +346,72 @@ class TransparentDriverTests(unittest.TestCase):
         for result in (None, {}, "wrong-parent", "transaction-expired", "transaction-script-invalid"):
             with self.assertRaises(AcceptanceError):
                 controls.proposal_rejection(result, "mixed")
+
+
+class RollbackBackupModel:
+    """In-memory invalidation precedes the inherited asynchronous backup writer."""
+    restart = Network.restart
+
+    def __init__(self):
+        self.height, self.backed_height = 3, 3
+        self.hashes = {height: f"{height:064x}" for height in range(4)}
+        self.nodes = [self, self]
+        self.a = self.b = self
+        self.events = []
+
+    def tip(self):
+        return self.height, self.hashes[self.height]
+
+    def rpc(self, method, *args):
+        if method == "getblockhash":
+            assert args[0] <= self.height
+            return self.hashes[args[0]]
+        assert method == "invalidateblock"
+        self.events.append("invalidate")
+        self.height = next(height for height, value in self.hashes.items() if value == args[0]) - 1
+
+    def stop(self):
+        self.events.append("stop")
+
+    def start(self):
+        self.events.append("start")
+        self.height = self.backed_height
+
+    def backup_ready(self, network, *, excluded):
+        assert network is self
+        assert excluded == [self.hashes[2], self.hashes[3]]
+        assert self.height == 1
+        self.events.append("backup-observed")
+        self.backed_height = self.height
+        return {"canonical": [{"height": self.height}], "excluded_block_hashes": excluded}
+
+
+class RollbackBackupTests(unittest.TestCase):
+    def test_old_immediate_restart_restores_removed_chain_but_shared_observer_prevents_it(self):
+        old = RollbackBackupModel()
+        for node in old.nodes:
+            node.rpc("invalidateblock", old.hashes[2])
+        with self.assertRaisesRegex(AcceptanceError, "restart_tip"):
+            old.restart()
+        current = RollbackBackupModel()
+        import shielded_spend_controls
+        with patch.object(shielded_spend_controls, "backup_ready", side_effect=current.backup_ready):
+            receipt = controls.rollback(current, current.hashes[2], 1)
+        self.assertEqual((receipt["height"], receipt["hash"]), (1, current.hashes[1]))
+        self.assertEqual(current.events, ["invalidate", "invalidate", "backup-observed", "stop", "stop", "start", "start"])
+
+    def test_incomplete_backup_prevents_restart_and_wrong_boundary_prevents_invalidation(self):
+        model = RollbackBackupModel()
+        import shielded_spend_controls
+        with patch.object(shielded_spend_controls, "backup_ready", side_effect=AcceptanceError("spend_invalidated_backup_present")):
+            with self.assertRaisesRegex(AcceptanceError, "spend_invalidated_backup_present"):
+                controls.rollback(model, model.hashes[2], 1)
+        self.assertNotIn("stop", model.events)
+        for block, height in ((model.hashes[1], 1), (model.hashes[3], 3)):
+            untouched = RollbackBackupModel()
+            with self.assertRaisesRegex(AcceptanceError, "transparent_rollback_block"):
+                controls.rollback(untouched, block, height)
+            self.assertFalse(untouched.events)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ from common import (ROOT, CONTRACT, AcceptanceError, canonical, common_tip, read
                     require, sha256, source_state, validate_build, wait_for, write_json, zat)
 from generate_transactions import host_call, producer_identity, randomizer, seed, signer_call
 from lifecycle_controls import rejection_unchanged, single_artifact, utxos
-from node_live import authenticated_outputs, policy, reconcile_saved
+from node_live import authenticated_outputs, policy, reconcile_saved, restart_with_backups
 from nodes import Network, SLH_HEIGHT, authenticate_coinbase
 
 CLASSICAL_SCRIPT = (("could not verify a transparent script",),
@@ -208,12 +208,15 @@ def mine_to(network, height):
 
 
 def rollback(network, block_hash, height):
+    removed = [network.a.rpc("getblockhash", index)
+               for index in range(height + 1, common_tip(network.nodes)["height"] + 1)]
+    require(removed and removed[0] == block_hash, "transparent_rollback_block")
     for node in network.nodes:
         node.rpc("invalidateblock", block_hash)
     wait_for(lambda: all(node.tip()[0] == height for node in network.nodes), "transparent_rollback_tip")
     # Existing disposable restart clears local relay retries for a new negative
     # window; it does not change upstream reset/retry behavior or assert barriers.
-    return network.restart()
+    return restart_with_backups(network, excluded=removed)
 
 
 def execute(args, artifacts, receipt):
