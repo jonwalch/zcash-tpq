@@ -1,0 +1,133 @@
+{
+  "candidate_binary_sha256": "a098374188499bd189819fc20e196170e20f1c9ff72fc14fce81d186aaf3afa4",
+  "candidate_commit": "d7da7c091a51d8bac2a2849c463bc4983b15e3fc",
+  "candidate_or_controls_dirty": false,
+  "candidate_source_files": {
+    "Cargo.lock": "e942d12f0c7dabaafb9ff2ba8486596f7ca0fa8be02119d36e14e3d2f9fa2abd",
+    "Cargo.toml": "691e6315f266435d86b38a702a9dc1f084e0e11f1d984759bf1025b4cb624aee",
+    "crates/pq-slh-dsa-b-verify/Cargo.toml": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf",
+    "crates/pq-slh-dsa-b-verify/LICENSE-APACHE": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6",
+    "crates/pq-slh-dsa-b-verify/LICENSE-MIT": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680",
+    "crates/pq-slh-dsa-b-verify/NOTICE.md": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38",
+    "crates/pq-slh-dsa-b-verify/PROVENANCE.json": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43",
+    "crates/pq-slh-dsa-b-verify/README.md": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8",
+    "crates/pq-slh-dsa-b-verify/examples/compare.rs": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623",
+    "crates/pq-slh-dsa-b-verify/src/address.rs": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368",
+    "crates/pq-slh-dsa-b-verify/src/hash.rs": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356",
+    "crates/pq-slh-dsa-b-verify/src/hypertree.rs": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768",
+    "crates/pq-slh-dsa-b-verify/src/lib.rs": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954",
+    "crates/pq-slh-dsa-b-verify/src/util.rs": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa",
+    "crates/pq-slh-dsa-b-verify/tests/conformance.rs": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e",
+    "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21",
+    "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+  },
+  "completed_at_utc": "2026-10-09T14:21:37.715459+00:00",
+  "control_files": {
+    "NIST-NOTICE.txt": "41f983e98c3b58ee6b94f404c8785deebb8a92288ae7031a61ff13041421ddea",
+    "README.md": "1b43d3f7167b58758ce89c58ee206d21f90e4be468f32d4b627015c71ddad10a",
+    "check_controls.py": "01aa845cd343ab4369f409ece18b5a5b24c25f9be33e37333f0b53e238392427",
+    "extract.py": "8018a7b93fffefbc5c37a6eaf8e1427e2eec0a4fe2daf07e331eefccf55d4e72",
+    "wrong-profiles.json": "572c060da2d08da8dc97ddc6d8b8b5b84c95c7feae52b073b2c94d50dd57d4ac"
+  },
+  "independent_source": {
+    "commit": "588ea1028003bf5608a92bae1d8d76abaa7274a2",
+    "files": [
+      {
+        "path": "slhdsa/lowlevel/__init__.py",
+        "sha256": "5d3de856bad888b409c27f14c6b3af9dd77d1eeab02aa48f30ff32b04d182b20"
+      },
+      {
+        "path": "slhdsa/lowlevel/_utils.py",
+        "sha256": "9920aeb9c644f55bc5003f9dfa7ad893ec2ccb5c580ca48195f605a31fa7410e"
+      },
+      {
+        "path": "slhdsa/lowlevel/addresses.py",
+        "sha256": "14c169eeab5f598be9a025a4ba31300c4536802a6ab1c5140595ab970eb7fc78"
+      },
+      {
+        "path": "slhdsa/lowlevel/fors.py",
+        "sha256": "4401b4cd4a49982222bbd43e61a323ca3a232dc84188e99c26ab6388b2f0de50"
+      },
+      {
+        "path": "slhdsa/lowlevel/hypertree.py",
+        "sha256": "55fe5af5e0c86bdd4f8bd8d2e75c509972dc62222462aab6545b577603ea200a"
+      },
+      {
+        "path": "slhdsa/lowlevel/parameters.py",
+        "sha256": "b54fa4b438cea285ce1ac7e6059221e6fdabc67d935f6ec081f6d704b0c1e015"
+      },
+      {
+        "path": "slhdsa/lowlevel/slhdsa.py",
+        "sha256": "f548f2f143601087612ba301d36f7b84cfad3d74cf97b15f6ca90aad2f9e4efa"
+      },
+      {
+        "path": "slhdsa/lowlevel/wots.py",
+        "sha256": "92ab8e5292e49c81be756dc0c14948089008489f95a4e32c8f95fb140f406bcd"
+      },
+      {
+        "path": "slhdsa/lowlevel/xmss.py",
+        "sha256": "cd4e0d4bb92ed137d486fea715d150b249747faf9cdd1d436dd5dd1a4abb5058"
+      },
+      {
+        "path": "COPYING.LESSER",
+        "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b"
+      },
+      {
+        "path": "COPYING",
+        "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+      }
+    ],
+    "license": "LGPL-3.0-or-later",
+    "repository": "https://github.com/colinxu2020/slhdsa"
+  },
+  "nist_source": {
+    "commit": "975de31eb83d87039ec88934fdc47d8c312b892d",
+    "path": "gen-val/json-files/SLH-DSA-sigVer-FIPS205/internalProjection.json",
+    "repository": "https://github.com/usnistgov/ACVP-Server",
+    "sha256": "a013fc2104f4ed4799d96d51141f65b965969b2cf10646626a021b6d456ce792"
+  },
+  "portable_hash_build": {
+    "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix",
+    "compiler_sha256": "34129c71a01a74f7f3b2443521519b2e5447553fa187f5fcafaaf8c42cc192e2",
+    "library_sha256": "a7be63755e2ff239acc58594cd3afd2cb3eb764d6402933a172a9abe5d012c6c",
+    "shim_sha256": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438",
+    "sources_sha256": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed"
+  },
+  "records": [
+    {
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      },
+      "independent_blake3": false,
+      "independent_source_profile": true,
+      "independent_source_profile_mutation": false,
+      "parameter_set": "SLH-DSA-SHA2-128s",
+      "request_sha256": "61759ced11768ad3a95dcdcf60d7b24409e1f2609032427ec9e066b738b3dbd8",
+      "tc_id": 266,
+      "tg_id": 19
+    },
+    {
+      "candidate": {
+        "error": "InvalidSignature",
+        "valid": false
+      },
+      "independent_blake3": false,
+      "independent_source_profile": true,
+      "independent_source_profile_mutation": false,
+      "parameter_set": "SLH-DSA-SHAKE-128s",
+      "request_sha256": "5e479ffa1d3220f7690a1af2c5c14b0af3d037f2501c0b02fb36259c64215697",
+      "tc_id": 343,
+      "tg_id": 25
+    }
+  ],
+  "reference_files": {
+    "check.py": "cd6b05e747d839beef0b346894dd09d02e4dbe668068d11080879fff62ab6c4b",
+    "hash_shim.c": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438",
+    "prepare.py": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f",
+    "reference.py": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9",
+    "sources.json": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed"
+  },
+  "schema_version": 1,
+  "scope": "Two valid FIPS 205 wrong-profile primitive controls; no native/node/wallet acceptance"
+}
