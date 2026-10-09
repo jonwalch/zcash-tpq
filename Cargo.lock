@@ -2285,6 +2285,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "home"
+version = "0.5.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc627f471c528ff0c4a49e1d5e60450c8f6461dd6d10ba9dcd3a61d3dff7728d"
+dependencies = [
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "howudoin"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2969,6 +2978,15 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "known-folders"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a1886916523694cd6ea3d175f03a1e5010699a2a4cc13696d83d7bea1d80638"
+dependencies = [
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -7334,6 +7352,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "xdg"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fb433233f2df9344722454bc7e96465c9d03bff9d77c248f9e7523fe79585b5"
+
+[[package]]
 name = "xtask"
 version = "0.1.0"
 dependencies = [
@@ -8147,9 +8171,12 @@ dependencies = [
  "blake2b_simd",
  "document-features",
  "group",
+ "home",
+ "known-folders",
  "rand 0.10.2",
  "rand_core 0.10.1",
  "wagyu-zcash-parameters",
+ "xdg",
  "zakura-bellman",
  "zakura-bls12-381",
  "zakura-jubjub",
