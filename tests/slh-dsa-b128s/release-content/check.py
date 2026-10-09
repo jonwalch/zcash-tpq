@@ -131,7 +131,7 @@ def resolve_path(origin, value):
     return "/".join(parts)
 
 
-def manifest_paths(path, data, names, *, added):
+def manifest_paths(path, data, names, *, added, require_workspace_members=True):
     manifest = tomllib.loads(data.decode("utf8"))
     package = manifest.get("package", {})
     if added and package:
@@ -149,7 +149,7 @@ def manifest_paths(path, data, names, *, added):
             target = resolve_path(path, value)
             # Cargo permits glob patterns and excludes with no current match.
             # Every form must stay inside the checkout, even when unmatched.
-            if field != "exclude":
+            if field != "exclude" and require_workspace_members:
                 pattern = target + "/Cargo.toml" if target else "Cargo.toml"
                 require(any(fnmatch.fnmatchcase(name, pattern) for name in names), "workspace member not tracked")
 
@@ -223,7 +223,11 @@ def history(root, base, allowed):
             if path in state:
                 require(state[path][0] in ("100644", "100755"), "historical product symlink: " + path)
                 if path.endswith("Cargo.toml"):
-                    manifest_paths(path, blob(root, state[path][2]), state, added=path not in base)
+                    # A registration-only commit can precede the member source
+                    # merge. Historical paths must remain bounded; final-tree
+                    # membership existence is enforced by verify_paths above.
+                    manifest_paths(path, blob(root, state[path][2]), state, added=path not in base,
+                                   require_workspace_members=False)
         paths.update(touched)
     return {"commits": len(revisions), "changed_paths": len(paths), "commits_sha256": sha(canonical(sorted(revisions)))}
 
