@@ -10,7 +10,7 @@ description = "Bounded public SLH transaction conformance adapter"
 [features]
 default = []
 # Human-only real proof construction; never enabled by a node dependency.
-shielded-fixtures = ["dep:orchard", "dep:sapling-crypto", "dep:zcash_proofs", "dep:zcash_protocol", "dep:rand_10"]
+shielded-fixtures = ["dep:orchard", "dep:sapling-crypto", "dep:zcash_proofs", "dep:zcash_protocol", "dep:rand_10", "dep:incrementalmerkletree", "dep:zcash_note_encryption"]
 
 [dependencies]
 hex = "0.4.3"
@@ -24,6 +24,8 @@ sapling-crypto = { workspace = true, features = ["circuit"], optional = true }
 zcash_proofs = { workspace = true, features = ["local-prover"], optional = true }
 zcash_protocol = { workspace = true, optional = true }
 rand_10 = { workspace = true, optional = true }
+incrementalmerkletree = { workspace = true, optional = true }
+zcash_note_encryption = { workspace = true, optional = true }
 zakura-chain = { path = "../../../../crates/zakura-chain" }
 zakura-pq-tx-context = { path = "../../../../crates/pq-tx-context" }
 zakura-pq-slh-dsa-b-exp = { path = "../../../../crates/pq-slh-dsa-b-exp" }

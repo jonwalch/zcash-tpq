@@ -73,9 +73,38 @@ pub(super) fn signature(
     kind: &str,
     input_index: usize,
 ) -> Result<Script> {
+    signature_inner(tx, previous, kind, input_index, NetworkUpgrade::Nu7)
+}
+
+/// Explicit public Orchard deposit before NU6.3; ordinary funding stays NU7.
+#[cfg(feature = "shielded-fixtures")]
+pub(super) fn signature_at(
+    tx: &Transaction,
+    previous: Arc<Vec<ChainOutput>>,
+    kind: &str,
+    input_index: usize,
+    upgrade: NetworkUpgrade,
+) -> Result<Script> {
+    require(
+        upgrade == NetworkUpgrade::Nu6_2
+            && tx.version() == 5
+            && tx.network_upgrade() == Some(upgrade),
+        "schema",
+        "classical_deposit_branch",
+    )?;
+    signature_inner(tx, previous, kind, input_index, upgrade)
+}
+
+fn signature_inner(
+    tx: &Transaction,
+    previous: Arc<Vec<ChainOutput>>,
+    kind: &str,
+    input_index: usize,
+    upgrade: NetworkUpgrade,
+) -> Result<Script> {
     let (_, redeem, _) = scripts(kind)?;
     let digest = tx
-        .sighasher(NetworkUpgrade::Nu7, previous)
+        .sighasher(upgrade, previous)
         .map_err(|_| Failure {
             stage: "generation",
             reason: "classical_sighash",
