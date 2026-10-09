@@ -81,6 +81,14 @@ fn rust_backup_matches_python_ciphertext_and_authentication_controls() {
     let original = bytes(&answer["file_hex"]);
     let wallet = fixture_wallet();
     assert_eq!(
+        wallet.manifest().to_json().unwrap(),
+        corpus["inventory_json"].as_str().unwrap().as_bytes()
+    );
+    assert_eq!(
+        hex::encode(wallet.manifest().fingerprint().unwrap().0),
+        corpus["inventory_id"]
+    );
+    assert_eq!(
         wallet.plaintext().unwrap().as_slice(),
         corpus["recovery_json"].as_str().unwrap().as_bytes()
     );
