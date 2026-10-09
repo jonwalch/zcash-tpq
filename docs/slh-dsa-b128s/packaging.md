@@ -21,7 +21,12 @@ python3 tests/slh-dsa-b128s/release-content/check.py --packages
 The last command asks Cargo only for `package --list --locked --offline` for
 the added/changed package manifests, including the isolated signer. It does
 not compile, create a release, upload a crate, run a daemon, or execute a test
-signer. Package verification builds are not part of this check. Inherited
+signer. Package verification builds are not part of this check. The distribution
+unit is the complete checkout/source archive: unpublished crates' tests may
+intentionally consume repository-relative public fixtures outside their individual
+Cargo file lists. Cargo also copies explicitly named repository README/license
+files into a package; those companions are checked against tracked source.
+This audit makes no standalone-crate compilation claim. Inherited
 unchanged packages, including the generated upstream `zakura-assets` payload,
 retain their existing release process and are not relabeled as SLH packages.
 

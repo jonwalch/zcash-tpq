@@ -270,17 +270,31 @@ def package_lists(root, packages, current):
     for manifest, name in packages:
         command = ["cargo", "package", "--list", "--locked", "--offline", "--manifest-path", manifest]
         output = subprocess.check_output(command, cwd=root, timeout=120, stderr=subprocess.PIPE).decode().splitlines()
-        validate_package_list(manifest, output, current)
-        results.append({"package": name, "manifest": manifest, "files": output, "command": command})
+        specification = tomllib.loads(blob(root, current[manifest][2]).decode())["package"]
+        copied = {}
+        # Cargo copies explicitly named repository README/license files to the
+        # package root. These remain tracked source, not untracked payloads.
+        for field in ("readme", "license-file"):
+            value = specification.get(field)
+            if isinstance(value, str):
+                target = resolve_path(manifest, value)
+                require(target in current, "package companion outside tracked source")
+                copied[PurePosixPath(value).name] = target
+        validate_package_list(manifest, output, current, copied)
+        results.append({"package": name, "manifest": manifest, "files": output, "command": command,
+                        "copied_manifest_files": copied})
     return results
 
 
-def validate_package_list(manifest, output, current):
+def validate_package_list(manifest, output, current, copied=None):
     require(bool(output) and len(output) == len(set(output)), "empty/duplicate package listing")
     parent = PurePosixPath(manifest).parent
     for relative in output:
         path_name(relative)
         if relative in (".cargo_vcs_info.json", "Cargo.lock", "Cargo.toml", "Cargo.toml.orig"):
+            continue
+        if relative in (copied or {}):
+            require(copied[relative] in current, "untracked package companion")
             continue
         target = str(parent / relative)
         require(target in current, "untracked package payload: " + target)
@@ -321,10 +335,8 @@ def refresh(root):
     """Refresh existing reviewed rows only. New paths require explicit disposition."""
     path = root / LEDGER
     record = strict_json(path.read_bytes(), 4 * 1024 * 1024)
-    tracked = git(root, "ls-files", "-z").decode().strip("\0").split("\0")
-    base = tree(root, UPSTREAM)
-    changed = {name for name in tracked if name != LEDGER and
-               (name not in base or sha((root / name).read_bytes()) != sha(blob(root, base[name][2])))}
+    require(not git(root, "ls-files", "--others", "--exclude-standard"), "stage new files before refreshing")
+    changed = set(git(root, "diff", "--name-only", UPSTREAM).decode().splitlines()) - {LEDGER}
     mapped = {row["path"] for row in record["files"]}
     require(changed == mapped, "add explicit dispositions before refreshing: " + repr(sorted(changed ^ mapped)))
     for row in record["files"]:
