@@ -205,7 +205,12 @@ def main():
         **checked,
     }
     # Local library/compiler absolute paths are operational details, not public evidence.
-    receipt["portable_hash_build"] = {key: value for key, value in receipt["portable_hash_build"].items() if key not in ("command", "sources", "output")}
+    build = receipt["portable_hash_build"]
+    receipt["portable_hash_build"] = {
+        key: build[key] for key in ("schema_version", "library_name", "library_sha256", "shim_sha256", "sources_sha256", "compiler_sha256")
+    }
+    receipt["portable_hash_build"]["compiler"] = build["compiler"].split("InstalledDir:")[0].rstrip()
+    receipt["portable_hash_build"]["flags"] = ["-O2", "-shared", "-fPIC", "-DBLAKE3_USE_NEON=0", "-DBLAKE3_NO_SSE2", "-DBLAKE3_NO_SSE41", "-DBLAKE3_NO_AVX2", "-DBLAKE3_NO_AVX512"]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x") as stream:
         json.dump(receipt, stream, sort_keys=True, indent=2)
