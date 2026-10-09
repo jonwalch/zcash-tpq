@@ -312,7 +312,7 @@ mod tests {
         .unwrap();
         let policy =
             zakura_pq_slh_dsa_b_exp::Policy::new(15, (0..15).map(|i| [i; 32]).collect()).unwrap();
-        proposal.inputs[0].entry.policy_hex = hex::encode(policy.encode());
+        proposal.inputs[0].entry.policy_hex = hex::encode(policy.descriptor());
         proposal.inputs[0].entry.origins = (0..15)
             .map(|i| Origin {
                 account: 0,

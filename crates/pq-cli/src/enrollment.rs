@@ -8,7 +8,7 @@ use std::{
     ops::RangeInclusive,
     path::Path,
 };
-use zakura_pq_slh_dsa_b_exp::{key_commitment, Policy};
+use zakura_pq_slh_dsa_b_exp::{codec::key_commitment, Policy};
 use zakura_pq_wallet::{
     read_inventory, read_transfer, write_transfer, Entry, Hex, KeyPath, Manifest, Origin, Profile,
     Role, Wallet,
@@ -154,7 +154,7 @@ fn append_policy(
     .map_err(|_| "invalid or duplicate cosigner keys")?;
     manifest.entries.push(Entry {
         origins: ordered.into_iter().map(|(_, origin)| origin).collect(),
-        policy_hex: hex::encode(policy.encode()),
+        policy_hex: hex::encode(policy.descriptor()),
         role: role as u8,
     });
     match role {
