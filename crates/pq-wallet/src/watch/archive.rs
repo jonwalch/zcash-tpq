@@ -14,9 +14,11 @@ use crate::{
 };
 mod commit;
 mod history;
+mod snapshot;
 pub use history::{
     PaymentDetails, PaymentHistoryEntry, PaymentHistoryPage, PaymentLocation, PaymentObservation,
 };
+pub(crate) use snapshot::{JournalSnapshot, JournalSnapshotMetadata};
 
 use rand_core::{OsRng, RngCore};
 use serde::Deserializer;

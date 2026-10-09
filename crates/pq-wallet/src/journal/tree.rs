@@ -28,6 +28,36 @@ pub(crate) struct Cursor {
 }
 
 impl Journal<'_> {
+    /// Validate every referenced page, including branches not visited by an
+    /// ordinary lookup. Memory contains hashes plus at most one bounded DFS
+    /// frontier, never the journal's complete bodies.
+    pub(crate) fn validate_snapshot_pages(
+        &mut self,
+        snapshot: &Snapshot,
+        reachable: &mut std::collections::BTreeSet<Hash>,
+    ) -> Result<()> {
+        self.pin(snapshot)?;
+        let mut pending = snapshot
+            .root
+            .clone()
+            .map(|r| vec![(r, true)])
+            .unwrap_or_default();
+        while let Some((reference, root)) = pending.pop() {
+            let mut budget = ReadBudget::new(1)?;
+            let page = self.load_page(&reference, snapshot.kind, root, None, &mut budget)?;
+            if !reachable.insert(reference.hash) {
+                // A tree cannot share a child: disjoint ordered ranges and
+                // authenticated min/max descriptors require distinct pages.
+                return Err(Error::Corrupt);
+            }
+            if reachable.len() as u64 > self.limits.objects {
+                return Err(Error::ObjectLimit);
+            }
+            pending.extend(page.children.into_iter().rev().map(|r| (r, false)));
+        }
+        Ok(())
+    }
+
     /// A failed mutation invalidates the entire staged batch. No disk writes
     /// happen here, and unchanged subtrees keep their existing references.
     pub fn insert(

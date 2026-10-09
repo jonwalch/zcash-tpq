@@ -142,6 +142,14 @@ impl<'a> Journal<'a> {
         })
     }
 
+    pub(crate) fn retained_usage(&self) -> (u64, u64) {
+        (self.used_bytes, self.used_objects)
+    }
+
+    pub(crate) fn object_limit(&self) -> u64 {
+        self.limits.objects
+    }
+
     pub(super) fn ready(&self) -> Result<()> {
         if self.poisoned {
             return Err(Error::ReopenRequired);
