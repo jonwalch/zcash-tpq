@@ -62,8 +62,8 @@
     },
     {
       "target": "src/lib.rs",
-      "target_sha256": "d9d0a02d5248e046d2e1b4362db2c7dfa6d053d564ad601d6425b27d2b3959cb",
-      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
+      "target_sha256": "7c7d50aa3bb7456663c68716bc12504402902f65638929ddc4cbd0522feffc45",
+      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls. Register the reused trusted loopback RPC module for the CLI."
     },
     {
       "target": "src/recovery.rs",

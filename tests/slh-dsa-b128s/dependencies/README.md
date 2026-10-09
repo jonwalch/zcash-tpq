@@ -20,8 +20,9 @@ signer dependency. Every graph uses
 match the machine running the check. A regression resolves tiny local crates
 with Windows and non-Windows dependencies without compiling either target.
 It also checks normal/build graphs for the explicit consensus SLH feature,
-native/primitive verifiers and default/enabled wallet features. The signer is
-allowed only in the enabled wallet graph. BLAKE3
+native/primitive verifiers and default/enabled wallet and CLI features. The signer
+is allowed only in the enabled wallet and CLI graphs. The default CLI also
+excludes the wallet library. BLAKE3
 remains pinned to 1.8.5 without its Rayon feature. Upstream node Rayon use is
 unaffected.
 

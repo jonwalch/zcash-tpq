@@ -43,11 +43,13 @@ known-authority restore requires an independently trusted receipt and caller
 reconciliation of the latest authority and previous allocators. A self-consistent
 snapshot cannot establish its own completeness.
 
-CLI/RPC command flows and live-node acceptance remain pending. The node runtime
-support signal remains false. This library checkpoint does not establish full
-wallet readiness.
+[CLI command flows](../../docs/slh-dsa-b128s/cli.md) now use the reused trusted
+loopback RPC adapter and the existing wallet APIs. Live-node and real-terminal
+acceptance remain pending; source and mocked checks do not establish full wallet
+readiness.
 
-`PROVENANCE.json`, `PAYMENTS_PROVENANCE.json` and `RECOVERY_PROVENANCE.json`
+`PROVENANCE.json`, `PAYMENTS_PROVENANCE.json`, `RECOVERY_PROVENANCE.json` and
+`CLI_RPC_PROVENANCE.json`
 record source mappings and adaptations. Independent seed/root, format, receiver
 and encrypted-backup answers accompany focused payment and persistence tests.
 Synthetic trusted-source tests do not establish real node provenance or funded

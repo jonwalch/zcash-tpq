@@ -1,8 +1,8 @@
 # Experimental SLH wallet contract
 
-Status: design frozen for implementation, 2026-10-09. This document specifies
-the planned SLH wallet; it does not claim that payment, CLI or recovery support
-is implemented. The [protocol](protocol.md) owns consensus bytes and the
+Status: frozen contract, 2026-10-09. Wallet, payment, recovery and CLI source
+implement this contract; live node and terminal acceptance remain separate
+[validation gates](acceptance.md). The [protocol](protocol.md) owns consensus bytes and the
 `slh-dsa-b-128s-exp-v1` identity. This wallet is Regtest-only and off by default
 behind `experimental-slh-dsa-b128s`.
 

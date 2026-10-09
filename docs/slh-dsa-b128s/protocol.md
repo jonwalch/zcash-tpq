@@ -3,9 +3,9 @@
 This specification freezes `slh-dsa-b-128s-exp-v1` for an off-by-default,
 Regtest-only implementation. SLH-DSA-B-128s uses BLAKE3 and is not a FIPS 205
 profile. Public-network activation, construction security review and operational
-acceptance are separate requirements. Runtime integration is not yet available;
-configured activation must fail at startup until consensus, relay, mining and
-state lifecycle support are complete.
+acceptance are separate requirements. Consensus, relay, mining and state lifecycle
+source are integrated behind the explicit feature. Default builds refuse configured
+activation; daemon and live acceptance remain pending human execution.
 
 ## Source and primitive
 
@@ -135,8 +135,8 @@ Use containing-block height for history and candidate-next-block height for
 mempool admission. Namespace database and backup paths as
 `regtest-slh-dsa-b128s-v1-hH-tT-bB`; reset pending/completed/stored work on
 activation, rollback and reactivation. Startup consults
-`zakura_consensus::supports_experimental_slh_dsa_b128s()`, which remains false
-until the complete runtime is integrated.
+`zakura_consensus::supports_experimental_slh_dsa_b128s()`, which reports whether
+the integrated experimental feature is compiled. It does not attest live acceptance.
 
 Classical inputs may fund SLH outputs with ordinary classical authorization and
 zero SLH checks. If any transparent input spends an active SLH output, every

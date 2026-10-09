@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 
 mod classical;
+mod controls;
 mod model;
 mod strict;
 
@@ -660,6 +661,37 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
 }
 fn execute(request: Request) -> Result<(&'static str, Value)> {
     match request {
+        Request::MixedPrepare {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("mixed-prepare", controls::mixed_prepare(&recipe)?))
+        }
+        Request::MixedAssemble {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+            record,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok((
+                "mixed-assemble",
+                controls::mixed_assemble(&recipe, &record)?,
+            ))
+        }
+        Request::ControlBlock {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("control-block", controls::block(&recipe)?))
+        }
         Request::ClassicalInfo {
             schema_version,
             contract,
@@ -807,6 +839,9 @@ fn handle(bytes: &[u8]) -> Value {
                     "check",
                     "classical-info",
                     "classical-spend",
+                    "mixed-prepare",
+                    "mixed-assemble",
+                    "control-block",
                 ]
                 .contains(&op)
                 {

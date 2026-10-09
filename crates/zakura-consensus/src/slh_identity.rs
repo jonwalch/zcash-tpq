@@ -66,7 +66,10 @@ mod tests {
             json["runtime_supported"],
             crate::supports_experimental_slh_dsa_b128s()
         );
-        assert!(!identity.runtime_supported || identity.verifier_compiled);
+        assert_eq!(
+            identity.runtime_supported,
+            cfg!(feature = "experimental-slh-dsa-b128s")
+        );
         if identity.verifier_compiled {
             assert_eq!(identity.backend, "portable-rust");
         } else {
