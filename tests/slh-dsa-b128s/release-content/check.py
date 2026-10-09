@@ -190,7 +190,7 @@ def manifest_paths(path, data, names, *, added, require_tracked_paths=True):
     return package.get("name")
 
 
-def verify_paths(root, base, current, changed):
+def verify_paths(root, base, current, changed, *, require_tracked_paths=True):
     packages = []
     for path, (mode, kind, oid) in current.items():
         require(kind == "blob", "submodule in source tree: " + path)
@@ -202,7 +202,8 @@ def verify_paths(root, base, current, changed):
             product_path(path)
             require(mode in ("100644", "100755"), "product symlink/submodule: " + path)
         if path.endswith("Cargo.toml"):
-            name = manifest_paths(path, blob(root, oid), current, added=path not in base)
+            name = manifest_paths(path, blob(root, oid), current, added=path not in base,
+                                  require_tracked_paths=require_tracked_paths)
             if path in changed and name:
                 packages.append((path, name))
     return packages
@@ -263,7 +264,7 @@ def other_ref_history(root):
                 "foreign ancestry on unselected ref")
         state = tree(root, revision)
         base = tree(root, UPSTREAM)
-        verify_paths(root, base, state, changed_paths(base, state))
+        verify_paths(root, base, state, changed_paths(base, state), require_tracked_paths=False)
     return {"extra_product_commits": len(extra), "extra_commits_sha256": sha(canonical(sorted(extra))),
             "upstream_refs_excluded_from_publication": upstream_refs}
 

@@ -158,6 +158,27 @@ class GitTests(unittest.TestCase):
             with patch.object(audit, "UPSTREAM", fixture.base), self.assertRaisesRegex(ValueError, "unselected ref"):
                 audit.other_ref_history(fixture.root)
 
+    def test_unselected_registration_history_is_bounded_without_requiring_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = GitFixture(Path(temporary))
+            main = fixture.run("branch", "--show-current")
+            fixture.run("checkout", "-qb", "registration")
+            fixture.write("Cargo.toml", '[[test]]\nname="public"\npath="tests/later.rs"\n')
+            registration = fixture.commit("register source arriving later")
+            fixture.run("checkout", "-q", main)
+            with patch.object(audit, "UPSTREAM", fixture.base):
+                self.assertEqual(audit.other_ref_history(fixture.root)["extra_product_commits"], 1)
+            base = audit.tree(fixture.root, fixture.base)
+            state = audit.tree(fixture.root, registration)
+            with self.assertRaises(ValueError):
+                audit.verify_paths(fixture.root, base, state, {"Cargo.toml"})
+            fixture.run("checkout", "-q", "registration")
+            fixture.write("Cargo.toml", '[[test]]\nname="public"\npath="../outside.rs"\n')
+            fixture.commit("outside path remains forbidden historically")
+            fixture.run("checkout", "-q", main)
+            with patch.object(audit, "UPSTREAM", fixture.base), self.assertRaises(ValueError):
+                audit.other_ref_history(fixture.root)
+
     def test_actual_archive_matches_tracked_bytes_and_preserves_upstream_symlink(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixture = GitFixture(Path(temporary))
