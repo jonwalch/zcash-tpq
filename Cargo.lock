@@ -5594,6 +5594,8 @@ name = "slh-dsa-b128s-fixture-host"
 version = "0.1.0"
 dependencies = [
  "hex",
+ "ripemd 0.1.3",
+ "secp256k1",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -8006,6 +8008,21 @@ dependencies = [
  "rand 0.10.2",
  "static_assertions",
  "subtle",
+]
+
+[[package]]
+name = "zakura-pq-cli"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "rustix",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "zakura-pq-slh-dsa-b-exp",
+ "zakura-pq-wallet",
+ "zeroize",
 ]
 
 [[package]]

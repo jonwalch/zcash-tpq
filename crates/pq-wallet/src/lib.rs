@@ -57,6 +57,8 @@ mod receiving;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 pub mod recovery;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
+pub mod rpc;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 mod scan;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod storage;
