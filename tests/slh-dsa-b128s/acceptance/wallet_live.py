@@ -628,7 +628,10 @@ def execute(args, artifacts, receipt):
                                                                        private / "recovery-controls")
                 receipt["quorum"] = {"participants": args.participants, "surviving_roots": len(group),
                                      "working_roots_deleted": args.participants}
-                receipt["restart"] = network.restart()
+                # Recovery does not synchronize the node's ordinary backup task.
+                # Import lazily because node_live reuses key_commitment above.
+                from node_live import restart_with_backups
+                receipt["restart"] = restart_with_backups(network)
                 old_tip = payment["review"]["tip"]
                 for node in network.nodes:
                     node.rpc("invalidateblock", old_tip["hash"])

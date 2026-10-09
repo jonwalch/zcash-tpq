@@ -156,6 +156,13 @@ Change approval is separate from common payment review.
 Wrong approvals and insufficient signatures must produce exact diagnostics.
 Retries must preserve partials and final transaction bytes.
 
+Before it restarts the nodes after recovery, the wallet driver observes their
+ordinary backups and checks the complete canonical block bytes. Local wallet
+operations do not synchronize the node's asynchronous backup task. This restart
+precedes the rollback, so there are no invalidated blocks to exclude. The driver
+reuses the node driver's backup observer and still requires the exact tip after
+reopening. It does not force a flush or change node storage or shutdown behavior.
+
 The wallet driver also tests:
 
 - Exhaustion and renewal of finite receive inventories for allocators and monitors.
