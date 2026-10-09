@@ -216,7 +216,7 @@
       "source_path": "node/zakura/crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/pq.rs",
       "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
       "source_sha256": "999bf34537d7da45a3b8d5a3a5f79049bead05185be034aeec97277f35a7f0f4",
-      "target_path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/pq.rs"
+      "target_path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs"
     },
     {
       "adaptation": "Adapt funding dust/context tests to SLH candidate height and 2,402/2,403/2,404; add wrong-count/overflow/unauthorized controls.",
@@ -225,7 +225,7 @@
       "source_path": "node/zakura/crates/zakurad/src/components/mempool/storage/tests/pq.rs",
       "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
       "source_sha256": "ff4ac80c291b55ce83d78a5aa6248fd01b047a02b5a664e1f07f2270214a3bb2",
-      "target_path": "crates/zakurad/src/components/mempool/storage/tests/pq.rs"
+      "target_path": "crates/zakurad/src/components/mempool/storage/tests/slh_dsa_b128s.rs"
     }
   ],
   "upstream_commit": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
