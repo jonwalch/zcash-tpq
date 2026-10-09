@@ -2,7 +2,14 @@
 #![cfg(all(unix, feature = "experimental-slh-dsa-b128s"))]
 
 use serde_json::{json, Value};
-use std::{fs, os::unix::fs::PermissionsExt, path::Path, process::Command};
+use std::{
+    fs,
+    os::unix::fs::PermissionsExt,
+    path::Path,
+    process::{Command, Stdio},
+    thread,
+    time::{Duration, Instant},
+};
 
 fn corpus() -> Value {
     serde_json::from_slice(include_bytes!(
@@ -40,13 +47,34 @@ fn run(directory: &Path, case: &Value, keys: &[Value]) -> std::process::Output {
             &case["threshold"].as_u64().unwrap().to_string(),
             "candidate.json",
         ])
-        .stdin(std::process::Stdio::null());
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     for (index, key) in keys.iter().enumerate() {
         let path = format!("key-{index}.json");
         write_private(&directory.join(&path), key["json"].as_str().unwrap());
         command.args([&path, key["fingerprint"].as_str().unwrap()]);
     }
-    command.output().unwrap()
+    // Reuse the polling/kill pattern of zakura-test's
+    // TestChild::wait_with_output_or_timeout without a new framework dependency.
+    // These public responses fit in the pipes. A regressed child that fills a
+    // pipe cannot block this polling thread; it is killed before output drains.
+    let mut child = command.spawn().unwrap();
+    let started = Instant::now();
+    loop {
+        if child.try_wait().unwrap().is_some() {
+            return child.wait_with_output().unwrap();
+        }
+        if started.elapsed() >= Duration::from_secs(10) {
+            let _ = child.kill();
+            let output = child.wait_with_output().unwrap();
+            panic!(
+                "public enrollment command timed out: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
 }
 
 #[test]
