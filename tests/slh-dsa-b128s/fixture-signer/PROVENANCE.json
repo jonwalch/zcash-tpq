@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "algorithm": {
+    "repository": "https://github.com/PQC-Suite-B/signatures",
+    "revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+    "license": "MIT OR Apache-2.0",
+    "source_modified": false,
+    "files": [
+      {
+        "path": "slh-dsa/src/address.rs",
+        "sha256": "b620899768627e910d98f787ffe5363da558c3b8e7e8fc3f1bddc7ed69356079"
+      },
+      {
+        "path": "slh-dsa/src/fors.rs",
+        "sha256": "71940febfc87e14b90df75db34fc725f2f37d191f2e9262e970e7eb044a6c03f"
+      },
+      {
+        "path": "slh-dsa/src/hashes/blake3.rs",
+        "sha256": "a3ad96163b2d01347ad7691a1cd7665daca6b2c98982e0848f17cdf740a52b54"
+      },
+      {
+        "path": "slh-dsa/src/hashes/sha2.rs",
+        "sha256": "72dceeff4f8c49db07d01fe59f73888a45bd456a1228af2956df18ef8e7c8fd1"
+      },
+      {
+        "path": "slh-dsa/src/hashes/shake.rs",
+        "sha256": "278658aa9d937ff2dedf5a46e04d67d124aa52a96d5b7ae99a82196218d25f3f"
+      },
+      {
+        "path": "slh-dsa/src/hashes.rs",
+        "sha256": "75ef736dc968e7baee3c3cd5f12744496a8698c38e682a54cfacb02d1b733f9a"
+      },
+      {
+        "path": "slh-dsa/src/hypertree.rs",
+        "sha256": "3b8b9eb00f7b6a21b389395b46543ac14eae03375b42ac40d889c8fa4d6854b3"
+      },
+      {
+        "path": "slh-dsa/src/lib.rs",
+        "sha256": "d64a128cc3f41a6f4657efd2682ab80140424e02d2fc399c22d31bf1d115d370"
+      },
+      {
+        "path": "slh-dsa/src/signature_encoding.rs",
+        "sha256": "0e7c1d0c6d70c8da900e744c7faee8abd4e0b1afe852f9828c5ff1af1eec784e"
+      },
+      {
+        "path": "slh-dsa/src/signing_key.rs",
+        "sha256": "b348450157d8bd47dbebd9dfe7609b2bddf75837f33c4460b21f06798c116f34"
+      },
+      {
+        "path": "slh-dsa/src/util.rs",
+        "sha256": "7551961599f509ba7052835b9c6b23aa9e26e1c983bdad81b52542058f08a1d2"
+      },
+      {
+        "path": "slh-dsa/src/verifying_key.rs",
+        "sha256": "26f9ae71b3625a8cd46e3ed8e4b9284585109843130549c5c8024dbe4db4e249"
+      },
+      {
+        "path": "slh-dsa/src/wots.rs",
+        "sha256": "5048fed9ee1a3f5ae6e10fdcb4b548cec97443a85bb88b94d7ceabf252ac8e6e"
+      },
+      {
+        "path": "slh-dsa/src/xmss.rs",
+        "sha256": "c20501770a08fa75288f9fb9ba70f4b27bdc3bde0f8c4111274c8c4ccfb313d9"
+      },
+      {
+        "path": "slh-dsa/Cargo.toml",
+        "sha256": "2363ce0b82006743fdf1b89961c9322c8ba9bbd3694c59643f71eecaca563be2"
+      },
+      {
+        "path": "slh-dsa/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "slh-dsa/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      }
+    ]
+  },
+  "runtime_dependency": false,
+  "isolated_workspace": true,
+  "hash_dependency": {
+    "version": "=1.8.5",
+    "parallel_message_path_reachable_under_interface_bounds": false,
+    "upstream_rayon_feature_retained": true
+  },
+  "short_buffer_input_bounds": {
+    "buffer_capacity": 384,
+    "prf_msg_bytes": 135,
+    "h_msg_bytes": 151,
+    "tree_hash_F_PRF_bytes": 64,
+    "tree_hash_H_bytes": 80,
+    "tree_hash_T_prefix_bytes": 48,
+    "tree_hash_T_prefix_capacity": 64,
+    "scope": "Only fixed Blake3_128s keygen and external Pure signing of 101-byte messages with empty context and 16-byte prescribed public randomness."
+  },
+  "retained_lock_sha256": "57787a6ccb87fbbf080e37815f01bacd2ae08d38dba1357a5d4c632f66362cbe",
+  "isolated_lock_sha256": "10b25f7cafe7e8ea72cf8f2eaa864bb8322090ef9d538c9526c7966041d4e8d6",
+  "lock_changes": [
+    {
+      "package": "blake3",
+      "old": [
+        "1.8.2"
+      ],
+      "new": [
+        "1.8.5"
+      ]
+    },
+    {
+      "package": "constant_time_eq",
+      "old": [
+        "0.3.1"
+      ],
+      "new": [
+        "0.4.2"
+      ]
+    },
+    {
+      "package": "cpufeatures",
+      "old": [
+        "0.2.17"
+      ],
+      "new": [
+        "0.2.17",
+        "0.3.1"
+      ]
+    },
+    {
+      "package": "slh-dsa-b128s-experiment",
+      "old": [
+        "0.1.0"
+      ],
+      "new": []
+    },
+    {
+      "package": "slh-dsa-b128s-public-fixture",
+      "old": [],
+      "new": [
+        "0.1.0"
+      ]
+    },
+    {
+      "package": "zakura-pq-slh-dsa-b-verify",
+      "old": [],
+      "new": [
+        "0.1.0"
+      ]
+    }
+  ],
+  "reuse": [
+    {
+      "target": "src/main.rs",
+      "sha256": "bf6be5f1740bbc23388e7537cf1afc38b17e70660a48160fc2f1f331ee7b9565",
+      "classification": "necessary SLH adaptation",
+      "source_sha256": "31bd00c0d9d1f769c187b2e65d3d26bac6345d91f58a9d6ac2ba15fbac5de14d",
+      "source_role": "bounded standalone SLH fixture requests, decoding, pinned keygen/sign and local verification",
+      "adaptations": [
+        "Strict frozen public-fixture version1 contract and required fixed-length fields.",
+        "Remove alternate profiles, internal framing, context selection, timing and repetitions.",
+        "Bound one complete request and response including terminal newline; redact error details.",
+        "Use fixed arrays after validation and verify exported signatures with upstream and extracted A.",
+        "Do not implement operational wallet signing or live disposable-secret handling."
+      ]
+    },
+    {
+      "source_sha256": "1e4d122cc58ce0b4146709a301462b8c5a290d1300e885448982a8941826ec00",
+      "source_role": "B-only keygen/sign/local-verification API sequence",
+      "imported_runtime_dependencies": false
+    }
+  ],
+  "public_keygen_fixture": {
+    "path": "tests/public-keygen.json",
+    "sha256": "1cfb24a2b3f0c44185301a94e63074fba94336412ac16138fdb9d022663ac478",
+    "source_sha256": "1057dcc398933e29d9a3b3bd7c5735a98800331ad90455bba37d1cfd2e54ab82",
+    "material": "public-test-only",
+    "expected_bytes_regenerated": false,
+    "projection": "First retained independent case, keeping public seed, public signing key and public key; add material/source metadata."
+  },
+  "licenses": [
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    }
+  ]
+}
