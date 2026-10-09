@@ -50,7 +50,7 @@ python3 tests/slh-dsa-b128s/acceptance/lifecycle_controls.py \
   --node-slh-build /absolute/path/to/slh-build.json \
   --host /absolute/path/to/slh-dsa-b128s-fixture-host \
   --host-build /absolute/path/to/host-build.json \
-  --signer /absolute/path/to/slh-dsa-b128s-fixture-signer \
+  --signer /absolute/path/to/slh-dsa-b128s-public-fixture \
   --signer-build /absolute/path/to/signer-build.json \
   --version 5 --classical single \
   --artifacts /absolute/path/to/new-control-artifacts
