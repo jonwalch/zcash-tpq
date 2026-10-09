@@ -6,6 +6,8 @@ mod capacity;
 mod change;
 mod counterexamples;
 mod expiry;
+#[cfg(unix)]
+mod faults;
 mod fee_upgrade;
 mod formats;
 mod history;

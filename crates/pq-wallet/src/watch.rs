@@ -221,6 +221,14 @@ impl WatchStore {
         self.receive_with_hook(|_| Ok(()))
     }
 
+    #[cfg(all(test, unix))]
+    pub(crate) fn fault_receive_with_hook(
+        &mut self,
+        hook: impl FnMut(StateStage) -> Result<(), Error>,
+    ) -> Result<Receiver, Error> {
+        self.receive_with_hook(hook)
+    }
+
     fn receive_with_hook(
         &mut self,
         hook: impl FnMut(StateStage) -> Result<(), Error>,
