@@ -8047,9 +8047,14 @@ dependencies = [
  "hex",
  "hkdf",
  "rand_core 0.6.4",
+ "serde",
  "serde_json",
  "sha2 0.10.9",
+ "thiserror 2.0.18",
+ "zakura-chain",
+ "zakura-pq-slh-dsa-b-exp",
  "zakura-pq-slh-dsa-b-sign",
+ "zakura-pq-tx-context",
  "zeroize",
 ]
 

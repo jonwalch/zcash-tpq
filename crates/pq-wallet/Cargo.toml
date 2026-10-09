@@ -5,11 +5,11 @@ edition = "2021"
 rust-version = "1.97"
 license = "MIT OR Apache-2.0"
 publish = false
-description = "Experimental SLH wallet key foundation"
+description = "Experimental SLH wallet suite and trusted signing foundation"
 
 [features]
 default = []
-experimental-slh-dsa-b128s = ["dep:zakura-pq-slh-dsa-b-sign", "dep:hkdf", "dep:sha2", "dep:rand_core", "dep:zeroize"]
+experimental-slh-dsa-b128s = ["dep:zakura-pq-slh-dsa-b-sign", "dep:hkdf", "dep:sha2", "dep:rand_core", "dep:zeroize", "dep:zakura-chain", "dep:zakura-pq-tx-context", "dep:zakura-pq-slh-dsa-b-exp", "dep:serde", "dep:serde_json", "dep:hex", "dep:thiserror"]
 
 [dependencies]
 zakura-pq-slh-dsa-b-sign = { path = "../pq-slh-dsa-b-sign", optional = true }
@@ -17,6 +17,14 @@ hkdf = { version = "=0.12.4", optional = true }
 sha2 = { version = "0.10", optional = true }
 rand_core = { version = "=0.6.4", features = ["getrandom"], optional = true }
 zeroize = { version = "=1.9.0", optional = true }
+
+zakura-chain = { path = "../zakura-chain", optional = true }
+zakura-pq-tx-context = { path = "../pq-tx-context", optional = true }
+zakura-pq-slh-dsa-b-exp = { path = "../pq-slh-dsa-b-exp", optional = true }
+serde = { version = "=1.0.228", features = ["derive"], optional = true }
+serde_json = { version = "=1.0.150", optional = true }
+hex = { version = "=0.4.3", optional = true }
+thiserror = { version = "2.0", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0"
