@@ -160,7 +160,7 @@
         "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
       ],
       "reason": "Independent immutable public interface comparisons with identity, companion and rejection mutations.",
-      "sha256": "1458688405a7c28a94c24c8d37322ded4e4ef961176eadb17eab37943248769e"
+      "sha256": "6b3fea00b292d272121843b1afb74cef8b5ab24897015bb8cb97747058cb97e5"
     },
     {
       "disposition": "attribution",
@@ -1951,7 +1951,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "94cd68b6ec816b6af1009e4fed19661def222e75428eb1ec28e11900a71e095c"
+      "sha256": "b67c74eeec3d163a689f9651d7c0057d3063f2d2993fa65386e84f56d094fe1e"
     },
     {
       "disposition": "new",
@@ -2069,6 +2069,16 @@
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
       "sha256": "f519bbd5c29cfcf5596c2a7a0d90c7301445572a8050636f71cf32da31a5474c"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/validation.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools.",
+      "sha256": "4dab3935fac9632217cfe9ea6c90ec629c6b395aeda28cfb7740060c18e87191"
     },
     {
       "disposition": "new",
@@ -2281,6 +2291,66 @@
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
       "sha256": "d128db593c42e5dcf51360fd70c7fb03f573293bda895551373788bcb87093cc"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/artifacts.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Bounded independent-only arbitrary-artifact wrapper around unchanged G2 oracle/reference; never authenticate caller prevouts or infer live acceptance.",
+      "sha256": "ee723877682a7bd065b612bbff870b4982947e1f2c7811933414b013776ffd5e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/matrix.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Validate exact source/preparation references and matrix claims without executing indexed human cases.",
+      "sha256": "218a70d1afe78964dbe2a71177af7d36537dcecc252f7ffd4d992097081dd6c9"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/node-matrix.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
+      "sha256": "63648d45c039752257fd5621aab20f0476183641c443fef05067305f0d4475a1"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Preserve pinned research inspiration and unchanged product oracle/reference source hashes.",
+      "sha256": "fc02313d80fc9dd6aee08f54bd2764e8eef32dca26b8b6b32938514f17210859"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/test_artifacts.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Exercise receipt identity, mutation rejection, bounded work and independent-only scope with offline callbacks.",
+      "sha256": "02bc273234069c42f29e998a826393abfdcc746d969594a8d7e993d340efb14e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/test_matrix.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Exercise source-index integrity, status scope and mutation rejection without running referenced workloads.",
+      "sha256": "461950cdd28bd4a215637f8e3963b2313aacaeb99286d4e94529d5fc131e1308"
     },
     {
       "disposition": "new",
@@ -3174,7 +3244,7 @@
         "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "136d5648c74d3271b7d40e576983b28e1f377cd1b8e99ed83e4c7af230c64679"
+      "sha256": "d9ea59ec211cf4089d4732a6cd18f84eb54e5c9001862f1a691bd1053f75f486"
     },
     {
       "disposition": "new",
@@ -3192,7 +3262,7 @@
         "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "a63933685a153c64a47e270f91dc285b4d2b719225adb364a6f86f036118c6b7"
+      "sha256": "cd359b1604ee106d683850e384efae2d79e4df3c3e18057c0c45d16391334775"
     },
     {
       "disposition": "new",

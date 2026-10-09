@@ -22,6 +22,8 @@ retain upstream behavior except the documented SLH integration boundaries.
 | Maintain public finite receive inventory and monitor balances | [Inventory and watch-only behavior](wallet.md#recovery-and-watch-only-behavior) |
 | Preserve and restore payment authority | [Recovery artifacts and trust](recovery.md) |
 | Run the prepared node/wallet/terminal scenarios | [Human acceptance runbook](acceptance.md), [lifecycle controls](lifecycle-controls.md) |
+| Check new public artifacts and inspect validation coverage | [Independent evidence and coverage](validation.md) |
+| Compare public enrollment and snapshot identities | [Independent wallet interfaces](../../tests/slh-dsa-b128s/wallet/interfaces/README.md) |
 | Audit source, dependencies and archives | [Packaging](packaging.md), [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) |
 
 Use the committed Rust toolchain, Git, Python 3.11 or later, and the exact Python
