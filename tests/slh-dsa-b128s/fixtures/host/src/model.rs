@@ -11,6 +11,33 @@ fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "lowercase", deny_unknown_fields)]
 pub enum Request {
+    #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-prepare")]
+    ShieldedPrepare {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ShieldedRecipe,
+    },
+    #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-finalize")]
+    ShieldedFinalize {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ShieldedRecipe,
+        transaction_hex: String,
+        #[serde(deserialize_with = "required_option")]
+        record: Option<Record>,
+    },
+    #[cfg(feature = "shielded-fixtures")]
+    #[serde(rename = "shielded-block")]
+    ShieldedBlock {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ControlBlockRecipe,
+    },
     #[serde(rename = "control-funding")]
     ControlFunding {
         schema_version: u64,
@@ -81,6 +108,33 @@ pub enum Request {
         public_fixture: bool,
         artifact: Box<Artifact>,
     },
+}
+
+#[cfg(feature = "shielded-fixtures")]
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShieldedRecipe {
+    pub human_run: bool,
+    pub transaction_version: u8,
+    pub pools: Vec<String>,
+    pub parent_hex: String,
+    pub output_index: u32,
+    pub expiry_height: u32,
+    pub authorization: String,
+    #[serde(deserialize_with = "required_option")]
+    pub public_key_hex: Option<String>,
+    #[serde(deserialize_with = "required_option")]
+    pub sapling_parameters: Option<SaplingParameters>,
+}
+
+#[cfg(feature = "shielded-fixtures")]
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SaplingParameters {
+    pub spend_path: String,
+    pub spend_sha256: String,
+    pub output_path: String,
+    pub output_sha256: String,
 }
 
 #[derive(Clone, Copy, Deserialize, Serialize)]

@@ -200,6 +200,16 @@ fn field<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
 /// Fees are explicit fixture inputs; the driver independently binds them to the
 /// actual authenticated parents and exact transaction outputs.
 pub(super) fn block(recipe: &ControlBlockRecipe) -> Result<Value> {
+    block_inner(recipe, false)
+}
+
+/// Explicit human shielded controls reuse the same block/header construction.
+#[cfg(feature = "shielded-fixtures")]
+pub(super) fn shielded_block(recipe: &ControlBlockRecipe) -> Result<Value> {
+    block_inner(recipe, true)
+}
+
+fn block_inner(recipe: &ControlBlockRecipe, shielded_outputs: bool) -> Result<Value> {
     let template = &recipe.template;
     require(
         template["transactions"]
@@ -274,7 +284,12 @@ pub(super) fn block(recipe: &ControlBlockRecipe) -> Result<Value> {
             !transaction.is_coinbase()
                 && transaction.network_upgrade() == Some(NetworkUpgrade::Nu7)
                 && !transaction.has_shielded_inputs()
-                && !transaction.has_shielded_outputs(),
+                && (shielded_outputs || !transaction.has_shielded_outputs())
+                && (!shielded_outputs
+                    || (transaction.inputs().len() == 1
+                        && transaction.sapling_outputs().count() <= 2
+                        && transaction.orchard_actions().count() <= 2
+                        && transaction.ironwood_actions().count() <= 2)),
             "schema",
             "control_transparent_transaction",
         )?;

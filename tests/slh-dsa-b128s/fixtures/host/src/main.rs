@@ -4,6 +4,8 @@
 mod classical;
 mod controls;
 mod model;
+#[cfg(feature = "shielded-fixtures")]
+mod shielded;
 mod strict;
 mod transparent;
 
@@ -662,6 +664,41 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
 }
 fn execute(request: Request) -> Result<(&'static str, Value)> {
     match request {
+        #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedPrepare {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("shielded-prepare", shielded::prepare(&recipe)?))
+        }
+        #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedFinalize {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+            transaction_hex,
+            record,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok((
+                "shielded-finalize",
+                shielded::finalize(&recipe, &transaction_hex, record.as_ref())?,
+            ))
+        }
+        #[cfg(feature = "shielded-fixtures")]
+        Request::ShieldedBlock {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("shielded-block", controls::shielded_block(&recipe)?))
+        }
         Request::ControlFunding {
             schema_version,
             contract,
@@ -866,6 +903,9 @@ fn handle(bytes: &[u8]) -> Value {
                     "control-block",
                     "control-funding",
                     "control-authorization",
+                    "shielded-prepare",
+                    "shielded-finalize",
+                    "shielded-block",
                 ]
                 .contains(&op)
                 {
