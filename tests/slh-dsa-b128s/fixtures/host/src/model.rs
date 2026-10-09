@@ -11,6 +11,20 @@ fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "lowercase", deny_unknown_fields)]
 pub enum Request {
+    #[serde(rename = "classical-info")]
+    ClassicalInfo {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        kind: String,
+    },
+    #[serde(rename = "classical-spend")]
+    ClassicalSpend {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ClassicalRecipe,
+    },
     Prepare {
         schema_version: u64,
         contract: String,
@@ -31,6 +45,19 @@ pub enum Request {
         public_fixture: bool,
         artifact: Box<Artifact>,
     },
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ClassicalRecipe {
+    pub kind: String,
+    pub transaction_version: u8,
+    pub lock_time: u32,
+    pub expiry_height: u32,
+    pub parent_hex: String,
+    pub output_index: u32,
+    pub outputs: Vec<ScriptOutput>,
+    pub fee_zat: u64,
 }
 
 #[derive(Deserialize)]

@@ -1,6 +1,7 @@
-//! Public transaction fixtures only: no secret material or signing operations.
+//! Public transaction fixtures only. Classical funding uses fixed public test keys.
 #![forbid(unsafe_code)]
 
+mod classical;
 mod model;
 mod strict;
 
@@ -659,6 +660,24 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
 }
 fn execute(request: Request) -> Result<(&'static str, Value)> {
     match request {
+        Request::ClassicalInfo {
+            schema_version,
+            contract,
+            public_fixture,
+            kind,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("classical-info", classical::info(&kind)?))
+        }
+        Request::ClassicalSpend {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("classical-spend", classical::spend(&recipe)?))
+        }
         Request::Prepare {
             schema_version,
             contract,
@@ -782,7 +801,15 @@ fn handle(bytes: &[u8]) -> Value {
         })
         .and_then(|value| {
             if let Some(op) = value.get("op").and_then(Value::as_str) {
-                if ["prepare", "assemble", "check"].contains(&op) {
+                if [
+                    "prepare",
+                    "assemble",
+                    "check",
+                    "classical-info",
+                    "classical-spend",
+                ]
+                .contains(&op)
+                {
                     operation = op.into();
                 }
             }
