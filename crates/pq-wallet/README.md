@@ -1,6 +1,7 @@
 # Experimental wallet key foundation
 
-This is the H1 key checkpoint for the [wallet contract](../../docs/slh-dsa-b128s/wallet.md).
+This crate supplies key generation and derivation for the
+[wallet contract](../../docs/slh-dsa-b128s/wallet.md).
 The default package has no normal dependencies and explicitly reports disabled
 support. Feature `experimental-slh-dsa-b128s` enables only the SLH key foundation.
 
@@ -13,10 +14,10 @@ initial implementation is serial and uncached. The HKDF/HMAC internal-state
 clearing limitation is inherited and explicitly retained.
 
 This primitive root is not an enrolled wallet, a durable backup or permission to
-spend. It has no wallet/allocator ID and issues no receivers. Later H2 imports
-the existing suite, policy, partial and trusted signing-context plumbing; I/J/K
-add the preserved payment, storage, recovery/watch and CLI flows. These are
-required follow-on work, not completed functionality of this crate.
+spend. It has no wallet/allocator ID and issues no receivers. Integration with
+the existing suite, policy, partial and trusted signing-context plumbing remains
+pending, as do payment, storage, recovery/watch and CLI flows. The
+[wallet contract](../../docs/slh-dsa-b128s/wallet.md) specifies those requirements.
 
 `PROVENANCE.json` maps the retained source to the existing wallet. The fixed
 derivation is checked against independent Python stdlib HKDF and pinned
