@@ -13,10 +13,15 @@ already be available locally.
 
 The check rejects alternate PQ packages even when optional or test-only, and
 rejects local dependencies outside this repository. It inspects each node root
-separately in default and all-feature normal/build/dev graphs so workspace-wide
-feature unification cannot hide a signer dependency. It also checks the explicit
-consensus SLH feature, native/primitive verifier graphs and default/enabled
-wallet graphs. The signer is allowed only in the enabled wallet graph. BLAKE3
+separately: default features use normal/build edges, and all features use
+normal/build/dev edges. This avoids workspace-wide feature unification hiding a
+signer dependency. Every graph uses
+`--target all`, including dependencies behind target conditions that do not
+match the machine running the check. A regression resolves tiny local crates
+with Windows and non-Windows dependencies without compiling either target.
+It also checks normal/build graphs for the explicit consensus SLH feature,
+native/primitive verifiers and default/enabled wallet features. The signer is
+allowed only in the enabled wallet graph. BLAKE3
 remains pinned to 1.8.5 without its Rayon feature. Upstream node Rayon use is
 unaffected.
 

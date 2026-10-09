@@ -59,7 +59,8 @@ def validate_tree(packages, *, required=(), forbidden=()):
 
 
 def graph(package, features=(), edges="normal,build"):
-    args = ["tree", "-p", package, "--prefix", "none", "--format", "{p}|{f}", "-e", edges]
+    args = ["tree", "-p", package, "--prefix", "none", "--format", "{p}|{f}", "-e", edges,
+            "--target", "all"]
     if features:
         args += ["--features", ",".join(f"{package}/{feature}" for feature in features)]
     return parse_tree(cargo(*args))
