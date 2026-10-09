@@ -61,7 +61,7 @@ reference. This suite does not repeat their full matrices.
 | Existing area | Existing test source |
 | --- | --- |
 | HKDF, public keys and signatures | [`keys/tests.rs`](../../../../crates/pq-wallet/src/keys/tests.rs), [`suite/tests.rs`](../../../../crates/pq-wallet/src/suite/tests.rs) |
-| All 120 policy shapes, receiver/inventory formats and origin mappings | [`watch/tests.rs`](../../../../crates/pq-wallet/src/watch/tests.rs), [`wallet_tests.rs`](../../../../crates/pq-wallet/src/wallet_tests.rs), [`enrollment.rs](../../../../crates/pq-cli/src/enrollment.rs), [`test_formats.py`](../formats/test_formats.py) |
+| All 120 policy shapes, receiver/inventory formats and origin mappings | [`watch/tests.rs`](../../../../crates/pq-wallet/src/watch/tests.rs), [`wallet_tests.rs`](../../../../crates/pq-wallet/src/wallet_tests.rs), [`enrollment.rs`](../../../../crates/pq-cli/src/enrollment.rs), [`test_formats.py`](../formats/test_formats.py) |
 | Proposal/partial identities and independent size/check ceilings | [`payment/tests.rs`](../../../../crates/pq-wallet/src/payment/tests.rs), [`payment/tests/slh_capacity.rs`](../../../../crates/pq-wallet/src/payment/tests/slh_capacity.rs) |
 | Exact encrypted backup and authenticated invalid schema controls | [`backup_tests.rs`](../../../../crates/pq-wallet/src/backup_tests.rs) |
 | Raw RPC block/hash/Merkle checks, exact amounts, unspent context and transport bounds | [`rpc/tests/payment.rs`](../../../../crates/pq-wallet/src/rpc/tests/payment.rs), [`rpc/tests/discovery.rs`](../../../../crates/pq-wallet/src/rpc/tests/discovery.rs) |
