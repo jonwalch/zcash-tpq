@@ -227,6 +227,13 @@
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
       "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
     },
+    "human-node-crashes": {
+      "anchor": "def run_subject(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/crash_controls.py",
+      "scope": "Separate classical and SLH subjects at admitted/unmined, acknowledged mined-block and actual longer-branch reorg checkpoints; isolated peers, exact PID/SIGKILL/reopen and saved bytes. Not power-loss, disk-write or finalized-database fault injection.",
+      "sha256": "c73ba72b9d817831b2f1b7f12161df3747add1fed72a70b93d925bfdce653389"
+    },
     "human-nu7-rollback": {
       "anchor": "rollback_below_nu7",
       "kind": "human_case_prepared",
@@ -269,6 +276,13 @@
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
       "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
     },
+    "human-shielded-anchors": {
+      "anchor": "def lifecycle(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "scope": "Remove a later anchor while retaining original note and transparent parents, reconsider exact block, mine cached spend, and refuse a duplicate nullifier using a distinct available transparent parent. Source preparation only.",
+      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8"
+    },
     "human-shielded-compatibility": {
       "anchor": "def pair(",
       "kind": "human_case_prepared",
@@ -289,6 +303,20 @@
       "path": "tests/slh-dsa-b128s/acceptance/shielded_controls.py",
       "scope": "Real output-only proof/signature preparation on actual mature parents; three v5/seven v6 pool subsets, Orchard value zero under inherited NU7 rules. No generation/live result.",
       "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5"
+    },
+    "human-shielded-spend-refusals": {
+      "anchor": "def authorization_round(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "scope": "Positive-bracket real spend-auth, binding and proof refusals with unchanged effect/native identities and exact diagnostics; no primitive-entry or internal database claim.",
+      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8"
+    },
+    "human-shielded-spends": {
+      "anchor": "def execute(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "scope": "Genuine fixed-public-key note recovery and witnesses from canonical bounded node history; actual ordered prevouts; v5/v6 pool shapes and isolated pre-NU6.3 Orchard deposit. Source preparation only.",
+      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8"
     },
     "human-slh-reactivation": {
       "anchor": "reactivated_slh",
@@ -873,10 +901,11 @@
             "shielded-collections",
             "shielded-destinations",
             "shielded-reference",
-            "human-shielded-outputs"
+            "human-shielded-outputs",
+            "human-shielded-spends"
           ],
           "id": "shielded-effects",
-          "remaining_preparation": "Existing independent synthetic digest controls are unchanged. Valid-proof output-only signed shapes are prepared; proof generation/node execution and genuine shielded-spend anchors remain pending.",
+          "remaining_preparation": "Genuine bounded shielded-spend constructors and all supported v5/v6 shapes are prepared; actual authorized local execution requires separate source-bound receipts. The independent digest corpus remains unchanged.",
           "requirement": "Shielded effecting fields/collections and authorizing-data exclusions use separate Rust reference."
         },
         {
@@ -1138,10 +1167,11 @@
             "publish",
             "late-failure",
             "accounting",
-            "human-shielded-failure"
+            "human-shielded-failure",
+            "human-shielded-spend-refusals"
           ],
           "id": "complete-success",
-          "remaining_preparation": "Real output-only proof/binding failures alongside valid SLH now have an executable adapter. Human proof generation and actual rejection/no-publication outcomes remain pending.",
+          "remaining_preparation": "Real spend-auth/proof/binding refusals are prepared; only separate completed execution receipts establish actual proof/daemon outcomes.",
           "requirement": "Mixed or failed other checks cannot publish success; active zero-native transaction publishes bound zero."
         },
         {
@@ -1266,29 +1296,32 @@
             "tip-reset",
             "human-nu7-rollback",
             "human-slh-reactivation",
-            "human-capture-lifecycle"
+            "human-capture-lifecycle",
+            "human-shielded-anchors"
           ],
           "id": "rollback",
-          "remaining_preparation": null,
+          "remaining_preparation": "Prepared causal anchor rollback/reconsider and exact saved authorization reentry; execution evidence remains separate from this source matrix.",
           "requirement": "Rollback below both SLH and NU7, then reactivate."
         },
         {
           "evidence": [
             "human-reorg",
-            "human-capture-lifecycle"
+            "human-capture-lifecycle",
+            "human-shielded-anchors"
           ],
           "id": "reorg",
-          "remaining_preparation": null,
+          "remaining_preparation": "Prepared causal anchor rollback/reconsider and exact saved authorization reentry; execution evidence remains separate from this source matrix.",
           "requirement": "Reorg and remine preserve actual saved transaction bytes and UTXOs."
         },
         {
           "evidence": [
             "payload",
             "human-same-txid",
-            "human-capture-lifecycle"
+            "human-capture-lifecycle",
+            "human-shielded-anchors"
           ],
           "id": "same-txid",
-          "remaining_preparation": null,
+          "remaining_preparation": "Prepared causal anchor rollback/reconsider and exact saved authorization reentry; execution evidence remains separate from this source matrix.",
           "requirement": "Changed signature with unchangedTXID cannot reuse verification identity."
         },
         {
@@ -1343,10 +1376,11 @@
         {
           "evidence": [
             "human-namespace",
-            "human-wallet-faults"
+            "human-wallet-faults",
+            "human-node-crashes"
           ],
           "id": "durability",
-          "remaining_preparation": "Separate wallet-only test-hook I/O/SIGKILL, configured quota and pre-sign entropy controls are prepared but unrun. Node database crash/kill/quota and power-loss durability are not covered; clean restart is not crash durability.",
+          "remaining_preparation": "Bounded node process-crash checkpoints and exact retry are prepared alongside the separate wallet fault driver. No disk-write, power-loss, finalized-database or general durability guarantee; completed execution receipts are required.",
           "requirement": "Clean restart must not be reported as crash/fault durability."
         }
       ],
@@ -1386,10 +1420,11 @@
             "template-shielded",
             "shielded-reference",
             "human-classical",
-            "human-shielded-compatibility"
+            "human-shielded-compatibility",
+            "human-shielded-spends"
           ],
           "id": "shielded",
-          "remaining_preparation": "Exact real-proof output-only classical/shielded block comparison is prepared, not executed. Shielded spends/anchors remain outside this subset; no unrelated upstream cleanup.",
+          "remaining_preparation": "Real shielded output compatibility and genuine spend shapes are prepared. Broader default/enabled acceptance requires completed matching runs; no inherited node repair or independent consensus-verifier claim.",
           "requirement": "Existing classical/shielded behavior remains intact."
         },
         {
@@ -1408,5 +1443,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "0ca670bfe4629510bbf46f01d5cf40afced413a4"
+  "source_checkpoint": "82d78997958d864905fbae4d0dd6346c1f3d2e86"
 }

@@ -42,8 +42,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
-      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums.",
-      "sha256": "fe6faee0a21209fc9d94a5f9d3862e6c856b2ed27d004ab02ba74202fd01c8d5"
+      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum.",
+      "sha256": "bb31440adc631cb31dd601fb5fc68b4c674658aef2106f4f4da867e4d2ff3eeb"
     },
     {
       "disposition": "upstream-modification",
@@ -1937,6 +1937,15 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/slh-transparent-controls.md",
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
@@ -1996,7 +2005,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "a64748f91b18b2646f82aa2935684e9f7855da1642d30a2641b1b6a73fa8fa77"
+      "sha256": "4153f47ebfbd7f1cdb0c6ed7132fc49ac3f0a7b3d015020a458b209cace11e5d"
     },
     {
       "disposition": "new",
@@ -2005,7 +2014,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "8ff351676161b5583514db4809303c529a1fc740685a61d432c631f64d603285"
+      "sha256": "b6df8c53e698d2a4846ec921c8c4048df037105fa95408940bed52880c8e6697"
     },
     {
       "disposition": "new",
@@ -2024,6 +2033,15 @@
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
       "sha256": "92d27691e1dd7599b448abca59b10d4afa8f36ea48b520df89ff5b9f159fa818"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/crash-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
+      "sha256": "e83f6ff25f55fd1a2184d14fe3fde5e6d22548bd5237b314ffed2e08c155369f"
     },
     {
       "disposition": "new",
@@ -2153,6 +2171,15 @@
     },
     {
       "disposition": "new",
+      "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
+      "sha256": "a523a41ac898888c3bfb8462b0574990930775ef3a4eb4166222865e03a03734"
+    },
+    {
+      "disposition": "new",
       "path": "docs/slh-dsa-b128s/transaction-fixtures.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
@@ -2208,7 +2235,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "a6444cf2053792b2cc85213184499fc0a9c480ec0a95745a17aab538cfa7f342"
+      "sha256": "3cf35d020c2f86b9d3a9f89e439cffbdcd6795241d3472dad195810e31dcae43"
     },
     {
       "disposition": "new",
@@ -2231,6 +2258,15 @@
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
       "sha256": "4b7001d0666e56a976359d359051a04030ce79b926017506bd37f1fc004ab4e9"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/crash_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
+      "sha256": "c73ba72b9d817831b2f1b7f12161df3747add1fed72a70b93d925bfdce653389"
     },
     {
       "disposition": "new",
@@ -2301,7 +2337,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "5b1b3529357e0ded81e4e2e8b9c40db56337034fc8cdcf5f331d783cb4eb9c80"
+      "sha256": "f9498b6cf0455b2fcf4d52ca2998a545f4289d8c11e9dbde21a7e9a3732997e3"
     },
     {
       "disposition": "adapted",
@@ -2331,6 +2367,15 @@
       "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5"
     },
     {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
+      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8"
+    },
+    {
       "disposition": "attribution",
       "path": "tests/slh-dsa-b128s/acceptance/sources.json",
       "provenance": [
@@ -2339,7 +2384,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "23217fb70b4dfb5ec4c3f8563da45d5b10451481fa737cdc8c52e2257ec2ab67"
+      "sha256": "bcc31b1e98aa816433696c2416e6f6019581736a1685dd986594e483b983855e"
     },
     {
       "disposition": "new",
@@ -2372,7 +2417,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "63001c79af5266746d7f1277cca6f7ce0811a07251260199e292c92cbc9fdc46"
+      "sha256": "42efc35a60fc3194d36185df5c0275486f78c6e20c8ee2cdeff57bb838fe0d45"
     },
     {
       "disposition": "new",
@@ -2382,6 +2427,15 @@
       ],
       "reason": "Offline mocks bind exact optional host/test recipes, no-run artifact selection and source/features/binary receipts; no compilation or child execution.",
       "sha256": "50c5854a36743ca0cffba06fab650989e6939a9f78b2dcd5146b9314373634d6"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_crash_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
+      "sha256": "12003a9a3f7809b6866d33fc317d2c8834281f2ee4fe779e53f64eba4055c94a"
     },
     {
       "disposition": "new",
@@ -2458,6 +2512,15 @@
       ],
       "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
       "sha256": "4e02f818839abbf01df59e4744b8e5ed00f5c7281cab815e2455eb9778dba99c"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_shielded_spend_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change.",
+      "sha256": "23544f470eacfdda83cc2db05397d4bf9da709a3e15ff0f943e97bea3660023b"
     },
     {
       "disposition": "new",
@@ -2554,7 +2617,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "a472b0412d02924b0f2119b652a5299286c2a253b31babd649a73ad42429b7b4"
+      "sha256": "70873f60995c9cd9bd11ef935f3beda535afadd7ad55b619be7b90802e3608dd"
     },
     {
       "disposition": "new",
@@ -2884,8 +2947,8 @@
         "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums.",
-      "sha256": "ba18a7b2edd941333e0b4654cca2b8a11ed22bc6d858e52ecdbf9314681d1520"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum.",
+      "sha256": "052c453dd01e3f4f38f3917fb403402859f902a015c45826bfbfb9d6f8f7ec74"
     },
     {
       "disposition": "new",
@@ -2895,7 +2958,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "94584d095b93aab98f02fbc680cb393edd5f14363cc5fbdd1188973ac2d59f88"
+      "sha256": "362f21fac539bdc1a0e4735ce5063302389636784b5245f030a07f5d343f96c9"
     },
     {
       "disposition": "attribution",
@@ -2907,6 +2970,24 @@
       "sha256": "b0a21b9c46c173012fb64481d6ff5af64d12837284a7f52892c2c59e1a164a56"
     },
     {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "4d65eda2d57ca4564717a555d875b9d043ac3bf4eb235f9f43c705777735c82f"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_SCHEMA.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "de13fd2420a414b243bd5862d44ac92d7baf4807bd7fc36a0aab2e5739ee4e6a"
+    },
+    {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
       "provenance": [
@@ -2914,7 +2995,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
-      "sha256": "0cc6f17f7da1d3480fe20b562ae1547ea23b43fc1759186039b2d9e7d444d69f"
+      "sha256": "b8cca5994bec4784bd21539bb6bebac3849bc6d2c240195b7758d501c0d689c6"
     },
     {
       "disposition": "new",
@@ -2924,7 +3005,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
-      "sha256": "c58ff910642d8c50a6355937e31e704c47be33f5870499ab75bf165b8efb2c0b"
+      "sha256": "6d608eafac3f819b1ca290e4f9377b94dbc46f6c0dff92aa752ce7571fec7fab"
     },
     {
       "disposition": "new",
@@ -2934,7 +3015,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
-      "sha256": "e1c13f695c0b561a133985ff61d0ef8955fd65953b72578081179d10d7b98119"
+      "sha256": "1dcd7592f44e99e623e0f13c0f8de0ed52b1c010b6fec0c37ed993d9c28ce727"
     },
     {
       "disposition": "new",
@@ -2944,7 +3025,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
-      "sha256": "653aaa83f5273c7fd1c02fc0e610a7bce5d8ad2300210124deeaef929375b0f5"
+      "sha256": "01d19608d85322c846294460ee0c1dd343ed99f5748d277fec6e117bdc620b1c"
     },
     {
       "disposition": "adapted",
@@ -2953,7 +3034,25 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
-      "sha256": "b38132ca06e2f55d3a4023c55c219f19e9130b1e9e689f2fad696bb37b018fbb"
+      "sha256": "0b7ab2657708018830af6ac3a005f2eb4ebf4c263d3f9eb3ca1aa755d966ddbe"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "0e87310f052c77b6439cb755cca2ab8478a181d1e01033038a89e306aeb9e50a"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend/history.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "c6a7bbffab31c1ec9c32b5bff0216e4c3d82629d16150ebd01eeb6fd42b4baff"
     },
     {
       "disposition": "new",
