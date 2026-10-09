@@ -25,3 +25,11 @@ and [hostile wallet history](../../../docs/slh-dsa-b128s/history-controls.md).
 [Opt-in observation](../../../docs/slh-dsa-b128s/observations.md) records bounded
 process/window primitive attempts without changing verification or retry rules.
 Their focused mock tests do not establish live acceptance.
+
+[Funded capture brackets](../../../docs/slh-dsa-b128s/observation-controls.md),
+[output-only shielded coexistence](../../../docs/slh-dsa-b128s/shielded-controls.md)
+and [wallet durable faults](../../../docs/slh-dsa-b128s/fault-controls.md) add
+separate human drivers. The shielded host feature uses pinned local proving
+parameters; it never downloads them. The ignored wallet test driver reuses
+private write-stage hooks, with no operational fault flags. Both remain inert
+in the offline suite. Their guides state the exact limits and pending execution.

@@ -56,3 +56,16 @@ negative cases. Ordinary `classical-spend` remains unchanged. Both-order mixed
 controls and NU7 pre-SLH block construction reuse `controls.rs`; explicit height
 105–109 coverage is an adaptation for retaining genuine funding across rollback.
 See [transparent-controls.md](../../../../docs/slh-dsa-b128s/transparent-controls.md).
+
+The optional `shielded.rs` helper selectively adapts real bundle constructors
+from the same pinned research revision's `node/tests/mixed_traffic_fixture/src/main.rs`,
+`examples/pq_ironwood_fixture.rs`, plus Sapling batch-validation calls from
+`benches/sapling.rs`, as detailed in [SHIELDED_ATTRIBUTION.md](SHIELDED_ATTRIBUTION.md)
+and the shared source map. It uses the existing pinned Zakura proof
+libraries, explicit local Sapling parameters and the public fixture signer.
+It adds output-only real proof/binding controls, with zero-valued Orchard outputs
+under inherited NU7 rules; no workload or benchmark machinery is imported.
+`controls.rs` exposes a separate shielded block operation while retaining the
+ordinary transparent-only operation. The independent synthetic shielded digest
+reference and original corpus remain unchanged. Proof generation and live node
+validation require human execution; source preparation is not acceptance.

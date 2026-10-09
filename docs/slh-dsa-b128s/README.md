@@ -23,7 +23,8 @@ retain upstream behavior except the documented SLH integration boundaries.
 | Preserve and restore payment authority | [Recovery artifacts and trust](recovery.md) |
 | Run the prepared node/wallet/terminal scenarios | [Human acceptance runbook](acceptance.md), [lifecycle controls](lifecycle-controls.md) |
 | Exercise transparent refusal and uncertain wallet history | [Transparent controls](transparent-controls.md), [history controls](history-controls.md) |
-| Capture opt-in Regtest primitive attempts | [Observation and bounded receipts](observations.md) |
+| Capture opt-in Regtest primitive attempts | [Observation and bounded receipts](observations.md), [funded capture controls](observation-controls.md) |
+| Prepare real shielded coexistence and wallet write failures | [Shielded controls](shielded-controls.md), [wallet fault controls](fault-controls.md) |
 | Check new public artifacts and inspect validation coverage | [Independent evidence and coverage](validation.md) |
 | Compare public enrollment and snapshot identities | [Independent wallet interfaces](../../tests/slh-dsa-b128s/wallet/interfaces/README.md) |
 | Audit source, dependencies and archives | [Packaging](packaging.md), [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) |
@@ -52,9 +53,10 @@ the [recovery guide](recovery.md) describes the required trust and retirement.
 
 The 16-check transaction/64-check block profile is a functional test setting,
 not a production budget. Library/reference/mock evidence is distinct from live
-funded acceptance. The runbook records unexecuted human cases, prepared hostile
-history and observation tools, and remaining shielded-fixture, durable-fault and
-scenario-specific capture preparation.
+funded acceptance. The runbook records unexecuted human cases, including funded
+capture brackets, output-only shielded proofs and test-only wallet write faults.
+Shielded spends/anchors, deterministic internal queue occupancy, operating-system
+entropy suppression, disk exhaustion and power-loss behavior remain unclaimed.
 No production readiness, live recovery, performance or proof-validation result
 is implied by packaging success.
 

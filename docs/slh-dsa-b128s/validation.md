@@ -32,11 +32,11 @@ subcontrol merely to make the guard pass.
 | Migration | Classical authorization/funding, explicit zero accounting, later SLH threshold; prepared missing classical quorum and same-input family substitution | Prepared cases require authenticated parents and actual node execution |
 | Mixed inputs | Library classification; both-order relay/direct-block, unsupported-template and activation/reorg controls prepared | No live count or rejection result follows from source preparation |
 | Accounting | 16/17, 64/65, concurrent atomic budgets, no refunds; prepared live limits | Prepared live cases remain unexecuted |
-| Publication/mining | Bound payload identity, atomic selection, parent ordering, maximum authorization | Generic late failure and synthetic shielded resource counts do not prove real shielded failure suppression |
+| Publication/mining | Bound payload identity, atomic selection, parent ordering, maximum authorization; real output-only proof/binding failure driver prepared | Synthetic resource counts and source preparation do not establish live shielded failure suppression |
 | Build/gates | Dependency isolation, configuration/gate tests; prepared default/enabled build/startup controls | Dedicated daemon builds and startup cases are human-only |
 | Lifecycle | Tip reset, signature/payload identity, prepared-cache bypass; rollback/reorg and same-TXID authorization mutation prepared | Deterministic pending/completed/stored queue barriers remain distinct from those controls |
 | Persistent history | Namespaces, clean restart, ordinary backups; optional fresh block replay/recovered spend | No crash durability or future-contract-version migration claim; finalized DB internals are not inspected |
-| Compatibility | Classical parity and active SLH enabled/default driver; prepared transparent policy and unsupported-template controls | Real shielded compatibility and all live execution remain pending |
+| Compatibility | Classical parity, active SLH enabled/default and real output-only shielded block replay prepared | Shielded spends/anchors and all live execution remain pending |
 
 Run prepared human cases exactly as described in [acceptance.md](acceptance.md),
 [lifecycle-controls.md](lifecycle-controls.md) and
@@ -53,11 +53,20 @@ requires complete capture and positive controls before accepting a zero count.
 Counts describe a process/window, not successful validation or isolated RPC work;
 the existing retry and concurrency behavior is preserved. Library tests exercise
 the real primitive boundary, but daemon capture remains unexecuted.
+The [funded capture driver](observation-controls.md) supplies distinct positive
+proposal brackets and exact attempted subjects across three lifecycle processes
+per peer. It retains complete captures and saved-byte mining outcomes separately.
+Repeated proposals do not expose deterministic internal queue states or prove
+one primitive entry per RPC.
 
 The [hostile-history wallet controls](history-controls.md) prepare funded refusal
 and reconciliation cases for unavailable, missing, inconsistent, pruned and
 incomplete history. They preserve saved payment authority and restored monitors.
 Offline mock checks do not establish live wallet recovery or crash durability.
+The separate [wallet fault driver](fault-controls.md) prepares test-only write
+hooks, reached-stage SIGKILL, configured journal quota and pre-sign entropy
+checkpoint failures, followed by cached-authority/recovery checks. It does not
+cover node databases, OS entropy suppression, disk exhaustion or power loss.
 
 ## Independent checking of saved public artifacts
 
@@ -129,9 +138,12 @@ library test run still does not establish proof validity or node acceptance.
 The separate pinned parser/digest reference shares low-level
 hash, curve and librustzcash-family libraries with the comparison target. It
 covers synthetic shielded bundles and effects, not proof validity, genuine SLH
-signatures on those shapes, or node acceptance. A narrow attributed adapter for
-valid proof/signed-shielded cases and a failed-shielded-authorization case is
-still required before those human runs can be prepared.
+signatures on those shapes, or node acceptance. The separate attributed
+[shielded adapter](shielded-controls.md) now prepares real output-only bundles,
+their final native SLH message, proof/binding failure controls and legal funded
+node scenarios. It reuses upstream proof libraries and is not an independent
+proof oracle. Proof generation and live execution are unrun; shielded spends
+and genuine spend anchors remain outside this prepared subset.
 
 ## Reuse and attribution
 

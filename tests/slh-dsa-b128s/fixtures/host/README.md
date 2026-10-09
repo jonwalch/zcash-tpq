@@ -68,3 +68,13 @@ contain fixed diagnostics, never echoed input bytes. Native failure names and
 stage grouping are defined by the fixture specification. The native result is
 computed without consulting the claimed expected outcome; `expectation_match`
 then compares them. Neither the host nor producer is an independent oracle.
+
+The optional `shielded-fixtures` feature adds `shielded-prepare`,
+`shielded-finalize` and `shielded-block` for the separate human
+[shielded control workflow](../../../../docs/slh-dsa-b128s/shielded-controls.md).
+Preparation requires `human_run: true`, bounded actual parent bytes and explicit
+hashed local Sapling parameters when that pool is selected. No parameter download
+or operational secret-key input is supported. The ordinary `control-block`
+operation keeps its transparent-only restriction. Default host builds and normal
+node dependency graphs do not enable this feature. Focused feature tests validate
+schemas/parents before proving; no proof-generation test runs automatically.

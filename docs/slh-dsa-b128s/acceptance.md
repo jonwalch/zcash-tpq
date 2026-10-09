@@ -44,6 +44,14 @@ isolated public signer uses its separate manifest/lock. No observer feature is
 requested. Daemon identities must match the eight-field public runtime contract;
 the enabled live paths require `runtime_supported: true`.
 
+The separate [shielded driver](shielded-controls.md) requires the `host-shielded`
+recipe, which adds only the host's optional `shielded-fixtures` feature. The
+[wallet fault driver](fault-controls.md) uses `wallet-faults`: Cargo compiles its
+library test with `--no-run`, and the builder copies the exact test executable
+identified by Cargo's artifact message into `wallet-fault-tests`. Its build
+does not execute the ignored fault matrix. Both use the same source/binary
+receipt checks. These native executable recipes reject `CARGO_BUILD_TARGET`.
+
 The receipt binds the source commit, relevant source inventory/hash, root and
 signer locks, exact command/features, compiler/cargo versions, compiler flags,
 executable hash and identity. Version probes run in the same product directory
@@ -191,8 +199,9 @@ untrusted until both actual nodes authenticate the outputs and tip.
 | Wallet and recovery | Matrix above, public enrollment, independent roots, quorum/subquorum, watch exhaustion/replenishment, known/unknown restore, subsequent spends, refresh/archive/resume, late receipt/reorg | Strict fake CLI executes group/payment/recover/refresh and missing-root orchestration; independent immutable format calculations reused. Later archive/snapshot corruption/late-receipt and full terminal flows are source-prepared, not established by those mocks |
 | Terminal/passwords | Full terminal adapter above | Parser/provenance mocks and pinned-source adaptation only; no PTY or password/KDF run performed |
 | All 120 threshold shapes | Existing independent structural/format corpus remains unchanged | Selected funded matrix above; the driver accepts other 1 <= m <= n <= 15 shapes, but no exhaustive funded 120-shape run or result is claimed |
-| Primitive entry counts and shielded routing | Opt-in Regtest primitive attempts and bounded capture receipts are prepared; see [observations.md](observations.md) | Counts describe process/window attempts and require complete enabled capture with positive controls. No daemon receipt has been executed. Actual shielded-proof mixed-pool lifecycle fixtures still need a separate attributable adapter and proof generation |
-| Fault injection and hostile history | Snapshot authentication/missing-state/no-clobber controls plus [funded hostile-history refusals and reconciliation](history-controls.md) are prepared | The bounded loopback service covers unavailable, missing, inconsistent and pruned history; restored monitors and incomplete rescans retain authority limits. Only mocks have run. Process kills at durable-write boundaries and entropy/quota orchestration remain unprepared |
+| Primitive entry counts | [Funded capture brackets](observation-controls.md) prepare structural, classical and both-order mixed controls, same-TXID changed authorization, saved-byte mining and rollback/reactivation | Complete process/window attempts, with actual functional positives and no dropped late entries. Daemon execution is pending; RPC does not expose deterministic pending/completed internal queue states |
+| Shielded coexistence | [Real output-only proof fixtures](shielded-controls.md), valid SLH plus invalid proof/binding authorization and exact classical/shielded default-enabled block replay | Three v5 and seven v6 pool subsets; Orchard outputs are zero-valued under inherited NU7 rules. Real proof generation and node execution are pending. Shielded spends and their anchors remain unprepared |
+| Fault injection and hostile history | [Funded hostile-history refusals](history-controls.md) plus [wallet write-stage I/O/SIGKILL, configured quota and pre-sign entropy controls](fault-controls.md) | Test-only wallet hooks and a synthetic trusted source isolate persistence/recovery behavior; no runtime flag or node fault mechanism. Only bounded checks/mocks have run. OS disk exhaustion, OS entropy suppression, power loss and node database crash durability are unclaimed |
 | Performance | None | No workload measurements or production budget recommendation; any separate study must retain p50/p95/p99 and the project's workload/hardware baseline |
 
 The remaining tooling gaps are distinct from prepared scenarios awaiting human
