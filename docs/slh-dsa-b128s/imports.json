@@ -2644,7 +2644,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "5b0e353afcefb7dc856d3b8469dc8f0920f2dc3cc85c9a831d9e6a9774a7118e"
+      "sha256": "bf3f3f833e8de9679de0465aef961f1abeb7169bbcc5d76e7ccd7542730b91be"
     },
     {
       "disposition": "new",

@@ -280,8 +280,8 @@
       "anchor": "def lifecycle(",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
-      "scope": "Remove a later anchor while retaining original note and transparent parents, reconsider exact block, mine cached spend, and refuse a duplicate nullifier using a distinct available transparent parent. Source preparation only.",
-      "sha256": "b40337d32a8441552a1414126bbc0ea6b27e68f3ce242b1d82088c283c8f7242"
+      "scope": "Remove a later anchor while retaining original note and transparent parents, reconsider exact block, mine cached spend, and refuse a duplicate nullifier using a distinct available transparent parent. Publication requires exact per-node admission; replacement reentry directly submits the saved candidate block to both nodes with positive proposals and exact best-chain bytes. No renewed gossip guarantee. Source preparation only.",
+      "sha256": "e089e5e0df8ece698da3c81644d66ccb42ca2179a3b8e3c3f74034b615261f1f"
     },
     "human-shielded-compatibility": {
       "anchor": "def pair(",
@@ -309,14 +309,14 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
       "scope": "Positive-bracket real spend-auth, binding and proof refusals with unchanged effect/native identities and exact diagnostics; no primitive-entry or internal database claim.",
-      "sha256": "b40337d32a8441552a1414126bbc0ea6b27e68f3ce242b1d82088c283c8f7242"
+      "sha256": "e089e5e0df8ece698da3c81644d66ccb42ca2179a3b8e3c3f74034b615261f1f"
     },
     "human-shielded-spends": {
       "anchor": "def execute(",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
       "scope": "Genuine fixed-public-key note recovery and witnesses from canonical bounded node history; actual ordered prevouts; v5/v6 pool shapes and isolated pre-NU6.3 Orchard deposit. Source preparation only.",
-      "sha256": "b40337d32a8441552a1414126bbc0ea6b27e68f3ce242b1d82088c283c8f7242"
+      "sha256": "e089e5e0df8ece698da3c81644d66ccb42ca2179a3b8e3c3f74034b615261f1f"
     },
     "human-slh-reactivation": {
       "anchor": "reactivated_slh",
@@ -1300,7 +1300,7 @@
             "human-shielded-anchors"
           ],
           "id": "rollback",
-          "remaining_preparation": "Prepared causal anchor rollback/reconsider and exact saved authorization reentry; execution evidence remains separate from this source matrix.",
+          "remaining_preparation": "Prepared causal anchor rollback/reconsider, exact per-node initial admission and direct-block saved authorization reentry; execution evidence remains separate from this source matrix.",
           "requirement": "Rollback below both SLH and NU7, then reactivate."
         },
         {
@@ -1310,7 +1310,7 @@
             "human-shielded-anchors"
           ],
           "id": "reorg",
-          "remaining_preparation": "Prepared causal anchor rollback/reconsider and exact saved authorization reentry; execution evidence remains separate from this source matrix.",
+          "remaining_preparation": "Prepared causal anchor rollback/reconsider, exact per-node initial admission and direct-block saved authorization reentry; execution evidence remains separate from this source matrix.",
           "requirement": "Reorg and remine preserve actual saved transaction bytes and UTXOs."
         },
         {
@@ -1321,7 +1321,7 @@
             "human-shielded-anchors"
           ],
           "id": "same-txid",
-          "remaining_preparation": "Prepared causal anchor rollback/reconsider and exact saved authorization reentry; execution evidence remains separate from this source matrix.",
+          "remaining_preparation": "Prepared causal anchor rollback/reconsider, exact per-node initial admission and direct-block saved authorization reentry; execution evidence remains separate from this source matrix.",
           "requirement": "Changed signature with unchangedTXID cannot reuse verification identity."
         },
         {
@@ -1443,5 +1443,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "02c25e048c3e37c0b56efacb864b09c9ff02f5a4"
+  "source_checkpoint": "8d717622efaee2605f76b7f1bc90c005f9de301c"
 }
