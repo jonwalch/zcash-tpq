@@ -11,6 +11,28 @@ fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "lowercase", deny_unknown_fields)]
 pub enum Request {
+    #[serde(rename = "mixed-prepare")]
+    MixedPrepare {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: MixedRecipe,
+    },
+    #[serde(rename = "mixed-assemble")]
+    MixedAssemble {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: MixedRecipe,
+        record: Record,
+    },
+    #[serde(rename = "control-block")]
+    ControlBlock {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ControlBlockRecipe,
+    },
     #[serde(rename = "classical-info")]
     ClassicalInfo {
         schema_version: u64,
@@ -45,6 +67,42 @@ pub enum Request {
         public_fixture: bool,
         artifact: Box<Artifact>,
     },
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParentOutput {
+    pub parent_hex: String,
+    pub output_index: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MixedRecipe {
+    pub kind: String,
+    pub transaction_version: u8,
+    pub expiry_height: u32,
+    pub classical_first: bool,
+    pub classical: ParentOutput,
+    pub slh: ParentOutput,
+    pub public_key_hex: String,
+    pub fee_zat: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ControlBlockRecipe {
+    pub template: serde_json::Value,
+    pub kind: String,
+    pub nonce: u64,
+    pub transactions: Vec<ControlTransaction>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ControlTransaction {
+    pub transaction_hex: String,
+    pub fee_zat: u64,
 }
 
 #[derive(Deserialize)]

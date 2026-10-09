@@ -21,7 +21,7 @@ fn keys(kind: &str) -> Result<Vec<SecretKey>> {
         .collect())
 }
 
-fn scripts(kind: &str) -> Result<(Script, Vec<u8>, Address)> {
+pub(super) fn scripts(kind: &str) -> Result<(Script, Vec<u8>, Address)> {
     let secp = Secp256k1::new();
     let keys = keys(kind)?;
     let mut redeem = Vec::new();
@@ -67,7 +67,12 @@ fn push(bytes: &[u8], script: &mut Vec<u8>) -> Result<()> {
     Ok(())
 }
 
-fn signature(tx: &Transaction, previous: Arc<Vec<ChainOutput>>, kind: &str) -> Result<Script> {
+pub(super) fn signature(
+    tx: &Transaction,
+    previous: Arc<Vec<ChainOutput>>,
+    kind: &str,
+    input_index: usize,
+) -> Result<Script> {
     let (_, redeem, _) = scripts(kind)?;
     let digest = tx
         .sighasher(NetworkUpgrade::Nu7, previous)
@@ -75,7 +80,7 @@ fn signature(tx: &Transaction, previous: Arc<Vec<ChainOutput>>, kind: &str) -> R
             stage: "generation",
             reason: "classical_sighash",
         })?
-        .sighash(HashType::ALL, Some((0, redeem.clone())))
+        .sighash(HashType::ALL, Some((input_index, redeem.clone())))
         .0;
     let secp = Secp256k1::new();
     let message = Message::from_digest(digest);
@@ -184,7 +189,7 @@ pub(super) fn spend(recipe: &ClassicalRecipe) -> Result<Value> {
         outputs,
     }
     .build();
-    let unlock = signature(&transaction, previous, &recipe.kind)?;
+    let unlock = signature(&transaction, previous, &recipe.kind, 0)?;
     install(&mut transaction, 0, unlock);
     let bytes = transaction.zcash_serialize_to_vec().map_err(|_| Failure {
         stage: "generation",
