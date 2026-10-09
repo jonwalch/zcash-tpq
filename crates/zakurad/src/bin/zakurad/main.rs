@@ -30,6 +30,10 @@ fn main() {
         .skip(1)
         .eq(["--slh-dsa-b128s-verifier-identity"])
     {
+        #[allow(
+            clippy::print_stdout,
+            reason = "the standalone identity command returns its JSON response on stdout"
+        )]
         println!(
             "{}",
             serde_json::to_string(
