@@ -110,7 +110,9 @@ committed source: `node-slh`, `host-shielded`, and the isolated public `signer`.
 The spend operations use the existing optional host shielded feature. Sapling
 requires explicit absolute paths to existing public parameters; each regular
 file is bounded to 64 MiB and hashed. No parameter download or search occurs.
-The node graph contains neither proving nor signing dependencies.
+These fixture host and public signing dependencies are not introduced into the
+node dependency graph; inherited upstream proof-library dependencies retain their
+existing scope.
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py --human-run \
