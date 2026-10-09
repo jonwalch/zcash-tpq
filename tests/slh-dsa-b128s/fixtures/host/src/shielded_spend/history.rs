@@ -566,6 +566,7 @@ mod tests {
             unreachable!("synthetic coinbase is v1")
         };
         outputs[0].lock_script = classical::scripts("single").unwrap().0;
+        outputs[0].value = 3_000_000u64.try_into().unwrap();
         let mut sources = Vec::new();
         let mut rng = rand_10::rng();
         for (index, pool) in ["sapling", "orchard", "ironwood"].into_iter().enumerate() {
