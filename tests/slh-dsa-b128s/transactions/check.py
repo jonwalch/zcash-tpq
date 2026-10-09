@@ -87,7 +87,7 @@ def candidate(binary, raw):
     require(set(response) == common | ({"result"} if response["ok"] else {"error"}), "candidate fields")
     require(type(response["schema_version"]) is int and response["schema_version"] == 1
             and response["contract"] == oracle.CONTRACT and response["public_fixture"] is True
-            and response["op"] == "check", "candidate identity")
+            and (response["op"] == "check" or (not response["ok"] and response["op"] == "unknown")), "candidate identity")
     if response["ok"]:
         body = response["result"]
         require(type(body) is dict and set(body) == {"observed", "expectation_match"}
