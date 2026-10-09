@@ -817,7 +817,7 @@
       "sources": []
     },
     {
-      "adaptation": "Exercise the actual wallet execute boundary with a delayed ordinary-backup model. Reuse existing node backup fixtures to reproduce the old stale-tip restart and require observation before stopping; reject changed backup bytes or a changed reopened tip. No live wallet failure or new runtime behavior is inferred.",
+      "adaptation": "Exercise the actual wallet execute boundary with a delayed ordinary-backup model. Reuse existing node backup fixtures to reproduce the old stale-tip restart and require observation before stopping; reject changed backup bytes or a changed reopened tip. No live wallet failure or new runtime behavior is inferred. Reuse the product test_node_reentry backup model for a linear chain, following the pinned research history ordering.",
       "classification": "new focused offline test adapter",
       "path": "tests/slh-dsa-b128s/acceptance/test_wallet_restart.py",
       "sha256": "4af552745bd7be14f6de0948ca9154c0bbaee24e828c7887657068543ba3a9e2",
@@ -845,7 +845,8 @@
         "recovery",
         "cosigners",
         "quorum_recovery",
-        "classical_history"
+        "classical_history",
+        "history"
       ]
     },
     {

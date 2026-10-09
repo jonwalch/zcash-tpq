@@ -2420,7 +2420,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "2b1c5cece78309a9a13ff770d218f0e978bb1bad01b0d0b02c371a394832f33f"
+      "sha256": "fa72117d89ea64e428a7d473503ab3c3724514a519ae10bb5b81c73212b4884f"
     },
     {
       "disposition": "new",
