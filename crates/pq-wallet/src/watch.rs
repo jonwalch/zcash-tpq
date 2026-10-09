@@ -113,7 +113,6 @@ impl WatchStore {
                     ..Default::default()
                 },
                 receive_next: manifest.retired_receive_end,
-                /// The validated cumulative public inventory.
                 manifest,
                 mode,
                 scan: Scan::default(),

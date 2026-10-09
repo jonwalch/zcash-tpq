@@ -102,11 +102,27 @@ fn operational_snapshot_restores_from_only_documented_artifacts_and_requires_tru
         b"orphan bytes",
     )
     .unwrap();
+    // Non-authoritative root copies have no journal quota and are outside the
+    // documented artifact set. They must neither block capture nor be removed.
+    write_private(
+        &original.join("state-pre-v3-public.json"),
+        b"retained old copy",
+    )
+    .unwrap();
+    write_private(
+        &original.join(".watch-retained"),
+        b"retained root temporary",
+    )
+    .unwrap();
     let snapshot = directory.path().join("snapshot");
     let receipt = watch
         .save_operational_snapshot(&backup, PASSWORD, &snapshot)
         .unwrap();
     assert!(receipt.generation().is_some());
+    assert!(original.join("state-pre-v3-public.json").exists());
+    assert!(original.join(".watch-retained").exists());
+    assert!(!snapshot.join("watch/state-pre-v3-public.json").exists());
+    assert!(!snapshot.join("watch/.watch-retained").exists());
     let trusted = SnapshotTrust::KnownAuthority {
         trusted_receipt: receipt.fingerprint().unwrap(),
     };
@@ -229,7 +245,9 @@ fn snapshot_rejects_changed_backup_state_unsafe_files_and_wrong_profile() {
         Err(Error::Authentication)
     ));
     fs::write(snapshot.join("backup.tpq"), saved).unwrap();
-    symlink(&state, snapshot.join("watch/.watch-unsafe")).unwrap();
+    let real_state = snapshot.join("watch/state-real.json");
+    fs::rename(&state, &real_state).unwrap();
+    symlink(&real_state, &state).unwrap();
     assert!(restore_operational_snapshot(
         &snapshot,
         PASSWORD,

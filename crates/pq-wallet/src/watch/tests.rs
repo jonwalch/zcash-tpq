@@ -46,7 +46,7 @@ fn inventory(receive: u32, change: u32) -> Manifest {
                         )],
                     )
                     .unwrap()
-                    .encode(),
+                    .descriptor(),
                 ),
                 role: role as u8,
             });
@@ -316,7 +316,7 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
         2,
         Entry {
             origins: participants.into_iter().map(|(_, origin)| origin).collect(),
-            policy_hex: hex::encode(policy.encode()),
+            policy_hex: hex::encode(policy.descriptor()),
             role: 0,
         },
     );
@@ -353,7 +353,7 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
             index: 2,
             wallet_id: wrong.wallet_id,
         }],
-        policy_hex: hex::encode(foreign.encode()),
+        policy_hex: hex::encode(foreign.descriptor()),
         role: 0,
     };
     assert!(matches!(

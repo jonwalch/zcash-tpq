@@ -16,8 +16,6 @@ use std::{
 
 const FORMAT: &str = "ZcashTransparentPQ/operational-snapshot-receipt/v1";
 const MAX_RECEIPT: usize = 4096;
-const MAX_ROOT_FILES: u64 = 4096;
-const MAX_ROOT_BYTES: u64 = 128 * 1024 * 1024;
 
 /// Independently supplied recovery authority. Hashing an untrusted receipt does
 /// not establish trust, backup freshness, or that another allocator has stopped.
@@ -483,39 +481,23 @@ fn copy_watch(
 ) -> Result<(), Error> {
     private_directory(source)?;
     create_directory(destination)?;
-    let mut root_count = 0u64;
-    let mut root_bytes = 0u64;
-    for entry in fs::read_dir(source).map_err(Error::Storage)? {
-        let entry = entry.map_err(Error::Storage)?;
-        let name = entry.file_name();
-        let name = name.to_str().ok_or(Error::Encoding)?;
-        if name == "allocator.lock" {
-            continue;
-        }
-        if name == "journal" {
-            copy_journal(&entry.path(), &destination.join(name), metadata)?;
-            continue;
-        }
-        if name != "state.json"
-            && !(name.starts_with("state-pre-v3-") && name.ends_with(".json"))
-            && !name.starts_with(".watch-")
-            && !name.starts_with(".recovery-")
-        {
-            return Err(Error::RecoveryIncomplete);
-        }
-        root_count = root_count.checked_add(1).ok_or(Error::Limits)?;
-        if root_count > MAX_ROOT_FILES {
-            return Err(Error::Limits);
-        }
-        let (bytes, _) = stream_private(
-            &entry.path(),
-            Some(&destination.join(name)),
-            crate::watch::archive::MAX_V3 as u64,
-        )?;
-        root_bytes = root_bytes.checked_add(bytes).ok_or(Error::Limits)?;
-        if root_bytes > MAX_ROOT_BYTES {
-            return Err(Error::Limits);
-        }
+    // The recovery artifact is the exact authoritative state plus the complete
+    // immutable journal, not an arbitrary clone of the surrounding directory.
+    // Old migration copies and non-authoritative root temporaries remain at the
+    // source; every journal orphan/temp object is retained under its own quotas.
+    stream_private(
+        &source.join("state.json"),
+        Some(&destination.join("state.json")),
+        crate::watch::archive::MAX_V3 as u64,
+    )?;
+    match fs::symlink_metadata(source.join("journal")) {
+        Ok(_) => copy_journal(
+            &source.join("journal"),
+            &destination.join("journal"),
+            metadata,
+        )?,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+        Err(error) => return Err(Error::Storage(error)),
     }
     private_directory(destination)?
         .sync_all()

@@ -91,7 +91,7 @@ fn entry(role: Role, threshold: u8, mut records: Vec<([u8; 32], Origin)>) -> Ent
     let policy = Policy::new(threshold, records.iter().map(|(key, _)| *key).collect()).unwrap();
     Entry {
         role: role as u8,
-        policy_hex: hex::encode(policy.encode()),
+        policy_hex: hex::encode(policy.descriptor()),
         origins: records.into_iter().map(|(_, origin)| origin).collect(),
     }
 }
@@ -100,7 +100,7 @@ fn records(entry: &Entry) -> Vec<([u8; 32], Origin)> {
     entry
         .policy()
         .unwrap()
-        .key_commitments()
+        .commitments()
         .iter()
         .copied()
         .zip(entry.origins.clone())
@@ -149,7 +149,7 @@ fn locally_owned(wallet: &Wallet, entry: &Entry) {
         Role::Change
     };
     assert_eq!(
-        entry.policy().unwrap().key_commitments()[slot],
+        entry.policy().unwrap().commitments()[slot],
         key_commitment(&wallet.public_key(KeyPath {
             role,
             index: origin.index
