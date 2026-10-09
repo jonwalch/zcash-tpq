@@ -162,7 +162,28 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/build.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "501ac8851ccb28bdf335193dcff5e7cbec36f8c0f270559a4a31202ebdbea638"
+      "sha256": "5fb366503e3f8b6de6a59d1640e96b297d97bdedf246cc8e93a5c1357499faec"
+    },
+    "human-capture-brackets": {
+      "anchor": "def active_windows(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
+      "scope": "Funded distinct positive proposal brackets and attempted structural/classical/mixed subjects; human daemon entry capture pending. Process/window counts, not per-RPC attribution.",
+      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
+    },
+    "human-capture-lifecycle": {
+      "anchor": "receipt[\"inactive_refusals\"]",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
+      "scope": "Saved-byte relay/mining, reorg, rollback/reactivation and repeated proposals prepared; no deterministic pending/completed internal queue claim.",
+      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
+    },
+    "human-capture-sealing": {
+      "anchor": "def sealed_reports(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
+      "scope": "Every closed lifecycle process is counted in full; no omitted tail, unclean stop or missing positive control can supply a zero receipt.",
+      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
     },
     "human-classical": {
       "anchor": "def classical_compatibility(",
@@ -248,6 +269,27 @@
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
       "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
     },
+    "human-shielded-compatibility": {
+      "anchor": "def pair(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_controls.py",
+      "scope": "Prepared exact classical/shielded blocks on default and enabled peers; output-only subset, no shielded-spend/anchor or live result.",
+      "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5"
+    },
+    "human-shielded-failure": {
+      "anchor": "def negative_controls(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_controls.py",
+      "scope": "Same-TXID invalid proof/binding controls alongside valid native SLH authorization; exact rejection, unchanged tip/parents/tree roots, positive preflight and later mining required. Execution pending.",
+      "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5"
+    },
+    "human-shielded-outputs": {
+      "anchor": "def execute(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_controls.py",
+      "scope": "Real output-only proof/signature preparation on actual mature parents; three v5/seven v6 pool subsets, Orchard value zero under inherited NU7 rules. No generation/live result.",
+      "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5"
+    },
     "human-slh-reactivation": {
       "anchor": "reactivated_slh",
       "kind": "human_case_prepared",
@@ -282,6 +324,13 @@
       "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
       "scope": "Prepared human scenario only; no live execution or acceptance is asserted.",
       "sha256": "88fac15a797696dca997fa5a35286c597805af65ed2fd797310822c9e7a7150d"
+    },
+    "human-wallet-faults": {
+      "anchor": "def bracket(",
+      "kind": "human_case_prepared",
+      "path": "tests/slh-dsa-b128s/acceptance/fault_controls.py",
+      "scope": "Wallet-only private stage hooks, reached-stage SIGKILL, configured quota and pre-sign entropy checkpoint; synthetic trusted source, no node database crash or power-loss claim.",
+      "sha256": "1eef9c680f8f2edca1bcf09dec5ff166e448636af51b9c7e138f36705a8c027c"
     },
     "human-wallet-max": {
       "anchor": "def execute(",
@@ -768,10 +817,12 @@
             "relay-order",
             "observation-native",
             "observation-consensus",
-            "observation-receipts"
+            "observation-receipts",
+            "human-capture-brackets",
+            "human-capture-sealing"
           ],
           "id": "precrypto",
-          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
+          "remaining_preparation": "Positive-bracket daemon primitive-entry capture is now source-prepared for structural/classical/mixed subjects and three lifecycle processes per peer. Human execution remains pending; complete process/window attempts never establish isolated per-RPC counts.",
           "requirement": "Structural failures precede reservation and primitive entry."
         }
       ],
@@ -821,10 +872,11 @@
             "shielded-action-fields",
             "shielded-collections",
             "shielded-destinations",
-            "shielded-reference"
+            "shielded-reference",
+            "human-shielded-outputs"
           ],
           "id": "shielded-effects",
-          "remaining_preparation": "Existing 12 offline tests cover 114 shielded mutations and 36 context comparisons. Valid-proof, genuinely signed shielded-shape node cases still need a narrow fixture adapter and human proof generation/execution.",
+          "remaining_preparation": "Existing independent synthetic digest controls are unchanged. Valid-proof output-only signed shapes are prepared; proof generation/node execution and genuine shielded-spend anchors remain pending.",
           "requirement": "Shielded effecting fields/collections and authorizing-data exclusions use separate Rust reference."
         },
         {
@@ -865,10 +917,12 @@
             "block-worker",
             "human-slh-switch",
             "observation-worker",
-            "observation-receipts"
+            "observation-receipts",
+            "human-capture-lifecycle",
+            "human-capture-sealing"
           ],
           "id": "fallback",
-          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
+          "remaining_preparation": "Positive-bracket daemon primitive-entry capture is now source-prepared for structural/classical/mixed subjects and three lifecycle processes per peer. Human execution remains pending; complete process/window attempts never establish isolated per-RPC counts.",
           "requirement": "Active exact SLH never falls back; inactive template keeps historical script semantics."
         }
       ],
@@ -894,10 +948,12 @@
             "observer",
             "observation-native",
             "observation-consensus",
-            "observation-receipts"
+            "observation-receipts",
+            "human-capture-brackets",
+            "human-capture-sealing"
           ],
           "id": "zero",
-          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
+          "remaining_preparation": "Positive-bracket daemon primitive-entry capture is now source-prepared for structural/classical/mixed subjects and three lifecycle processes per peer. Human execution remains pending; complete process/window attempts never establish isolated per-RPC counts.",
           "requirement": "Classical-only funding publishes explicit zero PQ checks and no native primitive entries."
         },
         {
@@ -962,10 +1018,12 @@
             "observer",
             "observation-native",
             "observation-consensus",
-            "observation-receipts"
+            "observation-receipts",
+            "human-capture-brackets",
+            "human-capture-sealing"
           ],
           "id": "zero",
-          "remaining_preparation": "Opt-in daemon primitive-entry capture and bounded parser are prepared. Each human case still needs positive-control capture and execution before reporting process/window attempts; these are never isolated RPC counts.",
+          "remaining_preparation": "Positive-bracket daemon primitive-entry capture is now source-prepared for structural/classical/mixed subjects and three lifecycle processes per peer. Human execution remains pending; complete process/window attempts never establish isolated per-RPC counts.",
           "requirement": "Mixed classification must precede workers/reservations and publish no success metadata."
         },
         {
@@ -1079,10 +1137,11 @@
           "evidence": [
             "publish",
             "late-failure",
-            "accounting"
+            "accounting",
+            "human-shielded-failure"
           ],
           "id": "complete-success",
-          "remaining_preparation": "The late-check failure is a generic failing future; an actual invalid shielded proof/signature alongside valid SLH needs dedicated adapter/human execution.",
+          "remaining_preparation": "Real output-only proof/binding failures alongside valid SLH now have an executable adapter. Human proof generation and actual rejection/no-publication outcomes remain pending.",
           "requirement": "Mixed or failed other checks cannot publish success; active zero-native transaction publishes bound zero."
         },
         {
@@ -1195,17 +1254,19 @@
           "evidence": [
             "tip-reset",
             "accounting",
-            "storage"
+            "storage",
+            "human-capture-lifecycle"
           ],
           "id": "queues",
-          "remaining_preparation": "No deterministic live queue-barrier driver for each pending/completed/stored state. Existing tip reset and payload tests do not execute all daemon queue states.",
+          "remaining_preparation": "Inherited queue/download tests remain unchanged. RPC lacks deterministic pending/completed-unconsumed queue barriers; stored bytes and lifecycle outcomes do not establish those internal states. No scheduler rewrite is a completion gate.",
           "requirement": "Pending/completed-unconsumed/stored mempool work resets across activation/branch/same-height fork."
         },
         {
           "evidence": [
             "tip-reset",
             "human-nu7-rollback",
-            "human-slh-reactivation"
+            "human-slh-reactivation",
+            "human-capture-lifecycle"
           ],
           "id": "rollback",
           "remaining_preparation": null,
@@ -1213,7 +1274,8 @@
         },
         {
           "evidence": [
-            "human-reorg"
+            "human-reorg",
+            "human-capture-lifecycle"
           ],
           "id": "reorg",
           "remaining_preparation": null,
@@ -1222,7 +1284,8 @@
         {
           "evidence": [
             "payload",
-            "human-same-txid"
+            "human-same-txid",
+            "human-capture-lifecycle"
           ],
           "id": "same-txid",
           "remaining_preparation": null,
@@ -1230,10 +1293,11 @@
         },
         {
           "evidence": [
-            "prepared"
+            "prepared",
+            "human-capture-brackets"
           ],
           "id": "prepared-cache",
-          "remaining_preparation": "Library prepared-cache test/source checks remain distinct from a daemon hit/miss receipt.",
+          "remaining_preparation": "Actual repeated proposals and fresh-attempt lower bounds are prepared; source cache tests retain their narrow invariant. No per-proposal daemon hit/miss attribution or live result.",
           "requirement": "Both active prepared-cache paths bypass old work."
         }
       ],
@@ -1278,10 +1342,11 @@
         },
         {
           "evidence": [
-            "human-namespace"
+            "human-namespace",
+            "human-wallet-faults"
           ],
           "id": "durability",
-          "remaining_preparation": "Crash,kill,quota and power-loss durability injection are not prepared; no durability claim.",
+          "remaining_preparation": "Separate wallet-only test-hook I/O/SIGKILL, configured quota and pre-sign entropy controls are prepared but unrun. Node database crash/kill/quota and power-loss durability are not covered; clean restart is not crash durability.",
           "requirement": "Clean restart must not be reported as crash/fault durability."
         }
       ],
@@ -1320,10 +1385,11 @@
           "evidence": [
             "template-shielded",
             "shielded-reference",
-            "human-classical"
+            "human-classical",
+            "human-shielded-compatibility"
           ],
           "id": "shielded",
-          "remaining_preparation": "No full real-proof classical/shielded default-vs-enabled compatibility driver; do not broaden this to unrelated upstream cleanup.",
+          "remaining_preparation": "Exact real-proof output-only classical/shielded block comparison is prepared, not executed. Shielded spends/anchors remain outside this subset; no unrelated upstream cleanup.",
           "requirement": "Existing classical/shielded behavior remains intact."
         },
         {
@@ -1342,5 +1408,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "d5c4d4c271ab749f07f6c1beb106fae309bd961d"
+  "source_checkpoint": "0ca670bfe4629510bbf46f01d5cf40afced413a4"
 }
