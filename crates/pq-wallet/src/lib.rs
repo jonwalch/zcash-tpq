@@ -1,5 +1,4 @@
-//! Experimental wallet foundation. Payments, storage, recovery and CLI follow
-//! the frozen wallet contract and are not implemented by this key checkpoint.
+//! Experimental Regtest SLH wallet: backed enrollment, discovery and approved payments.
 
 #![forbid(unsafe_code)]
 
@@ -36,6 +35,8 @@ pub use keys::{KeyPath, Role, Root, RootEntropyError};
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
+    pub(crate) static BACKUPS: std::sync::Mutex<()> = std::sync::Mutex::new(());
     #[test]
     fn disabled_feature_is_explicit() {
         assert_eq!(
@@ -46,6 +47,21 @@ mod tests {
 }
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
+mod backup;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+mod journal;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+mod receiving;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+mod scan;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+mod storage;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+mod watch;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+pub mod payment;
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 mod canonical;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod error;
@@ -53,6 +69,19 @@ mod error;
 mod manifest;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod suite;
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+pub use receiving::Receiver;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+pub use scan::{ChainSource, Checkpoint, Coin, NodeContext, Outpoint, ScanStatus};
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+pub use watch::archive::{
+    PaymentDetails, PaymentHistoryEntry, PaymentHistoryPage, PaymentLocation, PaymentObservation,
+};
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+pub use watch::{export_inventory, read_inventory, read_transfer, write_transfer, WatchMode, WatchStore};
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 pub use error::Error;
@@ -77,6 +106,15 @@ use zeroize::Zeroizing;
 pub struct Wallet {
     root: Zeroizing<[u8; 32]>,
     manifest: Manifest,
+}
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Recovery<'a> {
+    format: &'a str,
+    manifest: Manifest,
+    root_hex: &'a str,
 }
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
@@ -213,6 +251,103 @@ impl Wallet {
         u8::try_from(entry.local(self.manifest.wallet_id)?.0).map_err(|_| Error::Policy)
     }
 
+    /// Authenticate and reconstruct a package against an independently approved
+    /// profile. This cannot establish backup freshness, chain history or balance.
+    pub fn decrypt(bytes: &[u8], password: &[u8], profile: &Profile) -> Result<Self, Error> {
+        profile.validate()?;
+        let plaintext = backup::decrypt(bytes, password)?;
+        Self::from_plaintext(&plaintext, profile)
+    }
+
+    /// Produce a fresh salt/nonce for every envelope. The returned bytes are not
+    /// proof of durable storage; use save_backup before publishing an inventory.
+    pub fn encrypt(&self, password: &[u8]) -> Result<Vec<u8>, Error> {
+        self.encrypt_with_rng(password, &mut OsRng)
+    }
+    /// Encrypt with fresh fallible entropy from the supplied CSPRNG.
+    pub fn encrypt_with_rng(
+        &self,
+        password: &[u8],
+        rng: &mut impl CryptoRngCore,
+    ) -> Result<Vec<u8>, Error> {
+        backup::encrypt(self.plaintext()?, password, rng)
+    }
+
+    /// Retire covered issuance ranges and rotate the allocator after external
+    /// reconciliation of the latest backup and old allocator. Save the new
+    /// generation before fresh enrollment. Existing entries remain spendable.
+    pub fn retire_for_restore(&mut self) -> Result<(), Error> {
+        self.retire_for_restore_with_rng(&mut OsRng)
+    }
+    /// Retire covered issuance and rotate allocator using fallible supplied entropy.
+    pub fn retire_for_restore_with_rng(
+        &mut self,
+        rng: &mut impl CryptoRngCore,
+    ) -> Result<(), Error> {
+        let revision = self
+            .manifest
+            .revision
+            .checked_add(1)
+            .ok_or(Error::Exhausted)?;
+        let mut id = [0; 16];
+        rng.try_fill_bytes(&mut id).map_err(|_| Error::Entropy)?;
+        if Hex(id) == self.manifest.allocator_id {
+            return Err(Error::Entropy);
+        }
+        let mut candidate = self.manifest.clone();
+        candidate.allocator_id = Hex(id);
+        candidate.revision = revision;
+        candidate.retired_receive_end = candidate.receive_end;
+        candidate.retired_change_end = candidate.change_end;
+        self.manifest.check_update(&candidate)?;
+        self.manifest = candidate;
+        Ok(())
+    }
+
+    fn plaintext(&self) -> Result<Zeroizing<Vec<u8>>, Error> {
+        let root_hex = Zeroizing::new(hex::encode(&self.root[..]));
+        canonical::encode(
+            &Recovery {
+                format: "ZcashTransparentPQ/recovery/v1",
+                manifest: self.manifest.clone(),
+                root_hex: &root_hex,
+            },
+            manifest::MAX_PLAINTEXT,
+        )
+    }
+    fn from_plaintext(bytes: &[u8], profile: &Profile) -> Result<Self, Error> {
+        let recovery: Recovery<'_> = canonical::decode(bytes, manifest::MAX_PLAINTEXT)?;
+        if recovery.format != "ZcashTransparentPQ/recovery/v1" {
+            return Err(Error::UnsupportedFormat);
+        }
+        recovery.manifest.validate()?;
+        if recovery.manifest.profile != *profile {
+            return Err(Error::UnsupportedContext);
+        }
+        let mut root = Zeroizing::new([0; 32]);
+        manifest::decode_hex(recovery.root_hex, root.as_mut())?;
+        let wallet = Self {
+            root,
+            manifest: recovery.manifest,
+        };
+        for entry in &wallet.manifest.entries {
+            let (slot, origin) = entry.local(wallet.manifest.wallet_id)?;
+            let role = match entry.role {
+                0 => Role::Receive,
+                1 => Role::Change,
+                _ => return Err(Error::UnsupportedContext),
+            };
+            if entry.suite_policy()?.key_commitments()[slot]
+                != wallet.key_commitment(KeyPath {
+                    role,
+                    index: origin.index,
+                })?
+            {
+                return Err(Error::Policy);
+            }
+        }
+        Ok(wallet)
+    }
     fn key(&self, path: KeyPath) -> SigningKey {
         SigningKey::from_seed(keys::derive_seed(&self.root, path))
     }
