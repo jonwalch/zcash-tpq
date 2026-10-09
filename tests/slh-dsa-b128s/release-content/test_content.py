@@ -74,6 +74,13 @@ class PathTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 audit.validate_package_list("crates/pq-wallet/Cargo.toml", listing, {})
 
+    def test_cargo_copied_repository_readme_is_bound_to_tracked_source(self):
+        audit.validate_package_list("crates/zakura-consensus/Cargo.toml", ["README.md"],
+                                    {"README.md"}, {"README.md": "README.md"})
+        with self.assertRaises(ValueError):
+            audit.validate_package_list("crates/zakura-consensus/Cargo.toml", ["README.md"], {},
+                                        {"README.md": "README.md"})
+
 
 class GitTests(unittest.TestCase):
     def test_deleted_experiment_cannot_hide_in_history(self):

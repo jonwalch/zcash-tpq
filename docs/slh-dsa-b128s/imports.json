@@ -2014,7 +2014,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "1ebb08fcb2bdb96cc4610e6833757b3bd3e57b31a9b9c603ac4e23bba3574cd1"
+      "sha256": "147cf8324a49bf23f8af553617ef67f4ca0a60705d53fed0297659b42f4eb7f6"
     },
     {
       "disposition": "new",
@@ -2875,7 +2875,7 @@
         "tests/slh-dsa-b128s/release-content/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "907d340f07fe1ccf41033519add5edc775a1b71e6054959021fa4613a6c4641a"
+      "sha256": "e64c2ba7eb0bbf2bc40de7a5f7e42b7b691da6c3ff2dde1f345498857fde5527"
     },
     {
       "disposition": "new",
@@ -2885,7 +2885,7 @@
         "tests/slh-dsa-b128s/release-content/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "9f796091fbc82523acee2b70b4e3cfee30e87d980265f640e7686d63fc3d36d1"
+      "sha256": "9ebfebf10d115bba9be3e0e1175dde013d93d59f6cf281a42fc5d8da8ba05926"
     },
     {
       "disposition": "new",
