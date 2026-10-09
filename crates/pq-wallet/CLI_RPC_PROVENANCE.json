@@ -11,7 +11,7 @@
       "target_path": "crates/pq-cli/src/main.rs",
       "target_sha256": "f0f756f1b6f638577f37e26bd016064ddb1b170752dc57e7ffe9fdffd05cdde6",
       "classification": "adapted",
-      "adaptations": "Default-off SLH-only wrapper and create-slh-exp; existing dispatch extended to public enrollment and J recovery; original insecurely incomplete restore replaced by J APIs."
+      "adaptations": "Default-off SLH-only wrapper and create-slh-exp; existing dispatch extended to public enrollment and explicit J recovery modes; keys-only legacy restore delegates to J inventory restore."
     },
     {
       "source_path": "crates/pq-cli/src/discovery.rs",
@@ -41,9 +41,9 @@
       "source_path": "crates/pq-cli/src/payments.rs",
       "source_sha256": "56aa08789b23103bbdc6bb627e98e5c34c536521f73e2ea71bf541e51ce01b89",
       "target_path": "crates/pq-cli/src/payments.rs",
-      "target_sha256": "96a3bdc2c8e7a77c7109b14e9ba1e7f7ffdb709fe81064fa7e45462e0ac5ef10",
+      "target_sha256": "628fac8fb5e4a6d2554b12323ce1d478dd33174367477aa92e8994b548d278c3",
       "classification": "adapted",
-      "adaptations": "Retain command flows; SLH-only help; bounded per-input threshold partial collection up to 225 with duplicate and subquorum refusal before primitive work."
+      "adaptations": "Retain command flows; SLH-only help; bounded per-input threshold partial collection up to 225 with duplicate and subquorum refusal before primitive work. Display checked public suite, profile and ordered input/change policy origins alongside existing approval fields, preserving all IDs and approval logic."
     },
     {
       "source_path": "crates/pq-wallet/src/rpc.rs",
