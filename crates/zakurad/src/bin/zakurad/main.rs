@@ -26,6 +26,19 @@ fn limit_glibc_malloc_arenas() {
 
 /// Process entry point for `zakurad`
 fn main() {
+    if std::env::args()
+        .skip(1)
+        .eq(["--slh-dsa-b128s-verifier-identity"])
+    {
+        println!(
+            "{}",
+            serde_json::to_string(
+                &zakura_consensus::experimental_slh_dsa_b128s_verifier_identity()
+            )
+            .expect("the verifier identity contains only JSON scalars")
+        );
+        return;
+    }
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     limit_glibc_malloc_arenas();
 
