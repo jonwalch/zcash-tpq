@@ -466,6 +466,7 @@ fn build_workload(case: &BenchmarkCase, candidates: &[CandidateTx]) -> Option<Wo
             stats.verifier_checks += candidate.counts.verifier_check_counts();
 
             Request::Block {
+                slh_dsa_b128s_budget: None,
                 transaction_hash: candidate.transaction.hash(),
                 transaction: candidate.transaction.clone(),
                 known_outpoint_hashes: known_outpoint_hashes.clone(),

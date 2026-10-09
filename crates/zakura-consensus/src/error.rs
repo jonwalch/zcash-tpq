@@ -132,6 +132,28 @@ pub enum TransactionError {
     #[cfg_attr(any(test, feature = "proptest-impl"), proptest(skip))]
     Script(#[from] zakura_script::Error),
 
+    #[error("experimental SLH-DSA-B-128s authorization failed for transparent input {input_index}: {reason}")]
+    ExperimentalSlhDsaB128s { input_index: usize, reason: String },
+
+    #[error("experimental SLH-DSA-B-128s transaction context is invalid: {reason}")]
+    ExperimentalSlhDsaB128sContext { reason: String },
+
+    #[error("experimental SLH-DSA-B-128s transaction exceeds its limit of {limit} SLH checks")]
+    ExperimentalSlhDsaB128sTransactionBudget { limit: u32 },
+
+    // A block-scoped failure, lifted to BlockError by the block verifier. This
+    // does not establish that the individual transaction is invalid.
+    #[error("experimental SLH-DSA-B-128s block exceeds its limit of {limit} SLH checks")]
+    ExperimentalSlhDsaB128sBlockBudget { limit: u32 },
+
+    #[error(
+        "experimental SLH-DSA-B-128s verification requires the configured block budget context"
+    )]
+    ExperimentalSlhDsaB128sBudgetContext,
+
+    #[error("active SLH transparent inputs cannot be mixed with other transparent input types")]
+    ExperimentalSlhDsaB128sMixedInputs,
+
     #[error("Sapling proof or signature verification failed")]
     SaplingVerificationFailed,
 
@@ -456,6 +478,12 @@ impl TransactionError {
             Self::NoOutputs => consensus("transaction.no_outputs"),
             Self::BadBalance => consensus("transaction.bad_balance"),
             Self::Script(_) => consensus("transaction.script"),
+            Self::ExperimentalSlhDsaB128s { .. }
+            | Self::ExperimentalSlhDsaB128sContext { .. }
+            | Self::ExperimentalSlhDsaB128sMixedInputs
+            | Self::ExperimentalSlhDsaB128sTransactionBudget { .. } => {
+                consensus("transaction.experimental_slh_dsa_b128s")
+            }
             Self::SaplingVerificationFailed => consensus("transaction.sapling_verification"),
             Self::Halo2VerificationFailed => consensus("transaction.halo2_verification"),
             Self::SmallOrder => consensus("transaction.small_order"),
@@ -464,7 +492,9 @@ impl TransactionError {
             Self::Ed25519(_) => consensus("transaction.ed25519"),
             Self::RedJubjub(_) => consensus("transaction.redjubjub"),
             Self::RedPallas(_) => consensus("transaction.redpallas"),
-            Self::InternalDowncastError(_) => {
+            Self::InternalDowncastError(_)
+            | Self::ExperimentalSlhDsaB128sBudgetContext
+            | Self::ExperimentalSlhDsaB128sBlockBudget { .. } => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::VerifierUnavailable)
             }
             Self::BothVPubsNonZero => consensus("transaction.both_vpubs_nonzero"),
@@ -564,6 +594,10 @@ impl TransactionError {
             | NoOutputs
             | BadBalance
             | Script(_)
+            | ExperimentalSlhDsaB128s { .. }
+            | ExperimentalSlhDsaB128sContext { .. }
+            | ExperimentalSlhDsaB128sMixedInputs
+            | ExperimentalSlhDsaB128sTransactionBudget { .. }
             | SaplingVerificationFailed
             | Halo2VerificationFailed
             | SmallOrder
@@ -754,6 +788,13 @@ pub enum BlockError {
         sigops: u32,
     },
 
+    #[error("experimental SLH-DSA-B-128s block {height:?} {hash:?} exceeds {limit} SLH checks")]
+    TooManyExperimentalSlhDsaB128sChecks {
+        height: zakura_chain::block::Height,
+        hash: zakura_chain::block::Hash,
+        limit: u32,
+    },
+
     #[error("summing miner fees for block {height:?} {hash:?} failed: {source:?}")]
     SummingMinerFees {
         height: zakura_chain::block::Height,
@@ -798,7 +839,8 @@ impl BlockError {
             | NoTransactions
             | BadMerkleRoot { .. }
             | WrongTransactionConsensusBranchId
-            | TooManyTransparentSignatureOperations { .. } => 100,
+            | TooManyTransparentSignatureOperations { .. }
+            | TooManyExperimentalSlhDsaB128sChecks { .. } => 100,
             Transaction(err) => err.mempool_misbehavior_score(),
             _other => 0,
         }

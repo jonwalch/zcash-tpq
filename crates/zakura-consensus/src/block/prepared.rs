@@ -73,6 +73,13 @@ impl PreparedCandidateCache {
         work_id: Option<&str>,
         network: &Network,
     ) -> Option<CachedPreparedCandidate> {
+        // Active SLH blocks rerun authorization and reserve fresh attempt budgets.
+        if block
+            .coinbase_height()
+            .is_some_and(|height| network.is_experimental_slh_dsa_b128s_active(height))
+        {
+            return None;
+        }
         // Deriving the candidate bytes costs a full block serialization, so skip it when the
         // cache holds no entry that could match.
         {
@@ -128,6 +135,12 @@ impl PreparedCandidateCache {
         prepared: SemanticallyVerifiedBlock,
         network: &Network,
     ) {
+        if block
+            .coinbase_height()
+            .is_some_and(|height| network.is_experimental_slh_dsa_b128s_active(height))
+        {
+            return;
+        }
         let immutable_bytes = immutable_candidate_bytes(block, network);
         let fingerprint = fingerprint(&immutable_bytes);
 
@@ -482,6 +495,61 @@ mod tests {
             SemanticallyVerifiedBlock::from(Arc::new(block.clone())),
             network,
         );
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_active_candidates_never_reuse_prepared_work() {
+        use zakura_chain::{
+            block::Height,
+            parameters::testnet::{ExperimentalSlhDsaB128sLimits, RegtestParameters},
+        };
+        let mut block = test_block();
+        let height = Height(10);
+        let zakura_chain::transparent::Input::Coinbase {
+            height: coinbase_height,
+            ..
+        } = &mut Arc::make_mut(&mut block.transactions[0]).inputs_mut()[0]
+        else {
+            unreachable!()
+        };
+        *coinbase_height = height;
+        let active = Network::new_regtest(RegtestParameters {
+            activation_heights: zakura_chain::parameters::testnet::ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(5),
+                ..Default::default()
+            },
+            experimental_slh_dsa_b128s_activation_height: Some(height),
+            experimental_slh_dsa_b128s_limits: Some(
+                ExperimentalSlhDsaB128sLimits::new(3, 6).unwrap(),
+            ),
+            ..Default::default()
+        });
+        let inactive = Network::new_regtest(RegtestParameters {
+            activation_heights: zakura_chain::parameters::testnet::ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(5),
+                ..Default::default()
+            },
+            experimental_slh_dsa_b128s_activation_height: Some(height.next().unwrap()),
+            experimental_slh_dsa_b128s_limits: active.experimental_slh_dsa_b128s_limits(),
+            ..Default::default()
+        });
+        for source in [
+            PreparedCandidateSource::ServerTemplate,
+            PreparedCandidateSource::ClientProposal,
+        ] {
+            let cache = PreparedCandidateCache::default();
+            insert(&cache, &block, "active", source, &active);
+            assert!(cache.0.lock().unwrap().is_empty());
+            assert!(cache.lookup(&block, Some("active"), &active).is_none());
+            insert(&cache, &block, "old", source, &inactive);
+            assert!(!cache.0.lock().unwrap().is_empty());
+            assert!(cache.lookup(&block, Some("old"), &inactive).is_some());
+            for work_id in [None, Some("old")] {
+                assert!(cache.lookup(&block, work_id, &active).is_none());
+            }
+        }
     }
 
     #[test]

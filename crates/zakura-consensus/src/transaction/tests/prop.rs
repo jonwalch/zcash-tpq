@@ -518,6 +518,7 @@ fn validate(
         verifier
             .clone()
             .oneshot(transaction::Request::Block {
+                slh_dsa_b128s_budget: None,
                 transaction_hash,
                 transaction: Arc::new(transaction),
                 known_utxos: Arc::new(known_utxos),

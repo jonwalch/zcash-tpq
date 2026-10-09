@@ -36,7 +36,9 @@ use proptest_derive::Arbitrary;
 #[allow(unused_imports)]
 use crate::block::MAX_BLOCK_BYTES;
 
+mod slh_dsa_b128s;
 pub mod zip317;
+pub use slh_dsa_b128s::{SlhDsaB128sVerification, SlhDsaB128sVerificationError};
 
 /// The minimum cost value for a transaction in the mempool.
 ///
@@ -410,6 +412,11 @@ pub struct VerifiedUnminedTx {
     /// Used by mempool policy checks (`AreInputsStandard`, `GetP2SHSigOpCount`).
     /// Empty for transactions with no transparent inputs or in test contexts.
     pub spent_outputs: Arc<Vec<transparent::Output>>,
+
+    /// Successful SLH accounting bound to immutable payload, UTXO and rule context.
+    /// Consumers must validate it with [`Self::verified_slh_dsa_b128s_checks`].
+    /// Boxed because experimental rules are normally inactive. Never serialized.
+    pub slh_dsa_b128s_verification: Option<Box<SlhDsaB128sVerification>>,
 }
 
 impl fmt::Debug for VerifiedUnminedTx {
@@ -457,6 +464,7 @@ impl VerifiedUnminedTx {
             time: None,
             height: None,
             spent_outputs,
+            slh_dsa_b128s_verification: None,
         })
     }
 
