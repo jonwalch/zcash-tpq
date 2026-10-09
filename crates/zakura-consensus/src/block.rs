@@ -180,6 +180,9 @@ impl VerifyBlockError {
                 BlockError::WrongTransactionConsensusBranchId => {
                     consensus("block.wrong_transaction_consensus_branch_id")
                 }
+                BlockError::TooManyExperimentalSlhDsaB128sChecks { .. } => {
+                    consensus("block.experimental_slh_dsa_b128s_budget")
+                }
                 BlockError::TooManyTransparentSignatureOperations { .. } => {
                     consensus("block.too_many_transparent_signature_operations")
                 }
@@ -597,6 +600,17 @@ where
                 block.transactions.len(),
             );
 
+            // Every transaction in this attempt shares one fresh, non-refundable allowance.
+            let slh_dsa_b128s_budget =
+                network
+                    .is_experimental_slh_dsa_b128s_active(height)
+                    .then(|| {
+                        tx::SlhDsaB128sBlockBudget::new(
+                            network
+                                .experimental_slh_dsa_b128s_limits()
+                                .expect("active SLH requires explicit limits"),
+                        )
+                    });
             for (&transaction_hash, transaction) in
                 transaction_hashes.iter().zip(block.transactions.iter())
             {
@@ -611,6 +625,7 @@ where
                         known_utxos: known_utxos.clone(),
                         height,
                         time: block.header.time,
+                        slh_dsa_b128s_budget: slh_dsa_b128s_budget.clone(),
                     });
                 async_checks.push(rsp);
             }
@@ -650,6 +665,14 @@ where
                                 ),
                             },
                         );
+                    }
+                    Err(TransactionError::ExperimentalSlhDsaB128sBlockBudget { limit }) => {
+                        return Err(BlockError::TooManyExperimentalSlhDsaB128sChecks {
+                            height,
+                            hash,
+                            limit,
+                        }
+                        .into());
                     }
                     result => result.map_err(VerifyBlockError::Transaction)?,
                 };

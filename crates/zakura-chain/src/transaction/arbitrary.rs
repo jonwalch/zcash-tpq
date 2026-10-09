@@ -873,6 +873,7 @@ impl Arbitrary for VerifiedUnminedTx {
                         time: Some(time),
                         height: Some(height),
                         spent_outputs: std::sync::Arc::new(vec![]),
+                        slh_dsa_b128s_verification: None,
                     }
                 },
             )

@@ -1757,3 +1757,22 @@ fn poc_p2sh_1001_accurate_multisigs_should_stay_below_block_sigop_limit() -> Res
 
     Ok(())
 }
+
+#[test]
+fn shared_previous_outputs_preserve_the_cached_allocation() {
+    let transaction = SCRIPT_TX
+        .zcash_deserialize_into::<Arc<Transaction>>()
+        .unwrap();
+    let previous = Arc::new(vec![transparent::Output {
+        value: (212 * u64::pow(10, 8)).try_into().unwrap(),
+        lock_script: transparent::Script::new(&SCRIPT_PUBKEY),
+    }]);
+    let cached =
+        super::CachedFfiTransaction::new(transaction, previous.clone(), NetworkUpgrade::Blossom)
+            .unwrap();
+    assert!(Arc::ptr_eq(&previous, &cached.shared_previous_outputs()));
+    assert!(std::ptr::eq(
+        previous.as_ref(),
+        cached.all_previous_outputs()
+    ));
+}

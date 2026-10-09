@@ -3722,6 +3722,7 @@ async fn gbt_with(net: Network, addr: ZcashAddress) {
         time: None,
         height: None,
         spent_outputs: std::sync::Arc::new(vec![]),
+        slh_dsa_b128s_verification: None,
     };
 
     let next_fake_tip_hash =

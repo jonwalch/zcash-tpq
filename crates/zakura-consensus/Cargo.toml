@@ -30,6 +30,7 @@ progress-bar = [
 ]
 
 # Test-only features
+slh-test-observer = ["experimental-slh-dsa-b128s", "zakura-pq-slh-dsa-b-exp/test-observer"]
 internal-bench = []
 proptest-impl = ["proptest", "proptest-derive", "zakura-chain/proptest-impl", "zakura-state/proptest-impl"]
 

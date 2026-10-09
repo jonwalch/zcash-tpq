@@ -908,6 +908,29 @@ pub fn mempool_standard_input_scripts(
     Ok(())
 }
 
+/// Check relay input structure under the SLH gate selected from the candidate
+/// height. The output slice must be trusted and ordered. Returned counts are
+/// structural only; storage must require successful verified metadata.
+pub fn mempool_standard_input_scripts_with_slh_dsa_b128s(
+    tx: &Transaction,
+    spent_outputs: &[transparent::Output],
+    active: bool,
+) -> Result<u32, TransactionError> {
+    let indexes = super::slh_dsa_b128s::input_indexes(tx, spent_outputs, active)?;
+    if indexes.is_empty() {
+        mempool_standard_input_scripts(tx, spent_outputs)?;
+        Ok(0)
+    } else {
+        super::slh_dsa_b128s::structural_checks(tx, spent_outputs, &indexes)
+    }
+}
+
+/// Exact SLH template recognition for relay/storage. This does not establish
+/// activation, policy commitment knowledge or authorization validity.
+pub fn is_slh_dsa_b128s_output(output: &transparent::Output) -> bool {
+    super::slh_dsa_b128s::is_output(output)
+}
+
 /// Checks the `nConsensusBranchId` field.
 ///
 /// # Consensus
