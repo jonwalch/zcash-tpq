@@ -371,10 +371,10 @@
       "sources": []
     },
     {
-      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Preserve the reused public SubmissionUnknown error and durably retained state when the synthetic source reports HistoryUnavailable.",
       "classification": "test-only human durable fault preparation",
       "path": "crates/pq-wallet/src/payment/tests/faults.rs",
-      "sha256": "d81f8ed4a221ffe18d0089ce482d47faf9a123d52ee820708209c83f0de8f579",
+      "sha256": "fb2d5fb90b04cce07570e10c912cf90e1702555d1e988beedadbdb26dfa1cd15",
       "sources": [
         "wallet_fault_archive",
         "wallet_fault_backup",
@@ -454,14 +454,14 @@
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
       "classification": "new bounded orchestration, mock validation or public guide",
       "path": "docs/changelog/unreleased/slh-wallet-fault-controls.md",
-      "sha256": "001de70765a08da60841082d1bc5356b0f96155dc5768855fbc5ffcc4412de55",
+      "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b",
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
       "classification": "new or amended product documentation",
       "path": "docs/slh-dsa-b128s/acceptance.md",
-      "sha256": "5e822894b600f09d93b85f2b0b1aabb692d454480af6b109e296bf7d08f47871",
+      "sha256": "9aeb4b91b6c76205f131759a8e6ff58702a1d1dceab56300048945ceb9ab5b4d",
       "sources": []
     },
     {
@@ -479,7 +479,7 @@
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
       "classification": "new bounded orchestration, mock validation or public guide",
       "path": "docs/slh-dsa-b128s/fault-controls.md",
-      "sha256": "1c1e8211b3844e49f998f2c6590d0d78458cfa6a73d76d653d626a6cf10ea12c",
+      "sha256": "96f08737be6e15744a2f38e3a87bb25cdd8eb0cb765cdafa3a17cd1d759be688",
       "sources": []
     },
     {
@@ -620,10 +620,10 @@
       ]
     },
     {
-      "adaptation": "Reuse genuine fixture transport, saved-byte relay/budget/history comparisons and actual chain replay. Adapt to SLH16/64 limits, current activation gates and isolated public keys. Distinct mature rollback-control parent and state reconciliation respect inherited rejected-RPC retry semantics.",
+      "adaptation": "Reuse genuine fixture transport, saved-byte relay/budget/history comparisons and actual chain replay. Adapt to SLH16/64 limits, current activation gates and isolated public keys. Distinct mature rollback-control parent and state reconciliation respect inherited rejected-RPC retry semantics. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd",
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288",
       "sources": [
         "relay",
         "history",
@@ -763,10 +763,10 @@
       "sources": []
     },
     {
-      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
       "classification": "new focused offline test adapter",
       "path": "tests/slh-dsa-b128s/acceptance/test_node_reentry.py",
-      "sha256": "3ae362bb6ca450ef7b104c0186f1ac29749cf7b0f0df18caed09d75f51c88a7d",
+      "sha256": "087de1d7fe5eb261bf29354952a305b2fa8123424c2dec862aca2708ab330e03",
       "sources": []
     },
     {

@@ -1122,7 +1122,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
-      "sha256": "d81f8ed4a221ffe18d0089ce482d47faf9a123d52ee820708209c83f0de8f579"
+      "sha256": "fb2d5fb90b04cce07570e10c912cf90e1702555d1e988beedadbdb26dfa1cd15"
     },
     {
       "disposition": "adapted",
@@ -1996,7 +1996,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
-      "sha256": "001de70765a08da60841082d1bc5356b0f96155dc5768855fbc5ffcc4412de55"
+      "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b"
     },
     {
       "disposition": "new",
@@ -2041,7 +2041,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "5e822894b600f09d93b85f2b0b1aabb692d454480af6b109e296bf7d08f47871"
+      "sha256": "9aeb4b91b6c76205f131759a8e6ff58702a1d1dceab56300048945ceb9ab5b4d"
     },
     {
       "disposition": "new",
@@ -2077,7 +2077,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
-      "sha256": "1c1e8211b3844e49f998f2c6590d0d78458cfa6a73d76d653d626a6cf10ea12c"
+      "sha256": "96f08737be6e15744a2f38e3a87bb25cdd8eb0cb765cdafa3a17cd1d759be688"
     },
     {
       "disposition": "new",
@@ -2362,7 +2362,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     {
       "disposition": "new",
@@ -2420,7 +2420,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "f6903cec9af6cc3db21322c53c096e18cf841866140e632bf5fca712e3c3894a"
+      "sha256": "a5c037cabc152f41aaad2a53cbc1e557e2de27918222494bb5281409eb8c7b2a"
     },
     {
       "disposition": "new",
@@ -2520,7 +2520,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "3ae362bb6ca450ef7b104c0186f1ac29749cf7b0f0df18caed09d75f51c88a7d"
+      "sha256": "087de1d7fe5eb261bf29354952a305b2fa8123424c2dec862aca2708ab330e03"
     },
     {
       "disposition": "new",
@@ -2653,7 +2653,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "1c1485d5175f6b2755584e093020172743b9ae517bce0e0cd6bdf4d83d1fd241"
+      "sha256": "cef4b5160be49ba07165a4799e01f1c2a3c73349b072c568fba492813a832804"
     },
     {
       "disposition": "new",

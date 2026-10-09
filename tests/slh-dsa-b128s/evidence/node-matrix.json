@@ -148,7 +148,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-64-65": {
       "anchor": "def block_controls(",
@@ -204,7 +204,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-mixed": {
       "anchor": "def mixed_controls(",
@@ -239,7 +239,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-quorum-substitution": {
       "anchor": "def authorization_variants(",
@@ -253,14 +253,14 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-replay": {
       "anchor": "if args.finalized_history:",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-same-txid": {
       "anchor": "receipt[\"same_txid_reentry\"]",
@@ -323,7 +323,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-slh-switch": {
       "anchor": "def slh_compatibility(",
@@ -344,7 +344,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd"
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
     },
     "human-unsupported-mixed": {
       "anchor": "def mixed_artifacts(",
@@ -1443,5 +1443,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "c9b0d0f5b8506162018fe3d11166795e43530e67"
+  "source_checkpoint": "8c9fb455ab16ce9a346002129bc4e26c03016c65"
 }
