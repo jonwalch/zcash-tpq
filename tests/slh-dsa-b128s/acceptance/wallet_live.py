@@ -111,25 +111,50 @@ class Demo:
             roots.append(root)
         require(len({row["wallet_id"] for row in originals}) == participants, "independent_cosigners")
         entries = []
+        inventories = []
+        current = list(originals)
+        for root in roots:
+            public = root.parent / "inventory-0.json"
+            self.cli("export", root, public, secret=True)
+            inventories.append(public)
+        generation = 0
         for role in (0, 1):
             for index in range(2):
                 keys = []
+                exchanges = []
+                role_name = "receive" if role == 0 else "change"
                 for root, original in zip(roots, originals):
-                    public = object_output(self.cli("pubkey", root, "receive" if role == 0 else "change",
-                                                    index, secret=True))
-                    require(public["wallet_id"] == original["wallet_id"], "derived_owner")
+                    key_path = root.parent / f"key-{role}-{index}.json"
+                    exported = object_output(self.cli("key-export", root, role_name, index, key_path, secret=True))
+                    public = exported["exchange"]
+                    expected_fingerprint = hashlib.sha256(
+                        b"ZcashTransparentPQ/experimental/slh-dsa-b-128s/key-exchange/v1\0"
+                        + canonical(public)).hexdigest()
+                    require(exported["fingerprint"] == expected_fingerprint
+                            and key_path.read_bytes() == canonical(public), "key_exchange_binding")
+                    require(public["wallet_id"] == original["wallet_id"]
+                            and public["role"] == role and public["index"] == index, "derived_owner")
                     keys.append((key_commitment(bytes.fromhex(public["public_key_hex"])),
                                  {"account": 0, "index": index, "wallet_id": public["wallet_id"]}))
+                    exchanges.extend([key_path, expected_fingerprint])
                 keys.sort(key=lambda item: item[0])
                 require(len(set(key for key, _ in keys)) == participants, "distinct_cosigner_keys")
                 entries.append({"role": role, "origins": [origin for _, origin in keys],
                     "policy_hex": (bytes([1, 247, threshold, participants])
                                    + b"".join(key for key, _ in keys)).hex()})
+                generation += 1
+                for slot, root in enumerate(roots):
+                    candidate = dict(current[slot], entries=list(entries), revision=generation)
+                    candidate["receive_end" if role == 0 else "change_end"] = index + 1
+                    self.oracle.check_manifest(candidate)
+                    destination = root.parent / f"inventory-{generation}.json"
+                    prepared = object_output(self.cli("enroll-prepare", inventories[slot], role_name,
+                                                      threshold, destination, *exchanges))
+                    require(prepared["inventory"] == candidate and destination.read_bytes() == canonical(candidate)
+                            and prepared["fingerprint"] == fingerprint(candidate), "prepared_enrollment")
+                    current[slot], inventories[slot] = candidate, destination
         group = []
-        for root, original in zip(roots, originals):
-            inventory = dict(original, entries=entries, receive_end=2, change_end=2, revision=1)
-            self.oracle.check_manifest(inventory)
-            public = write_json(root.parent / "inventory.json", inventory)
+        for root, inventory, public in zip(roots, current, inventories):
             backup = root.parent / "wallet.tpq"
             self.cli("enroll", root, public, fingerprint(inventory), backup, secret=True)
             root.unlink()
@@ -162,7 +187,7 @@ class Demo:
     def payment(self, group, recipient, version, inputs, directory, *, all_value=None, reject=False):
         directory.mkdir(mode=0o700)
         threshold = bytes.fromhex(group[0].manifest["entries"][0]["policy_hex"])[2]
-        participants = len(group)
+        participants = bytes.fromhex(group[0].manifest["entries"][0]["policy_hex"])[3]
         auth = self.oracle.authorization_bytes(threshold, participants)
         input_size = 36 + len(self.oracle.compact_size(auth)) + auth + 4
         fee = 400 * max(2, (input_size * inputs + 149) // 150)
@@ -192,7 +217,18 @@ class Demo:
             endpoint = self.nodes[index % 2].address
             independently_reviewed = object_output(self.cli("review", signer.backup, signer.store, endpoint,
                                                             intent, proposal_path, secret=True))
-            require(independently_reviewed == review, "independent_approval")
+            require({key: value for key, value in independently_reviewed.items() if key != "local_change"}
+                    == {key: value for key, value in review.items() if key != "local_change"},
+                    "independent_approval")
+            local = independently_reviewed["local_change"]
+            if all_value is None:
+                entry = proposal["outputs"][1]["entry"]
+                origin = next(origin for origin in entry["origins"]
+                              if origin["wallet_id"] == signer.manifest["wallet_id"])
+                require(local is not None and local["local_index"] == origin["index"]
+                        and local["advancement"] is None, "independent_local_change")
+            else:
+                require(local is None, "unexpected_no_change_advancement")
             refused = directory / f"refused-{index}"
             self.cli("sign", signer.backup, signer.store, endpoint, intent, proposal_path,
                      "00" * 32, refused, secret=True, success=False)
@@ -213,6 +249,15 @@ class Demo:
                 shutil.copyfile(path, target)
                 target.chmod(0o600)
             signed.append(signer)
+        insufficient = directory / "subquorum"
+        insufficient.mkdir(mode=0o700)
+        for path in sorted(collected.iterdir())[:max(0, threshold - 1)]:
+            shutil.copyfile(path, insufficient / path.name)
+            (insufficient / path.name).chmod(0o600)
+        self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, intent, proposal_path,
+                 insufficient, secret=True, success=False)
+        rejected_export = self.export(owner, review["proposal_id"], directory / "subquorum-export")
+        require(not (rejected_export / "signed-transaction.hex").exists(), "subquorum_assembled_transaction")
         self.cli("assemble", owner.backup, owner.store, self.nodes[0].address, intent, proposal_path,
                  collected, secret=True)
         exported = self.export(owner, review["proposal_id"], directory / "export")
@@ -226,7 +271,7 @@ class Demo:
         directory.mkdir(mode=0o700)
         receipts, snapshots = [], []
         saved = []
-        for index, signer in enumerate(group):
+        for index, signer in enumerate(group[:len(payment["signers"])]):
             snapshot = directory / f"snapshot-{index}"
             receipt = object_output(self.cli("snapshot-save", signer.backup, signer.store, snapshot, secret=True))
             receipts.append(receipt)
@@ -323,7 +368,7 @@ def execute(args, artifacts, receipt):
             parent = authenticate_coinbase(network.nodes, 1, information["script_hex"])
             funding = host_call(args.host, "classical-spend", recipe={
                 "kind": args.classical, "transaction_version": args.version,
-                "lock_time": network.a.tip()[0], "expiry_height": network.a.tip()[0] + 20,
+                "lock_time": 0, "expiry_height": network.a.tip()[0] + 20,
                 "parent_hex": parent["parent_hex"], "output_index": parent["output_index"],
                 "outputs": [{"value_zat": FUNDING_VALUE,
                              "script_hex": lock_script(entry_at(group[0].manifest, 0, 0))}
@@ -361,6 +406,16 @@ def execute(args, artifacts, receipt):
                 group, receipt["recovery"] = demo.recover(group, payment, private / "recovery")
                 receipt["restart"] = network.restart()
                 receipt["payment"] = submit(demo, network, group[0], payment)
+                proposal_id = payment["review"]["proposal_id"]
+                demo.cli("payment-archive", group[0].backup, group[0].store,
+                         network.a.address, proposal_id, secret=True)
+                archived = demo.export(group[0], proposal_id, private / "archived-export")
+                require((archived / "signed-transaction.hex").read_text() == payment["raw"], "archived_exact_bytes")
+                demo.cli("payment-resume", group[0].backup, group[0].store,
+                         network.a.address, proposal_id, secret=True)
+                resumed = demo.export(group[0], proposal_id, private / "resumed-export")
+                require((resumed / "signed-transaction.hex").read_text() == payment["raw"], "resumed_exact_bytes")
+                receipt["archive_resume"] = {"proposal_id": proposal_id, "exact_bytes": True}
                 balance = demo.sync(group[0].store)["scan"]["confirmed_zatoshis"]
                 require(balance == payment["review"]["change_value"], "restored_change_balance")
                 following = demo.payment(group, recipient, args.version, 1, private / "after-recovery", all_value=balance)
