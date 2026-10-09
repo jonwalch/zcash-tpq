@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "scope": "Synthetic offline digest/message controls; no proof validity or signature/node acceptance claim",
+  "upstream_repository": "https://github.com/zakura-core/zakura",
+  "upstream_commit": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+  "upstream_path": "crates/zakura-chain/src/transaction/tests/ironwood_v6_tx_hash.rs",
+  "original_fixture_repository": "https://github.com/valargroup/zcash-test-vectors",
+  "original_fixture_commit": "16b5d0cee253e9947cbd9860f2ec2be1633d6484",
+  "original_fixture_path": "test-vectors/rust/ironwood_v6_tx_hash.rs",
+  "reference_dependencies": [
+    {
+      "name": "zakura-primitives",
+      "version": "2.2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "1799865d3780d60184209d04132037d4179e3fa6dbf9daf525966a967a0472c4"
+    },
+    {
+      "name": "zakura-protocol",
+      "version": "2.2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "9a193663d58f686065bd3f611ca9e13c1063b5c7a80546a14e0b0c86896531b3"
+    },
+    {
+      "name": "zakura-transparent",
+      "version": "2.2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "checksum": "7e2f8ca7bb7756d10bfa4a63e9438794bd885e4da9fe3fce040d758d4d9a1624"
+    }
+  ],
+  "fixtures": [
+    {
+      "scenario": "sapling_anchor_a",
+      "path": "data/sapling-source.hex",
+      "file_sha256": "67ed76142b315d0383967b025b91e41f91b8eae89a657be33c5f825ba67432c1",
+      "wire_sha256": "7d6b04c00d8e9692265b2f27c075e4ecdbf2923b3b340c5873f731e4287a3443",
+      "wire_bytes": 482
+    },
+    {
+      "scenario": "sapling_negative_value_balance",
+      "path": "data/sapling-output-source.hex",
+      "file_sha256": "15c5ca26b7e4f469087ee3e82e1d2148c3a30e66b5632bbb2df70d430b191bb4",
+      "wire_sha256": "5939acf7f65130fe1cd0b6e1774c7e29521ae5032932198d36d7b4b94f733d9f",
+      "wire_bytes": 1046
+    },
+    {
+      "scenario": "orchard_anchor_a",
+      "path": "data/orchard-source.hex",
+      "file_sha256": "8a7cd629c33af75009e730d109e35c557a334cf31b95ad663caf262ac27a4277",
+      "wire_sha256": "7160830b10db8a2a23890fc1195eb1fc2f514b0850b077957f989d4f5133b17b",
+      "wire_bytes": 6010
+    },
+    {
+      "scenario": "ironwood_anchor_a",
+      "path": "data/ironwood-source.hex",
+      "file_sha256": "94a8b31391e2a8cb7be627551dc9bbdddd11f56d071e22925f1c773df545e7a4",
+      "wire_sha256": "bc13d45333f9bd65459bd9e1232913b8f64ef2fe225565f0f3558d0d41535e9e",
+      "wire_bytes": 6010
+    }
+  ]
+}
