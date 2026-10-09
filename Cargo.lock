@@ -5627,7 +5627,6 @@ dependencies = [
  "zakura-proofs",
  "zakura-protocol",
  "zakura-sapling-crypto",
- "zcash_note_encryption",
 ]
 
 [[package]]
