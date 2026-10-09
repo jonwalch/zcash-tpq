@@ -11,6 +11,20 @@ fn required_option<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "lowercase", deny_unknown_fields)]
 pub enum Request {
+    #[serde(rename = "control-funding")]
+    ControlFunding {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ClassicalRecipe,
+    },
+    #[serde(rename = "control-authorization")]
+    ControlAuthorization {
+        schema_version: u64,
+        contract: String,
+        public_fixture: bool,
+        recipe: ControlAuthorizationRecipe,
+    },
     #[serde(rename = "mixed-prepare")]
     MixedPrepare {
         schema_version: u64,
@@ -67,6 +81,25 @@ pub enum Request {
         public_fixture: bool,
         artifact: Box<Artifact>,
     },
+}
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AuthorizationVariant {
+    MissingClassicalQuorum,
+    SlhOnClassical,
+    ClassicalOnSlh,
+    CorruptSlh,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ControlAuthorizationRecipe {
+    pub transaction_hex: String,
+    pub input_index: u32,
+    pub variant: AuthorizationVariant,
+    #[serde(deserialize_with = "required_option")]
+    pub donor_transaction_hex: Option<String>,
 }
 
 #[derive(Deserialize)]

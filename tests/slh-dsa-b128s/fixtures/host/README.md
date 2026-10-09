@@ -13,6 +13,13 @@ controls and transparent block construction. See the
 Their fixed public ECDSA test scalars are explicitly attributable and are never
 operational wallet keys. Original corpus operations and bytes remain unchanged.
 
+The [transparent acceptance controls](../../../../docs/slh-dsa-b128s/transparent-controls.md)
+add explicit public `control-funding` and `control-authorization` operations,
+unsupported-template modes of `mixed-prepare`/`mixed-assemble`, and NU7
+pre-SLH heights 105–109 for `control-block`. They reuse the same native codec,
+classical signer and block builder. Ordinary `classical-spend` retains its original
+output allowlist; no alternate signing backend or operational key is added.
+
 Select this package explicitly for focused checks:
 
 ```sh

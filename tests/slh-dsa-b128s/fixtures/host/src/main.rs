@@ -5,6 +5,7 @@ mod classical;
 mod controls;
 mod model;
 mod strict;
+mod transparent;
 
 use model::*;
 use serde_json::{json, Value};
@@ -661,6 +662,27 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
 }
 fn execute(request: Request) -> Result<(&'static str, Value)> {
     match request {
+        Request::ControlFunding {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok(("control-funding", classical::control_spend(&recipe)?))
+        }
+        Request::ControlAuthorization {
+            schema_version,
+            contract,
+            public_fixture,
+            recipe,
+        } => {
+            envelope(schema_version, &contract, public_fixture)?;
+            Ok((
+                "control-authorization",
+                transparent::authorization(&recipe)?,
+            ))
+        }
         Request::MixedPrepare {
             schema_version,
             contract,
@@ -842,6 +864,8 @@ fn handle(bytes: &[u8]) -> Value {
                     "mixed-prepare",
                     "mixed-assemble",
                     "control-block",
+                    "control-funding",
+                    "control-authorization",
                 ]
                 .contains(&op)
                 {

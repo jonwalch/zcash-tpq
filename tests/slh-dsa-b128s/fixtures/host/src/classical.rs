@@ -112,6 +112,15 @@ pub(super) fn signature(
 }
 
 pub(super) fn spend(recipe: &ClassicalRecipe) -> Result<Value> {
+    spend_inner(recipe, false)
+}
+
+/// Explicit negative-control funding; no alternate authorization backend exists.
+pub(super) fn control_spend(recipe: &ClassicalRecipe) -> Result<Value> {
+    spend_inner(recipe, true)
+}
+
+fn spend_inner(recipe: &ClassicalRecipe, unsupported_templates: bool) -> Result<Value> {
     require(
         matches!(recipe.transaction_version, 5 | 6)
             && recipe.lock_time < 500_000_000
@@ -143,7 +152,11 @@ pub(super) fn spend(recipe: &ClassicalRecipe) -> Result<Value> {
         let bytes = bounded_hex(&output.script_hex, 35)?;
         require(
             bytes == lock.as_raw_bytes()
-                || (bytes.len() == 35 && bytes[..2] == [0x53, 0x20] && bytes[34] == 0xc0),
+                || (bytes.len() == 35
+                    && bytes[1] == 0x20
+                    && bytes[34] == 0xc0
+                    && (bytes[0] == 0x53
+                        || unsupported_templates && matches!(bytes[0], 0x51 | 0x52))),
             "schema",
             "classical_destination",
         )?;
@@ -296,6 +309,23 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn unsupported_templates_require_the_explicit_public_control_operation() {
+        for prefix in [0x51, 0x52] {
+            let mut recipe = fixture("multisig", 5);
+            recipe.outputs[0].script_hex = format!("{prefix:02x}20{}c0", "11".repeat(32));
+            assert_eq!(spend(&recipe).unwrap_err().reason, "classical_destination");
+            assert_eq!(control_spend(&recipe).unwrap()["ecdsa_checks"], 2);
+            recipe.outputs[0].script_hex.push_str("00");
+            assert!(control_spend(&recipe).is_err());
+        }
+        let mut recipe = fixture("single", 6);
+        recipe.outputs[0].value_zat = 2402;
+        assert!(spend(&recipe).is_ok()); // Dust is relay policy, not fixture validity.
+        recipe.outputs[0].script_hex = format!("5020{}c0", "11".repeat(32));
+        assert!(control_spend(&recipe).is_err());
+    }
+
     #[test]
     fn funding_rejects_foreign_parents_and_unbounded_shapes() {
         let mut recipe = fixture("single", 5);

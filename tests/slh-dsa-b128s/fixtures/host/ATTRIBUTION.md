@@ -44,3 +44,15 @@ It neither creates shielded proofs nor imports other PQ backends. Source/target
 hashes and adaptations are recorded in [`acceptance/sources.json`](../../acceptance/sources.json). Parent bytes
 received by any helper are untrusted: human drivers authenticate actual mature
 outpoints, values, scripts and chain tips through both nodes before use.
+
+The transparent controls in `transparent.rs` adapt the authorization-only
+mutation from pinned research
+`node/zakura/crates/zakura-consensus/src/transaction/pq_test_support.rs::bad_pq`.
+They use the existing SLH codec to preserve effects/TXID while corrupting a
+signature, and add narrow public multisig quorum and signature-family substitution
+cases. No alternate backend is imported. `control-funding` reuses the same public
+classical signer and adds exact unsupported `0x51`/`0x52` templates only for these
+negative cases. Ordinary `classical-spend` remains unchanged. Both-order mixed
+controls and NU7 pre-SLH block construction reuse `controls.rs`; explicit height
+105–109 coverage is an adaptation for retaining genuine funding across rollback.
+See [transparent-controls.md](../../../../docs/slh-dsa-b128s/transparent-controls.md).

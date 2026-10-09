@@ -47,9 +47,23 @@ fn mixed(recipe: &MixedRecipe) -> Result<(Transaction, Arc<Vec<ChainOutput>>, Po
     })?;
     let classical = parent(&recipe.classical)?;
     let slh = parent(&recipe.slh)?;
-    let (lock, _, _) = classical::scripts(&recipe.kind)?;
+    let (other_lock, lock) = match recipe.kind.as_str() {
+        "unsupported51" | "unsupported52" => {
+            let mut bytes = policy.lock_script().as_raw_bytes().to_vec();
+            bytes[0] = if recipe.kind == "unsupported51" {
+                0x51
+            } else {
+                0x52
+            };
+            (Script::new(&bytes), classical::scripts("single")?.0)
+        }
+        _ => {
+            let lock = classical::scripts(&recipe.kind)?.0;
+            (lock.clone(), lock)
+        }
+    };
     require(
-        classical.previous_output.lock_script == lock
+        classical.previous_output.lock_script == other_lock
             && slh.previous_output.lock_script == policy.lock_script()
             && classical.outpoint != slh.outpoint,
         "schema",
@@ -136,13 +150,16 @@ pub(super) fn mixed_assemble(recipe: &MixedRecipe, entry: &Record) -> Result<Val
         Script::new(&authorization.encode()),
     );
     let classical_index = 1 - index;
-    let signature = classical::signature(
-        &transaction,
-        previous.clone(),
-        &recipe.kind,
-        classical_index,
-    )?;
-    install(&mut transaction, classical_index, signature);
+    let unsupported = matches!(recipe.kind.as_str(), "unsupported51" | "unsupported52");
+    if !unsupported {
+        let signature = classical::signature(
+            &transaction,
+            previous.clone(),
+            &recipe.kind,
+            classical_index,
+        )?;
+        install(&mut transaction, classical_index, signature);
+    }
     TransactionContext::new(
         &transaction,
         NetworkDomain::Regtest,
@@ -167,7 +184,7 @@ pub(super) fn mixed_assemble(recipe: &MixedRecipe, entry: &Record) -> Result<Val
         json!({"material":"public-test-only","transaction_hex":hex::encode(&bytes),
         "transaction_sha256":strict::hash(&bytes),"txid":transaction.hash().to_string(),
         "slh_input_index":index,"classical_input_index":classical_index,
-        "slh_checks":1,"ecdsa_checks":if recipe.kind == "multisig" {2} else {1},
+        "slh_checks":1,"ecdsa_checks":if unsupported {0} else if recipe.kind == "multisig" {2} else {1},
         "message_hex":hex::encode(context.message()),"outputs":output_fields(&transaction)}),
     )
 }
@@ -217,7 +234,7 @@ pub(super) fn block(recipe: &ControlBlockRecipe) -> Result<Value> {
         _ => return fail("schema", "block_height"),
     };
     require(
-        height.0 >= 110 && template["height"].as_u64() == Some(u64::from(height.0)),
+        height.0 >= 105 && template["height"].as_u64() == Some(u64::from(height.0)),
         "schema",
         "block_height",
     )?;
@@ -384,6 +401,49 @@ mod tests {
         }
     }
     #[test]
+    fn unsupported_mixed_templates_bind_both_input_orders_without_other_backends() {
+        for version in [5, 6] {
+            for first in [false, true] {
+                for prefix in [0x51, 0x52] {
+                    let mut request = recipe(first, version);
+                    request.kind = format!("unsupported{prefix:02x}");
+                    let mut parent =
+                        decode_transaction(&hex::decode(&request.classical.parent_hex).unwrap())
+                            .unwrap();
+                    let mut bytes = parent.outputs()[1].lock_script.as_raw_bytes().to_vec();
+                    bytes[0] = prefix;
+                    match &mut parent {
+                        Transaction::V5 { outputs, .. } | Transaction::V6 { outputs, .. } => {
+                            outputs[0].lock_script = Script::new(&bytes)
+                        }
+                        _ => unreachable!("fixture v5/v6"),
+                    }
+                    let raw = hex::encode(parent.zcash_serialize_to_vec().unwrap());
+                    request.classical.parent_hex = raw.clone();
+                    request.slh.parent_hex = raw;
+                    assert_eq!(
+                        mixed_prepare(&request).unwrap()["slh_input_index"],
+                        usize::from(first)
+                    );
+                    let (_, previous, _, slh_index) = mixed(&request).unwrap();
+                    assert_eq!(
+                        previous[1 - slh_index].lock_script.as_raw_bytes()[0],
+                        prefix
+                    );
+                    let entry = Record {
+                        signer_index: 0,
+                        public_key_hex: request.public_key_hex.clone(),
+                        signature_hex: "00".repeat(7856),
+                    };
+                    assert!(mixed_assemble(&request, &entry).is_err());
+                    request.kind = "unsupported50".into();
+                    assert!(mixed_prepare(&request).is_err());
+                }
+            }
+        }
+    }
+
+    #[test]
     fn mixed_parents_and_partial_are_checked() {
         let mut recipe = recipe(true, 5);
         recipe.classical.output_index = 1;
@@ -411,13 +471,16 @@ mod tests {
 
     #[test]
     fn control_block_roundtrips_and_commits_exact_transactions_and_fee_share() {
-        for version in [5, 6] {
+        for (version, height) in [5, 6]
+            .into_iter()
+            .flat_map(|v| [104, 105, 106, 107, 108, 109, 111].map(|h| (v, h)))
+        {
             let (lock, _, _) = classical::scripts("single").unwrap();
             let (mut coinbase, _) = TransactionRecipe {
                 version,
                 network_upgrade: NetworkUpgrade::Nu7,
                 lock_time: LockTime::Height(Height(0)),
-                expiry_height: Height(111),
+                expiry_height: Height(height),
                 spends: vec![],
                 outputs: vec![chain_output(100_000_000, lock.as_raw_bytes().to_vec()).unwrap()],
             }
@@ -425,7 +488,7 @@ mod tests {
             match &mut coinbase {
                 Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. } => {
                     inputs.push(ChainInput::Coinbase {
-                        height: Height(111),
+                        height: Height(height),
                         data: vec![],
                         sequence: u32::MAX,
                     })
@@ -436,7 +499,7 @@ mod tests {
             let transaction_bytes = transaction.zcash_serialize_to_vec().unwrap();
             let request = ControlBlockRecipe {
                 template: json!({"transactions":[],"coinbasetxn":{"data":hex::encode(coinbase.zcash_serialize_to_vec().unwrap())},
-                    "height":111,"version":4,"previousblockhash":"11".repeat(32),"curtime":1_700_000_000,
+                    "height":height,"version":4,"previousblockhash":"11".repeat(32),"curtime":1_700_000_000,
                     "bits":"200f0f0f","defaultroots":{"chainhistoryroot":"22".repeat(32)}}),
                 kind: "single".into(),
                 nonce: 64,
@@ -445,6 +508,10 @@ mod tests {
                     fee_zat: 100_000,
                 }],
             };
+            if height == 104 {
+                assert_eq!(block(&request).unwrap_err().reason, "block_height");
+                continue;
+            }
             let result = block(&request).unwrap();
             let bytes = hex::decode(result["block_hex"].as_str().unwrap()).unwrap();
             let parsed = Block::zcash_deserialize(bytes.as_slice()).unwrap();
@@ -453,7 +520,11 @@ mod tests {
                 parsed.transactions[1].zcash_serialize_to_vec().unwrap(),
                 transaction_bytes
             );
-            assert_eq!(parsed.coinbase_height(), Some(Height(111)));
+            assert_eq!(parsed.coinbase_height(), Some(Height(height)));
+            assert!(parsed
+                .transactions
+                .iter()
+                .all(|transaction| { transaction.network_upgrade() == Some(NetworkUpgrade::Nu7) }));
             assert_eq!(
                 parsed.header.merkle_root,
                 parsed.transactions.iter().collect()
@@ -468,22 +539,11 @@ mod tests {
                 .bytes_in_serialized_order()
                 .into()
             );
-            let network = Network::new_regtest(RegtestParameters {
-                activation_heights: ConfiguredActivationHeights {
-                    nu6_3: Some(1),
-                    nu7: Some(105),
-                    ..Default::default()
-                },
-                ..Default::default()
-            });
+            // NU7 contributes floor(6 * aggregate_fees / 10) to NSM.
+            // This retained arithmetic answer is independent of miner_fee_share.
             assert_eq!(
                 u64::from(parsed.transactions[0].outputs()[0].value),
-                100_000_000
-                    + u64::from(miner_fee_share(
-                        Height(111),
-                        &network,
-                        100_000u64.try_into().unwrap()
-                    ))
+                100_040_000
             );
             assert_eq!(result["block_hash"], parsed.hash().to_string());
             assert_eq!(result["txids"], json!([transaction.hash().to_string()]));
