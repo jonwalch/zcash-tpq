@@ -48,10 +48,10 @@
     },
     {
       "target": "src/watch/tests/enrollment.rs",
-      "target_sha256": "3e5cc52592926e4fbe0ecbf965848123ed9c89baad19c986167785bb20c6fb06",
+      "target_sha256": "920a471768dc98c1409a6aa56fa8f965403d15c119b7b459aef7df289ff47bcf",
       "source": "crates/pq-wallet/src/watch/tests/enrollment.rs",
       "source_sha256": "e681358c7de01178704e209920b04756f294695ea38086b90f846f39ad5a1554",
-      "adaptation": "Reused authenticated multisig enrollment/failure controls with SLH roots and descriptor API."
+      "adaptation": "Reused authenticated multisig enrollment/failure controls with SLH roots, suite tag and descriptor API."
     },
     {
       "target": "src/backup_tests.rs",
