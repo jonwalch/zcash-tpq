@@ -7544,6 +7544,7 @@ dependencies = [
  "rand 0.8.6",
  "rayon",
  "serde",
+ "serde_json",
  "spandoc",
  "thiserror 2.0.18",
  "tokio",
@@ -7557,6 +7558,9 @@ dependencies = [
  "zakura-header-chain",
  "zakura-node-services",
  "zakura-orchard",
+ "zakura-pq-slh-dsa-b-exp",
+ "zakura-pq-test-support",
+ "zakura-pq-tx-context",
  "zakura-primitives",
  "zakura-proofs",
  "zakura-protocol",
@@ -7971,6 +7975,9 @@ dependencies = [
  "zakura-pq-slh-dsa-b-verify",
  "zakura-pq-test-support",
  "zakura-pq-tx-context",
+ "zakura-primitives",
+ "zakura-protocol",
+ "zakura-transparent",
 ]
 
 [[package]]
