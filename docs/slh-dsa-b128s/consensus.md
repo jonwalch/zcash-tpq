@@ -1,9 +1,9 @@
 # Experimental SLH consensus boundary
 
 Consensus library integration is present behind `experimental-slh-dsa-b128s`.
-The complete runtime support signal remains false: relay storage, mining resource
-selection and end-to-end lifecycle acceptance must be integrated before a node
-can enable configured activation. The [protocol](protocol.md) defines the bytes,
+Relay storage, mining resource selection and lifecycle source are integrated;
+compiled runtime support follows the explicit default-off feature. Daemon and
+live acceptance remain human validation gates. The [protocol](protocol.md) defines the bytes,
 activation rules and explicit limits.
 
 The existing resolver authenticates all spent outputs and returns them in input

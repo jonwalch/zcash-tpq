@@ -73,10 +73,11 @@ pub use slh_identity::{
 /// A boxed [`std::error::Error`].
 pub type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 
-/// Whether the complete experimental SLH-DSA-B-128s runtime is available.
+/// Whether this build enables the integrated experimental SLH runtime.
 ///
-/// Configuration must remain unavailable until consensus, relay, mining and
-/// state lifecycle support have been integrated and checked together.
+/// Consensus, relay, mining and state lifecycle use the same explicit Regtest
+/// configuration. Compiled capability does not assert live acceptance or
+/// construction security approval.
 pub const fn supports_experimental_slh_dsa_b128s() -> bool {
-    false
+    cfg!(feature = "experimental-slh-dsa-b128s")
 }

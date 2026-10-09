@@ -1,7 +1,7 @@
 # Experimental SLH relay and template selection
 
-The SLH library consumers use the [frozen contract](protocol.md). Complete node
-support remains disabled while runtime/lifecycle acceptance is pending.
+The SLH consumers use the [frozen contract](protocol.md). Runtime source is
+integrated behind the default-off feature; live acceptance remains pending.
 
 Relay checks exact `53 20 C32 c0` outputs before expensive authorization work.
 Funding them is nonstandard before the candidate block height reaches activation,
@@ -48,8 +48,8 @@ cargo test --locked -p zakura-rpc --lib methods::types::get_block_template::zip3
 Daemon storage tests are prepared but have not been compiled or executed by an
 agent. A human must run the daemon-package checks and live relay/mining, reset,
 reorg and lifecycle acceptance under [AGENTS.md](../../AGENTS.md). Existing mempool
-reset logic is reused. This checkpoint does not enable startup support or claim
-end-to-end node acceptance.
+reset logic is reused. Compiled feature availability does not establish end-to-end
+node acceptance.
 
 ## Source attribution
 

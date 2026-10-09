@@ -3,9 +3,10 @@
 The daemon feature `experimental-slh-dsa-b128s` selects the existing consensus
 verifier and RPC mining accounting together. It is off by default and adds no
 signer or fixture dependency. Configured activation also requires
-`zakura_consensus::supports_experimental_slh_dsa_b128s()`: that support signal
-remains false until the complete runtime release gate is cleared. Library checks
-alone do not establish daemon startup or live acceptance.
+`zakura_consensus::supports_experimental_slh_dsa_b128s()`: that support signal is
+true only when the feature is compiled. Consensus, relay, mining and lifecycle
+source are integrated. This reports experimental capability; library checks and
+source review do not establish daemon startup or live acceptance.
 
 ## Verifier identity
 
@@ -23,11 +24,11 @@ CLI parser path. Both default and feature-enabled builds recognize the query.
 | `algorithm_revision` | `b392fe82d2d9770142477a576a758a233888bc0a` |
 | `blake3_version` | `1.8.5` |
 | `verifier_compiled` | Whether consensus was compiled with the SLH feature |
-| `runtime_supported` | Whether the complete runtime startup gate is open |
+| `runtime_supported` | Whether integrated experimental runtime support is compiled |
 
 The algorithm and hash fields identify the experimental contract even when the
-verifier is disabled; inspect `verifier_compiled` and `backend` together. Runtime
-support is distinct from compiled verifier availability. The external receipt
+verifier is disabled; inspect `verifier_compiled` and `backend` together. The current integrated runtime and verifier flags follow the same explicit
+feature; neither flag establishes execution or security acceptance. The external receipt
 must bind exact source, dependency features, executable and configuration hashes.
 The identity does not assert those hashes or independently establish provenance.
 
@@ -50,7 +51,7 @@ experimental_slh_dsa_b128s_max_checks_per_block = 64
 All three SLH fields are required together. The activation height is nonzero,
 Regtest-only and strictly after NU7 and all checkpoints. Limits satisfy
 `0 < transaction <= block <= u32::MAX`. Public and custom public networks reject
-SLH fields. A build without complete runtime support refuses configured startup.
+SLH fields. A build without the feature refuses configured startup.
 
 Database and non-finalized backup paths use
 `regtest-slh-dsa-b128s-v1-hH-tT-bB`. Changing the SLH gate or either limit selects a
@@ -87,7 +88,7 @@ cargo clippy --locked -p zakura-consensus --all-targets --features slh-test-obse
 The daemon identity entry point, feature forwarding, startup refusal and mempool
 storage/reset consumers are source-reviewed only at this checkpoint. A human must
 build and execute the daemon and required live acceptance under the repository's
-[agent rules](../../AGENTS.md). Runtime activation remains unavailable here.
+[agent rules](../../AGENTS.md). Execution remains pending human validation; the default build stays disabled.
 
 ## Reused sources
 
