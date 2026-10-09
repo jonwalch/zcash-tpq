@@ -162,8 +162,23 @@ def bracket(binary, case, stage, mode, output, *, factory=Process, persist=lambd
     group["complete"] = True
 
 
+def selection(case, mode):
+    """Validate the entire requested matrix before starting any child."""
+    require(case == "all" or case in CASES, "fault_case")
+    require(mode in ("io", "kill", "both"), "fault_mode")
+    selected = CASES if case == "all" else {case: CASES[case]}
+    rows = []
+    for name, stages in selected.items():
+        can_kill = name in ("migration", "receive", "backup")
+        require(mode != "kill" or can_kill, "fault_mode")
+        modes = ("io", "kill") if mode == "both" and can_kill else ("io",) if mode == "both" else (mode,)
+        rows.extend((name, stage, selected_mode) for stage in stages for selected_mode in modes)
+    return rows
+
+
 def run(args):
     require(os.name == "posix" and hasattr(signal, "SIGKILL"), "fault_platform_unsupported")
+    selected = selection(args.case, args.mode)
     directory = args.artifacts.resolve()
     directory.mkdir(mode=0o700, parents=False, exist_ok=False)
     before = source_state()
@@ -177,16 +192,12 @@ def run(args):
     receipt = directory / "execution.json"
     write_json(receipt, record)
     try:
-        selected = CASES if args.case == "all" else {args.case: CASES[args.case]}
-        for case, stages in selected.items():
-            for stage in stages:
-                modes = ("io", "kill") if args.mode == "both" and case in ("migration", "receive", "backup") else ("io",) if args.mode == "both" else (args.mode,)
-                for mode in modes:
-                    try:
-                        bracket(binary, case, stage, mode, record["cases"],
-                                persist=lambda: write_json(receipt, record, fresh=False))
-                    finally:
-                        write_json(receipt, record, fresh=False)
+        for case, stage, mode in selected:
+            try:
+                bracket(binary, case, stage, mode, record["cases"],
+                        persist=lambda: write_json(receipt, record, fresh=False))
+            finally:
+                write_json(receipt, record, fresh=False)
         require(source_state() == before and sha256(binary) == record["binary_sha256"], "fault_source_or_binary_changed")
         record["complete"] = True
     except Exception as error:

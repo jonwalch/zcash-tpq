@@ -122,6 +122,13 @@ class FaultControlsTests(unittest.TestCase):
         with self.assertRaisesRegex(AcceptanceError, "fault_case"):
             self.run_case(stage="not-a-stage")
 
+    def test_complete_matrix_is_validated_before_any_execution(self):
+        self.assertEqual(len(controls.selection("all", "both")), 59)
+        self.assertEqual(len(controls.selection("all", "io")), 31)
+        self.assertEqual(controls.selection("entropy", "both"), [("entropy", "BeforeSign", "io")])
+        with self.assertRaisesRegex(AcceptanceError, "fault_mode"):
+            controls.selection("all", "kill")
+
     def test_distinct_attempt_tokens_are_required(self):
         with patch.object(controls.secrets, "token_hex", return_value="ab" * 16):
             with self.assertRaisesRegex(AcceptanceError, "fault_reused_attempt"):

@@ -254,11 +254,14 @@ impl RngCore for BeforeSign<'_> {
         if self.hook.request.case == "final-publication" && self.hook.request.mode == "io" {
             // As in the pinned final-publication regression: scanning and reservation
             // are already durable; the final commit's original path is now absent.
-            fs::rename(
-                self.hook.request.path("watch"),
-                self.hook.request.path("relocated"),
-            )
-            .expect("private prepared watcher must relocate successfully");
+            assert!(
+                fs::rename(
+                    self.hook.request.path("watch"),
+                    self.hook.request.path("relocated"),
+                )
+                .is_ok(),
+                "private prepared watcher must relocate successfully"
+            );
             self.hook
                 .request
                 .receipt("reached", &["named_stage_reached"]);

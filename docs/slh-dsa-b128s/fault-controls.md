@@ -32,6 +32,7 @@ python3 tests/slh-dsa-b128s/acceptance/fault_controls.py --human-run \
 Repeat with `--case receive`, `backup`, `entropy`, `final-publication` and `quota`,
 using a fresh artifact directory each time. `--mode io` runs returned-error
 controls; `--mode kill` is supported only for migration, receive and backup.
+Requests combining `--case all --mode kill` refuse before starting any child.
 `--mode both` selects both mechanisms where supported and the returned-error
 mechanism for the other cases. `--case all --mode both` covers all 59 named
 case/mechanism combinations. Each is bracketed by successful independent runs
