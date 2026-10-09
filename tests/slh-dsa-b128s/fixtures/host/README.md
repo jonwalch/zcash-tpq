@@ -78,3 +78,11 @@ or operational secret-key input is supported. The ordinary `control-block`
 operation keeps its transparent-only restriction. Default host builds and normal
 node dependency graphs do not enable this feature. Focused feature tests validate
 schemas/parents before proving; no proof-generation test runs automatically.
+
+The same opt-in feature adds `shielded-spend-funding`, `shielded-spend-prepare`,
+`shielded-spend-finalize` and `shielded-spend-block` for
+[genuine note and anchor controls](../../../../docs/slh-dsa-b128s/shielded-spend-controls.md).
+Witnesses come from bounded canonical node history and fixed public fixture
+identities. The separate Orchard funding operation is v5 NU6.2 only; ordinary
+signing remains NU7. Existing transparent and output-only block restrictions are
+preserved. The node and wallet do not depend on these fixture operations.

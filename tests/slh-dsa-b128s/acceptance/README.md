@@ -33,3 +33,11 @@ separate human drivers. The shielded host feature uses pinned local proving
 parameters; it never downloads them. The ignored wallet test driver reuses
 private write-stage hooks, with no operational fault flags. Both remain inert
 in the offline suite. Their guides state the exact limits and pending execution.
+
+[Genuine shielded spends and anchors](../../../docs/slh-dsa-b128s/shielded-spend-controls.md)
+reuse actual node history for note recovery and witnesses, and retain the exact
+authorization across causal anchor rollback and reentry. The separate
+[node process-crash driver](../../../docs/slh-dsa-b128s/crash-controls.md) checks
+isolated admitted/mined/reorg checkpoints and saved-byte replay. These are opt-in
+drivers with explicit build receipts; the offline tests mock all proof, process,
+signal and RPC boundaries. No power-loss or internal database guarantee is implied.

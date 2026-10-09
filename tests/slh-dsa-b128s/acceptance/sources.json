@@ -217,6 +217,65 @@
       "sha256": "3157b7dec0e7d2cae7914c3d829c6141a4a03041a942807b4ad9a4d9da0eed8b"
     },
     {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_fixture",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_spend_fixture.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "8b1a0e0bb0abd1f0945c270f11a330f601c9675da900091d17c84e37bd3a03db",
+      "use": "selective reuse"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_fixture_python",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_ironwood_spend_fixture.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "ccf74ea84c9b35cc27a8a1882513ef5d53ea20203b714e597308d125d1f817ac"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_fixture_tests",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/test_pq_ironwood_spend_fixture.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "3aeda0b19a677c2ef90020768ce0d853f0daafc682cdfb8769c35ff369af47ea"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_history",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_spend/history.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "ad80f4dd6f3ae1dd0c760d83bb43c5466d46f2f7da1585a7c644e0eed9d5e577",
+      "use": "selective reuse"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_live",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_ironwood_spend_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "00f1b2c2401a63bf8483610a0d3b8e3974978a99e5f0b5b4599c6b821e03b319"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_live_tests",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/test_pq_ironwood_spend_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "c246f08c3b94d095ccce6cbf21d4ca34eb953b8e44cd3f8df3a40e6961f5031e"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_state_reference",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_spend_state.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "93581188733137a5a91aa00344d9ba5fb9a496e94370a9d2c9a0bf280507aece",
+      "use": "inspected-only; no import"
+    },
+    {
       "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
       "id": "terminal",
       "license": "MIT OR Apache-2.0",
@@ -378,6 +437,13 @@
       "sources": []
     },
     {
+      "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
+      "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80",
+      "sources": []
+    },
+    {
       "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "docs/changelog/unreleased/slh-transparent-controls.md",
@@ -395,8 +461,19 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
       "classification": "new or amended product documentation",
       "path": "docs/slh-dsa-b128s/acceptance.md",
-      "sha256": "8ff351676161b5583514db4809303c529a1fc740685a61d432c631f64d603285",
+      "sha256": "b6df8c53e698d2a4846ec921c8c4048df037105fa95408940bed52880c8e6697",
       "sources": []
+    },
+    {
+      "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
+      "classification": "attributable bounded process-crash acceptance adapter",
+      "path": "docs/slh-dsa-b128s/crash-controls.md",
+      "sha256": "e83f6ff25f55fd1a2184d14fe3fde5e6d22548bd5237b314ffed2e08c155369f",
+      "sources": [
+        "history",
+        "relay",
+        "rpc_node"
+      ]
     },
     {
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
@@ -434,6 +511,18 @@
       "sources": []
     },
     {
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation.",
+      "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
+      "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
+      "sha256": "a523a41ac898888c3bfb8462b0574990930775ef3a4eb4166222865e03a03734",
+      "sources": [
+        "shielded_spend_fixture_python",
+        "shielded_spend_fixture_tests",
+        "shielded_spend_live",
+        "shielded_spend_live_tests"
+      ]
+    },
+    {
       "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "docs/slh-dsa-b128s/transparent-controls.md",
@@ -448,10 +537,10 @@
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/acceptance/README.md",
-      "sha256": "a6444cf2053792b2cc85213184499fc0a9c480ec0a95745a17aab538cfa7f342",
+      "sha256": "3cf35d020c2f86b9d3a9f89e439cffbdcd6795241d3472dad195810e31dcae43",
       "sources": []
     },
     {
@@ -472,6 +561,17 @@
       "sources": [
         "build",
         "provenance",
+        "rpc_node"
+      ]
+    },
+    {
+      "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
+      "classification": "attributable bounded process-crash acceptance adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/crash_controls.py",
+      "sha256": "c73ba72b9d817831b2f1b7f12161df3747add1fed72a70b93d925bfdce653389",
+      "sources": [
+        "history",
+        "relay",
         "rpc_node"
       ]
     },
@@ -577,6 +677,18 @@
       ]
     },
     {
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation.",
+      "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "sha256": "58bce6a669fcdfe02618e1c49a23edac5437f9780caaee6facea6eb7ebce83a8",
+      "sources": [
+        "shielded_spend_fixture_python",
+        "shielded_spend_fixture_tests",
+        "shielded_spend_live",
+        "shielded_spend_live_tests"
+      ]
+    },
+    {
       "adaptation": "Reuse PTY password exchange and terminal echo/restoration checks; explicit binary replaces global research executable, with bounded transcript and fixed public errors.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/terminal.py",
@@ -607,6 +719,17 @@
       "path": "tests/slh-dsa-b128s/acceptance/test_build_tools.py",
       "sha256": "50c5854a36743ca0cffba06fab650989e6939a9f78b2dcd5146b9314373634d6",
       "sources": []
+    },
+    {
+      "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
+      "classification": "attributable bounded process-crash acceptance adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_crash_controls.py",
+      "sha256": "12003a9a3f7809b6866d33fc317d2c8834281f2ee4fe779e53f64eba4055c94a",
+      "sources": [
+        "history",
+        "relay",
+        "rpc_node"
+      ]
     },
     {
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
@@ -666,6 +789,18 @@
       "path": "tests/slh-dsa-b128s/acceptance/test_shielded_controls.py",
       "sha256": "4e02f818839abbf01df59e4744b8e5ed00f5c7281cab815e2455eb9778dba99c",
       "sources": []
+    },
+    {
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation.",
+      "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
+      "path": "tests/slh-dsa-b128s/acceptance/test_shielded_spend_controls.py",
+      "sha256": "23544f470eacfdda83cc2db05397d4bf9da709a3e15ff0f943e97bea3660023b",
+      "sources": [
+        "shielded_spend_fixture_python",
+        "shielded_spend_fixture_tests",
+        "shielded_spend_live",
+        "shielded_spend_live_tests"
+      ]
     },
     {
       "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
@@ -728,10 +863,10 @@
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Document separate feature-gated shielded operations, unchanged transparent defaults and no automatic proof-generation tests.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Document separate feature-gated shielded operations, unchanged transparent defaults and no automatic proof-generation tests. Document optional genuine note/spend operations, bounded trusted history and unchanged transparent/output-only restrictions.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
-      "sha256": "94584d095b93aab98f02fbc680cb393edd5f14363cc5fbdd1188973ac2d59f88",
+      "sha256": "362f21fac539bdc1a0e4735ce5063302389636784b5245f030a07f5d343f96c9",
       "sources": []
     },
     {
@@ -739,6 +874,20 @@
       "classification": "narrow attributed shielded fixture and acceptance preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md",
       "sha256": "b0a21b9c46c173012fb64481d6ff5af64d12837284a7f52892c2c59e1a164a56",
+      "sources": []
+    },
+    {
+      "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
+      "sha256": "4d65eda2d57ca4564717a555d875b9d043ac3bf4eb235f9f43c705777735c82f",
+      "sources": []
+    },
+    {
+      "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_SCHEMA.md",
+      "sha256": "de13fd2420a414b243bd5862d44ac92d7baf4807bd7fc36a0aab2e5739ee4e6a",
       "sources": []
     },
     {
@@ -752,10 +901,10 @@
       ]
     },
     {
-      "adaptation": "Retain transparent empty-template block construction, NU7 aggregate miner fee share and existing header/Merkle/history/auth commitments. Combine existing public classical signer and native SLH signing context for both mixed input orders; no shielded proofs or alternate backend. Retain default blocks/mixed builders; allow NU7 heights105-109, exact unsupported51/52 counterpart templates without signer, and bounded positive/negative regressions. Preserve existing source lineage and transparent control-block behavior; add explicit optional output-only shielded-block path bounded to one transparent input and two outputs/actions per pool; reuse exact fee/header/auth-root construction.",
+      "adaptation": "Retain transparent empty-template block construction, NU7 aggregate miner fee share and existing header/Merkle/history/auth commitments. Combine existing public classical signer and native SLH signing context for both mixed input orders; no shielded proofs or alternate backend. Retain default blocks/mixed builders; allow NU7 heights105-109, exact unsupported51/52 counterpart templates without signer, and bounded positive/negative regressions. Preserve existing source lineage and transparent control-block behavior; add explicit optional output-only shielded-block path bounded to one transparent input and two outputs/actions per pool; reuse exact fee/header/auth-root construction. Separate bounded shielded-spend-block operation reuses existing NU7 block constructor; original transparent/output modes remain restricted.",
       "classification": "adapted transparent block and mixed control",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/controls.rs",
-      "sha256": "c58ff910642d8c50a6355937e31e704c47be33f5870499ab75bf165b8efb2c0b",
+      "sha256": "6d608eafac3f819b1ca290e4f9377b94dbc46f6c0dff92aa752ce7571fec7fab",
       "sources": [
         "block",
         "classical_sign",
@@ -763,28 +912,46 @@
       ]
     },
     {
-      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Register strict optional spend prepare/finalize/funding/block operations; default build has no proof/spend tooling.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
-      "sha256": "e1c13f695c0b561a133985ff61d0ef8955fd65953b72578081179d10d7b98119",
+      "sha256": "1dcd7592f44e99e623e0f13c0f8de0ed52b1c010b6fec0c37ed993d9c28ce727",
       "sources": []
     },
     {
-      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Strict explicit request schemas with required nullable fields; same public envelope; actual history/parent bytes, no caller amounts or secrets.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
-      "sha256": "653aaa83f5273c7fd1c02fc0e610a7bce5d8ad2300210124deeaef929375b0f5",
+      "sha256": "01d19608d85322c846294460ee0c1dd343ed99f5748d277fec6e117bdc620b1c",
       "sources": []
     },
     {
-      "adaptation": "Reuse real output-only action conversion/proving, temporary bindings/full-effect signing, valid proof-donor/wrong-digest variants and batch validation. Add Sapling builder API glue, bounded hashed local parameters, all pool subsets with zero Orchard value, exact parent/native finalization; no alternate backend/workload.",
+      "adaptation": "Reuse real output-only action conversion/proving, temporary bindings/full-effect signing, valid proof-donor/wrong-digest variants and batch validation. Add Sapling builder API glue, bounded hashed local parameters, all pool subsets with zero Orchard value, exact parent/native finalization; no alternate backend/workload. Expose current helpers; extend canonical Sapling adapter with parser-based spend conversion; share unchanged final native/classical authorization sequence. Preserve output operation restrictions.",
       "classification": "narrow attributed shielded fixture and acceptance preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded.rs",
-      "sha256": "b38132ca06e2f55d3a4023c55c219f19e9130b1e9e689f2fad696bb37b018fbb",
+      "sha256": "0b7ab2657708018830af6ac3a005f2eb4ebf4c263d3f9eb3ca1aa755d966ddbe",
       "sources": [
         "shielded_output_deposit",
         "shielded_output_fixture",
         "shielded_sapling_batch"
+      ]
+    },
+    {
+      "adaptation": "Pinned real-spend construction generalized to ten pool/version subsets, independent parents, current host bundle/digest/authorization helpers, pre-NU6.3 Orchard deposit, same-effect isolated spend-auth/binding/proof controls; no crypto rewrite.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend.rs",
+      "sha256": "0e87310f052c77b6439cb755cca2ab8478a181d1e01033038a89e306aeb9e50a",
+      "sources": [
+        "shielded_spend_fixture"
+      ]
+    },
+    {
+      "adaptation": "Pinned canonical contiguous trusted-node history and ordered prevouts, fixed public note decryption and positions/witnesses; extended to Sapling/Orchard and strict bounded duplicate/UTXO/nullifier/root checks. New ciphertext-only placeholder tests are not consensus fixtures.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend/history.rs",
+      "sha256": "c6a7bbffab31c1ec9c32b5bff0216e4c3d82629d16150ebd01eeb6fd42b4baff",
+      "sources": [
+        "shielded_spend_history"
       ]
     },
     {

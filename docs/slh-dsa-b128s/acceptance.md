@@ -46,6 +46,8 @@ the enabled live paths require `runtime_supported: true`.
 
 The separate [shielded driver](shielded-controls.md) requires the `host-shielded`
 recipe, which adds only the host's optional `shielded-fixtures` feature. The
+[genuine spend/anchor driver](shielded-spend-controls.md) uses that same recipe,
+with a separate legal pre-NU6.3 Orchard deposit window. The
 [wallet fault driver](fault-controls.md) uses `wallet-faults`: Cargo compiles its
 library test with `--no-run`, and the builder copies the exact test executable
 identified by Cargo's artifact message into `wallet-fault-tests`. Its build
@@ -200,8 +202,8 @@ untrusted until both actual nodes authenticate the outputs and tip.
 | Terminal/passwords | Full terminal adapter above | Parser/provenance mocks and pinned-source adaptation only; no PTY or password/KDF run performed |
 | All 120 threshold shapes | Existing independent structural/format corpus remains unchanged | Selected funded matrix above; the driver accepts other 1 <= m <= n <= 15 shapes, but no exhaustive funded 120-shape run or result is claimed |
 | Primitive entry counts | [Funded capture brackets](observation-controls.md) prepare structural, classical and both-order mixed controls, same-TXID changed authorization, saved-byte mining and rollback/reactivation | Complete process/window attempts, with actual functional positives and no dropped late entries. Daemon execution is pending; RPC does not expose deterministic pending/completed internal queue states |
-| Shielded coexistence | [Real output-only proof fixtures](shielded-controls.md), valid SLH plus invalid proof/binding authorization and exact classical/shielded default-enabled block replay | Three v5 and seven v6 pool subsets; Orchard outputs are zero-valued under inherited NU7 rules. Real proof generation and node execution are pending. Shielded spends and their anchors remain unprepared |
-| Fault injection and hostile history | [Funded hostile-history refusals](history-controls.md) plus [wallet write-stage I/O/SIGKILL, configured quota and pre-sign entropy controls](fault-controls.md) | Test-only wallet hooks and a synthetic trusted source isolate persistence/recovery behavior; no runtime flag or node fault mechanism. Only bounded checks/mocks have run. OS disk exhaustion, OS entropy suppression, power loss and node database crash durability are unclaimed |
+| Shielded coexistence | [Real output-only proof fixtures](shielded-controls.md), [genuine spends and anchors](shielded-spend-controls.md), invalid proof/binding/spend authorization and exact saved-byte reentry | Three v5 and seven v6 pool subsets; a legal pre-NU6.3 deposit supplies nonzero Orchard notes. Only completed matching execution receipts establish proof generation and daemon acceptance; no internal nullifier-state or independent consensus-verifier claim |
+| Fault injection and hostile history | [Funded hostile-history refusals](history-controls.md), [wallet write-stage faults](fault-controls.md) and [isolated node process-crash checkpoints](crash-controls.md) | Separate classical and SLH admitted/mined/reorg subjects preserve exact saved bytes and permit only specified old/new recovery states. Source and mocks are preparation; OS disk exhaustion, OS entropy suppression, power loss and general node database crash durability are unclaimed |
 | Performance | None | No workload measurements or production budget recommendation; any separate study must retain p50/p95/p99 and the project's workload/hardware baseline |
 
 The remaining tooling gaps are distinct from prepared scenarios awaiting human
