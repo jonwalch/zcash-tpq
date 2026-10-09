@@ -123,7 +123,9 @@ class Model:
 
     def restart(self):
         self.calls.append("restart")
-        for node in self.nodes: node.pool = []
+        for node in self.nodes:
+            node.pool = []
+            node.invalidated.clear()
 
     def mine(self, count=1):
         hashes = []
@@ -162,6 +164,7 @@ class StateNode:
         self.negative_submitted = set()
         self.anchor_rejected = False
         self.duplicate_preflight = False
+        self.invalidated = set()
 
     def tip(self): return self.height, self.hash
 
@@ -231,6 +234,7 @@ class StateNode:
             model.calls.append((self.index, "reject-block", tx["transaction_hex"]))
             return "rejected"
         if method == "invalidateblock":
+            self.invalidated.add(params[0])
             if not model.no_rollback:
                 if params[0] == model.anchor["block_hash"]: self.height,self.hash,self.stage = 112,identity("baseline"),0
                 else:
@@ -240,6 +244,7 @@ class StateNode:
                     self.negative.clear(); self.negative_submitted.clear()
             return None
         if method == "reconsiderblock":
+            assert params[0] in self.invalidated, "restart lost the memory-only invalidated block"
             assert self.anchor_rejected, "unknown-anchor subject skipped"
             if not model.no_reconsider: self.height,self.hash,self.stage = 113,identity("anchor-block"),1
             return None
@@ -290,7 +295,8 @@ class SpendTests(unittest.TestCase):
 
     def run_lifecycle(self, model, replaced=None):
         with tempfile.TemporaryDirectory() as temp, patch.object(controls,"host_call",model.host), \
-                patch.object(controls,"wait_for",wait),patch("node_live.wait_for",wait):
+                patch.object(controls,"wait_for",wait),patch("node_live.wait_for",wait), \
+                patch.object(controls,"backup_ready",return_value={"mock":True}):
             control=controls.SpendControls(model.args,Path(temp),model)
             anchored=controls.observe(model.nodes,model.parents)
             for node in model.nodes:node.height,node.hash,node.stage=112,identity("baseline"),0
@@ -343,6 +349,34 @@ class SpendTests(unittest.TestCase):
             controls.finalize(SimpleNamespace(host="host",signer="signer"),recipe,prepared,{"secret_key":"PUBLIC"},"primary")
         self.assertEqual(len(signed),1);self.assertEqual(len(records),10)
         self.assertTrue(all(record==records[0] for record in records))
+
+    def test_restart_loses_inherited_invalidated_anchor_record(self):
+        model = Model()
+        for node in model.nodes:
+            node.rpc("invalidateblock", model.anchor["block_hash"])
+            node.anchor_rejected = True
+        model.restart()
+        for node in model.nodes:
+            with self.assertRaisesRegex(AssertionError, "memory-only"):
+                node.rpc("reconsiderblock", model.anchor["block_hash"])
+
+    def test_backup_restart_gate_requires_removed_orphan_absence(self):
+        model = Model()
+        with tempfile.TemporaryDirectory() as temp:
+            for index, node in enumerate(model.nodes):
+                node.directory = Path(temp) / str(index)
+                directory = node.directory / "state" / "non_finalized_state" / controls.namespace((110,16,64))
+                directory.mkdir(parents=True)
+                (directory / model.anchor["block_hash"]).write_bytes(b"stale")
+            with patch.object(controls,"backup_observed",return_value={"complete":True}), \
+                    patch.object(controls,"export_chain",return_value=[{"height":113}]),patch.object(controls,"wait_for",wait):
+                with self.assertRaisesRegex(AcceptanceError,"invalidated_backup_present"):
+                    controls.backup_ready(model,excluded=(model.anchor["block_hash"],))
+                for node in model.nodes:
+                    (node.directory / "state" / "non_finalized_state" / controls.namespace((110,16,64)) / model.anchor["block_hash"]).unlink()
+                receipt = controls.backup_ready(model,excluded=(model.anchor["block_hash"],))
+                self.assertEqual(receipt["excluded_block_hashes"],[model.anchor["block_hash"]])
+                self.assertEqual(len(receipt["canonical"]),2)
 
     def test_inactive_ironwood_is_explicit_only_before_nu6_3(self):
         tip = {"height": 101, "hash": identity("preactivation")}

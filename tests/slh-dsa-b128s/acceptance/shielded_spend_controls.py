@@ -12,9 +12,10 @@ import re
 from common import (CONTRACT, AcceptanceError, canonical, common_tip, read_json,
                     require, sha256, source_state, validate_build, wait_for, write_json, zat)
 from generate_transactions import MAX_HOST, hex_field, host_call, invoke, randomizer, seed, signer_call
-from lifecycle_controls import utxos
+from lifecycle_controls import namespace, utxos
+from crash_controls import backup_observed, export_chain
 from node_live import authenticated_outputs, policy, reconcile_saved, transaction_state
-from nodes import Network, authenticate_coinbase
+from nodes import BLOCK_LIMIT, SLH_HEIGHT, TX_LIMIT, Network, authenticate_coinbase
 import shielded_controls as outputs
 from transparent_controls import Controls, mine_to, reject_relay
 
@@ -335,14 +336,32 @@ def publish(network, tx, artifacts, label):
     return block
 
 
-def rollback(network, block, expected):
+def backup_ready(network, *, excluded=()):
+    """Observe complete canonical backups and removal; never force a writer flush."""
+    tip = common_tip(network.nodes)
+    rows = []
+    for node in network.nodes:
+        rows.append(backup_observed(node, export_chain(node, tip["height"])))
+        directory = node.directory / "state" / "non_finalized_state" / namespace((SLH_HEIGHT, TX_LIMIT, BLOCK_LIMIT))
+        for block_hash in excluded:
+            hex_field(block_hash, 32)
+            wait_for(lambda: not (directory / block_hash).exists(), "spend_invalidated_backup_present", 30)
+    require(common_tip(network.nodes) == tip, "spend_backup_tip_changed")
+    return {"canonical": rows, "excluded_block_hashes": list(excluded)}
+
+
+def rollback(network, block, expected, *, restart=True):
     for node in network.nodes:
         node.rpc("invalidateblock", block["block_hash"])
     wait_for(lambda: common_tip(network.nodes) == expected, "spend_rollback_tip")
-    # Existing clean restart clears transient retry windows, without changing
-    # inherited cache/retry behavior or claiming an internal queue barrier.
-    network.restart()
-    require(common_tip(network.nodes) == expected, "spend_rollback_restart")
+    if restart:
+        # Inherited invalidated-block records are memory-only. This path does
+        # not reconsider them; wait for ordinary backup removal before reopen.
+        backup = backup_ready(network, excluded=(block["block_hash"],))
+        network.restart()
+        require(common_tip(network.nodes) == expected, "spend_rollback_restart")
+        return backup
+    return None
 
 
 def lifecycle(control, positive, duplicate, variants, parents, baseline, anchor_block, anchored, receipt):
@@ -355,12 +374,13 @@ def lifecycle(control, positive, duplicate, variants, parents, baseline, anchor_
             "spend_anchor_not_new")
     receipt["anchor_positive_before"] = preflight(control, "anchor-positive-before", positive, parents)
     receipt["duplicate_positive_before"] = preflight(control, "duplicate-positive-before", duplicate, parents)
-    rollback(network, anchor_block, baseline["tip"])
+    rollback(network, anchor_block, baseline["tip"], restart=False)
     require(observe(nodes, parents) == baseline, "spend_anchor_rollback_state")
     receipt["removed_anchor"] = reject(control, "removed-anchor", positive, parents, state_reason="anchor")
     for node in nodes:
         node.rpc("reconsiderblock", anchor_block["block_hash"])
     wait_for(lambda: common_tip(nodes) == anchored["tip"], "spend_anchor_reconsider_tip")
+    receipt["reconsider_backup"] = backup_ready(network)
     network.restart()
     require(observe(nodes, parents) == anchored, "spend_anchor_reconsider_state")
     for node in nodes:
@@ -373,7 +393,7 @@ def lifecycle(control, positive, duplicate, variants, parents, baseline, anchor_
             "spend_pool_transition")
     receipt["duplicate_spend"] = reject(control, "duplicate-note", duplicate, parents, state_reason="nullifier", spent=(0,))
     receipt["mined"] = {"block": mined, "state": after}
-    rollback(network, mined, anchored["tip"])
+    receipt["rollback_backup"] = rollback(network, mined, anchored["tip"])
     require(observe(nodes, parents) == anchored, "spend_rollback_effects")
     # Mine replacement blocks above the retained funding and anchor. This is a
     # fork selected after explicit invalidation, not a competing-peer race.

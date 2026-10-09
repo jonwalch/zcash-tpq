@@ -96,8 +96,15 @@ The driver performs the following bounded sequence:
    pool state and authenticated output.
 
 The replacement branch is selected after explicit invalidation; it is not a
-competing-peer timing experiment. Existing clean restarts delimit negative
-windows and preserve the inherited node retry behavior. The driver does not
+competing-peer timing experiment. Anchor invalidation and reconsideration stay in the same node processes because
+inherited invalidated-block records are memory-only. Before a later clean restart,
+the driver observes every canonical block's ordinary backup bytes through the
+current tip; after spend rollback it additionally waits for the removed spend's
+backup file to disappear. It reuses the [crash adapter](crash-controls.md)'s
+bounded backup observation, whose 128-block limit covers this driver's roughly
+117-block maximum. These file observations do not force a flush or establish a
+writer barrier. Clean restarts delimit negative windows and preserve the inherited
+node retry behavior. The driver does not
 assert internal nullifier-set membership, cache hits, primitive counts or
 publication barriers. Duplicate-nullifier refusal is a functional state result
 with a valid independent transparent parent. Direct internal membership queries
