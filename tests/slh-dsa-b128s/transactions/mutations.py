@@ -190,6 +190,21 @@ def controls(artifacts):
         elif change == "depth":
             encoded = b"[" * 17 + b"0" + b"]" * 17
         add("schema-" + change, a, failure="schema", raw=encoded)
+    for field in ("native_rejection", "signature_checks", "profile-stage", "rejection-input-index"):
+        a, _ = fresh()
+        if field == "profile-stage":
+            del a["expected"]["functional_profile"]["stage"]
+        elif field == "rejection-input-index":
+            a["expected"] = oracle.observation("context", "consensus_branch")
+            del a["expected"]["native_rejection"]["input_index"]
+        else:
+            del a["expected"][field]
+        add("schema-missing-" + field, a, failure="schema")
+    for kind, value in (("array", []), ("object", {})):
+        a, _ = fresh()
+        a["expected"] = oracle.observation("context", "consensus_branch")
+        a["expected"]["native_rejection"]["reason"] = value
+        add("schema-reason-" + kind, a, failure="schema")
     a, _ = fresh()
     a["artifact_sha256"] = "00" * 32
     add("artifact-hash", a, failure="integrity", raw=oracle.canonical(a))

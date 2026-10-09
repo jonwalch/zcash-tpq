@@ -8,7 +8,7 @@ in the 18 prescribed public artifacts using the separately pinned
 cryptographic verdicts never call the production implementation. The fixture
 host is only an optional comparison target after the independent computation.
 
-It also runs 49 negative controls with explicit expected interface stages or
+It also runs 55 negative controls with explicit expected interface stages or
 native rejection codes, plus independent old-domain and double-Pure-framing
 controls. Mutation cases reconstruct redundant hashes/digests/messages when
 exercising native rejection. Separate mismatch cases test those correspondence
