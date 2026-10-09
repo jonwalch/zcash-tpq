@@ -74,6 +74,7 @@ impl Root {
         let mut info = b"ZcashTransparentPQ/wallet-key/v1\0".to_vec();
         info.extend([1, 2, 0xf7]);
         info.extend(0u32.to_le_bytes());
+        // Role is repr(u8) with only 0 and 1, so this conversion is lossless.
         info.push(path.role as u8);
         info.extend(path.index.to_le_bytes());
         let mut seed = Zeroizing::new([0; SEED_BYTES]);

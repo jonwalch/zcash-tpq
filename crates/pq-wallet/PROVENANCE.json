@@ -6,7 +6,7 @@
   "files": [
     {
       "target": "src/keys.rs",
-      "target_sha256": "f34f7972c46ff8e89161049cfe940e44701ed396946db0bf52c3e8f6feaafff3",
+      "target_sha256": "02753e66c8842f5279d024e57cd319240a637dfd0a7a52db4ad200b1ba42e173",
       "sources": [
         {
           "path": "crates/pq-wallet/src/lib.rs",
@@ -30,7 +30,7 @@
     },
     {
       "target": "src/keys/tests.rs",
-      "target_sha256": "461e358c5e9f847764a25a1df18ab0847af496a00e91a56e7a553ac174897b36",
+      "target_sha256": "e984f7642a8d357595d730202d8cc98516222363fd71af2bf32f9075ab22d844",
       "sources": [],
       "classification": "new conformance tests",
       "adaptation": "Compare six fixed independently generated public seeds/roots/bothHKDFblocks, suite separation and fallible root entropy."
