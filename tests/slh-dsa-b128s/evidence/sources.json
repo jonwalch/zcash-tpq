@@ -4,7 +4,7 @@
       "adaptation": "Consulted source/binary/config-before-after and artifact-manifest receipt approach; no driver code copied and no runtime research dependency.",
       "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
       "path": "node/tests/sqisign_acceptance.py",
-      "repository": "https://github.com/zcash/zcash-transparent-pq",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
       "sha256": "897633701ead8329c906bb3611a3faf4b8c53618f7513e7059e783bce202fa92"
     }
   ],
