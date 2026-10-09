@@ -9,7 +9,7 @@ description = "Experimental SLH wallet suite and trusted signing foundation"
 
 [features]
 default = []
-experimental-slh-dsa-b128s = ["dep:zakura-pq-slh-dsa-b-sign", "dep:hkdf", "dep:sha2", "dep:rand_core", "dep:zeroize", "dep:zakura-chain", "dep:zakura-pq-tx-context", "dep:zakura-pq-slh-dsa-b-exp", "dep:serde", "dep:serde_json", "dep:hex", "dep:thiserror"]
+experimental-slh-dsa-b128s = ["dep:zakura-pq-slh-dsa-b-sign", "dep:hkdf", "dep:sha2", "dep:rand_core", "dep:zeroize", "dep:zakura-chain", "dep:zakura-pq-tx-context", "dep:zakura-pq-slh-dsa-b-exp", "dep:serde", "dep:serde_json", "dep:hex", "dep:thiserror", "dep:bech32", "dep:argon2", "dep:chacha20poly1305", "dep:tempfile", "dep:libc"]
 
 [dependencies]
 zakura-pq-slh-dsa-b-sign = { path = "../pq-slh-dsa-b-sign", optional = true }
@@ -25,6 +25,12 @@ serde = { version = "=1.0.228", features = ["derive"], optional = true }
 serde_json = { version = "=1.0.150", optional = true }
 hex = { version = "=0.4.3", optional = true }
 thiserror = { version = "2.0", optional = true }
+
+bech32 = { version = "=0.11.1", optional = true }
+argon2 = { version = "=0.5.3", default-features = false, features = ["zeroize"], optional = true }
+chacha20poly1305 = { version = "=0.10.1", default-features = false, features = ["alloc"], optional = true }
+tempfile = { version = "=3.27.0", optional = true }
+libc = { version = "=0.2.186", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0"
