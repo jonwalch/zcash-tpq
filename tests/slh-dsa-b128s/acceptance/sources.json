@@ -644,10 +644,10 @@
       ]
     },
     {
-      "adaptation": "Reuse current mature funding, proposal/rejection, exact saved-byte replay and clean process capture APIs; add fixed attempted subject manifests and identity-bound positive brackets without RPC attribution or queue changes.",
+      "adaptation": "Reuse current mature funding, proposal/rejection, exact saved-byte replay and clean process capture APIs; add fixed attempted subject manifests and identity-bound positive brackets without RPC attribution or queue changes. Preserve the shared rollback backup receipt while comparing its exact height/hash with the prior tip. Reuse the existing transparent Ledger backup stub for capture mocks and reject either changed tip field. This adapts an introduced return shape only; publication, identity, observer boundaries and inherited runtime behavior stay unchanged.",
       "classification": "funded functional observation and lifecycle preparation",
       "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
-      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7",
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe",
       "sources": [
         "authorization_mutation",
         "history",
@@ -770,10 +770,10 @@
       "sources": []
     },
     {
-      "adaptation": "Causal offline mock coverage or public guide for funded positive-bracket capture, precise lifecycle outcomes and queue visibility limits.",
+      "adaptation": "Causal offline mock coverage or public guide for funded positive-bracket capture, precise lifecycle outcomes and queue visibility limits. Preserve the shared rollback backup receipt while comparing its exact height/hash with the prior tip. Reuse the existing transparent Ledger backup stub for capture mocks and reject either changed tip field. This adapts an introduced return shape only; publication, identity, observer boundaries and inherited runtime behavior stay unchanged.",
       "classification": "focused causal capture test or public guide",
       "path": "tests/slh-dsa-b128s/acceptance/test_observation_controls.py",
-      "sha256": "ee45fbc958ba08a1a95c97fb18acb858eb6a5a4863c1aed4ac36ba36878ba2b3",
+      "sha256": "ce0d178a9d37e0449307ec59ee6eee5a3eaaef8d9dff64141454b08b7bba043d",
       "sources": []
     },
     {

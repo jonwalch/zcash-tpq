@@ -169,21 +169,21 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
       "scope": "Funded distinct positive proposal brackets and attempted structural/classical/mixed subjects; human daemon entry capture pending. Process/window counts, not per-RPC attribution.",
-      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe"
     },
     "human-capture-lifecycle": {
       "anchor": "receipt[\"inactive_refusals\"]",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
       "scope": "Saved-byte relay/mining, reorg, rollback/reactivation and repeated proposals prepared; no deterministic pending/completed internal queue claim.",
-      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe"
     },
     "human-capture-sealing": {
       "anchor": "def sealed_reports(",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
       "scope": "Every closed lifecycle process is counted in full; no omitted tail, unclean stop or missing positive control can supply a zero receipt.",
-      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe"
     },
     "human-classical": {
       "anchor": "def classical_compatibility(",
@@ -1443,5 +1443,5 @@
   ],
   "schema_version": 1,
   "scope": "source-and-preparation-map-v1",
-  "source_checkpoint": "eca9da6032eebeb0b6023f35626031249b4140b5"
+  "source_checkpoint": "5fd690bf05ababe579491a42640ee52f6c104e81"
 }

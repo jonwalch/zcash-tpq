@@ -2382,7 +2382,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse funded public fixtures, proposal/rejection and clean captures for distinct positive brackets and exact saved-byte lifecycle cases; no RPC/queue/runtime changes or live results.",
-      "sha256": "43b0773f6bd0da756ce963259271f513b7af0aa1c94cec1cab0f88dd2d68c5d7"
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe"
     },
     {
       "disposition": "adapted",
@@ -2420,7 +2420,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "fa72117d89ea64e428a7d473503ab3c3724514a519ae10bb5b81c73212b4884f"
+      "sha256": "2fbbdfdf9b4b2c4474ecda0617063cff68ba5ea4d8a78f58c71ff4ca1f1dfeca"
     },
     {
       "disposition": "new",
@@ -2529,7 +2529,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Reuse funded public fixtures, proposal/rejection and clean captures for distinct positive brackets and exact saved-byte lifecycle cases; no RPC/queue/runtime changes or live results.",
-      "sha256": "ee45fbc958ba08a1a95c97fb18acb858eb6a5a4863c1aed4ac36ba36878ba2b3"
+      "sha256": "ce0d178a9d37e0449307ec59ee6eee5a3eaaef8d9dff64141454b08b7bba043d"
     },
     {
       "disposition": "new",
@@ -2662,7 +2662,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "f40493a1da2a18fb5f8a4d96f8206ebe9790495c2d5f19acbf95c3ff4736effb"
+      "sha256": "5997ff15ef36cd51bcb5d953fe45ca1d53d5260565821544a2ef3cca7f137865"
     },
     {
       "disposition": "new",
