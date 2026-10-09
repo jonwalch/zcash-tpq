@@ -1,0 +1,12 @@
+Acceptance adapters contain code adapted from jonwalch/zcash-transparent-pq,
+licensed MIT OR Apache-2.0. Node/fixture source pin:
+e759cb86a06510893f8e7d1eb986b7025401c8c9.
+Wallet/terminal source pin:
+da638d4045074f7957aec3fb3fb018bd66b96d05.
+
+See sources.json for per-file mappings, exact source hashes and necessary
+adaptations. No alternate cryptographic backend, experiment catalog, research
+checkout or research history is a dependency of these adapters. Existing product
+fixture/oracle modules retain their own source/license notices and unchanged
+historical corpora. Standard-library process/RPC adapters do not establish
+independent cryptographic acceptance.

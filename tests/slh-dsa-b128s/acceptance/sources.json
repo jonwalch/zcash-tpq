@@ -1,0 +1,388 @@
+{
+  "contract": "slh-dsa-b-128s-exp-v1",
+  "immutable_scope": [
+    "tests/slh-dsa-b128s/reference/",
+    "tests/slh-dsa-b128s/transactions/",
+    "tests/slh-dsa-b128s/wallet/formats/"
+  ],
+  "note": "Per-file attribution and local consistency only; no research checkout is a runtime or unit-test dependency. This file omits its own hash to avoid a circular inventory. Source mappings do not claim byte-for-byte imports or live acceptance.",
+  "reused_product": [
+    {
+      "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+      "role": "Existing canonical/strict parser, transport, public fixture seed/randomizer, host/sign calls and producer source inventories; imported unchanged.",
+      "sha256": "cde18e133bf47a317e383fc363243b4710dc11cc07898171f02ac7a366828621"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/reference.py",
+      "role": "Independent canonical/keys/policy/receiver/capacity oracle, dynamically imported unchanged.",
+      "sha256": "6234c14663abca692d8a34b9160302404bdf26256ba094d80d6917a10fc661a4"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/vectors.json",
+      "role": "Immutable independent wallet format corpus; not regenerated.",
+      "sha256": "9927cee383b5203588bb53b4c710f94bd5e84e9cabae49d9593d0bd8ec2bcf0e"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/requirements.txt",
+      "role": "Existing pinned Python dependency requirements.",
+      "sha256": "7e188fdaedecc43306e23fe1463bfdf302c8bb73c9e8def23c1bb7deb0cd3931"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/strict.rs",
+      "role": "Unchanged bounded strict JSON and operation envelope parser.",
+      "sha256": "db01aa09a9c9b10b5a554df1c65a8a6d29b211e188fe71775c2f35a589b9f724"
+    },
+    {
+      "path": "crates/pq-test-support/src/lib.rs",
+      "role": "Existing TransactionRecipe/ordered Spend/install construction used by host controls; unchanged.",
+      "sha256": "c229e9458e325a76aa265adf147f50adf7dc656882ae0720229decbc8c07d4c1"
+    }
+  ],
+  "schema_version": 1,
+  "sources": [
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "rpc_node",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "bad0a2332dc2766679845f844deb49818cc4d71c02310e1a7142864cc037c7ff"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "relay",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_relay_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "b133a7d8d5694e494af81ced36f8ae02b8bc85316c27e78d6fe83e360f8671bc"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "build",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_relay_build.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "f5b6e401a93c7d6a804a543919353fed4be7233085f4acc5eb9724449523c43b"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "history",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_history_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "e453353e6a0e642769acd3529753b41df087b3ce3f210187d7dd38e7320e74b5"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "provenance",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_acceptance.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "897633701ead8329c906bb3611a3faf4b8c53618f7513e7059e783bce202fa92"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "classical_history",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_ecdsa_history_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "6b54d934999ac70111e8b245a1c1f191e1b535b703e818f76aa0ab4355feb224"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "compatibility",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_compatibility_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "b028307348470820f173585b0c2bb587deb1ab8ad5c1cddbad89b009826bfa64"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "restart",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_restart_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "d9ee5499953e15eb7f69b7b122a93bcc7d8c6f5d5b3498e5e182d6786cb55172"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "block",
+      "license": "MIT OR Apache-2.0",
+      "path": "examples/pq_regtest_fixture.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "576940264d72e13e2c352c6e5823369d45d71d3f0bc3d4b1763c2d788ef5e822"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "nu7",
+      "license": "MIT OR Apache-2.0",
+      "path": "examples/pq_regtest_fixture/nu7.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "ce69d95c4bebdea1209f80d1096e6117e2b909ce38e15c12a1d3ca0624e18d6f"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "classical_sign",
+      "license": "MIT OR Apache-2.0",
+      "path": "examples/pq_regtest_fixture/relay.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "bd22343dbaaaed7b689e7645f599e134187e3f15eacf4c04b513e95d862dad42"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "terminal",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/cli_smoke.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "a347e3a461c00a6670c574c15d9f542043e05395f0cfbdad34caa6e512e2b413"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "payments",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/payments_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "57a196f69aa466ddb0e11b90fc48eb58826b04abc4f4ef0fa0472457053555d4"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "recovery",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/recovery_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "e7ec5cc195106ec33e7851ec2702398e89c2c76f4b27a5ed4da1e04d8accb630"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "cosigners",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/sqisign_payments_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "89beb7f5b86dd8becdc8d8215545583951b5e59da10b8d1721a9efd035235f05"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "quorum_recovery",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/sqisign_recovery_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "64b8e393cf2b0397244feed91e42f2f9df465d54476c2e4bf8338fca57fc005d"
+    }
+  ],
+  "targets": [
+    {
+      "adaptation": "Retain bounded loopback RPC, exact source/build provenance and public diagnostics; reuse product canonical/parser/inventory functions and current SLH identity. Exact canonical wallet files omit trailing whitespace.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/common.py",
+      "sha256": "1c271737ad67d72a79d93163bdbed53f54522454082656fe0f1eca691e1e6517",
+      "sources": [
+        "rpc_node",
+        "build",
+        "provenance"
+      ]
+    },
+    {
+      "adaptation": "Retain explicit build/log/binary/source receipts; replace research Docker overlay with exact clean-product Cargo recipes and the existing isolated signer manifest. Toolchain probes share Cargo working directory.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/build.py",
+      "sha256": "501ac8851ccb28bdf335193dcff5e7cbec36f8c0f270559a4a31202ebdbea638",
+      "sources": [
+        "build",
+        "provenance"
+      ]
+    },
+    {
+      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/nodes.py",
+      "sha256": "52d90c1f8ae510d56393e585789d0d801ee5885e6bc98e8c6c71fff1d51db598",
+      "sources": [
+        "rpc_node",
+        "relay",
+        "history"
+      ]
+    },
+    {
+      "adaptation": "Reuse PTY password exchange and terminal echo/restoration checks; explicit binary replaces global research executable, with bounded transcript and fixed public errors.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/terminal.py",
+      "sha256": "3063b43fd58f0034cb3495c2f3eb82aa7c1894a786d5e7d10f9b87c52c15cca0",
+      "sources": [
+        "terminal"
+      ]
+    },
+    {
+      "adaptation": "Port original terminal backup/enrollment/watch regression flow; use create-slh-exp, explicit source/build receipts, current inventory restore mode and retained backup password. Remove auto-build and research checkout dependency.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/terminal_smoke.py",
+      "sha256": "973ab79e9bcedde9aef0145b1fe7f063cf829b3d59150f8fefd1a8708fb404c1",
+      "sources": [
+        "terminal"
+      ]
+    },
+    {
+      "adaptation": "Reuse separate-root proposal/review/approve/sign/assemble/submit, finite watchers and coherent recovery flows. Adapt to SLH public enrollment APIs, adjacent revisions, 15-participant limits, independent format oracle and legal classical funding. Add current snapshot authority modes, preserved archive/refresh bytes and retired-receipt reorg controls.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/wallet_live.py",
+      "sha256": "9c2eb9265bb604dd0b0d2cbcbfc010b3c37d81daa4db99633122ef473a7f8543",
+      "sources": [
+        "payments",
+        "recovery",
+        "cosigners",
+        "quorum_recovery",
+        "classical_history"
+      ]
+    },
+    {
+      "adaptation": "Reuse genuine fixture transport, saved-byte relay/budget/history comparisons and actual chain replay. Adapt to SLH16/64 limits, current activation gates and isolated public keys. Distinct mature rollback-control parent and state reconciliation respect inherited rejected-RPC retry semantics.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "sha256": "82d8613fca1b2676ce5214a2a50149717ef81378c9707986157312ecd31204fd",
+      "sources": [
+        "relay",
+        "history",
+        "classical_history",
+        "provenance"
+      ]
+    },
+    {
+      "adaptation": "Reuse exact classical block/UTXO compatibility, unchanged rejection state, stopped cache hashes and ordinary backup replay. Adapt to enabled/default SLH, both mixed input orders, direct64/65 blocks, and current rule namespaces without importing generic Docker infrastructure.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a",
+      "sources": [
+        "compatibility",
+        "history",
+        "restart"
+      ]
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/fake_cli.py",
+      "sha256": "58a1672dc0095fd0fb8d6d30afeefe3a1a63cd782abd62438d37465843052686",
+      "sources": []
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_acceptance.py",
+      "sha256": "63001c79af5266746d7f1277cca6f7ce0811a07251260199e292c92cbc9fdc46",
+      "sources": []
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_lifecycle_controls.py",
+      "sha256": "af2b28b4ea23bc97b1f1ed8a37fd3329c9a584d669491439ac5571518e64eeb4",
+      "sources": []
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_node_reentry.py",
+      "sha256": "3ae362bb6ca450ef7b104c0186f1ac29749cf7b0f0df18caed09d75f51c88a7d",
+      "sources": []
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_sources.py",
+      "sha256": "40c01a5603ae0f1e48a2259e1f61eb76300d55277c1ef97386cfd43b84d9df3c",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/acceptance/README.md",
+      "sha256": "668b2334484a758d09494e367116ef977e5170ba31c7798beb0bff59621aef08",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/acceptance/NOTICE",
+      "sha256": "b1abc320e4e360422776b4703018df28e90d907b6251312d3125474949fe3fc9",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "docs/slh-dsa-b128s/acceptance.md",
+      "sha256": "78cb3d0863f2fce3fea93dd478b27db6e2eec987ffa5b7d0ba336c4aef6a3925",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "docs/slh-dsa-b128s/lifecycle-controls.md",
+      "sha256": "f2ead0488b472010cb5b46971a711171b6290252f6713459b7854664f01568b0",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "docs/changelog/unreleased/slh-acceptance.md",
+      "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
+      "sha256": "9034afb2638e35236256eb87255b0beb0fe8301cbd8cfa2fcb0fc11c722ec65b",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+      "sha256": "8181e063efa5c591c1c669e15503bc64b3a48f53acbb00b970f4bb6a7a0e5639",
+      "sources": []
+    },
+    {
+      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input.",
+      "classification": "adapted classical helper",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
+      "sha256": "774047bbc3037dbae91365b3bfc76dce6223b16287c4aee11c953ab41148c9b2",
+      "sources": [
+        "nu7",
+        "classical_sign"
+      ]
+    },
+    {
+      "adaptation": "Retain transparent empty-template block construction, NU7 aggregate miner fee share and existing header/Merkle/history/auth commitments. Combine existing public classical signer and native SLH signing context for both mixed input orders; no shielded proofs or alternate backend.",
+      "classification": "adapted transparent block and mixed control",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/controls.rs",
+      "sha256": "cffe10dbf25927c934eec5320147c76db68347be85f102069c797fe16127aced",
+      "sources": [
+        "block",
+        "nu7",
+        "classical_sign"
+      ]
+    },
+    {
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs.",
+      "classification": "narrow existing product host extension",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
+      "sha256": "62656dc2b1055b6043de0717cfdc0e3269ab6eb8b7b7f3f4460dc7976e15f204",
+      "sources": []
+    },
+    {
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs.",
+      "classification": "narrow existing product host extension",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
+      "sha256": "2e2222bcdc7569bbf7c977009b5f2786d63faea2888ca6fc4642915062a91780",
+      "sources": []
+    },
+    {
+      "adaptation": "Add only existing workspace secp256k1/ripemd dependency edges needed by extracted public classical helper. No registry identity/version or production graph change; coordinated root lock is separately bound by build receipts.",
+      "classification": "existing workspace dependency reuse",
+      "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
+      "sha256": "5c70264428fe44f2a1fa64b2cf5fc66094fc302bf8ba2c702ba486c5843ee34b",
+      "sources": []
+    }
+  ],
+  "upstream_zakura": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+  "validation_boundary": "Only offline/mock and bounded fixture-host checks were executed during preparation. All dedicated binary builds, node/wallet/terminal/signing live cases, proof generation and performance runs require human execution. See docs/slh-dsa-b128s/acceptance.md for prepared and missing driver scenarios."
+}
