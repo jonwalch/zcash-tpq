@@ -20,7 +20,7 @@ class DependencyGuardTests(unittest.TestCase):
             check.validate_tree({"blake3": {("1.8.5", ("std",))}}, required=(check.VERIFY,))
 
     def test_forbidden_dependencies_are_rejected(self):
-        for name in (check.SIGN, check.WALLET, "ml-dsa", "pq-sqisign", "slh-fixture-host"):
+        for name in (check.SIGN, check.WALLET, "ml-dsa", "pq-sqisign", "slh-fixture-host", "slh-dsa", "fips204", "fips205"):
             with self.subTest(name=name), self.assertRaises(ValueError):
                 check.validate_tree({name: {("0.1.0", ())}}, forbidden=(check.SIGN, check.WALLET))
 

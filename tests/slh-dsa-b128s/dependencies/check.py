@@ -12,13 +12,18 @@ NATIVE = "zakura-pq-slh-dsa-b-exp"
 SIGN = "zakura-pq-slh-dsa-b-sign"
 WALLET = "zakura-pq-wallet"
 CONTEXT = "zakura-pq-tx-context"
-ALTERNATE = re.compile(r"(?:ml[-_]?dsa|sqisign)", re.IGNORECASE)
+PQ_BACKEND = re.compile(r"(?:ml[-_]?dsa|sqisign|slh[-_]?dsa|fips20[45])", re.IGNORECASE)
+ALLOWED_PQ = {VERIFY, NATIVE, SIGN, "slh-dsa-b128s-fixture-host"}
 PACKAGE = re.compile(r"^([\w-]+) v([^\s]+)(?: \([^\n]*\))?\|([^\n]*)$")
 
 
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def check_backend(name):
+    require(not PQ_BACKEND.search(name) or name in ALLOWED_PQ, f"unapproved PQ backend: {name}")
 
 
 def cargo(*args):
@@ -45,7 +50,7 @@ def validate_tree(packages, *, required=(), forbidden=()):
     require(set(required) <= names, f"missing packages: {sorted(set(required) - names)}")
     require(not (set(forbidden) & names), f"forbidden packages: {sorted(set(forbidden) & names)}")
     for name, builds in packages.items():
-        require(not ALTERNATE.search(name), f"alternate PQ backend: {name}")
+        check_backend(name)
         require("fixture" not in name, f"fixture package in consumer graph: {name}")
         if name == "blake3":
             for version, features in builds:
@@ -64,7 +69,7 @@ def check():
     metadata = json.loads(cargo("metadata", "--format-version", "1", "--all-features"))
     packages = {package["name"]: package for package in metadata["packages"]}
     for package in metadata["packages"]:
-        require(not ALTERNATE.search(package["name"]), f"alternate optional/dev package: {package['name']}")
+        check_backend(package["name"])
         if package["source"] is None:
             require(Path(package["manifest_path"]).resolve().is_relative_to(ROOT), "path dependency outside product")
     require(all(name in packages for name in (VERIFY, NATIVE, SIGN, WALLET)), "SLH foundation package missing")
