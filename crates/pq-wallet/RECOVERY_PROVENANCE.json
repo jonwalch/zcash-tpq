@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+  "source_revision": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+  "license": "MIT OR Apache-2.0",
+  "files": [
+    {
+      "target": "src/backup.rs",
+      "target_sha256": "46c7a84a8b3294d443618bda7d1d944af76c880aa2b74ee0104af66421e395dc",
+      "source": "crates/pq-wallet/src/backup.rs",
+      "source_sha256": "46c7a84a8b3294d443618bda7d1d944af76c880aa2b74ee0104af66421e395dc",
+      "adaptation": "Byte-identical encrypted envelope/KDF/AEAD implementation."
+    },
+    {
+      "target": "src/storage.rs",
+      "target_sha256": "42976e02673bff9320fb659d684be62b41f25e40dce372266ed3cdbf3a073878",
+      "source": "crates/pq-wallet/src/storage.rs",
+      "source_sha256": "42976e02673bff9320fb659d684be62b41f25e40dce372266ed3cdbf3a073878",
+      "adaptation": "Byte-identical bounded private durable backup publication."
+    },
+    {
+      "target": "src/receiving.rs",
+      "target_sha256": "72c9949de4d6a3f240e9a49ad4c81fc96008beb41b0efab6dfb3228fd4ebd4d3",
+      "source": "crates/pq-wallet/src/receiving.rs",
+      "source_sha256": "9fd90f14c4ce6bee185aab301b2a6b94bfa114ef898c7e456a7e895a4f77a685",
+      "adaptation": "Preserved enrollment and backup-before-install ordering; SLH receiver documentation and target public API documentation only."
+    },
+    {
+      "target": "src/scan.rs",
+      "target_sha256": "2ccc5bf6db7e5307b6e835f946d3630545202000191cd74d4bbe8d539dddbbce",
+      "source": "crates/pq-wallet/src/scan.rs",
+      "source_sha256": "ed0a7c41a6581ea93d6f999146446efd9a8158de2e0bd13b31bc3d308243276b",
+      "adaptation": "Preserved trusted node context, exact enrolled script matching, incomplete history and reorg semantics; target public API documentation only."
+    },
+    {
+      "target": "src/watch.rs",
+      "target_sha256": "2deafda197bdef62cefa649936d65151fc813d29f5328df075ae9f5d370325d9",
+      "source": "crates/pq-wallet/src/watch.rs",
+      "source_sha256": "65ce0f0065a4bf0b6069b47678626d9a071a234e969cae116a40929e08f6457f",
+      "adaptation": "Preserved locked allocator/monitor, monotonic issuance and cached discovery; added explicit recovery inventory rotation hook that retains reservations and invalidates cached completeness; module registration and API documentation."
+    },
+    {
+      "target": "src/watch/tests.rs",
+      "target_sha256": "c9e56f0a8c090e421156ec6e9ccc4f7d549b014c2919e71176b41827e877117b",
+      "source": "crates/pq-wallet/src/watch/tests.rs",
+      "source_sha256": "17c4eaf4abdbdf7e52467691058368dabfa112fbcd8d25b69e18980f4165fccc",
+      "adaptation": "Reused synthetic node, enrollment, persistence and reorg tests; replace crypto backend/corpus with SLH and all120 independent receiver answers. RPC transport test deferred with unavailable RPC/CLI lane."
+    },
+    {
+      "target": "src/watch/tests/enrollment.rs",
+      "target_sha256": "3e5cc52592926e4fbe0ecbf965848123ed9c89baad19c986167785bb20c6fb06",
+      "source": "crates/pq-wallet/src/watch/tests/enrollment.rs",
+      "source_sha256": "e681358c7de01178704e209920b04756f294695ea38086b90f846f39ad5a1554",
+      "adaptation": "Reused authenticated multisig enrollment/failure controls with SLH roots and descriptor API."
+    },
+    {
+      "target": "src/backup_tests.rs",
+      "target_sha256": "4e0cb46b5ddf6af1e04160e294c95b8a98417ff8d6abde3ac6612a680f24e558",
+      "source": "crates/pq-wallet/src/tests.rs",
+      "source_sha256": "889ca9cd9dd0d6dc281ed96e5f784327c15258f744ecddc73b19745160d23bd6",
+      "adaptation": "Preserved focused encrypted-answer, schema/authentication, entropy and durable-publication tests from src/tests.rs, using independent SLH format corpus."
+    },
+    {
+      "target": "src/lib.rs",
+      "target_sha256": "d9d0a02d5248e046d2e1b4362db2c7dfa6d053d564ad601d6425b27d2b3959cb",
+      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
+    },
+    {
+      "target": "src/recovery.rs",
+      "target_sha256": "29112dfeea79aece19bbeb5b13947bcee0579098120c80843b157c7f8000083c",
+      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
+    },
+    {
+      "target": "src/recovery/tests.rs",
+      "target_sha256": "ae21548e3f1d92da6926d18516cd87c6a560a89edb0b8e11bb94db4429257c1d",
+      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
+    }
+  ],
+  "unchanged_contracts": [
+    "canonical JSON and inventory/recovery version1",
+    "Argon2id65536KiB,t3,p4 and ChaCha20Poly1305 56-byteheader",
+    "4096entries/8MiB independent plaintext limits",
+    "private durable backup-before-enrollment and one allocator",
+    "v2/v3 state and existing journal/capability limits"
+  ],
+  "validation_scope": "Source attribution, not a validation receipt. Live/node/terminal backup workloads require separate human evidence."
+}
