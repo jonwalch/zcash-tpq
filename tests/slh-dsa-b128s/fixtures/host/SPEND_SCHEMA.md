@@ -6,9 +6,8 @@ controls. They use the standard schema-1 public fixture envelope and reject
 unknown fields. They do not accept operational keys. All shielded keys derive
 from the fixed public `[42;32]` material used by the output fixture.
 
-The host consumes trusted node history; it does not verify block consensus.
-The acceptance driver must authenticate exact blocks, parent outputs, source,
-configuration and treestate against both disposable nodes before invoking it.
+The host consumes trusted node history. It does not verify block consensus.
+Before host execution, the driver must authenticate blocks, parent outputs, source, configuration, and tree state against both nodes.
 The host never treats caller-supplied amounts or scripts as UTXO authority.
 It derives all amounts/scripts from canonical historical transactions.
 
@@ -75,9 +74,18 @@ For classical `single`/`multisig` authorization, `public_key_hex` must be null.
 fields cannot be omitted. Parameters reuse the bounded explicit public parameter
 loader and pinned library hash validation; no download or path search occurs.
 
-Bounds precede proving: tip 110–512, at most 513 blocks, 512 KiB per raw block,
-6 MiB total raw block bytes, 8,192 transactions, 4,096 commitments per pool,
-262,144 bytes per resulting transaction and the existing 16 MiB JSON envelope.
+The host checks these bounds before proof generation:
+
+| Item | Bound |
+| --- | --- |
+| Tip height | 110–512 |
+| History | At most 513 blocks |
+| Raw block / total raw blocks | 512 KiB / 6 MiB |
+| Transactions | 8,192 |
+| Commitments per pool | 4,096 |
+| Resulting transaction | 262,144 bytes |
+| JSON envelope | 16 MiB |
+
 Expiry is 111–1000 and strictly greater than the exported tip. The exact Regtest
 genesis, canonical complete block encoding, contiguous heights/parents, unique
 transaction identities, unique consumed prevouts and exact tip hash/height are
@@ -86,9 +94,8 @@ The transparent parent must occur with identical bytes, contain the specified
 output and remain unspent; coinbase maturity is checked. The driver additionally
 checks its live availability before every subject operation.
 
-Reconstruction decrypts the public note, selects its actual output/action and
-commitment position, appends all later commitments, and compares the incremental
-witness root, node tree root and supplied treestate root. Position selection
+Reconstruction decrypts the public note and locates its output/action and commitment position.
+It appends later commitments and compares the witness root, node root, and supplied tree-state root. Position selection
 works when commitments repeat. Nullifiers are derived from the actual note/key
 (and Sapling position), then checked against the full exported chain. Missing,
 already spent or mismatched notes and roots fail before parameters or proving
@@ -138,10 +145,9 @@ verified donor and exact field isolation establish the proof-only control,
 without claiming an independent per-proof result or primitive counters.
 
 `shielded-spend-finalize` takes the same recipe plus top-level `transaction_hex`
-and required nullable `record`, exactly like the existing finalizer. It rebuilds
-the trusted context without proving, checks the complete transparent skeleton,
-selected pools, counts, balances, actual nullifier and anchor, then reuses the
-existing public native verifier/classical signer. For SLH, the caller obtains
+and required nullable `record`, exactly like the existing finalizer. It reconstructs trusted context without proof generation.
+It checks the transparent skeleton, pools, counts, balances, nullifier, and anchor.
+It then uses the existing native verifier or public classical signer. For SLH, the caller obtains
 one signature over `positive.message_hex` from the isolated public signer and
 reuses it across authorization-only variants. Final output contains the normal
 wire fields plus `slh_checks`, `ecdsa_checks`, `fee_zat`, `deposit_zat=0`, and

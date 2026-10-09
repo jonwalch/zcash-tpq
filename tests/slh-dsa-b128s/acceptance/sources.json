@@ -426,7 +426,7 @@
       "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "docs/changelog/unreleased/slh-primitive-observation.md",
-      "sha256": "101eed6eec2c5e2f9ba4672d05ae6a68053d3ca2bc465444ff890d757ae320cb",
+      "sha256": "c9905e6e01e627f96c2a5824cb52644de98ba2ed685d2d1eebbc1af3bf52c8bb",
       "sources": []
     },
     {
@@ -447,7 +447,7 @@
       "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "docs/changelog/unreleased/slh-transparent-controls.md",
-      "sha256": "7e31493d9ba51a8081260b8f028b3a4b8550ba80b890d0c7bf6b392f56387328",
+      "sha256": "7fc28f13f5333c54845250f82a0e5bc98406c87d3ef33faabd464bfda1366d16",
       "sources": []
     },
     {
@@ -461,14 +461,14 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
       "classification": "new or amended product documentation",
       "path": "docs/slh-dsa-b128s/acceptance.md",
-      "sha256": "b6df8c53e698d2a4846ec921c8c4048df037105fa95408940bed52880c8e6697",
+      "sha256": "5e822894b600f09d93b85f2b0b1aabb692d454480af6b109e296bf7d08f47871",
       "sources": []
     },
     {
       "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
       "classification": "attributable bounded process-crash acceptance adapter",
       "path": "docs/slh-dsa-b128s/crash-controls.md",
-      "sha256": "e83f6ff25f55fd1a2184d14fe3fde5e6d22548bd5237b314ffed2e08c155369f",
+      "sha256": "2db4b6d58befbc2990620ebc622ec30e1ed42ff596331fcaaa98bc70db5d857b",
       "sources": [
         "history",
         "relay",
@@ -479,42 +479,42 @@
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
       "classification": "new bounded orchestration, mock validation or public guide",
       "path": "docs/slh-dsa-b128s/fault-controls.md",
-      "sha256": "845c72929dbec4c243d52e51bf89a52b235165fffca46bc711c635d4410fc473",
+      "sha256": "1c1e8211b3844e49f998f2c6590d0d78458cfa6a73d76d653d626a6cf10ea12c",
       "sources": []
     },
     {
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
       "classification": "new or amended product documentation",
       "path": "docs/slh-dsa-b128s/lifecycle-controls.md",
-      "sha256": "f2ead0488b472010cb5b46971a711171b6290252f6713459b7854664f01568b0",
+      "sha256": "1f47d2def79852bdc6c82e5fd0a975c24c4f2033d29cfc6d66261699a118c8e1",
       "sources": []
     },
     {
       "adaptation": "Causal offline mock coverage or public guide for funded positive-bracket capture, precise lifecycle outcomes and queue visibility limits.",
       "classification": "focused causal capture test or public guide",
       "path": "docs/slh-dsa-b128s/observation-controls.md",
-      "sha256": "156a7d62db249b3e50d3941fcbc527ffa54dddf435f81039788fedfbaa28c172",
+      "sha256": "7d17afd320297c892af39ed0e8474e795d8d08ec2a7d86cf07314e5b1ff2e0aa",
       "sources": []
     },
     {
       "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "docs/slh-dsa-b128s/observations.md",
-      "sha256": "7c765e021f4263ac7c44255e40cf117d179dc08c72de27ed4bbf81bc64ebb89d",
+      "sha256": "8afc10172ce77bb4071117c3e6181c3fa73ef2e34917f4746d05ac47bffee85d",
       "sources": []
     },
     {
       "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
       "classification": "narrow attributed shielded fixture and acceptance preparation",
       "path": "docs/slh-dsa-b128s/shielded-controls.md",
-      "sha256": "7cc04808ee768967f4cef22d8ff0e5e25859808c3c0e8f8dcb8526d77dc2b5b0",
+      "sha256": "e4297e5e54af177a70fb76ac2122e0fd67cf58b38ae94628ed8433994ca8d7f5",
       "sources": []
     },
     {
       "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse inert D5 export_chain/backup_observed for complete bounded canonical backups, retain in-memory anchor invalidation until reconsider, and require removed-spend backup absence before later clean restart. Publication uses direct same-byte RPC admission on each absent node, retaining per-node initial states/replies and requiring exact mempool/template presence even after the two pinned queue-race diagnostics. Final reentry reuses pinned research pq_ironwood_spend_live.py lines145-162 and204-211 cached-transaction block replay via current Controls.accept(publish=False), explicit same-block submission to each node, and exact best-chain/raw-block/TXID/confirmed-byte/effect checks. This replaces the introduced fresh-gossip assumption while leaving shared node_live/reconcile_saved and upstream gossip behavior unchanged; no renewed gossip-liveness claim. Causal models reproduce both original r4 failures and reject queued-only/non-arrival, unrelated refusal, changed bytes/template, no-op replay and unauthenticated duplicate block replies.",
       "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
       "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
-      "sha256": "d8ab41588e9bb38648f2446fe158d31e453393be3ad0680d0350d5ffe2847f07",
+      "sha256": "afd85249cac98ef0f7aa0678140692ca13a8e7b25c4f3f887a972b8222384fb3",
       "sources": [
         "shielded_spend_fixture_python",
         "shielded_spend_fixture_tests",
@@ -526,7 +526,7 @@
       "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow attributed transparent control adapter or focused regression",
       "path": "docs/slh-dsa-b128s/transparent-controls.md",
-      "sha256": "cfcc6b167839d3471f5743c8ae96e6c66e430923795831ddc08379c173fb5a72",
+      "sha256": "9337131e97a8486a39fe62bf28179ca0cfd06c35a427235169ee82e1a101634c",
       "sources": []
     },
     {
@@ -540,7 +540,7 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/acceptance/README.md",
-      "sha256": "3cf35d020c2f86b9d3a9f89e439cffbdcd6795241d3472dad195810e31dcae43",
+      "sha256": "fde31b87039fb5cf00b89c5174609899dd4a7937fe3dd85009cd6cea025abd0e",
       "sources": []
     },
     {
@@ -866,7 +866,7 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Document separate feature-gated shielded operations, unchanged transparent defaults and no automatic proof-generation tests. Document optional genuine note/spend operations, bounded trusted history and unchanged transparent/output-only restrictions.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
-      "sha256": "362f21fac539bdc1a0e4735ce5063302389636784b5245f030a07f5d343f96c9",
+      "sha256": "adf33ec5b5b99d87e61b587ae16aabcd31a9fbedb3c5a8273f80adfdff155239",
       "sources": []
     },
     {
@@ -887,7 +887,7 @@
       "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_SCHEMA.md",
-      "sha256": "c8ef3538f30acd12276c20f660ad70c5aeb323df57045bc5d6dfeec82f8e4904",
+      "sha256": "54c6aeec3c0714697a9146523f2be9bf0d76c93e54d22db760f98a5f8144f606",
       "sources": []
     },
     {

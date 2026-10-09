@@ -40,9 +40,8 @@ python3 tests/slh-dsa-b128s/fixtures/generate_transactions.py \
 
 This generates 15 prescribed public keys and 146 signatures for 18 artifacts,
 with no repetitions or measurements. It refuses an existing output directory.
-The production receipt retains actual tracked-source inventories, source
-commit/scoped status, locks, executable hashes and raw artifact hashes. The
-producer checks these inputs again before writing output. This receipt alone
+The production receipt records source inventories, commit status, lockfiles, binary hashes, and artifact hashes.
+The producer checks these inputs again before it writes output. This receipt alone
 does not establish independent acceptance or a live-node result.
 
 Interface errors are distinct from native authorization results. Fixed error
@@ -65,15 +64,14 @@ reasons by stage are:
 
 Malformed requests with no recognized operation use `op: "unknown"`. Errors
 contain fixed diagnostics, never echoed input bytes. Native failure names and
-stage grouping are defined by the fixture specification. The native result is
-computed without consulting the claimed expected outcome; `expectation_match`
-then compares them. Neither the host nor producer is an independent oracle.
+stage grouping are defined by the fixture specification. The host calculates the native result without consulting the claimed outcome.
+`expectation_match` then compares the two. Neither the host nor producer is an independent oracle.
 
 The optional `shielded-fixtures` feature adds `shielded-prepare`,
 `shielded-finalize` and `shielded-block` for the separate human
 [shielded control workflow](../../../../docs/slh-dsa-b128s/shielded-controls.md).
-Preparation requires `human_run: true`, bounded actual parent bytes and explicit
-hashed local Sapling parameters when that pool is selected. No parameter download
+Preparation requires `human_run: true` and bounded actual parent bytes.
+Sapling also requires explicit local parameters with recorded hashes. No parameter download
 or operational secret-key input is supported. The ordinary `control-block`
 operation keeps its transparent-only restriction. Default host builds and normal
 node dependency graphs do not enable this feature. Focused feature tests validate

@@ -3,7 +3,7 @@
 This isolated test workspace creates deterministic, explicitly public
 SLH-DSA-B-128s fixtures. It is never a wallet signing service and is not a node or
 wallet dependency. All key and seed material supplied to it must already be
-public test material. It does not implement live disposable-key handling.
+public test material. Live drivers use these public fixtures. Real wallet keys belong to the separate operational signer.
 
 The [version 1 interface](../../../docs/slh-dsa-b128s/fixtures.md) requires one
 strict JSON object on stdin. Both requests and responses are limited to 32,768
@@ -27,10 +27,13 @@ fields; those artifacts use the separate public schema.
 
 The signer dependency is unmodified `PQC-Suite-B/signatures` revision
 `b392fe82d2d9770142477a576a758a233888bc0a`; the manifest and lock pin BLAKE3
-`=1.8.5`. The signing source has short-message unsafe buffer copies. Their use
-here is constrained by checked fixed arrays: the Pure wrapper contributes two
-bytes, so PRF input is `16 + 16 + 2 + 101 = 135` bytes and H_msg input is
-`16 + 16 + 16 + 2 + 101 = 151` bytes, both below its 384-byte buffer. Keygen and
+`=1.8.5`. The upstream signing source uses unsafe copies in its short-message path.
+Checked fixed arrays keep this tool's inputs within the 384-byte buffer:
+
+- PRF input: `16 + 16 + 2 + 101 = 135` bytes.
+- H_msg input: `16 + 16 + 16 + 2 + 101 = 151` bytes.
+
+The Pure wrapper contributes two bytes. Keygen and
 tree hashes have fixed inputs; F/PRF are 64 bytes, H is 80, and T copies only the
 48-byte seed/address prefix into its 64-byte buffer before streaming nodes.
 This bounded test use does not establish an unrestricted upstream API's safety.
@@ -39,8 +42,7 @@ Upstream directly requests BLAKE3's Rayon feature, so this isolated dependency
 graph retains Rayon to avoid patching upstream source or its manifest. Under the
 fixed message bounds its parallel message path is never selected. No Rayon
 feature is requested by the runtime verifier; feature unification here belongs
-only to this isolated fixture workspace. The only version adaptation from the
-retained signer lock is BLAKE3 1.8.2 to 1.8.5 and its required dependency changes.
+only to this isolated fixture workspace. The retained signer lock changes only for BLAKE3 1.8.2 to 1.8.5 and its required dependencies.
 No original fixture or lock was edited.
 
 Run focused checks with this manifest; do not add this package to the node

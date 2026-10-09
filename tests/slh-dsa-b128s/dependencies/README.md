@@ -11,22 +11,24 @@ This invokes locked, offline Cargo metadata/tree inspection only. It does not
 compile a node, execute a live suite or dispatch CI. Cargo dependencies must
 already be available locally.
 
-The check rejects alternate PQ packages even when optional or test-only, and
-rejects local dependencies outside this repository. It inspects each node root
-separately: default features use normal/build edges, and all features use
-normal/build/dev edges. This avoids workspace-wide feature unification hiding a
-signer dependency. Every graph uses
-`--target all`, including dependencies behind target conditions that do not
-match the machine running the check. A regression resolves tiny local crates
-with Windows and non-Windows dependencies without compiling either target.
-It also checks normal/build graphs for the explicit consensus SLH feature,
-native/primitive verifiers and default/enabled wallet and CLI features. The signer
-is allowed only in the enabled wallet and CLI graphs. The default CLI also
-excludes the wallet library. BLAKE3
-remains pinned to 1.8.5 without its Rayon feature. Upstream node Rayon use is
-unaffected.
+The guard checks each dependency graph separately:
 
-This establishes dependency isolation, not source provenance, absence of secret
-handling bugs or runtime acceptance. The implemented wallet and relay/mining
-libraries do not establish complete CLI flows or live acceptance; the node's
-runtime support signal remains false.
+- Each node root with default features: normal and build dependencies.
+- Each node root with all features: normal, build, and development dependencies.
+- Explicit SLH consensus, native verifier, and primitive verifier graphs.
+- Default and enabled wallet and CLI graphs.
+
+Every graph uses `--target all`, including dependencies for other operating systems.
+This avoids hidden edges and misleading workspace-wide feature combinations.
+A regression test resolves small Windows and non-Windows dependencies without compiling them.
+
+The guard rejects alternate PQ packages, including optional and test-only packages.
+Local dependency paths must stay inside the repository.
+The signer is allowed only in enabled wallet and CLI graphs.
+The default CLI also excludes the wallet library.
+BLAKE3 stays pinned to 1.8.5 without its Rayon feature.
+Upstream node use of Rayon is unchanged.
+
+These checks establish dependency isolation. Runtime support now follows the
+explicit SLH feature, and CLI source is integrated. Neither the dependency graph
+nor the compiled-support flag establishes live acceptance or signer security.

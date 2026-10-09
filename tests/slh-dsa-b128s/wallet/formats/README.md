@@ -5,14 +5,13 @@ These are public, format-only conformance fixtures for the frozen
 roots, salts and nonces are deliberately public test values. Never use them for
 funds. Synthetic policy keys and the maximum partial's signature are byte
 patterns, not valid generated keys or signatures. The four-entry inventory
-instead uses the unchanged, independently generated [H1 keys](../README.md).
+instead uses the unchanged, independently generated [wallet key vectors](../README.md).
 
 The Python oracle reuses the separately written Transparent PQ reference's
 canonical JSON, Bech32m, inventory transitions and encrypted backup algorithm.
 [sources.json](sources.json) pins the imported source and contract inputs;
-[NOTICE](NOTICE) preserves attribution. The adaptations are the SLH domains and
-suite `f7`, all 120 policies, the W0 size ledger, strict parser prechecks and
-standalone format fixtures. No production Rust serializer, signer, encryption
+[NOTICE](NOTICE) preserves attribution. The adaptations cover SLH domains, suite `f7`, all 120 policies, wallet size limits,
+parser prechecks, and standalone fixtures. No production Rust serializer, signer, encryption
 implementation, subprocess or node computes expected bytes. SHA-256 and JSON
 use Python's standard library. Argon2id and ChaCha20Poly1305 use a separate
 pinned Python library, with no changed encryption parameters or container.
@@ -25,7 +24,7 @@ python3 -m unittest discover -s tests/slh-dsa-b128s/wallet/formats -p 'test_*.py
 
 The normal reference command recomputes and compares the complete retained
 file byte for byte. `--write` creates only a new file and refuses to overwrite
-one. The independent H1 key corpus is checked by SHA-256; this suite does not
+one. The independent key corpus is checked by SHA-256; this suite does not
 repeat expensive signing or silently regenerate its answers. It does compute
 the unchanged 64 MiB, three-pass, four-lane Argon2id backup key and complete
 ChaCha20Poly1305 ciphertext/tag. The tests are bounded Python/reference checks,
@@ -42,7 +41,7 @@ The 20 test methods cover:
   reader cap, and version 1 proposal/profile/inventory fingerprints. The two
   unsigned v5/v6 proposal transactions have independently encoded bytes.
 - CompactSize and minimal-push boundaries, 118,882-byte authorization and
-  118,927-byte full input, the five W0 transaction cases in both versions, check
+  118,927-byte full input, the five wallet transaction cases in both versions, check
   limits independently from transaction size, and a byte-limit rejection even
   when the check limit permits the transaction.
 - Independent 4,096-entry and 8 MiB inventory ceilings: a full 1-of-1 inventory
@@ -57,33 +56,30 @@ The 20 test methods cover:
   mutations, password bounds and authenticated-but-invalid recovery schemas.
   Recovery retains `format`, `manifest`, `root_hex`; it contains no journal.
 
-The validators establish public syntax and reference expectations. Entry
-syntax alone cannot authenticate origin claims; `check_origin_mapping` consumes
-an independently approved mapping. `check_proposal_envelope` intentionally does
-not verify transaction effects, UTXO provenance, grouping, fee approvals or
-signatures. Those comparisons require the payment implementation. The retained
-journal/watch caps are ledger expectations only, not implemented journal
-readers or a promise that maximal nested objects fit.
+These validators check syntax and calculate independent expected bytes.
+Entry syntax cannot authenticate origins.
+`check_origin_mapping` requires an independently approved mapping.
+`check_proposal_envelope` does not verify effects, UTXOs, grouping, fees, or signatures.
+Those checks belong to the payment implementation.
+Journal and watch limits are reference expectations, not journal readers or capacity guarantees for nested objects.
 
-The Rust wallet tests consume these answers for actual receiver, inventory,
-proposal, partial, size and encrypted-backup comparisons. Recovery tests regenerate
-every local public key, validate durable objects and preserve exact saved
-authority bytes. The separate [interface comparisons](../interfaces/README.md)
-add independent public CLI enrollment answers and operational receipt/companion
-identities. Existing fake-loopback RPC tests cover transport and trusted block
-resolution; actual live CLI/RPC acceptance remains pending human execution. No operational
-snapshot schema is defined by this format oracle; the product's
-[recovery contract](../../../../docs/slh-dsa-b128s/recovery.md) owns that artifact.
+Rust tests compare receivers, inventories, proposals, partials, sizes, and encrypted backups with these answers.
+Recovery tests reconstruct local keys, check stored objects, and preserve exact authorization bytes.
+Separate [interface tests](../interfaces/README.md) cover CLI enrollment and snapshot receipt identities.
+Fake-loopback tests cover RPC transport and trusted block resolution.
+Live CLI/RPC acceptance still needs human execution.
+The [recovery contract](../../../../docs/slh-dsa-b128s/recovery.md), not this oracle, defines operational snapshots.
+
 The existing file/journal design has these acceptance requirements:
 
 | Existing recovery case | Required outcome |
 | --- | --- |
-| Root/inventory backup alone | Regenerate local keys, retire old issuance ranges and rotate allocator; no complete-history claim; fresh covering backup before issuance |
-| Coherent watch/journal copy from a trusted protected snapshot | Bind backup hash, wallet/suite/profile/inventory and generation; preserve saved bytes and reservations; stage then atomically publish in a new private directory |
-| Missing/truncated/mismatched reachable object or unsafe path | Reject; leave existing state unchanged |
-| Legitimate retained orphan/temp object | Preserve under the existing quota rules; no wholesale journal read into a recovery buffer |
-| Self-consistent replacement or unknown newer authority | Keep authority restricted; empty mempool does not establish completeness |
-| Cached observations or unavailable/pruned history | Reconcile with trusted node; never turn uncertainty into a zero/current balance |
+| Root/inventory backup alone | Reconstruct local keys, retire old address ranges, and replace the allocator identity. Restore stays monitor-only. |
+| Coherent watch/journal copy from a trusted protected snapshot | Bind backup, wallet, suite, profile, inventory, and generation. Preserve saved bytes and reservations. Publish atomically in a new private directory. |
+| Missing/truncated/mismatched reachable object or unsafe path | Reject without changing existing state |
+| Legitimate retained orphan/temp object | Preserve within existing quotas. Do not load the full journal into one buffer. |
+| Self-consistent replacement or unknown newer authority | Keep authority restricted. An empty mempool does not establish completeness. |
+| Cached observations or unavailable/pruned history | Synchronize with a trusted node. Uncertainty cannot become a current zero balance. |
 
 Focused product library tests cover these cases; separately evidenced human
 live/terminal acceptance remains required. This format corpus alone proves

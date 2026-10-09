@@ -1,28 +1,30 @@
-# Experimental SLH wallet contract
+# Wallet contract
 
-Status: frozen contract, 2026-10-09. Wallet, payment, recovery and CLI source
-implement this contract; live node and terminal acceptance remain separate
-[validation gates](acceptance.md). The [protocol](protocol.md) owns consensus bytes and the
-`slh-dsa-b-128s-exp-v1` identity. This wallet is Regtest-only and off by default
-behind `experimental-slh-dsa-b128s`.
+This document specifies the wallet contract dated 2026-10-09.
+The wallet, payment, recovery, and CLI code implement this contract.
+Live node and terminal tests remain open.
+The [protocol](protocol.md) specifies consensus bytes and `slh-dsa-b-128s-exp-v1`.
+The wallet requires Regtest and `experimental-slh-dsa-b128s`, which is off by default.
 
-The implementation reuses the existing Transparent PQ wallet's canonical JSON,
-HKDF layout, enrollment, approval, encryption, durable reservation and journal
-contracts. Changes are restricted to SLH identity, lengths, policy capacity and
-operational recovery orchestration. Only suite `f7` is accepted. Other-suite
-backups, saved proposals and partials are rejected, never converted implicitly.
-An unavailable feature is an explicit unsupported-operation error.
+The implementation reuses canonical JSON, HKDF derivation, enrollment,
+approval, encryption, reservations, and journals from the Transparent PQ wallet.
+The adaptations cover SLH identity, lengths, policy capacity, and operational recovery.
+Only suite `f7` is accepted.
+Other-suite backups, proposals, and partials produce errors. The wallet does not convert them.
+An unavailable feature produces an unsupported-operation error.
 
-## Root and derivation
+## Root and key derivation
 
-A wallet owns a uniformly generated 32-byte root. Root, wallet ID and allocator
-ID use separate fallible OS entropy requests; the latter two identifiers have
-16 bytes each. A failure issues no receiver. Account is always zero; receive
-role is `00`, change role is `01`, and index is an unsigned 32-bit integer.
-Exhaustion never wraps. There is no public child derivation or xpub.
+The wallet uses a uniformly generated 32-byte root.
+The root, wallet ID, and allocator ID each require a separate fallible OS entropy request.
+The two IDs have 16 bytes each.
+An entropy failure issues no receiver.
+Account is always zero. Receive role is `00`. Change role is `01`.
+The index is an unsigned 32-bit integer. Exhaustion never wraps the index.
+There is no public child derivation or xpub.
 
-The existing derivation version and domains remain unchanged. ASCII literals
-below include the single written terminal zero byte:
+The derivation version and domains remain unchanged.
+Each ASCII literal below includes one final zero byte:
 
 ```text
 salt = ASCII("ZcashTransparentPQ/wallet-root/v1\0")
@@ -35,46 +37,58 @@ seed = T1 || T2[0..16]
 SK.seed = seed[0..16]; SK.prf = seed[16..32]; PK.seed = seed[32..48]
 ```
 
-This is HKDF-SHA256 with 48 output bytes, not padding or repeating a 32-byte
-child seed. Restore reconstructs every local public root and key commitment
-and checks it against its enrolled sorted position. Independent conformance
-must pin both expansion blocks, full public keys and receive/change/index
-boundaries before the signer checkpoint is accepted.
+HKDF-SHA256 produces 48 bytes through two expansion blocks.
+It does not pad or repeat a 32-byte seed.
+Restore reconstructs each local public root and key commitment.
+It checks each commitment against its sorted position in the inventory.
+Independent [wallet vectors](../../tests/slh-dsa-b128s/wallet/README.md)
+cover both blocks, full public keys, roles, and index boundaries.
 
-The signer is a separate, safe fixed-profile crate. It accepts owned clearing
-seed material, has no secret `Debug`, `Clone` or serialization, and signs the
-exact 101-byte external message using Pure with empty context exactly once.
-Each operational signature obtains 16 fresh bytes through fallible entropy and
-passes local primitive verification before release. Entropy or verification
-failure returns no partial; there is no deterministic operational fallback.
-Explicit randomness belongs only to isolated conformance builds. The initial
-implementation is serial and uncached. Document temporary/backend clearing
-limits, including the inherited HKDF/HMAC internal-state limitation.
+## Signer and approval
 
-The wallet reconstructs trusted transaction context and approves effects before
-calling the signer. The native crate supplies verifier-only
-`InputSigningContext`, partial verification and canonical assembly. Neither
-native nor node code depends on signing. Feature-enabled wallet dependencies
-may include the signer; default wallet and every node graph must exclude it.
+The separate signer crate uses safe Rust and a fixed profile.
+It accepts owned seed material with memory clearing.
+Secrets have no `Debug`, `Clone`, or serialization implementation.
+The signer applies Pure framing once to the 101-byte message with empty context.
+Each operational signature requires 16 fresh bytes from fallible entropy.
+Local primitive verification must succeed before the signer returns a partial.
+An entropy or verification failure returns no partial.
+There is no deterministic fallback for operational signatures.
 
-## Receiver, transport and policies
+Prescribed randomness and fault injection are private unit-test code only.
+The initial signer is serial and has no cache.
+The [signer README](../../crates/pq-slh-dsa-b-sign/README.md#clearing-scope)
+states memory-clearing limits, including HKDF/HMAC internal state.
 
-Retain Bech32m HRP `tpqreg`, 69 lowercase characters and the existing 35-byte
-payload layout: `01 || 02 || f7 || policy_commitment`. The resulting script is
-exactly `53 || 20 || policy_commitment || c0`. Reject alternate HRPs/checksums,
-case, length, suites and noncanonical encodings. The prefix is experimental;
-it is not an assigned Unified Address receiver.
+Before signing, the wallet reconstructs trusted transaction context and approves the effects.
+The native crate supplies verifier-only `InputSigningContext`, partial verification, and canonical assembly.
+Neither the native crate nor the node depends on a signer.
+Only feature-enabled wallet builds can include the signer.
 
-Retain canonical JSON: printable ASCII without escapes, sorted object fields,
-no whitespace/newline, duplicate or unknown fields; unsigned shortest decimal
-integers, explicit permitted nulls and depth at most 16. Readers bound bytes and
-collections before expensive work and reject rather than normalize.
+## Receivers and transport
 
-Retain inventory/recovery/proposal version 1 envelope fields and their meanings.
-The inventory's suite byte selects the 48-byte derivation, so it does not
-reinterpret a saved other-suite object. A partial uses the distinct format
-`ZcashTransparentPQ/experimental/slh-dsa-b-128s/partial/v1` and exactly these
-fields in this order:
+The receiver uses Bech32m, HRP `tpqreg`, and 69 lowercase characters.
+Its 35-byte payload is `01 || 02 || f7 || policy_commitment`.
+The output script is `53 || 20 || policy_commitment || c0`.
+The decoder rejects other HRPs, checksums, case, lengths, suites, and noncanonical encodings.
+This experimental prefix is not an assigned Unified Address receiver.
+
+Canonical JSON has these requirements:
+
+- Printable ASCII, without escapes, whitespace, or a final newline.
+- Sorted object fields, without duplicate or unknown fields.
+- Unsigned integers in the shortest decimal form.
+- Null only where the schema permits it.
+- A maximum depth of 16.
+
+Readers check byte and collection limits before expensive work.
+They reject invalid encodings instead of normalizing them.
+Inventory, recovery, and proposal envelopes retain version 1 and the existing field meanings.
+The suite byte selects the 48-byte derivation.
+It cannot reinterpret an object from another suite.
+
+A partial uses `ZcashTransparentPQ/experimental/slh-dsa-b-128s/partial/v1`.
+Its fields occur in this order:
 
 | Field | Encoding |
 | --- | --- |
@@ -85,53 +99,54 @@ fields in this order:
 | `signature_hex` | 15,712 lowercase hex characters |
 | `signer_index` | Unsigned integer 0–14, validated against the enrolled policy |
 
-Policies support all 120 shapes `1 <= m <= n <= 15`. Origins correspond
-one-for-one to sorted distinct commitments; each has account zero, u32 index
-and distinct participant wallet ID. Every cosigner approves the full threshold,
-participant set and origin mapping. New enrollment, issuance, change selection
-and signing preflight actual encoded sizes and both approved check limits.
-Existing incompatible history remains readable/scannable for recovery.
+## Policies and payments
 
-Preserve the payment grouping rule: all inputs and change have the same
-threshold and participant wallet-ID set, with suite-homogeneous policies. The
-node's heterogeneous-policy budget fixtures do not change this approval rule.
-Payments retain transparent-only v5/v6 on NU7, final sequences, zero lock time,
-one recipient and optional change, and the existing 20-block expiry horizon.
-Profile/recipient activation are independently approved; RPC metadata is not
-permission to enable a gate. Funding tools may use classical inputs with zero
-SLH checks; this does not add a classical-key wallet here.
+The wallet supports all 120 policies with `1 <= m <= n <= 15`.
+Each sorted commitment has one origin, with account zero, a u32 index, and a distinct participant wallet ID.
+Each cosigner approves the threshold, participants, and origin mapping.
+Enrollment, address issuance, change selection, and signing check actual sizes and both approved check limits.
+Incompatible old history remains readable for recovery and scans.
 
-## Capacity and rejection ledger
+All payment inputs and change must share a threshold and participant wallet-ID set.
+Their policies must use the same suite.
+The node's fixtures with different policies do not change this wallet rule.
+Payments use transparent-only v5/v6 transactions on NU7, final sequences, and zero lock time.
+They have one recipient, optional change, and a 20-block expiry horizon.
+Profile and recipient activation require independent approval.
+RPC metadata cannot authorize activation.
+Classical funding tools do not add a classical-key wallet to this extension.
 
-Bounds are independent ceilings, not a promise every combination fits. Count
-canonical bytes before allocating/publishing; retain schema versions where only
-the SLH size allowance changes. Errors preserve the existing distinction
-between encoding/size limits, context, policy limits and approval mismatch.
+## Capacity limits
+
+Each limit applies independently. Some combinations cannot fit all limits.
+The wallet counts canonical bytes before allocation or publication.
+A change in the SLH size allowance alone does not change schema versions.
+Errors distinguish encoding, size, context, policy, and approval failures.
 
 | Item | Frozen allowance and required enforcement |
 | --- | --- |
-| Per-input authorization | Canonical maximum 118,882 bytes; native guard 131,072; validate push/index/policy encoding before crypto |
-| Partial | 16,001 bytes at indices 14/14, including JSON; cap 16,384 for encode/decode, CLI files and saved local partials |
-| Final transaction | Cap 262,144 bytes; apply to serialization, RPC hex bounds, review, final assembly, history/retry and snapshot reads |
-| Proposal | Retain 262,144 bytes and 15 inputs; unsigned transaction has empty authorizations. At most two outputs; origins bounded at 15 before allocation |
-| Assembly input files | At most the sum of approved thresholds, never over 225; reject excess and duplicate slots before verification |
-| Saved local partials | At most 15, one local signature per input; do not reinterpret this as every cosigner's signatures |
-| Inventory/recovery/transfer | Retain 4,096 entries and 8,388,608 bytes independently; preflight exact canonical envelope size before enrollment/export |
-| Encrypted root backup | Existing 56-byte header plus bounded plaintext plus 16-byte authentication tag; no journal in this envelope |
-| Journal capability | Retain 1,048,576 bytes, count the complete object including proposal, local partials, final hex transaction and metadata |
-| Watch state | Retain v2 33,554,432-byte limit; v3 retains its 16,384-byte metadata allowance |
-| Journal commit/quota | Retain 67,108,864-byte commit cap, object/count limits and configured quota; retained generations consume quota separately |
+| Per-input authorization | Canonical maximum 118,882 bytes. Native guard 131,072. Validate push/index/policy encoding before crypto |
+| Partial | 16,001 bytes at indices 14/14, including JSON. Cap 16,384 for encode/decode, CLI files and saved local partials |
+| Final transaction | Cap 262,144 bytes. Apply to serialization, RPC hex bounds, review, final assembly, history/retry and snapshot reads |
+| Proposal | 262,144 bytes and 15 inputs. Unsigned transaction has empty authorizations. At most two outputs. Origins bounded at 15 before allocation |
+| Assembly input files | At most the sum of approved thresholds, never over 225. Reject excess and duplicate slots before verification |
+| Saved local partials | At most 15, one local signature per input. Do not reinterpret this as every cosigner's signatures |
+| Inventory/recovery/transfer | 4,096 entries and 8,388,608 bytes independently. Preflight exact canonical envelope size before enrollment/export |
+| Encrypted root backup | Existing 56-byte header plus bounded plaintext plus 16-byte authentication tag. No journal in this envelope |
+| Journal capability | 1,048,576 bytes, count the complete object including proposal, local partials, final hex transaction and metadata |
+| Watch state | Version 2 has a 33,554,432-byte limit. Version 3 retains a 16,384-byte metadata allowance. |
+| Journal commit/quota | 67,108,864-byte commit cap, object/count limits and configured quota. Retained generations consume quota separately |
 
-An entry with 15 origins at maximum u32 indices is 2,206 canonical bytes. An
-array of 4,096 such entries is 9,039,873 bytes before the outer envelope, so the
-entry count alone cannot promise capacity. Do not raise the 8 MiB cap: exact
-preflight determines the smaller capacity. The independent envelope and object
-caps similarly constrain active payment slots and retained history; do not
-load the entire journal into a single recovery buffer.
+An entry with 15 origins at maximum u32 indices has 2,206 canonical bytes.
+An array of 4,096 such entries has 9,039,873 bytes before the envelope.
+Thus, the entry count does not guarantee capacity within 8 MiB.
+Exact byte counts determine the smaller capacity.
+Journal objects and retained history also consume independent limits.
+Recovery must not load the full journal into one buffer.
 
-Transaction sizes below include a 35-byte-script recipient and change and no
-shielded data. They use exact CompactSize widths, including five bytes for a
-15-of-15 authorization. Check count and byte limits are tested independently:
+The following sizes include a recipient and change, each with a 35-byte script.
+They exclude shielded data and use exact CompactSize widths.
+A 15-of-15 authorization needs a five-byte CompactSize length.
 
 | Inputs/policy | Checks | v5 bytes | v6 bytes | Initial 16-check profile |
 | --- | ---: | ---: | ---: | --- |
@@ -141,47 +156,47 @@ shielded data. They use exact CompactSize widths, including five bytes for a
 | Nine 2-of-3 | 18 | 143,492 | 143,493 | Reject check limit, not byte limit |
 | Two 15-of-15 | 30 | 237,967 | 237,968 | Reject check limit, not byte limit |
 
-Use current Zakura actual-size ZIP-317 accounting and marginal fee 400, not an
-old helper's 5,000. Recipient/change SLH dust is 2,403 zatoshis; test
-2,402/2,403/2,404. Do not rewrite stored fee approvals. The 16-transaction /
-64-block check profile is a test configuration, not a production recommendation.
+ZIP-317 fees use actual sizes and the pinned marginal fee of 400 zatoshis.
+The old 5,000-zatoshi helper value does not apply.
+The SLH recipient and change dust floor is 2,403 zatoshis.
+Boundary tests use 2,402, 2,403, and 2,404.
+Stored fee approvals remain unchanged.
+The 16-check transaction and 64-check block limits are test settings.
 
 ## Recovery and watch-only behavior
 
-Retain encrypted root/inventory backup algorithms and bounded parameters,
-private durable file publication, exact saved authorization bytes, monotonic
-retirement/cursors and one allocator. A monitor holds public inventory only;
-it cannot sign or allocate. A paired allocator issues only generated entries
-covered by a durable backup. Exhaustion requires explicit generation,
-enrollment, backup and public inventory import.
+The wallet retains encrypted backups, private durable publication, exact saved authorizations,
+monotonic retirement and cursors, and one allocator.
+A monitor holds public inventory. It cannot sign or allocate addresses.
+A paired allocator issues only generated entries covered by a durable backup.
+Inventory exhaustion requires more generation, enrollment, backup, and public inventory import.
 
-Key/inventory restore regenerates commitments, reconciles the latest available
-backup, retires old issuance ranges while preserving scan coverage and rotates
-the allocator. Fresh issuance requires a new covering backup. This mode cannot
-claim complete payment history or outstanding-authority recovery.
+Key/inventory restore reconstructs commitments and checks the latest available backup.
+It retires old address ranges but retains their scan coverage.
+It replaces the allocator identity and restores a monitor.
+A key backup cannot establish complete payment history or all outstanding signatures.
 
-Operational restore uses the exact encrypted backup plus a coherent private
-copy of the existing watch-state file and immutable journal, captured under the
-allocator lock or after clean close. Receipt metadata binds backup hash,
-wallet/suite/profile/inventory identity and generation. Completeness requires
-a protected trusted backup source or independently retained trusted state/root
-receipt; a self-consistent replacement cannot prove no authority was omitted.
-Unknown outstanding authority remains restricted, including with an empty
-mempool. A snapshot cannot recover later lost signatures or prove an old
-allocator has stopped elsewhere.
+An operational snapshot includes the matching encrypted backup, watch state, and immutable journal.
+Capture requires the allocator lock or a clean close.
+The receipt binds the backup hash, wallet, suite, profile, inventory, and generation.
+The [recovery guide](recovery.md) specifies files, trusted receipt requirements, and restore modes.
+A consistent set of files alone cannot prove that no signatures are missing.
+An empty mempool does not resolve unknown outstanding signatures.
+A snapshot cannot recover later signatures or prove that another allocator stopped.
 
-Copy objects with bounded streaming, preserve legitimate retained orphan/temp
-files under existing quota rules and validate reachable objects with the
-existing readers. Reject missing/truncated/mismatched reachable objects and
-unsafe paths. Stage then atomically publish into a new private directory,
-leaving existing state intact on failure. Preserve reservations and exact saved
-bytes. Imported observations remain cached until trusted-node reconciliation;
-incomplete/pruned/unavailable history cannot become a zero/current balance.
-Historical reads and any migration are explicit and recoverable. No new
-encrypted journal container is required by this contract.
+Restore copies objects with bounded buffers and retains valid orphan and temporary journal files.
+Existing quota rules still apply.
+The existing readers check all reachable objects.
+Missing, truncated, mismatched, or unsafe paths cause rejection.
+Restore stages the files and atomically publishes a new private directory.
+It preserves reservations and exact saved bytes.
+A final directory-sync failure can report an error after publication.
 
-Implementation gates include independently checked derivation/signing, bounded
-format/size tests, all policy shapes, durable approval and backup failure tests,
-corruption/stale-snapshot/unknown-authority controls and default/feature graphs.
-Live payments, funded recovery and terminal backup validation require human
-execution and remain pending until separately evidenced.
+Imported observations remain cached until synchronization with a trusted node.
+Incomplete, pruned, or unavailable history cannot become a current zero balance.
+Historical reads and migrations remain explicit and recoverable.
+The snapshot does not introduce a new encrypted journal container.
+
+Focused tests cover derivation, signatures, formats, policy shapes, approvals, backups,
+corruption, stale snapshots, unknown authority, and dependency graphs.
+Live payments, funded recovery, and terminal tests still require human execution.

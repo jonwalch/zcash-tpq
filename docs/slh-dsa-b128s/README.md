@@ -1,70 +1,61 @@
-# Experimental SLH node and wallet
+# SLH node and wallet guide
 
-This is a focused SLH-only extension of upstream Zakura commit
-`9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`. The fixed experimental contract is
-`slh-dsa-b-128s-exp-v1`, suite `f7`, using the pinned BLAKE3-based algorithm.
-It is not the FIPS 205 SHAKE/SHA2 profile. See the [protocol](protocol.md) for
-the exact encoding, algorithm pin, activation rules and supported context.
+This extension lets a local Zakura test network hold and spend transparent funds
+with SLH-DSA-B-128s. It includes a node verifier, wallet, command-line interface
+(CLI), multisig, backups, recovery, and public address inventories.
+SLH is the only added post-quantum (PQ) signature scheme.
+Node builds do not include the wallet signer.
 
-The node verifier, wallet signer and independent references remain separate.
-Normal node builds do not contain wallet/signing code. The
-`experimental-slh-dsa-b128s` feature is off by default and only supports an
-explicitly configured Regtest network after NU7. Classical and shielded rules
-retain upstream behavior except the documented SLH integration boundaries.
+Support requires the `experimental-slh-dsa-b128s` feature.
+The Regtest configuration must set SLH activation after NU7.
+The BLAKE3 construction is experimental. It is not a FIPS 205 profile.
+The [protocol](protocol.md) specifies the source revisions and the
+`slh-dsa-b-128s-exp-v1` contract.
 
-## Entry points
+## Use the node and wallet
 
-| Task | Maintained guide |
+| Task | Guide |
 | --- | --- |
-| Enable a disposable Regtest node and inspect runtime identity | [Runtime and configuration](runtime.md) |
-| Understand activation, budgets and wire format | [Protocol](protocol.md), [relay and mining](relay-mining.md) |
-| Create an encrypted root, enroll independent cosigners and approve payments | [CLI commands](cli.md), [wallet contract](wallet.md) |
-| Maintain public finite receive inventory and monitor balances | [Inventory and watch-only behavior](wallet.md#recovery-and-watch-only-behavior) |
-| Preserve and restore payment authority | [Recovery artifacts and trust](recovery.md) |
-| Run the prepared node/wallet/terminal scenarios | [Human acceptance runbook](acceptance.md), [lifecycle controls](lifecycle-controls.md) |
-| Exercise transparent refusal and uncertain wallet history | [Transparent controls](transparent-controls.md), [history controls](history-controls.md) |
-| Capture opt-in Regtest primitive attempts | [Observation and bounded receipts](observations.md), [funded capture controls](observation-controls.md) |
-| Prepare real shielded coexistence and wallet write failures | [Shielded controls](shielded-controls.md), [wallet fault controls](fault-controls.md) |
-| Exercise genuine note spends, anchors and process crashes | [Shielded spend controls](shielded-spend-controls.md), [node crash controls](crash-controls.md) |
-| Check new public artifacts and inspect validation coverage | [Independent evidence and coverage](validation.md) |
-| Compare public enrollment and snapshot identities | [Independent wallet interfaces](../../tests/slh-dsa-b128s/wallet/interfaces/README.md) |
-| Audit source, dependencies and archives | [Packaging](packaging.md), [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) |
+| Configure a test node and identify its verifier | [Runtime](runtime.md) |
+| Create a wallet, enroll cosigners, and make payments | [CLI commands](cli.md) |
+| Back up keys and payment history, then restore them | [Recovery](recovery.md) |
+| Understand finite address inventories and watch-only roles | [Wallet behavior](wallet.md#recovery-and-watch-only-behavior) |
+| Build matching binaries and run end-to-end scenarios | [Acceptance runbook](acceptance.md) |
 
-Use the committed Rust toolchain, Git, Python 3.11 or later, and the exact Python
-requirements beside each reference suite. A full source checkout is required
-for history/content checks. Build receipts and exact feature commands are in
-the acceptance runbook. Dedicated node builds and live node/wallet/terminal
-validation are human-only under [AGENTS.md](../../AGENTS.md); the content guard
-and its focused Python tests perform no such work.
+The build requires Rust 1.97 or later, Git, and Python 3.11 or later.
+Each reference suite lists its Python dependencies.
+`rust-toolchain.toml` selects the `stable` channel, which changes over time.
+Build receipts record the exact compiler version.
+The acceptance guide gives the build commands.
+[AGENTS.md](../../AGENTS.md) permits only humans to run dedicated node builds and live tests.
 
-```sh
-python3 -m unittest discover -s tests/slh-dsa-b128s/release-content -p 'test_*.py' -v
-python3 tests/slh-dsa-b128s/release-content/check.py
-```
+## Reference and validation
 
-## Recovery and limits
+| Area | Guide |
+| --- | --- |
+| Encodings, signing messages, activation, and limits | [Protocol](protocol.md), [wallet specification](wallet.md) |
+| Verification, mempool admission, and mining | [Consensus](consensus.md), [relay and mining](relay-mining.md) |
+| What has been checked and what remains | [Validation evidence](validation.md) |
+| Funding, rejection, restart, and reorg scenarios | [Lifecycle](lifecycle-controls.md), [transparent controls](transparent-controls.md) |
+| Missing or inconsistent node history | [Wallet history controls](history-controls.md) |
+| Verifier-call logs and their interpretation | [Observations](observations.md), [capture scenarios](observation-controls.md) |
+| Shielded outputs, note spends, and anchors | [Output controls](shielded-controls.md), [spend controls](shielded-spend-controls.md) |
+| Interrupted wallet writes and node processes | [Wallet faults](fault-controls.md), [node crashes](crash-controls.md) |
+| Public test data and independent comparisons | [Fixtures](fixtures.md), [transaction schema](transaction-fixtures.md), [wallet interfaces](../../tests/slh-dsa-b128s/wallet/interfaces/README.md) |
+| Source, dependencies, and release contents | [Packaging](packaging.md), [dependency checks](../../tests/slh-dsa-b128s/dependencies/README.md) |
 
-Keep encrypted backups and independent inventory/snapshot receipt fingerprints
-outside disposable working state. An operational snapshot contains `backup.tpq`,
-`receipt.json`, `watch/state.json` and the existing immutable `watch/journal/`
-when present. Retain every required participant's backup for the intended quorum.
-Inventory-only or unknown-authority restore remains monitor-only. A trusted
-snapshot cannot recover later lost signatures or prove an old allocator stopped;
-the [recovery guide](recovery.md) describes the required trust and retirement.
+## Current limits
 
-The 16-check transaction/64-check block profile is a functional test setting,
-not a production budget. Library/reference/mock evidence is distinct from live
-funded acceptance. The runbook records prepared cases, including funded
-capture brackets, real shielded outputs/spends/anchors, test-only wallet write
-faults and bounded node process-crash checkpoints. These prepared drivers require
-completed source-bound execution receipts. Deterministic internal queue occupancy, operating-system
-entropy suppression, disk exhaustion and power-loss behavior remain unclaimed.
-No production readiness, live recovery, performance or proof-validation result
-is implied by packaging success.
+The implementation includes focused tests and drivers for live scenarios.
+The live tests still need successful human runs with recorded source and binary hashes.
+This includes payment, recovery, terminal, proof-generation, and crash tests.
+No performance result establishes readiness for production.
+The limits of 16 checks per transaction and 64 checks per block are test settings.
 
-Upstream and imported MIT/Apache-2.0 licenses, per-module notices and public
-vector provenance are retained. The [import ledger](imports.json) maps every
-post-upstream file change to its disposition and attribution. Public research
-URLs identify sources; the research checkout, notes, experiment tree and Git
-history are not dependencies or product contents. Publication to a new remote
-and release destinations remains a separate action.
+A key backup cannot recover payment history or signatures made after the backup.
+A restore with incomplete or untrusted history stays monitor-only.
+The [recovery guide](recovery.md) describes the required files and trust decisions.
+
+The repository includes source mappings and licenses.
+It excludes internal research notes and history.
+The [writing guide](writing.md) defines the documentation style and technical terms.

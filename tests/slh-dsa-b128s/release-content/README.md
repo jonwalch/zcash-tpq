@@ -8,8 +8,8 @@ python3 -m unittest discover -s tests/slh-dsa-b128s/release-content -p 'test_*.p
 python3 tests/slh-dsa-b128s/release-content/check.py --packages
 ```
 
-Python 3.11+, Git and the pinned Cargo toolchain are required; no third-party
-Python library or research checkout is needed. Checks use temporary miniature Git
+The checks require Python 3.11+, Git, and the repository-selected Cargo toolchain.
+They need no third-party Python library or research checkout. Checks use temporary miniature Git
 repositories and real archive inspection, or mocked bounded publication inputs.
 No daemon, signer, terminal, build, network fetch, benchmark or publication runs.
 Source attribution is in [NOTICE](NOTICE).

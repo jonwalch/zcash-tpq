@@ -1,146 +1,127 @@
-# Real shielded spends and anchor lifecycle
+# Shielded spends and anchor tests
 
-The [acceptance driver](../../tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py)
-prepares genuine Sapling, Orchard and Ironwood spends alongside final SLH or
-classical transparent authorization. Source and offline models are preparation;
-only a completed live receipt establishes acceptance. The existing
-[output controls](shielded-controls.md) and independent digest corpus retain their
-original scope and bytes. Wallet approval remains transparent-only.
+The [driver](../../tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py)
+prepares real Sapling, Orchard, and Ironwood spends with SLH or classical transparent authorization.
+Only a complete live receipt establishes acceptance.
+The [output tests](shielded-controls.md) and independent digest corpus retain their separate scope.
+Wallet approval remains transparent-only.
 
-Use the ten supported version/pool subsets: in v5, `sapling`, `orchard`, and
-`sapling,orchard`; in v6, every nonempty subset of `sapling,orchard,ironwood`.
-List pool names in that order. Each included pool spends one genuine 50,000-zatoshi
-note and creates its builder's two padded outputs/actions. Public fixture keys
-are deliberately reproducible. Never send real funds to those identities.
+The driver uses the same ten version/pool subsets as the output tests.
+Pool names occur in the order Sapling, Orchard, Ironwood.
+Each selected pool spends one genuine 50,000-zatoshi note and creates two padded outputs or actions.
+Fixture keys are public. Do not send real funds to them.
 
-## Funding and history boundary
+## Funding and history
 
-This isolated profile uses NU6.2 at height 1, NU6.3 at 104, NU7 at 105 and SLH at
-110. Ordinary acceptance defaults are unchanged. Two connected local enabled
-nodes agree on funding, history and state. The driver authenticates real mature
-classical coinbase outpoints by raw transaction, block membership, amount, script
-and maturity through the existing node helper.
+This isolated profile uses NU6.2=1, NU6.3=104, NU7=105, and SLH=110.
+It does not change ordinary acceptance defaults.
+Both connected nodes use enabled binaries and agree on funding, history, and state.
+The driver authenticates mature classical coinbases through bytes, block membership, amount, script, and maturity.
 
-Orchard receives a real 50,000-zatoshi deposit at height 102, before NU6.3, using
-a v5 transaction expiring at 103 and the pinned Orchard v2 circuit. The driver
-relays and mines it through the ordinary node. The inherited prohibition on net
-Orchard additions after NU6.3 is preserved. Ironwood tree state is unavailable at
-this point: the receipt records `null` for its root only while the RPC explicitly
-returns empty commitments before height 104; it does not invent an empty root.
+Orchard receives 50,000 zatoshis at height 102, before NU6.3.
+The deposit uses v5, expiry 103, and the pinned Orchard v2 circuit.
+It relays and confirms through the ordinary node.
+The inherited prohibition on later net Orchard additions remains unchanged.
+Ironwood has no available tree state before height 104.
+The receipt records a null root only when RPC explicitly returns empty commitments.
+It does not invent a root.
 
-After height 110, the existing output fixture deposits 50,000 zatoshis into each
-selected Sapling/Ironwood pool. Separate classical funding creates two actual
-3,000,000-zatoshi transparent parents. In SLH mode both parents lock to the public
-SLH policy. Another independently funded output transaction then advances all
-selected pool trees. Its Orchard output is zero-valued, as required by the active
-rule. This later root supplies the anchor used by both genuine note spends.
+After height 110, the output fixture deposits 50,000 zatoshis into each selected Sapling/Ironwood pool.
+Separate classical funding creates two transparent parents of 3,000,000 zatoshis each.
+In SLH mode, both parents use the public SLH policy.
+A separate output transaction then advances all selected trees.
+Its Orchard output is zero-valued under the active rule.
+The later root supplies the anchor for both spends.
 
-The bounded export includes genesis through the stable current tip, exact raw
-blocks, and `z_gettreestate`. Both nodes must agree on every raw block, hash,
-height, previous-block link and exported treestate; funding transaction bytes,
-best-chain membership and both available transparent parents are checked again.
-The driver allows at most 512 blocks after genesis and 12 MiB of encoded history;
-the host additionally enforces its stricter raw-block, transaction and commitment
-bounds. The host reconstructs canonical linked history, decrypts notes with the
-fixed public fixture identities, finds their actual positions and witnesses,
-and matches every selected root to the node treestate.
-Sapling comparisons use the node's existing RPC display-order conversion while
-retaining canonical witness/tree/path equality internally. Note metadata keeps
-the exact RPC root; Orchard and Ironwood retain their existing byte order.
+History export includes genesis through the stable tip, exact blocks, and `z_gettreestate`.
+Both nodes must agree on bytes, hashes, heights, links, and tree state.
+The driver checks funding membership and both available transparent parents again.
+Export permits at most 512 blocks after genesis and 12 MiB of encoded history.
+The host applies stricter block, transaction, and commitment bounds.
 
-These are trusted-node observations and bounded witness reconstruction, not an
-independent consensus verifier. Requested amounts never replace authenticated
-chain amounts. No new RPC or production state instrumentation is introduced.
+The host reconstructs linked history and decrypts notes with public fixture identities.
+It finds note positions and witnesses, then matches selected roots to node tree state.
+Sapling uses the RPC display-order conversion while internal witness and tree checks retain canonical order.
+Note metadata keeps the exact RPC root.
+Orchard and Ironwood retain their existing byte order.
+These are trusted-node observations, not independent consensus verification.
+Requested amounts cannot replace authenticated chain amounts.
 
-## Saved bytes and causal controls
+## Saved signatures and variants
 
-All pool effects and real proofs precede shielded signatures. The native SLH
-signer signs the final complete 101-byte message, then the host verifies assembly.
-The second transaction spends exactly the same shielded notes using the other
-available transparent parent, so its complete effects, TXID and native message
-differ. Each transaction receives its own SLH signature. Its saved authorization
-bytes are never silently regenerated for retry.
+The host completes effects and proofs before shielded signatures.
+The SLH signer signs the final 101-byte message, and the host verifies assembly.
+The second transaction spends the same notes through a different available transparent parent.
+Its effects, TXID, and native message differ.
+Each transaction receives its own SLH signature.
+Retries use the saved authorization bytes.
 
-For each selected pool the host provides isolated real-spend authorization,
-binding-signature and other-public-input proof variants. They preserve the
-positive transaction's effects, TXID and native message, while changing its
-bytes and authorization digest. One SLH signature may therefore be reused across
-that transaction's authorization-only mutants. The driver verifies aggregate
-pool verdicts and individual signature/binding results. Sapling's proof component
-is explicitly `null`: the host's aggregate and field-isolation checks do not
-claim a separate proof primitive observation. None of these results count node
-worker entries or prove drained retry queues.
+Each pool supplies spend-authorization, binding-signature, and wrong-public-input proof variants.
+They retain the positive transaction's effects, TXID, and native message.
+Their bytes and authorization digest differ.
+Thus, authorization-only variants can reuse that transaction's SLH signature.
+The host checks aggregate pool results and individual spend/binding signatures.
+Sapling's separate proof result is null.
+Aggregate and field-isolation checks do not establish a separate proof-primitive observation.
 
-The driver performs the following bounded sequence:
+## Required lifecycle
 
-1. Both original and independent-parent duplicate transactions pass positive
-   block proposals while the later anchor exists.
-2. Invalidate only the later output block. The original notes and both transparent
-   parents remain available; exact roots, values and outpoints return to the prior
-   snapshot. Submit the unchanged original by relay, proposal and block submission.
-   Only an actual unknown-anchor diagnostic is accepted. The proof and anchor
-   bytes were not mutated to manufacture this state failure.
-3. Reconsider the exact later block and require its original bytes and state.
-   Positive proposals bracket every spend-auth, binding and proof refusal on
-   both nodes, with exact diagnostic matching and unchanged roots, values, parents
-   and tip. Rejected transactions must remain absent from both mempools.
-4. Relay the original saved spend, observe its exact template bytes, mine it,
-   and authenticate its saved transaction/block bytes and transparent change.
-   Each selected pool decreases by exactly 50,000 zatoshis and appends commitments;
-   all other pool roots and values remain unchanged.
-5. Submit the separately preflighted duplicate with its genuinely unspent
-   transparent parent. Require the pool-specific duplicate-nullifier diagnostic
-   on relay and direct block paths. Missing transparent inputs, expiry or unrelated
-   verification errors cannot stand in for this refusal.
-6. Invalidate the mined spend, restore exact roots, values and parents, and mine
-   two replacement blocks above the retained anchor. Repeat positive-bracket
-   authorization controls, then replay the exact cached spend in a block using
-   the pinned research flow. Both nodes must accept positive block proposals
-   before the exact block is submitted to each node. Require its exact best-chain
-   block bytes, transaction membership and confirmed saved transaction bytes on
-   both nodes, followed by the same resulting pool state and authenticated output.
+| Stage | Required result |
+| --- | --- |
+| Positive setup | Both original and independent-parent duplicate transactions pass block proposals with the later anchor present. |
+| Remove anchor | Invalidate only the later output block. Notes and transparent parents remain available. Roots and values return to the prior snapshot. |
+| Unknown-anchor refusal | Submit unchanged original bytes through relay, proposal, and block submission. Only the exact unknown-anchor diagnostic counts. |
+| Restore anchor | Reconsider the exact later block. Its bytes and state must match. |
+| Authorization controls | Positive proposals surround each negative on both nodes. Exact diagnostics, unchanged state, and mempool absence are required. |
+| Confirm original | Relay saved bytes, check both templates, and mine. Authenticate transaction bytes, block bytes, and transparent change. |
+| Duplicate-nullifier refusal | Use the separately checked duplicate with its unspent transparent parent. Require the pool-specific diagnostic through relay and block paths. |
+| Reorg and reentry | Invalidate the spend, restore state, and mine two replacement blocks above the anchor. Repeat controls and accept the exact cached spend in a block. |
 
-Publication records each node's initial saved-transaction state and submits the
-same bytes directly to each node where they are absent. Already observed exact
-mempool presence skips that node's RPC submission. Only the pinned already-queued
-or already-in-mempool race diagnostics permit bounded waiting after an RPC
-refusal; unrelated refusals fail. Exact bytes in both mempools and templates are
-required before mining, so a successful or queued RPC reply alone never counts
-as acceptance. These observations do not identify how an already-present peer
-obtained the transaction or claim fresh transaction gossip delivery.
+Anchor failure uses actual state removal. It does not mutate proof or anchor bytes.
+Missing transparent parents, expiry, and unrelated errors cannot substitute for nullifier refusal.
+A confirmed spend decreases each selected pool by 50,000 zatoshis and appends commitments.
+Unselected roots and values stay unchanged.
+Reentry must produce the same resulting pool state and authenticated output.
 
-Final reentry records `mode: direct-saved-block`, both initial absent states,
-the accepted block hash and byte hash, and the original transaction byte hash.
-It reuses `Controls.accept(publish=False)` for the two positive proposals. A
-duplicate block-submission reply is accepted only after authenticating the
-actual best-chain block and confirmed transaction. This tests cached-byte
-acceptance after rollback without requiring renewed transaction gossip.
+## Publication and restart limits
 
-The replacement branch is selected after explicit invalidation; it is not a
-competing-peer timing experiment. Anchor invalidation and reconsideration stay in the same node processes because
-inherited invalidated-block records are memory-only. Before a later clean restart,
-the driver observes every canonical block's ordinary backup bytes through the
-current tip; after spend rollback it additionally waits for the removed spend's
-backup file to disappear. It reuses the [crash adapter](crash-controls.md)'s
-bounded backup observation, whose 128-block limit covers this driver's roughly
-117-block maximum. These file observations do not force a flush or establish a
-writer barrier. Clean restarts delimit negative windows and preserve the inherited
-node retry behavior. The driver does not
-assert internal nullifier-set membership, cache hits, primitive counts or
-publication barriers. Duplicate-nullifier refusal is a functional state result
-with a valid independent transparent parent. Direct internal membership queries
-would require a separately scoped supported state replay helper.
+The driver records each node's initial transaction state.
+It submits exact bytes directly where the transaction is absent.
+Exact existing mempool presence skips that submission.
+Only known already-queued or already-in-mempool races permit bounded waiting after an RPC refusal.
+Before mining, both mempools and templates must contain exact bytes.
+A successful RPC response alone cannot establish acceptance.
+These observations do not prove fresh peer gossip.
 
-## Build and explicit run
+Final reentry records `mode: direct-saved-block`, initial absent states,
+block hashes, and the original transaction hash.
+`Controls.accept(publish=False)` supplies two positive proposals before block submission.
+Duplicate submission responses require authenticated best-chain block and confirmed transaction bytes.
+The replacement branch follows explicit invalidation, not competing-peer timing.
 
-Use the [matching build receipts](acceptance.md#build-receipts) from a clean
-committed source: `node-slh`, `host-shielded`, and the isolated public `signer`.
-The spend operations use the existing optional host shielded feature. Sapling
-requires explicit absolute paths to existing public parameters; each regular
-file is bounded to 64 MiB and hashed. No parameter download or search occurs.
-These fixture host and public signing dependencies are not introduced into the
-node dependency graph; inherited upstream proof-library dependencies retain their
-existing scope.
+Anchor invalidation and reconsideration remain in the same processes.
+Inherited invalidated-block records exist only in memory.
+Before a later restart, the driver observes all canonical backup blocks.
+After spend rollback, it also waits for the removed backup file to disappear.
+The [crash helper](crash-controls.md) bounds backup checks to 128 blocks.
+That covers this driver's approximately 117-block maximum.
+These observations do not force a flush or establish a writer barrier.
+
+Restarts separate negative windows and retain inherited retry behavior.
+The driver does not inspect internal nullifier membership, cache hits, primitive counts, or publication barriers.
+Nullifier refusal is a functional result with a valid independent transparent parent.
+Internal membership checks would need a separately scoped state helper.
+
+## Human command
+
+Build `node-slh`, `host-shielded`, and `signer` from clean, committed source.
+Use the [acceptance build workflow](acceptance.md#build-receipts).
+For Sapling, supply existing public parameter files by absolute path.
+Each regular file has a 64 MiB limit and a recorded hash.
+The tool does not search for or download parameters.
+Fixture dependencies remain outside the node graph.
+
+Run as a human under [AGENTS.md](../../AGENTS.md):
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py --human-run \
@@ -156,59 +137,47 @@ python3 tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py --human-run \
   --artifacts "$SLH_ACCEPTANCE_ROOT/shielded-spend-v6-all-slh"
 ```
 
-Omit both Sapling parameter arguments when that pool is absent. A fresh artifact
-directory is required. `--authorization single --classical single` and
-`--authorization multisig --classical multisig` run classical signatures through
-the same shielded lifecycle on the enabled binaries; this driver makes no
-default-versus-enabled binary compatibility claim.
+Without Sapling, omit both parameter arguments.
+Use a new artifact directory for each run.
+For classical authorization, use either option pair:
 
-Every proof request has a finite 1,800-second subprocess deadline and uses the
-existing bounded concurrent transport. `execution.json` starts incomplete, retains
-failures, and binds exact source/lock/build/binary/config/parameter identities.
-The output preserves public funding transactions, raw history, proof requests,
-host results, signed artifacts, proposals, accepted blocks, publication replies
-and RPC request/reply hashes. Both signed artifact hashes are checked again after
-lifecycle execution;
-retries use the cached exact authorization. Local receipts are traceability, not
-hostile-host attestations. Proving, node execution and acceptance remain pending
-until an actual matching live receipt completes.
+- `--authorization single --classical single`
+- `--authorization multisig --classical multisig`
 
-## Offline checks and attribution
+Both nodes still use enabled binaries.
+This driver does not compare default and enabled builds.
+Proof requests use bounded transport and a 1,800-second deadline.
+
+Receipts retain failures and identify source, locks, builds, binaries, configurations, and parameters.
+Artifacts include funding, history, requests, host results, signatures, proposals, blocks, publication responses, and RPC hashes.
+The driver checks both signed-artifact hashes again after execution.
+Retries use exact cached authorization.
+Local receipts provide traceability, not hostile-host attestation.
+Live proof and node outcomes remain open.
+
+## Offline tests and attribution
 
 ```sh
 python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance \
   -p 'test_shielded_spend_controls.py' -v
 ```
 
-The focused models cover all ten host shapes and all seven pool combinations
-through the causal lifecycle. They reject forged/changed/disconnected history,
-changed effect or authorization identities, absent or expired-parent confounders,
-wrong refusal reasons, skipped subject operations, no-op rollback/reconsideration,
-missing replacement blocks and no-op saved-byte reentry. Publication models cover
-absent peer propagation, bounded queue races, actual refusal, missing/changed
-bytes and both templates; replay models reject wrong blocks, membership or
-unconfirmed transaction bytes even after duplicate submission replies. They also verify the
-pre-NU6.3 funding gate and one final-message SLH signing call per effect identity.
-Model proof/signature bytes are not cryptographic evidence; tests launch no nodes,
-signer, prover or subprocess transport.
+Models cover ten host shapes and seven pool combinations through the lifecycle.
+They reject false history, changed identities, missing parents, wrong diagnostics,
+omitted operations, no-op state changes, and incorrect reentry.
+Publication models cover absent peer propagation, bounded races, refusal, exact bytes, and both templates.
+Replay models require correct blocks, membership, and confirmed transactions despite duplicate-submission responses.
+They check legal Orchard funding and one final-message signature per effect identity.
+They start no node, signer, prover, or subprocess transport.
+Model proof bytes have no cryptographic validity claim.
 
-Selective source lineage is research commit
-`e759cb86a06510893f8e7d1eb986b7025401c8c9`:
-`node/tests/pq_ironwood_spend_fixture.py` supplies bounded stable history export
-and exact note/funding/root correspondence;
-`node/tests/pq_ironwood_spend_live.py` supplies positive-bracket refusals, value/tree
-observations and exact saved-byte reorg/reentry;
-`node/tests/test_pq_ironwood_spend_fixture.py` and
-`node/tests/test_pq_ironwood_spend_live.py` supply adversarial reporting and ordering
-controls. Their original source/license attribution is retained through the
-repository's source mapping and MIT OR Apache-2.0
-[MIT](../../LICENSE-MIT) / [Apache](../../LICENSE-APACHE) licenses.
+Research revision `e759cb86a06510893f8e7d1eb986b7025401c8c9` supplies these patterns:
 
-The driver reuses product `shielded_controls`, `Network`, `Controls`,
-`authenticate_coinbase` and `transaction_state`, rather than copying node lifecycle,
-proof transport or signing implementations. Necessary adaptations are all-pool
-and v5/v6 support, native SLH final-message authorization, strict dual-node
-history/UTXO authentication, the legal Orchard funding profile, a later genuinely
-removed anchor, and the independent transparent parent for duplicate-spend
-causality. No alternate backend, research node overlay, benchmark history or
-operational secret is imported.
+- `node/tests/pq_ironwood_spend_fixture.py`: bounded history and note/root correspondence.
+- `node/tests/pq_ironwood_spend_live.py`: positive brackets, pool state, and saved-byte reentry.
+- The corresponding `test_*.py` files: adversarial ordering and reporting checks.
+
+The source map retains attribution under [MIT](../../LICENSE-MIT) or [Apache-2.0](../../LICENSE-APACHE).
+The driver shares product node, proof, signature, and transaction-state helpers.
+Adaptations add all-pool v5/v6 support, native SLH authorization, two-node authentication,
+legal Orchard funding, removed anchors, and independent transparent parents.

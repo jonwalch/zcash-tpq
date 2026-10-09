@@ -1,43 +1,36 @@
-# Human acceptance adapters
+# Human acceptance drivers
 
-Read the [acceptance runbook](../../../docs/slh-dsa-b128s/acceptance.md).
-All builds and actual node, wallet, signing, recovery and terminal runs are
-**human-only**. Importing these modules is inert. No historical result is relabeled
-as SLH acceptance; receipts start incomplete and retain failed attempts.
+The [acceptance guide](../../../docs/slh-dsa-b128s/acceptance.md) gives build commands and live scenarios.
+Builds and actual node, wallet, signing, recovery, and terminal runs are **human-only**.
+Importing these modules starts no workload.
+Execution receipts start incomplete and retain failed attempts.
+Historical results keep their original identities.
 
-The permitted offline suite is:
+## Offline tests
+
+Install the pinned [wallet-format requirements](../wallet/formats/requirements.txt).
+Run the focused suite:
 
 ```sh
 python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance -p 'test_*.py' -v
 ```
 
-It uses strict fake CLI/RPC/process boundaries and existing independent wallet
-format calculations. It never launches a node, CLI terminal, signer, build,
-container, proof generator or profiling workload. Install the same pinned Python
-requirements as [wallet formats](../wallet/formats/requirements.txt).
+It uses mocked CLI, RPC, process, signal, and proof interfaces.
+It also reuses independent wallet-format calculations.
+It starts no node, terminal, signer, build, container, prover, or profiler.
+`fake_cli.py` is test-only and is never imported by a live driver.
+[Source mappings](sources.json) record hashes and adaptations.
+[NOTICE](NOTICE) preserves attribution.
 
-Source mappings and file hashes are in [sources.json](sources.json); imported
-code attribution is in [NOTICE](NOTICE). `fake_cli.py` is a test-only adapter,
-and is never imported by a human live driver.
+## Additional scenarios
 
-Additional prepared cases cover [transparent authorization and lifecycle](../../../docs/slh-dsa-b128s/transparent-controls.md)
-and [hostile wallet history](../../../docs/slh-dsa-b128s/history-controls.md).
-[Opt-in observation](../../../docs/slh-dsa-b128s/observations.md) records bounded
-process/window primitive attempts without changing verification or retry rules.
-Their focused mock tests do not establish live acceptance.
+| Area | Guide |
+| --- | --- |
+| Transparent signatures, mixed inputs, and activation | [Transparent controls](../../../docs/slh-dsa-b128s/transparent-controls.md) |
+| Missing or inconsistent wallet history | [History controls](../../../docs/slh-dsa-b128s/history-controls.md) |
+| Primitive calls and funded capture windows | [Observations](../../../docs/slh-dsa-b128s/observations.md), [capture controls](../../../docs/slh-dsa-b128s/observation-controls.md) |
+| Real shielded proofs, notes, and anchors | [Output controls](../../../docs/slh-dsa-b128s/shielded-controls.md), [spend controls](../../../docs/slh-dsa-b128s/shielded-spend-controls.md) |
+| Interrupted writes and processes | [Wallet faults](../../../docs/slh-dsa-b128s/fault-controls.md), [node crashes](../../../docs/slh-dsa-b128s/crash-controls.md) |
 
-[Funded capture brackets](../../../docs/slh-dsa-b128s/observation-controls.md),
-[output-only shielded coexistence](../../../docs/slh-dsa-b128s/shielded-controls.md)
-and [wallet durable faults](../../../docs/slh-dsa-b128s/fault-controls.md) add
-separate human drivers. The shielded host feature uses pinned local proving
-parameters; it never downloads them. The ignored wallet test driver reuses
-private write-stage hooks, with no operational fault flags. Both remain inert
-in the offline suite. Their guides state the exact limits and pending execution.
-
-[Genuine shielded spends and anchors](../../../docs/slh-dsa-b128s/shielded-spend-controls.md)
-reuse actual node history for note recovery and witnesses, and retain the exact
-authorization across causal anchor rollback and reentry. The separate
-[node process-crash driver](../../../docs/slh-dsa-b128s/crash-controls.md) checks
-isolated admitted/mined/reorg checkpoints and saved-byte replay. These are opt-in
-drivers with explicit build receipts; the offline tests mock all proof, process,
-signal and RPC boundaries. No power-loss or internal database guarantee is implied.
+Each guide states its required controls and evidence limits.
+Offline success does not establish live acceptance, power-loss recovery, or general database durability.

@@ -1,16 +1,19 @@
-# Source and packaging audit
+# Source, builds, and packaging
 
-The delivery unit is a curated upstream-Zakura source repository. The upstream
-commit/tree, optional SLH code, standalone public test signer and public corpus
-are pinned. The [import ledger](imports.json) gives each changed file a current
-hash, disposition, reason and a local provenance reference. Existing module
-source maps retain detailed algorithm/source hashes and licenses;
-[node reuse](node-reuse.json) records the selective node mechanisms. No internal
-planning or agent review material is needed to build or inspect this product.
+The distribution unit is the full checkout or source archive.
+The seven added product crates and two fixture packages have `publish = false`.
+They are not standalone crates.io releases.
+Some tests use files elsewhere in the checkout.
+Upstream packages retain their release process.
 
-## Reusable checks
+The [import ledger](imports.json) records each changed file, its purpose, hash, and attribution.
+Component source maps record revisions and adaptations.
+[Node reuse](node-reuse.json) covers node changes.
+The product does not depend on the internal research checkout.
 
-Run from a clean, committed checkout with full selected ancestry:
+## Check release content
+
+Run these commands from a clean, committed checkout with its selected Git history:
 
 ```sh
 python3 -m unittest discover -s tests/slh-dsa-b128s/release-content -p 'test_*.py' -v
@@ -18,99 +21,84 @@ python3 tests/slh-dsa-b128s/release-content/check.py
 python3 tests/slh-dsa-b128s/release-content/check.py --packages
 ```
 
-The last command asks Cargo only for `package --list --locked --offline` for
-the added/changed package manifests, including the isolated signer. It does
-not compile, create a release, upload a crate, run a daemon, or execute a test
-signer. Package verification builds are not part of this check. The distribution
-unit is the complete checkout/source archive: unpublished crates' tests may
-intentionally consume repository-relative public fixtures outside their individual
-Cargo file lists. Cargo also copies explicitly named repository README/license
-files into a package; those companions are checked against tracked source.
-This audit makes no standalone-crate compilation claim. Inherited
-unchanged packages, including the generated upstream `zakura-assets` payload,
-retain their existing release process and are not relabeled as SLH packages.
+The guard checks these properties:
 
-The guard checks the selected tree against the exact upstream tree, requires a
-complete changed-file ledger, and inspects every post-upstream commit so that
-deleting an accidentally committed experiment does not hide it. It verifies
-normal/dev/build/target/patch Cargo paths, rejects alternate backend dependencies
-and newly publishable product crates, and requires symlinks to resolve within
-tracked source. The existing dependency guard separately checks resolved feature
-graphs. A streamed `git archive HEAD` must contain the tracked bytes and paths;
-actual Cargo listings must not introduce untracked package payloads.
+- Each change from pinned upstream has a ledger entry.
+- Product history and local product refs exclude forbidden imports, including files deleted in later commits.
+- Cargo paths stay inside the checkout.
+- Added product crates cannot become publishable or acquire alternate PQ dependencies.
+- Symlinks resolve to tracked source.
+- `git archive HEAD` preserves tracked paths and bytes.
+- With `--packages`, Cargo lists only permitted tracked content, including copied README and license files.
 
-Every ref is inventoried. Unselected product commits are checked for foreign
-ancestry and forbidden/path-dependent contents too. Existing upstream remote
-refs are recognized only with the canonical upstream remote URL; their contents
-are inherited, excluded from the selected release, and not turned into SLH
-cleanup gates. Publish only a deliberately selected branch, never a mirror or
-`--all`/`--tags` push of a developer repository. An isolated `--single-branch
---no-tags` clone has no worker or unrelated upstream branch refs. Git lazy
-fetching is disabled during the audit: missing objects are an explicit failure.
+`--packages` runs `cargo package --list --locked --offline`.
+It does not compile, publish, or run a node or signer.
+Dependencies and registry metadata must already be available.
+The separate [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) checks resolved feature graphs.
 
-For a change to an already reviewed file, stage the intended changes and run
-`python3 tests/slh-dsa-b128s/release-content/check.py --refresh-hashes`, then
-review the ledger diff and commit both. The helper refuses new/unmapped paths.
-Add an explicit disposition/reason/provenance row for each new file first;
-history-only rows are for reviewed removed product paths, never private notes
-or experiments. The ledger excludes its own hash; the selected Git tree binds
-that file. Integration must refresh and re-audit sibling additions, so a worker
-receipt is not automatically a receipt for the merged release tree.
+Missing Git objects cause failure. The guard disables lazy fetches.
+It identifies canonical upstream refs separately and excludes them from the product release.
+Hashes permit comparison but cannot replace manual review for secrets and licenses.
 
-Hashes and allowlists establish traceability and catch regressions; they cannot
-prove arbitrary source text contains no secret or that an attribution is legally
-complete. Review newly added files and imported licenses. Public deterministic
-fixture keys are test material, never operational wallet secrets. Historical
-test receipts keep their original source/binary/config identity; a content pass
-does not change their covered inputs or establish target execution.
+Publish only the selected branch.
+Do not publish all refs, all tags, or a mirror of a developer clone.
 
-## Isolated clone validation
+## Update the ledger
 
-Create a temporary ordinary clone of the selected committed branch using
-`git clone --no-local --single-branch --no-tags`. Confirm there is no Git object
-alternate, symlink to another checkout, worktree dependency or Cargo path outside
-the clone. Start with an empty Cargo home/target; no node build is needed. The
-bounded guard tests and archive audit must succeed without a research checkout
-or source download. Cargo's offline `package --list` also requires registry index
-metadata even though it does not compile. Record
-an empty-cache failure as a missing metadata prerequisite. For offline listings,
-an existing registry index can be copied into the isolated Cargo home: record
-its original registry URL and every copied file hash, and exclude crate archives,
-extracted sources, binaries and target caches. Keep the package-list receipt
-separate from the empty-cache source audit; do not claim empty-cache package
-success. The isolated public fixture signer also needs its existing pinned
-`PQC-Suite-B/signatures` Git dependency at
-`b392fe82d2d9770142477a576a758a233888bc0a` available to Cargo before listing its
-package. Registry metadata alone does not satisfy that source prerequisite.
-Report missing source bytes instead of silently downloading them. Keep all
-source/command/output hashes in the release validation record.
+Add a purpose, disposition, and provenance row for each new file.
+Stage the intended edits.
+Run the hash update:
 
-The audit is allowed to fail on missing source objects, missing toolchains or a
-package-list prerequisite. Report that specific limit; do not compensate by
-running live suites, changing upstream packages, fetching unrecorded inputs or
-claiming a warmed developer checkout is an isolated result.
+```sh
+python3 tests/slh-dsa-b128s/release-content/check.py --refresh-hashes
+```
 
-## Publication boundary
+The helper updates existing rows only.
+The ledger does not hash itself. Git records its bytes.
+Historical receipts apply to their original source and must retain their identities.
 
-All seven new product crates and both fixture packages have `publish = false`.
-Existing upstream package names and repository metadata are preserved. They are
-not new product registry destinations. The product remote, visibility, installer,
-registry namespace and release ownership have not been selected by this audit.
+Review the ledger diff.
+Commit the edits and ledger together.
+After integration, check the merged result.
 
-The inherited `release-binaries.yml` can build on `v*` tags in forks. Its GitHub
-release create/upload/delete-asset steps previously ran in those forks too,
-even though upstream Cargo/Docker publication already had repository guards.
-This extension gates exactly those two GitHub publication steps with repository
-variable `SLH_RELEASE_PUBLICATION == 'enabled'`; upstream's own repository keeps
-its prior behavior. The default in a new product repository is disabled. Build
-triggers, checksum/manifest creation, staged workflow artifacts, provenance and
-existing Docker/Cargo checks are retained. This variable does not select a
-destination or establish acceptance; configure it only after a separate release
-review of the chosen repository, release metadata and validation evidence.
+## Check an isolated clone
 
-Inherited manual `create-release`, release-drafter, registry and deployment
-workflows are upstream operator tooling. They are not approved product release
-or deployment entry points. Do not provision their upstream credentials or
-dispatch them for this experimental fork. The new `SLH source content` workflow
-only runs bounded Python/source/archive checks with read-only permissions; it
-adds no heavy build or live workload and uploads nothing.
+Create an independent clone with `git clone --no-local --single-branch --no-tags`.
+Select the committed product branch.
+Check for Git object alternates, external source links, and Cargo paths outside the clone.
+Start with empty Cargo home and target directories.
+Run the guard tests and archive audit.
+
+Offline package listing also needs these inputs:
+
+- Registry index metadata, including when Cargo does not compile.
+- The declared Git source `PQC-Suite-B/signatures@b392fe82d2d9770142477a576a758a233888bc0a` for the isolated fixture signer.
+
+If you copy registry metadata, record its URL and file hashes.
+Do not copy crate archives, extracted registry sources, binaries, or build caches for this check.
+Record missing inputs and each retrieval.
+Keep the empty-cache audit separate from checks after input retrieval.
+
+These checks do not establish a clean-machine build or reproducible binaries.
+`rust-toolchain.toml` selects the changing `stable` channel.
+The minimum Rust version is 1.97. No exact compiler release is pinned.
+Build receipts record compiler versions, dependencies, features, flags, binaries, and configurations.
+
+## Publication controls
+
+The product has no selected remote, visibility, installer, registry namespace, or release owner.
+Inherited package names do not select publication destinations.
+
+The inherited `release-binaries.yml` can build `v*` tags in forks.
+Its two GitHub publication steps require `SLH_RELEASE_PUBLICATION == 'enabled'` in the repository variables.
+Upstream retains its original behavior.
+The variable is disabled by default in a new product repository.
+It neither selects a destination nor establishes acceptance.
+
+Before publication, review the destination, release metadata, and test evidence.
+Do not dispatch inherited upstream release or deployment workflows for this fork.
+Do not install upstream credentials.
+
+Build triggers, staged artifacts, checksums, and existing Docker/Cargo guards remain.
+The added `SLH source content` workflow checks source and archives.
+It performs no heavy build, live test, or upload.

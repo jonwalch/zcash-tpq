@@ -2,8 +2,8 @@
 
 These 18 deterministic NU7 v5/v6 artifacts cover 1of1, 2of3, 3of5, 8of10,
 10of10, 15of15, index14 selection in 1of15, and heterogeneous 16/17-check
-transactions. Their 146 signatures use prescribed public test keys and bind
-complete transactions with ordered synthetic previous outputs. The 17-check
+transactions. Their 146 signatures use prescribed public test keys.
+They bind complete transactions with synthetic previous outputs in input order. The 17-check
 cases are natively valid and exceed only the explicit 16-check test profile.
 
 Generation follows the maintained

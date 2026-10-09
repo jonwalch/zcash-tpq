@@ -19,5 +19,6 @@ reset implementation. Only SLH runtime types and dependencies are included.
 
 Tests use the retained public synthetic SLH transaction corpus and the existing
 mock trusted-state services. They do not introduce a node signing dependency.
-Prepared candidate caches are bypassed under active SLH rules; the complete
-runtime support signal remains false until relay and mining are integrated.
+Active SLH rules bypass prepared-candidate caches.
+Runtime support follows the explicit feature, which is off by default.
+Live acceptance still requires human execution.

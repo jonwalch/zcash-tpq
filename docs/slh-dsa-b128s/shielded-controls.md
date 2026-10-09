@@ -1,70 +1,67 @@
-# Real shielded output controls
+# Shielded output tests with real proofs
 
-These are prepared human operations, not executed acceptance evidence. They use
-actual Sapling Groth16 and Orchard/Ironwood Halo2 proofs alongside final SLH or
-classical transparent authorization. The existing [synthetic digest corpus](../../tests/slh-dsa-b128s/shielded/README.md)
-and independent reference remain unchanged. The new shielded offline tests do not generate proofs or SLH signatures, start
-nodes, or claim that a synthetic bundle is valid. Existing host tests retain their
-bounded public classical-signature controls.
+These tests use real Sapling Groth16 and Orchard/Ironwood Halo2 proofs with SLH or classical transparent authorization.
+Live execution remains open.
+The [synthetic digest corpus](../../tests/slh-dsa-b128s/shielded/README.md) retains its separate scope.
+New offline tests do not generate proofs or SLH signatures.
+Existing host tests retain bounded public classical-signature controls.
 
-## Legal shapes and funding
+## Pool combinations and funding
 
-The adapter covers every nonempty supported pool subset: `sapling`, `orchard`,
-`sapling,orchard` in v5; those plus `ironwood`, `sapling,ironwood`,
-`orchard,ironwood`, `sapling,orchard,ironwood` in v6. List pools in that order.
-Each included pool has two outputs/actions, including the builder's normal padding.
+| Version | Pool subsets |
+| --- | --- |
+| v5 | `sapling`, `orchard`, `sapling,orchard` |
+| v6 | The v5 subsets, plus `ironwood`, `sapling,ironwood`, `orchard,ironwood`, `sapling,orchard,ironwood` |
 
-Each fresh disposable chain uses the [acceptance profile](acceptance.md): NU6.3 at
-1, NU7 at 105, SLH at 110, and the existing 16/64 check limits. Two peerless nodes
-agree on the full chain through height 110. The driver authenticates a real mature
-height-1 classical coinbase by raw transaction, block, outpoint, amount and script.
-For SLH, a separately authorized classical transaction spends that coinbase and
-mines a 3,000,000-zatoshi SLH output; both nodes authenticate it before proving or
-signing. Classical compatibility uses the mature classical output directly.
+Each included pool has two outputs or actions, including normal builder padding.
+Pool names occur in the order Sapling, Orchard, Ironwood.
+The profile uses NU6.3=1, NU7=105, SLH=110, and the 16/64 check limits.
+Two peerless nodes agree on the chain through height 110.
+The driver authenticates a mature height-1 classical coinbase through bytes, block, outpoint, amount, and script.
+SLH tests first mine a classical spend that creates a 3,000,000-zatoshi SLH output.
+Both nodes authenticate it before proof generation or signing.
+Classical compatibility tests use the mature classical output directly.
 
-Sapling and Ironwood each receive 50,000 zatoshis. **Orchard receives zero**:
-the inherited NU6.3 rule prohibits net additions to that pool. Its real zero-value
-output bundle has value balance zero, spends disabled and cross-address transfers
-disabled. It requires the pinned builder's two zero-value dummy action pairs,
-with each pair using the same recipient; no ordinary output is requested. Both
-v5 and v6 use the NU6.3 Orchard circuit/bundle version. These are
-valid-proof shape controls, not evidence of nonzero Orchard payments. This rule
-is unchanged from the pinned upstream baseline; the tool does not bypass it.
+Sapling and Ironwood each receive 50,000 zatoshis.
+**Orchard receives zero** because NU6.3 prohibits net additions to that pool.
+Its bundle has zero value balance, disabled spends, and disabled cross-address transfers.
+The builder uses two zero-value dummy action pairs with the same recipient within each pair.
+There is no ordinary Orchard output request.
+Both v5 and v6 use the NU6.3 Orchard circuit and bundle version.
+These controls do not establish nonzero Orchard payments.
 
-No case spends a shielded note. Sapling therefore needs no spend witness or anchor;
-Orchard/Ironwood disable spends and use the public empty-tree anchor permitted for
-that mode. All deposited value comes from the authenticated transparent coin.
-Nonzero Orchard spending requires genuinely created pre-NU6.3 notes and their
-actual witnesses. Genuine spends and anchor/reorg controls are prepared in the
-separate [spend driver](shielded-spend-controls.md); shielded-wallet recovery is
-outside these node fixtures.
+No case spends a shielded note.
+Sapling needs no spend witness or anchor.
+Orchard and Ironwood disable spends and use the permitted public empty-tree anchor.
+All deposited value comes from authenticated transparent funds.
+The [spend tests](shielded-spend-controls.md) separately use genuine notes and witnesses.
+These fixtures do not cover shielded-wallet recovery.
 
-## Build and run
+## Human build and run
 
-Use a clean committed checkout and the [matching build receipts](acceptance.md#build-receipts).
-The optional host feature keeps the public proof tool separate from node/wallet
-runtime graphs. Its dependencies reuse pinned workspace versions; no alternate
-backend, benchmark workload, download helper or research checkout is needed.
-
-A human builds the special host, in addition to the documented `node-default`,
-`node-slh` and `signer` binaries:
+Use matching builds from clean, committed source under the [acceptance workflow](acceptance.md#build-receipts).
+The optional host feature stays outside node and wallet runtime dependencies.
+It uses pinned workspace dependencies.
+Build `node-default`, `node-slh`, and `signer` as specified in that guide.
+Build the additional host as a human:
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/build.py --human-run --kind host-shielded \
   --artifacts "$SLH_ACCEPTANCE_ROOT/host-shielded"
 ```
 
-For Sapling, supply existing public `sapling-spend.params` and
-`sapling-output.params` files using absolute paths. This tool never downloads or
-searches for parameters. It bounds each regular file to 64 MiB, records SHA-256,
-and uses the pinned library's established parameter-hash validation. Orchard and
-Ironwood build their public NU6.3 proving key locally; no parameter files apply.
-Proof generation can be expensive and is a separate explicit `human_run: true`
-host operation with a finite 1,800-second subprocess deadline. Its stdout and
-stderr use the existing bounded concurrent transport; a timeout cannot complete a
-receipt. Do not invoke this host operation as an ordinary offline check.
+For Sapling, supply absolute paths to existing public parameter files.
+The tool does not search for or download parameters.
+Each regular file has a 64 MiB limit and a recorded SHA-256 hash.
+The pinned library also checks the expected parameter hash.
+Orchard and Ironwood construct their public proving keys locally.
 
-Example SLH run (fresh artifact directory required):
+Proof generation is an explicit `human_run: true` host operation.
+It has a 1,800-second deadline and bounded stdout/stderr transport.
+A timeout cannot complete a receipt.
+Do not run proof generation as an offline check.
+
+Run this example with a new artifact directory:
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/shielded_controls.py --human-run \
@@ -82,69 +79,71 @@ python3 tests/slh-dsa-b128s/acceptance/shielded_controls.py --human-run \
   --artifacts "$SLH_ACCEPTANCE_ROOT/shielded-v6-all-slh"
 ```
 
-Repeat for the ten listed version/pool subsets. Omit both parameter options when
-Sapling is absent. Repeat each subset with `--authorization single --classical
-single` and `--authorization multisig --classical multisig` for classical/shielded
-compatibility: the first node then runs the default binary without SLH activation,
-and the second runs the enabled configuration on identical blocks. SLH runs use
-the enabled binary on both nodes. All fixture keys are explicitly public test
-material; never send real funds to them. Wallet payment approval remains
-transparent-only and is not broadened by this test tool.
+Repeat for all ten version/pool subsets.
+Without Sapling, omit both parameter options.
+For classical compatibility, repeat each subset with these option pairs:
 
-## Identity, failures and receipts
+- `--authorization single --classical single`
+- `--authorization multisig --classical multisig`
 
-The host first constructs real proof bundles and installs all final effecting
-fields. It computes the whole transaction sighash with exact ordered parent
-outputs, then applies every shielded binding signature. Only then does the existing
-public SLH signer sign the resulting 101-byte native message. The host verifies
-that authorization after assembly. Classical controls reuse the public P2SH
-single/2-of-3 signer over the same complete effects. Transparent change equals the
-actual parent amount minus deposits and the fixed 100,000-zatoshi fee.
+Classical runs compare default and enabled binaries on identical blocks.
+SLH runs use enabled binaries on both nodes.
+All fixture keys are public. Do not send real funds to them.
+Wallet payment approval remains transparent-only.
 
-For each included pool the host supplies two authorization-only negative variants:
-a binding signature over the wrong digest, and a proof for different actual public
-inputs. Orchard/Ironwood donors are separately generated valid randomized proofs;
-Sapling uses the second real padded-output proof. These preserve valid proof
-encoding; they are not malformed-proof controls. The host verifies the positive
-bundles and checks that only the selected pool fails its batch verification.
-That batch result intentionally does not claim independent signature/proof counters.
+## Signatures and negative controls
 
-The complete effects, TXID and native SLH message stay identical across those
-variants, while the authorization digest and exact raw bytes change. One SLH
-signature is reused only for these unchanged effects. Effecting changes would
-require a different message/signature; the immutable independent digest mutation
-corpus remains the oracle for that distinction. Host finalization rejects altered
-parent, version, output/value, pool, count or transparent-input context. This
-adapter does not replace the independent corpus or its original producer receipts.
+The host constructs real proofs and all transaction effects first.
+It calculates the full sighash with exact previous outputs in input order.
+It then applies shielded binding signatures.
+The public SLH signer signs the final 101-byte native message.
+The host verifies authorization after assembly.
+Classical tests use the public P2SH single or 2-of-3 signer over the same complete effects.
+Change equals the parent amount minus deposits and the fixed 100,000-zatoshi fee.
 
-Both nodes must accept the positive block proposal before negative operations.
-Every negative is submitted by relay and direct proposal/submission and must fail
-for the exact Sapling or Halo2 verification reason, retain the actual parent and
-tip/tree roots, and remain absent from the mempool. Missing parents, expiry,
-unchanged mutant bytes and unrelated diagnostics cannot stand in for that result.
-The valid original is then relayed, included in a template, mined, and copied as
-exact block bytes to the second node. Both nodes must return the saved transaction,
-agree on pool roots, consume the parent, and authenticate transparent change.
-Included pool roots must change; uninvolved pool roots must remain unchanged.
+Each pool has two negative variants:
 
-`execution.json` starts incomplete and retains failures. `proof-request.json`,
-`proof-artifacts.json`, `signed-artifacts.json`, every candidate block and accepted
-block bind exact bytes. Build receipts bind generator/source/lock/binary hashes;
-parameter records bind the explicit local files; node configurations and bounded
-RPC request/response hashes are retained. Public artifacts contain no operational
-secrets. Locally generated receipts are traceability, not hostile-host attestations.
-A failure before proof completion leaves the attempted request and incomplete
-receipt, never a positive proof claim.
+- A binding signature over the wrong digest.
+- A proof for different public inputs.
 
-Failed shielded validation alongside locally valid SLH cannot count as successful
-transaction publication. The checks establish functional rejection/absence only.
-They do not observe internal success payloads, isolate worker executions, count
-primitive entries, establish a drained retry queue, or measure performance.
-Retries retain pinned Zakura behavior. Dedicated node builds, proofs, live
-positive/negative cases and default/enabled compatibility remain pending human
-execution; source/mocks are not substitutes.
+Orchard and Ironwood use separately generated valid proofs as donors.
+Sapling uses the second real padded-output proof.
+These are wrong-proof controls, not malformed encodings.
+The host checks positive bundles and requires only the selected pool to fail batch verification.
+Batch results do not isolate signature or proof counters.
 
-## Offline checks and reuse
+Variants retain effects, TXID, and the native message.
+Their authorization digests and raw bytes differ.
+The same SLH signature applies only because effects are unchanged.
+Changed effects require a different message and signature.
+Finalization rejects changed parent, version, outputs, values, pools, counts, or transparent context.
+The independent mutation corpus and its producer receipts remain unchanged.
+
+## Node results and receipts
+
+Both nodes must accept the positive block proposal before negative controls.
+Each negative must fail relay, proposal, and block submission for the exact Sapling or Halo2 reason.
+Parents, tips, and tree roots must stay unchanged.
+The transaction must stay outside the mempool.
+Missing parents, expiry, unchanged mutant bytes, and unrelated errors cannot satisfy the control.
+
+The original must then relay, enter a template, and confirm in a block.
+The second node receives exact block bytes.
+Both nodes must return the saved transaction, agree on roots, spend the parent, and authenticate change.
+Included roots must change. Other roots must stay unchanged.
+
+`execution.json` starts incomplete and retains failures.
+Proof requests, proof artifacts, signed artifacts, and blocks retain exact bytes.
+Receipts identify source, locks, binaries, parameters, configurations, and RPC hashes.
+An incomplete proof request cannot establish a positive proof result.
+Local receipts provide traceability, not hostile-host attestation.
+
+The tests observe functional rejection and absence.
+They do not expose internal success payloads, isolate workers, count primitive calls,
+prove queue completion, or measure performance.
+Proof generation, live cases, and binary compatibility still need human execution.
+
+## Offline tests and attribution
 
 ```sh
 cargo fmt -p slh-dsa-b128s-fixture-host -- --check
@@ -153,17 +152,13 @@ cargo clippy --locked -p slh-dsa-b128s-fixture-host --features shielded-fixtures
 python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance -p 'test_shielded_controls.py' -v
 ```
 
-The four added Rust tests stop before proof creation and test gates, bounded pool
-sets, exact raw-parent context and parameter integrity. Python models run all ten
-subsets and reject mismatched identities/amounts/proofs, no-op relay/mining,
-missing subject operations, and unrelated diagnostics. Mock proofs have no
-cryptographic validity claim.
+Four added Rust tests stop before proof creation.
+They check feature gates, pool bounds, parent context, and parameter integrity.
+Python models cover all ten subsets and reject mismatches, omitted calls, no-op publication, and wrong diagnostics.
+Mock proofs have no cryptographic validity claim.
 
-[Selective source attribution](../../tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md)
-records the pinned research proof/bundle mechanism and the necessary Sapling and
-all-pool adaptations. The cited historical `pq_measurements/shielded.rs` only
-verifies existing mainnet transactions; it is not a proof-construction source.
-The new adapter uses the real `pq_ironwood_fixture.rs` mechanism instead. No
-benchmark, large-context driver, alternate signature code or research history is
-imported. Production consensus, trusted UTXO resolution, crypto pins, wallet
-entropy, proof-covered approval source, and retry/cache rules are unchanged.
+[Source attribution](../../tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md)
+records the proof-builder source and pool adaptations.
+The source `pq_ironwood_fixture.rs` supplies proof construction.
+The historical `pq_measurements/shielded.rs` only verifies existing transactions.
+Production consensus, source pins, wallet entropy, approval code, and retry/cache rules remain unchanged.

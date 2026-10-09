@@ -1,13 +1,11 @@
 # Independent public enrollment and snapshot comparisons
 
-This bounded suite closes two gaps left by the existing wallet format tests:
-the CLI's public `enroll-prepare` file/command boundary and operational snapshot
-receipt identities/companion bytes. All roots, passwords, keys, encrypted bytes
+This suite checks the public `enroll-prepare` command and the identities and companion files of operational snapshots. All roots, passwords, keys, encrypted bytes
 and identities used here are **public test material**, unsuitable for funds.
 
 `reference.py` imports the existing independent [format oracle](../formats/README.md)
 for canonical JSON, policy/key domains, origin mapping, profile validation and
-cumulative inventory rules. It checks that source and the unchanged H1/L1
+cumulative inventory rules. It checks that source and the unchanged key and format
 corpora by SHA-256 before use. Expected values use Python's standard library;
 there is no production Rust call, subprocess, network request, new signing or
 backup KDF in the oracle. The existing format oracle's Python dependencies are
@@ -20,20 +18,20 @@ The new, separate `vectors.json` contains:
   at the next local index. Key exchanges, fingerprints, sorted descriptors,
   exact origin mappings, inventories and inventory fingerprints are independent
   answers. Inputs arrive in reverse participant order and external origins use
-  large u32 indices. H1 public keys are reused with synthetic public participant
+  large u32 indices. Existing public keys are reused with synthetic public participant
   IDs; this is not evidence of independent funded cosigner ownership.
 - A deterministic v2 allocator state after one receiver is issued, the exact
-  existing L1 encrypted backup, one retained orphan object, and their complete
+  existing format-test encrypted backup, one retained orphan object, and their complete
   receipt. State SHA-256, backup SHA-256, inventory identity and domain-separated
   journal-root/receipt identities are independently computed from exact bytes.
 - Twelve valid receipt identity mutations and nine invalid schema/byte controls.
   The maximum-generation v3 metadata example checks receipt syntax only; it is
   deliberately not a valid journal store or a recoverable authority fixture.
 
-The Rust CLI integration test launches only nonterminal `enroll-prepare` with
-public files, closed stdin and a ten-second process timeout. It compares the output file and stdout object to
-retained answers, verifies that retries cannot replace a candidate, and rejects
-eleven transport/pairing/origin mutations without publishing output. The wallet
+The CLI test runs nonterminal `enroll-prepare` with public files, closed stdin, and a ten-second timeout.
+It compares the output file and stdout with retained answers.
+Retries must not replace a candidate.
+Eleven transport, pairing, and origin mutations must fail without output publication. The wallet
 integration test consumes independently supplied receipt bytes and captures one
 bounded snapshot through the public library API, comparing all four companions.
 This invokes the existing backup decryption/key check once; it does not run a
@@ -67,7 +65,7 @@ reference. This suite does not repeat their full matrices.
 | Raw RPC block/hash/Merkle checks, exact amounts, unspent context and transport bounds | [`rpc/tests/payment.rs`](../../../../crates/pq-wallet/src/rpc/tests/payment.rs), [`rpc/tests/discovery.rs`](../../../../crates/pq-wallet/src/rpc/tests/discovery.rs) |
 | Snapshot corruption, saved authority, trust restrictions and atomic publication | [`recovery/tests.rs`](../../../../crates/pq-wallet/src/recovery/tests.rs), [`payment/tests/snapshot.rs`](../../../../crates/pq-wallet/src/payment/tests/snapshot.rs) |
 
-Receipt identity proves byte binding, not completeness, freshness, wallet
-ownership, a valid chain or retirement of another allocator. Funded independent
+A receipt identity binds bytes.
+It does not establish completeness, freshness, wallet ownership, chain validity, or retirement of another allocator. Funded independent
 quorums, actual trusted RPC/node acceptance and real terminal flows remain
 [human validation](../../../../docs/slh-dsa-b128s/acceptance.md) requirements.

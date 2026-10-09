@@ -1,19 +1,23 @@
-# Experimental SLH runtime wiring
+# Node configuration and verifier identity
 
-The daemon feature `experimental-slh-dsa-b128s` selects the existing consensus
-verifier and RPC mining accounting together. It is off by default and adds no
-signer or fixture dependency. Configured activation also requires
-`zakura_consensus::supports_experimental_slh_dsa_b128s()`: that support signal is
-true only when the feature is compiled. Consensus, relay, mining and lifecycle
-source are integrated. This reports experimental capability; library checks and
-source review do not establish daemon startup or live acceptance.
+The `experimental-slh-dsa-b128s` feature enables consensus verification and RPC mining accounting.
+It is off by default. It adds no signer or fixture dependency.
+Configured activation also requires `zakura_consensus::supports_experimental_slh_dsa_b128s()`.
+This function returns true when the build includes the feature.
+Live node acceptance remains open.
 
-## Verifier identity
+## Read the verifier identity
 
-The exact standalone command `zakurad --slh-dsa-b128s-verifier-identity` prints one
-JSON object and exits before node initialization. It does not load configuration,
-start services or execute cryptography. Additional arguments take the ordinary
-CLI parser path. Both default and feature-enabled builds recognize the query.
+Run this exact command:
+
+```sh
+zakurad --slh-dsa-b128s-verifier-identity
+```
+
+The command prints one JSON object and exits before node initialization.
+It does not load configuration, start services, or execute cryptography.
+Both default and feature-enabled builds accept the command.
+Additional arguments select the ordinary CLI parser instead.
 
 | Field | Meaning |
 | --- | --- |
@@ -26,16 +30,16 @@ CLI parser path. Both default and feature-enabled builds recognize the query.
 | `verifier_compiled` | Whether consensus was compiled with the SLH feature |
 | `runtime_supported` | Whether integrated experimental runtime support is compiled |
 
-The algorithm and hash fields identify the experimental contract even when the
-verifier is disabled; inspect `verifier_compiled` and `backend` together. The current integrated runtime and verifier flags follow the same explicit
-feature; neither flag establishes execution or security acceptance. The external receipt
-must bind exact source, dependency features, executable and configuration hashes.
-The identity does not assert those hashes or independently establish provenance.
+The algorithm and hash fields identify the contract even when the verifier is disabled.
+`verifier_compiled` and `backend` identify the compiled mode.
+The runtime and verifier flags follow the same feature.
+Neither flag proves execution or security acceptance.
+A separate receipt must record source, dependency features, binary hashes, and configuration hashes.
+The identity object does not establish source provenance.
 
-## Configuration and lifecycle
+## Configure Regtest
 
-A functional test profile uses the following fields; these limits are test
-parameters, not deployment recommendations:
+The following profile uses functional test limits:
 
 ```toml
 [network]
@@ -48,34 +52,35 @@ experimental_slh_dsa_b128s_max_checks_per_transaction = 16
 experimental_slh_dsa_b128s_max_checks_per_block = 64
 ```
 
-All three SLH fields are required together. The activation height is nonzero,
-Regtest-only and strictly after NU7 and all checkpoints. Limits satisfy
-`0 < transaction <= block <= u32::MAX`. Public and custom public networks reject
-SLH fields. A build without the feature refuses configured startup.
+All three SLH fields are required together.
+Activation must be nonzero and after NU7 and every checkpoint.
+Limits must satisfy `0 < transaction <= block <= u32::MAX`.
+Public networks, including custom public networks, reject SLH fields.
+A build without the feature refuses configured startup.
+These limits are not production recommendations.
 
-Database and non-finalized backup paths use
-`regtest-slh-dsa-b128s-v1-hH-tT-bB`. Changing the SLH gate or either limit selects a
-fresh namespace. Existing plain Regtest state and old rule namespaces are never
-copied, renamed or opened as the new history. The suffix identifies the v1 contract;
-a future incompatible contract must use a distinct namespace.
+## State and activation
 
-Mempool admission uses candidate-next-block height. Chain-tip notifications reset
-before the first active SLH candidate, on forks and rollbacks, and when several
-updates coalesce across activation. The existing upstream reset path drops the
-whole prior active state, including pending and completed downloads and stored
-results, then queues transactions for verification at the new tip. F's existing
-constructor supplies the same network to fresh storage. No parallel mempool
-lifecycle is introduced. Both prepared-block cache lookup and insertion bypass
-active SLH blocks, as specified by the [consensus boundary](consensus.md).
+Database and non-finalized backup paths use `regtest-slh-dsa-b128s-v1-hH-tT-bB`.
+A change to activation or either limit selects a new namespace.
+The node does not reuse plain Regtest state or state from different rule settings.
+An incompatible future contract needs a different namespace.
 
-## Validation boundary
+Mempool admission uses the next candidate block height.
+Chain-tip notifications reset the mempool at activation, forks, and rollbacks.
+The reset also handles coalesced updates that cross activation.
+It discards pending downloads, completed downloads, and stored results.
+It then queues transactions for verification under the new tip.
+The storage constructor uses the same network configuration after reset.
+Active SLH blocks bypass prepared-block cache lookup and insertion.
+The [consensus guide](consensus.md) describes these checks.
 
-Selected library checks cover parameter and configuration rejection, unchanged
-defaults, state/backup namespace isolation, activation/rollback/reactivation,
-same-height forks, coalesced tip updates, and JSON identity under both feature
-modes. They use mocked tips and temporary directories. No new proof fixture,
-live node, daemon build, restart/reorg suite or performance workload is run by
-these checks.
+## Focused tests
+
+Library tests cover configuration rejection, unchanged defaults, namespace isolation,
+activation, rollback, reactivation, forks, coalesced updates, and both identity modes.
+They use mocked tips and temporary directories.
+They do not build a daemon or run live tests.
 
 ```sh
 cargo test --locked -p zakura-chain -p zakura-network -p zakura-state --lib slh
@@ -85,19 +90,15 @@ cargo clippy --locked -p zakura-chain -p zakura-network -p zakura-state -p zakur
 cargo clippy --locked -p zakura-consensus --all-targets --features slh-test-observer -- -D warnings
 ```
 
-The daemon identity entry point, feature forwarding, startup refusal and mempool
-storage/reset consumers are source-reviewed only at this checkpoint. A human must
-build and execute the daemon and required live acceptance under the repository's
-[agent rules](../../AGENTS.md). Execution remains pending human validation; the default build stays disabled.
+The daemon entry point, feature forwarding, startup refusal, and reset consumers have source review only at this checkpoint.
+A human must build the daemon and run live acceptance under [AGENTS.md](../../AGENTS.md).
 
-## Reused sources
+## Source attribution
 
-The identity query follows the existing one-argument early-exit command and
-backend-identity facade from research revision
-`e759cb86a06510893f8e7d1eb986b7025401c8c9`, preserving its MIT/Apache-2.0 source
-attribution. The typed JSON facade adds the SLH contract, fixed algorithm/hash
-pins and separate compiled/runtime flags; it uses existing Serde dependencies.
-No alternate verifier or research runtime dependency is imported.
+The identity command reuses the early-exit mechanism from research revision
+`e759cb86a06510893f8e7d1eb986b7025401c8c9`.
+The typed JSON API adds the SLH contract, fixed source versions, and separate support flags.
+It uses the existing Serde dependencies and retains MIT/Apache-2.0 attribution.
 
 | Target | Research source at that revision | Adaptation |
 | --- | --- | --- |
@@ -106,7 +107,6 @@ No alternate verifier or research runtime dependency is imported.
 | `crates/zakurad/Cargo.toml` | `node/zakura/crates/zakurad/Cargo.toml` | Forward only the existing SLH consensus and mining features |
 | `crates/zakura-state/src/service/chain_tip/tests/vectors.rs` | `node/zakura/crates/zakura-state/src/service/chain_tip/tests/vectors.rs` | Extend the existing C1 mock-tip test with SLH/NU7 rollback, reactivation, same-height fork and coalescing cases |
 
-The lifecycle implementation itself is reused from the existing C/E/F slices and
-pinned upstream `9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`. The upstream mempool
-reset/drop/retry mechanism is retained verbatim. No unrelated upstream issues are
-fixed or made release gates by this work.
+The lifecycle code reuses the existing integration and pinned upstream revision
+`9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`.
+The upstream mempool reset, discard, and retry mechanism remains unchanged.

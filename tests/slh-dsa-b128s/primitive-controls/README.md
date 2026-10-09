@@ -16,10 +16,9 @@ adaptation were made on 2026-10-09.
 
 `extract.py` reuses the existing bounded, hash-checked test-source fetcher.
 `check_controls.py` reuses the existing [independent reference](../reference/README.md)
-and bounded native adapter without changing either. It first independently
-accepts each signature using its original SHA2/SHAKE profile and rejects a
-signature mutation in that profile, then independently rejects the unchanged
-signature using BLAKE3 and compares the Rust verifier's typed rejection.
+and bounded native adapter without changing either. The checker first accepts each signature under its original SHA2 or SHAKE profile.
+It then rejects a signature mutation under that profile.
+Finally, it rejects the original signature under BLAKE3 and compares the Rust verifier's error.
 The independent reference and checker remain test-only LGPL-3.0-or-later;
 their license copies remain in [reference/licenses](../reference/licenses).
 No alternative algorithm is added to the Rust runtime dependency graph.

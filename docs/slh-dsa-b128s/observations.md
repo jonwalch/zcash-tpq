@@ -1,34 +1,37 @@
-# Opt-in SLH primitive-entry observation
+# Primitive-call observations
 
-The consensus worker can emit an explicit Regtest diagnostic at the real
-SLH-DSA-B-128s primitive entry point. It is disabled by default, compiled only
-with the existing SLH verifier feature, and changes no validation rule, signature
-result, reservation order, error precedence or allowance. The public eight-field
-verifier identity remains unchanged. This is entry evidence, not a successful
-signature or node acceptance result.
+The consensus worker can log entry into the real SLH signature primitive on Regtest.
+This diagnostic is off by default and requires the SLH verifier feature.
+It does not change validation, signature results, reservation order, errors, or allowances.
+The eight-field verifier identity remains unchanged.
+An entry proves an attempted call, not successful verification or node acceptance.
 
-Set `ZAKURA_SLH_PRIMITIVE_OBSERVE` to exactly 32 lowercase hexadecimal characters
-and enable the `slh_primitive=info` tracing target for an explicitly configured
-Regtest process. This public capture token is an identifier, not a secret. An
-absent/invalid token and non-Regtest context emit nothing. The token is read once
-per process. The diagnostic contains only:
+## Enable capture
 
-- Fixed schema marker, contract and `portable-rust` backend.
-- Capture token, process ID and monotonically assigned event sequence.
-- Public transaction ID and authorizing-data digest, both in RPC display order.
-- Transparent input index and reserved-check ordinal within that input.
+Set `ZAKURA_SLH_PRIMITIVE_OBSERVE` to exactly 32 lowercase hexadecimal characters.
+Enable the `slh_primitive=info` tracing target in the configured Regtest process.
 
-The check ordinal is **not** the policy signer index: a 1-of-15 policy signed by
-member 14 emits ordinal 0. No keys, signatures, signing messages, secrets, timing or
-resource measurements are logged. The authorizing digest distinguishes changed
-signatures with unchanged transaction IDs. Sequence assignment may differ from
-line-write order across Rayon threads; reservation and ordered failure selection
-remain the existing implementation.
+The token is a public capture identifier, not a secret.
+The process reads it once.
+An absent or invalid token produces no entries.
+A non-Regtest context also produces no entries.
+Each entry contains:
 
-## Prepared capture API
+- The schema marker, contract, and `portable-rust` backend.
+- The token, process ID, and increasing event sequence.
+- The public TXID and authorization digest in RPC display order.
+- The input index and reserved-check ordinal within that input.
 
-The existing human-only [acceptance adapters](acceptance.md) accept an optional
-keyword when constructing their managed nodes:
+The ordinal is not the policy signer index.
+For example, member 14 of a 1-of-15 policy has ordinal 0.
+Entries exclude keys, signatures, messages, secrets, timing, and resource measurements.
+The authorization digest distinguishes changed signatures with the same TXID.
+Concurrent threads can write lines in a different order from sequence assignment.
+Reservation order and failure selection remain unchanged.
+
+## Capture API
+
+The [acceptance drivers](acceptance.md) accept an optional observation token:
 
 ```python
 with Network(binary, artifacts, miner, observation_token="0123456789abcdef0123456789abcdef") as network:
@@ -37,31 +40,30 @@ with Network(binary, artifacts, miner, observation_token="0123456789abcdef012345
     ...
 ```
 
-`ManagedNode` accepts the same keyword. Existing calls keep their behavior and
-remove any inherited observation environment variable. Explicit opt-in adds the
-tracing target and passes only the chosen token. Each cleanly stopped process
-writes `node-a/observation-0.json` (then 1, 2 on restarts), binding source, binary,
-configuration, token/PID and the exact byte interval in `node.log`. Existing log
-prefixes must remain unchanged; log replacement, incomplete lines, source/input
-changes or unsuccessful shutdown prevent a complete capture. A closed-process
-capture alone does not establish complete event coverage or acceptance.
+`ManagedNode` accepts the same keyword.
+Calls without a token remove any inherited observation variable.
+An explicit token enables the tracing target.
+Each cleanly stopped process writes `node-a/observation-0.json`, then 1 and 2 after restarts.
+The capture binds source, binary, configuration, token, PID, and a byte interval in `node.log`.
+The preceding log bytes must stay unchanged.
+Replaced logs, partial lines, changed inputs, or failed shutdown prevent a complete capture.
+A complete capture alone does not prove event coverage or functional acceptance.
 
-No driver or build was executed to validate this API. Dedicated node builds and
-actual live capture remain subject to [AGENTS.md](../../AGENTS.md) and the
-human acceptance workflow. Capture adds diagnostics to an existing functional
-scenario; it does not register a resource experiment or alter retry behavior.
+Live capture still requires human execution under [AGENTS.md](../../AGENTS.md).
+It adds diagnostics to functional tests. It does not measure resources or change retries.
 
-## Bounded offline receipt
+## Check a saved capture
 
-Use distinct genuine SLH positive-control identities before and after the
-subject operation. Retain their ordinary functional outcomes separately. A
-positive entry proves that observation reached the primitive; this parser does
-not verify that the signature or operation succeeded. The existing decoded
-transaction RPC includes `txid` and `authdigest`; retain its response and exact
-raw transaction bytes. The diagnostic comparison is not an independent digest
-oracle and does not authenticate UTXOs.
+Use distinct genuine SLH positive controls before and after the subject operation.
+Retain their functional outcomes separately.
+An observed call does not prove that the positive operation succeeded.
+The fixture host records `txid`, `authdigest`, and exact raw bytes.
+After confirmation, compare these with `getrawtransaction`.
+Zakura has no `decoderawtransaction` RPC.
+Rejected transactions are unavailable through `getrawtransaction`.
+These identity comparisons are not independent digest or UTXO checks.
 
-After stopping the process, inspect its capture without launching any binary:
+After process shutdown, run this parser without a live binary:
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/observations.py \
@@ -76,33 +78,39 @@ python3 tests/slh-dsa-b128s/acceptance/observations.py \
   --output /absolute/existing-directory/new-observation-receipt.json
 ```
 
-Replace each uppercase identity placeholder with its 64-character lowercase hex
-value. The output must be new; repeat `--subject` for up to 32 distinct subjects.
-The binary and exact build receipt must match the current clean source and
-captured configuration/source identities. A later process may append to the log,
-but the captured interval and its preceding bytes must still match their hashes.
+Replace each identity component with 64 lowercase hexadecimal characters.
+Use a new output file.
+Repeat `--subject` for at most 32 distinct subjects.
+The binary and build receipt must match clean source and captured identities.
+Later processes can append to the log.
+The captured interval and preceding bytes must still match their hashes.
 
-Parsing is limited to 32 MiB of log bytes, 16 KiB per line and 4,096 events. Every
-matching marker must have the exact schema, token, PID, backend and contract.
-Sequences must be unique and contiguous starting at 1; missing, duplicated,
-wrapped, malformed or truncated observations fail. Narrow terminal color escapes
-are removed; other control escapes in an entry fail. Both distinct positive
-controls must appear, with every before-control sequence preceding every
-after-control sequence. Repeated earlier controls arriving after the later
-control invalidate the bracket. Absence of subject lines alone cannot produce
-a zero-window receipt.
+## Parser limits and count meanings
 
-The receipt counts all observed process entries and the sequence window strictly
-between the last before-control entry and first after-control entry. Subject
-counts retain retries and concurrent calls. A subject may have zero window
-entries and nonzero later process entries; both are reported. **Neither count
-is an isolated RPC count.** A rejected RPC is not a worker-drain barrier.
-No deterministic queue isolation is added. The receipt explicitly disclaims
-per-request attribution, verification success, node acceptance, resource
-measurement and absence outside the selected window. Source and hash binding
-provide traceability, not attestation of a hostile host or logging system.
+| Item | Requirement |
+| --- | --- |
+| Log / line / events | At most 32 MiB / 16 KiB / 4,096 |
+| Entry identity | Exact schema, token, PID, backend, and contract |
+| Sequence | Unique and contiguous, starting at 1 |
+| Escapes | Narrow terminal color escapes only |
+| Positive controls | Distinct identities. Every before-control entry precedes every after-control entry. |
 
-## Bounded checks and reuse
+Missing, repeated, wrapped, malformed, or truncated events cause failure.
+A repeated earlier control after the later control invalidates the bracket.
+Absent subject lines alone cannot establish zero calls.
+
+The receipt counts the full process and the window between the last before-control and first after-control entries.
+Counts include retries and concurrent calls.
+A subject can have zero window entries but later process entries.
+The receipt reports both counts.
+**Neither is an isolated RPC count.**
+RPC rejection does not prove that workers finished.
+
+The receipt cannot establish per-request attribution, successful verification, node acceptance,
+resource use, or absence outside the window.
+Hashes provide traceability, not attestation of a hostile host or logger.
+
+## Focused tests and attribution
 
 ```sh
 python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance -p test_observations.py -v
@@ -110,20 +118,17 @@ cargo test --locked -p zakura-pq-slh-dsa-b-exp --features test-observer
 cargo test --locked -p zakura-consensus --lib --features slh-test-observer slh
 ```
 
-Native tests reuse unchanged public signatures for valid/invalid attempts and
-pre-reservation failures. The consensus test compares diagnostic entries with
-the existing test-only primitive observer across v5/v6, high signer index,
-16-check parallel work, bad signatures, malformed encoding and exhausted budget.
-Python tests mock process startup and exercise bounds, identity/sequence
-corruption, disabled defaults, clean capture and zero-window requirements.
-Those checks establish source/library/parser behavior, not live capture.
+Native tests reuse public signatures for valid, invalid, and pre-reservation cases.
+Consensus tests compare logs with the test-only observer.
+They cover v5/v6, high signer indices, parallel work, bad signatures, malformed encoding, and exhausted budgets.
+Python tests cover startup mocks, bounds, identities, sequences, capture completion, and zero-count requirements.
+They do not establish live capture.
 
-The worker opt-in/info-target mechanism and log matching were selectively adapted
-from MIT/Apache-2.0 research commit
-`e759cb86a06510893f8e7d1eb986b7025401c8c9`,
-`node/zakura/crates/zakura-consensus/src/transaction/sqisign/worker.rs::observe_entry`
-and `node/tests/sqisign_c_comparison.py::check_entries`. Only that mechanism was
-reused; no alternate verifier, backend replacement hook or measurement stack was
-imported. The new native callback exposes no material and cannot replace the
-fixed primitive or its result. Exact source mappings are maintained in the
-acceptance provenance record by the coordinator.
+The diagnostic mechanism adapts MIT/Apache-2.0 research revision
+`e759cb86a06510893f8e7d1eb986b7025401c8c9`:
+
+- `node/zakura/crates/zakura-consensus/src/transaction/sqisign/worker.rs::observe_entry`
+- `node/tests/sqisign_c_comparison.py::check_entries`
+
+The callback cannot replace the primitive or its result.
+The [source map](../../tests/slh-dsa-b128s/acceptance/sources.json) records exact mappings.

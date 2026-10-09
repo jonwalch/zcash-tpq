@@ -1,59 +1,55 @@
 # Experimental SLH wallet
 
-This crate implements SLH inventory, enrollment, payments, durable history and
-recovery for the [wallet contract](../../docs/slh-dsa-b128s/wallet.md).
-The default package has no normal dependencies and explicitly reports disabled
-support. Feature `experimental-slh-dsa-b128s` enables only suite `f7`.
+This crate implements inventory, enrollment, payments, durable history, and recovery.
+The [wallet contract](../../docs/slh-dsa-b128s/wallet.md) specifies its behavior.
+Default builds have no normal dependencies and report disabled support.
+`experimental-slh-dsa-b128s` enables only suite `f7` on Regtest.
 
-`Wallet::create` draws a 32-byte root and separate 16-byte wallet and allocator
-identifiers through fallible OS entropy. Its empty inventory issues no receiver.
-Public keys and commitments retain the existing wallet HKDF-SHA256 literal
-domains, Regtest/account-zero layout and receive/change coordinates, with 48
-output bytes for SLH. `Root` remains available for the earlier non-enrolled key
-foundation. Secret owners have no Debug, Clone, serialization or public fixed-
-seed import/export API. The initial implementation is serial and uncached; the
-inherited HKDF/HMAC internal-state clearing limitation remains.
+## Keys, approval, and limits
 
-`Manifest` retains version 1 canonical JSON, independent 4,096-entry/8 MiB
-ceilings, cumulative history, participant-origin authentication structure and
-approved profile. All 120 policies through 15-of-15 use the existing native
-codec; other suite bytes and formats reject. The private `SuitePolicy`, `SignerPartial` and `InputSigner` retain the
-existing policy, partial verification and assembly boundary for payment code. `InputSigner` reconstructs the message from transaction effects and
-ordered spent outputs; it accepts no supplied digest. These boundaries do not authenticate the provenance of caller-supplied UTXOs.
+`Wallet::create` requests a 32-byte root and separate 16-byte wallet and allocator IDs from fallible OS entropy.
+The initial inventory has no addresses.
+SLH key derivation uses the retained HKDF domains, account zero, receive/change coordinates, and 48 output bytes.
+`Root` also remains available for keys without enrollment.
+Secrets have no `Debug`, `Clone`, serialization, or public fixed-seed import/export API.
+The implementation is serial and has no cache.
+HKDF/HMAC internal-state clearing remains limited.
 
-`Wallet::sign_partial` and internal `sign_input` require an enrolled local coordinate,
-the exact matching policy and approved check limits. Callers must separately
-approve effects, activation, fees and durable reservations before signing. Each
-signature obtains fresh OS entropy inside the operational signer, verifies
-locally and is checked against the native input context before release. There
-is no injectable or deterministic operational signing randomness API.
+`Manifest` retains canonical version 1 JSON, cumulative history, authenticated origin structure, and the approved profile.
+The 4,096-entry and 8 MiB limits apply independently.
+All 120 policies through 15-of-15 use the native codec.
+Other suites and incompatible formats are rejected.
 
-Enrollment saves a covering encrypted backup before installing new receive or
-change coordinates. Payment review reconstructs effects from trusted ordered
-UTXOs, checks fees, expiry and participant grouping, and requires separate change
-approval. Signing first persists its reservation; retries preserve the exact
-saved authorization bytes. The existing canonical encodings, encrypted backup
-container, journal objects and watch-state formats are reused.
+`InputSigner` reconstructs messages from transaction effects and ordered spent outputs.
+It cannot accept a supplied digest.
+The caller must authenticate those UTXOs and approve effects, activation, fees, and reservations.
+Signing requires an enrolled local coordinate, matching policy, and approved check limits.
+Every signature uses fresh OS entropy and passes local and native-context verification before release.
+There is no operational API for deterministic or injected randomness.
 
-[Recovery](../../docs/slh-dsa-b128s/recovery.md) supports encrypted root/inventory
-restore and coherent operational snapshots. Snapshots retain exact state and
-journal objects under the allocator lock, validate reachable history and aliases,
-then publish into a new directory. Unknown authority remains monitor-only;
-known-authority restore requires an independently trusted receipt and caller
-reconciliation of the latest authority and previous allocators. A self-consistent
-snapshot cannot establish its own completeness.
+## Storage and recovery
 
-[CLI command flows](../../docs/slh-dsa-b128s/cli.md) now use the reused trusted
-loopback RPC adapter and the existing wallet APIs. Live-node and real-terminal
-acceptance remain pending; source and mocked checks do not establish full wallet
-readiness.
+Enrollment saves a covering encrypted backup before it installs new address coordinates.
+Payment review checks trusted UTXOs, fees, expiry, participants, and separate change approval.
+Signing saves reservations first. Retries preserve exact authorization bytes.
+The implementation reuses existing backup, journal, and watch-state formats.
 
-`PROVENANCE.json`, `PAYMENTS_PROVENANCE.json`, `RECOVERY_PROVENANCE.json` and
-`CLI_RPC_PROVENANCE.json`
-record source mappings and adaptations. Independent seed/root, format, receiver
-and encrypted-backup answers accompany focused payment and persistence tests.
-Synthetic trusted-source tests do not establish real node provenance or funded
-payment acceptance.
+[Recovery](../../docs/slh-dsa-b128s/recovery.md) supports key/inventory restore and operational snapshots.
+Snapshots retain state and journal objects under the allocator lock.
+Restore checks history and publishes a new directory.
+Unknown authority stays monitor-only.
+Known authority requires an independently trusted receipt and reconciliation of signatures and old allocators.
+A consistent snapshot cannot prove its own completeness.
+
+The [CLI](../../docs/slh-dsa-b128s/cli.md) uses the wallet APIs and trusted loopback RPC adapter.
+Live node and terminal acceptance remain open.
+
+## Tests and attribution
+
+The `PROVENANCE.json`, `PAYMENTS_PROVENANCE.json`, `RECOVERY_PROVENANCE.json`,
+and `CLI_RPC_PROVENANCE.json` files record source mappings.
+Independent key, format, receiver, and backup answers support focused tests.
+Synthetic trusted-source tests do not establish real UTXO provenance or funded acceptance.
 
 ```sh
 cargo test --locked -p zakura-pq-wallet --lib

@@ -1,3 +1,4 @@
 ### Added
 
-- Opt-in Regtest SLH primitive-attempt diagnostics and bounded capture receipts. Observation is disabled by default and does not change verification, reservations or the verifier identity contract.
+- Add optional Regtest logs of SLH primitive calls and bounded capture receipts.
+  Logging is off by default. Verification, reservations, and verifier identity stay unchanged.

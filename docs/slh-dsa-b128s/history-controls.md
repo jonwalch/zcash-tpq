@@ -1,61 +1,69 @@
-# Wallet history refusal and reconciliation
+# Wallet tests with faulty node history
 
-The [history controls](../../tests/slh-dsa-b128s/acceptance/history_controls.py)
-prepare actual CLI cases against disposable Regtest nodes. The
-[fault service](../../tests/slh-dsa-b128s/acceptance/history_service.py) forwards
-read-only RPC requests to the trusted loopback node and changes selected history
-responses. **Live execution remains pending.** Offline mocks establish the
-adapter's assertions and bounds; they do not establish wallet/node acceptance.
-The [acceptance runbook](acceptance.md) supplies the exact build receipt workflow.
+The [history driver](../../tests/slh-dsa-b128s/acceptance/history_controls.py)
+uses disposable nodes and the real CLI.
+Its [fault service](../../tests/slh-dsa-b128s/acceptance/history_service.py)
+forwards read-only RPC and changes selected history responses.
+**Live execution remains open.**
+Offline mocks check driver assertions and bounds, not wallet/node acceptance.
+The [acceptance guide](acceptance.md) specifies matching builds.
 
-The setup authenticates a mature classical coinbase on both nodes and confirms
-two 3,000,000-zatoshi SLH outputs. One output backs a signed, saved, unsubmitted
-payment. A successful `propose-preview` proves the other output remains eligible
-for a new proposal. Both checks must succeed again after removing the fault, at
-the same unchanged tip. This adapts the pinned research offline-recovery flow so
-a reservation or missing funds cannot stand in for a history refusal.
+## Funded controls
+
+Both nodes authenticate a mature coinbase and two confirmed SLH outputs of 3,000,000 zatoshis each.
+One output supplies a signed, saved, unsubmitted payment.
+A successful `propose-preview` proves that the other output remains eligible.
+Both controls must succeed again after fault removal, at the unchanged tip.
+Thus, reservations or missing funds cannot substitute for a history failure.
 
 | Case | Required behavior |
 | --- | --- |
-| Unavailable chain context | Exact `HistoryUnavailable` diagnostic; cached funds retained and current balance unknown. |
-| Missing tip block hash | Exact `HistoryUnavailable`; no proposal or partial export. |
-| Inconsistent tip hash | Exact `ChainChanged`; no new payment authority. |
+| Unavailable chain context | Exact `HistoryUnavailable` diagnostic. Cached funds retained and current balance unknown. |
+| Missing tip block hash | Exact `HistoryUnavailable`. No proposal or partial export. |
+| Inconsistent tip hash | Exact `ChainChanged`. No new payment authority. |
 | Pruned required raw block | Fresh public and inventory-restored monitors fail with `HistoryUnavailable`, then discover the full funded balance after reconciliation. |
 | Inconsistent raw block | A changed previous-block-hash byte must fail authenticated discovery with `ChainChanged`, then reconcile from honest bytes. |
-| Bounded incomplete scan | One block makes real progress while balance and activation remain unknown; the subsequent full scan discovers both outputs. |
+| Bounded incomplete scan | One block makes real progress while balance and activation remain unknown. The subsequent full scan discovers both outputs. |
 
-Cached fault cases cover the original allocator, a public monitor and an
-unknown-authority operational snapshot restore. Every monitor refuses receiver
-allocation, proposal creation, signing and submission with the precise
-`MonitorOnly` diagnostic, before or during uncertainty and after reconciliation.
-Fresh rescan cases separately cover a public monitor and an inventory-only
-restore. A never-scanned monitor can observe zero cached funds; it must not
-present that observation as a complete or current zero balance.
+Cached cases use the original allocator, a public monitor, and an unknown-authority snapshot restore.
+Each monitor must report `MonitorOnly` for allocation, proposals, signing, and submission.
+This restriction applies before faults, during faults, and after recovery.
+Fresh scans separately use a public monitor and an inventory-only restore.
+Zero cached funds in an unscanned monitor cannot become a complete current balance.
 
-The allocator's existing authority remains valid for offline receiver issuance.
-These controls do not revoke it. They verify that failures leave its manifest,
-receive/change cursors and saved payment authority unchanged. Cached context
-faults may only clear scan completeness/context; cached coins, undo data and
-checkpoint remain exact. Fresh rescans may persist authenticated partial
-progress. A v3 journal generation may advance with a scan commit, while its
-roots, capabilities and other authority fields must remain exact. This fixture
-does not force journal migration. Saved proposal, partial and transaction export
-hashes must remain byte-for-byte equal throughout. Tips, mempools and both funded
-outpoints remain unchanged on both nodes.
+The allocator retains permission to issue receivers offline.
+Failures must preserve its manifest, cursors, and saved payment authority.
+Cached-context faults can clear scan completeness and context only.
+Cached coins, undo data, and the checkpoint must remain exact.
+Fresh scans can save authenticated partial progress.
+A v3 journal generation can advance with a scan commit, but authority fields must stay exact.
+The fixture does not force journal migration.
 
-The service binds `127.0.0.1` with an ephemeral port and accepts only numeric
-loopback upstreams. It allows the five wallet read methods, with exact parameter
-shapes; submission and mining are refused. Each service admits at most 4,096
-POST requests over a 300-second window, at most 4 KiB per request and 16 MiB per
-upstream response. Client socket timeout is two seconds; upstream connection/read
-timeout is five seconds with an additional five-second body deadline. The
-serial listener is closed when the case ends. Unmodified replies retain their
-exact bytes, including decimal amounts. Per-request evidence contains method,
-mode and byte hashes, with an explicit marker proving the selected fault was
-applied. Genuine upstream errors do not count as injected failures.
+Saved proposal, partial, and transaction export hashes must stay unchanged.
+Both nodes must retain their tips, mempools, and funded outpoints.
 
-After committing the integrated source, a human can produce matching builds and
-run this command from the clean product checkout:
+## Fault service limits
+
+| Property | Limit |
+| --- | --- |
+| Listener | `127.0.0.1`, temporary port, serial requests |
+| Upstream | Numeric loopback address |
+| Methods | Five wallet read methods with exact parameter shapes. No submission or mining. |
+| Requests | 4,096 POST requests within 300 seconds |
+| Request / upstream response | 4 KiB / 16 MiB |
+| Client timeout | 2 seconds |
+| Upstream timeout | 5 seconds for connection/read, plus a 5-second body deadline |
+
+The listener closes at the end of each case.
+Unmodified responses retain exact bytes, including decimal amounts.
+Request evidence records method, mode, and byte hashes.
+A marker must show that the selected fault occurred.
+Ordinary upstream errors cannot count as injected failures.
+
+## Human command
+
+Create matching builds from clean, committed source.
+Run this command as a human:
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/history_controls.py --human-run \
@@ -69,25 +77,25 @@ python3 tests/slh-dsa-b128s/acceptance/history_controls.py --human-run \
   --artifacts "$SLH_ACCEPTANCE_ROOT/history-v5-single"
 ```
 
-Repeat with version `6` and a fresh artifact directory. `--classical multisig`
-uses the existing classical multisig funding helper when that combination is
-needed. Builds and actual node/wallet/terminal runs are human-only under
-[AGENTS.md](../../AGENTS.md); no build is launched implicitly. Roots, passwords,
-backups, operational snapshots and terminal transcripts stay in the private
-temporary workspace and are deleted. The public execution receipt starts
-incomplete, records failures, and binds source/build hashes, funding, fault
-events, state hashes and successful reconciliation. No performance, primitive
-entry or production readiness result is inferred.
+Repeat with version `6` and a new artifact directory.
+Use `--classical multisig` for the existing multisig funding profile when required.
+The command does not launch builds implicitly.
+[AGENTS.md](../../AGENTS.md) reserves builds and live tests for humans.
 
-The permitted focused offline check is:
+Private roots, passwords, backups, snapshots, and transcripts stay in a temporary directory, which the driver deletes.
+The public receipt records failures, source/build hashes, funding, fault events, state hashes, and successful recovery.
+It does not establish performance, primitive counts, or production readiness.
+
+## Focused tests and attribution
+
+Run the offline tests:
 
 ```sh
 python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance -p 'test_history*.py' -v
 ```
 
-Research `node_scan.py`, `recovery_live.py`, `recovery_controls.py` and the fake
-RPC discovery tests provide the attributed patterns; the existing SLH
-`wallet_live.Demo`, `Network`, strict transport and independent format oracle are
-reused. See the [source map](../../tests/slh-dsa-b128s/acceptance/sources.json) and
-[notice](../../tests/slh-dsa-b128s/acceptance/NOTICE). Production wallet behavior,
-upstream Zakura behavior and immutable reference corpora are unchanged.
+The driver adapts research discovery, recovery, and fake-RPC tests.
+It reuses `wallet_live.Demo`, `Network`, strict transport, and the independent format oracle.
+The [source map](../../tests/slh-dsa-b128s/acceptance/sources.json)
+and [notice](../../tests/slh-dsa-b128s/acceptance/NOTICE) record attribution.
+Production wallet behavior, upstream behavior, and reference corpora remain unchanged.

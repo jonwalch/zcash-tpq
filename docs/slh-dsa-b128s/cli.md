@@ -1,55 +1,68 @@
-# Experimental SLH wallet commands
+# Wallet commands
 
-`pq-wallet` is off by default. Enable `experimental-slh-dsa-b128s` on
-`zakura-pq-cli` to expose the SLH-only Regtest commands below. The default build
-accepts help and explicitly refuses wallet operations before reading files or
-credentials. The feature does not authorize node activation. Human node and
-terminal acceptance are separate gates described in [acceptance](acceptance.md).
-The [wallet contract](wallet.md) owns formats, approvals, capacities and recovery.
+`pq-wallet` manages SLH wallets on Regtest.
+Package `zakura-pq-cli` requires `experimental-slh-dsa-b128s` for wallet operations.
+Without that feature, only help is available.
+The [acceptance guide](acceptance.md#build-receipts) gives build commands.
+Live node and terminal tests remain open.
 
-The CLI reuses the pinned Transparent PQ command, password and RPC modules.
-Passwords come only from the controlling terminal with echo disabled; they are
-never arguments, environment variables, standard input, public JSON or logs.
-Creation and rekey confirm the new password. Other commands prompt once for the
-existing backup password. Source mappings and necessary adapters are recorded in
-[CLI/RPC provenance](../../crates/pq-wallet/CLI_RPC_PROVENANCE.json).
+## Prepare the wallet
 
-Run `pq-wallet --help` for exact positional arguments. Every operation starts
-with a separately approved canonical profile file. The profile fixes the genesis,
-NU7/SLH activation and per-transaction/per-block check allowances; RPC metadata
-never approves or enables those gates. Endpoints are numeric loopback socket
-addresses such as `127.0.0.1:18232` or `[::1]:18232`, without an HTTP URL. The
-operator authenticates the local node and its configuration; remote nodes require
-an authenticated local tunnel. Transport uses bounded HTTP/1.0 close framing,
-rejects unsupported framing/server failures and obtains exact UTXO amounts from
-confirmed block bytes checked against block hashes and transaction Merkle roots.
+Run `pq-wallet --help` for exact arguments.
 
-| Family | Implemented commands |
+Passwords come from the controlling terminal with echo disabled.
+Arguments, environment variables, and stdin cannot supply passwords.
+Creation and rekeying require confirmation of the new password.
+
+Each operation uses an independently approved canonical `profile.json`.
+The profile fixes the Regtest genesis, activation heights, and signature limits.
+Check these values against the intended node configuration.
+RPC responses cannot approve or enable wallet rules.
+
+Wallet JSON requires sorted fields and excludes extra fields, whitespace, and a final newline.
+The [wallet contract](wallet.md) specifies formats and limits.
+A fingerprint identifies exact public data.
+Before import, authenticate its fingerprint through a separate trusted channel.
+
+RPC endpoints use numeric loopback addresses, such as `127.0.0.1:18232` or `[::1]:18232`.
+They exclude `http://`.
+Authenticate the local node and its configuration.
+For a remote node, use an authenticated local tunnel.
+The adapter checks block hashes, transaction inclusion, amounts, and unspent outputs.
+Its bounded HTTP transport rejects unsupported framing and server failures.
+
+## Commands
+
+| Task | Commands |
 | --- | --- |
 | Keys and encrypted backup | `create-slh-exp`, `inspect`, `pubkey`, `rekey` |
-| Backed-up inventory | `extend`, `key-export`, `enroll-prepare`, `enroll`, `export` |
+| Address inventory | `extend`, `key-export`, `enroll-prepare`, `enroll`, `export` |
 | Watch-only discovery | `watch-create`, `watch-import`, `receive`, `sync`, `status` |
-| Independent payment approval | `propose`, `propose-preview`, `review`, `change-approve`, `sign` |
-| Exchange and broadcast | `assemble`, `submit`, `payments`, `payment-export` |
-| Durable history | `payment-archive`, `payment-resume`, `payment-history`, `payment-history-export` |
-| Tip metadata refresh | `refresh-propose`, `refresh-review`, `refresh-approve` |
+| Payment approval | `propose`, `propose-preview`, `review`, `change-approve`, `sign` |
+| Signature exchange and broadcast | `assemble`, `submit`, `payments`, `payment-export` |
+| Saved payment history | `payment-archive`, `payment-resume`, `payment-history`, `payment-history-export` |
+| Refresh chain-tip metadata | `refresh-propose`, `refresh-review`, `refresh-approve` |
 | Recovery | `restore`, `snapshot-save`, `snapshot-restore` |
 
-Creation writes a verified encrypted backup with empty inventory. `extend`
-generates receive/change 1-of-1 entries, then makes the covering backup durable.
-`export` emits public inventory. Pair its fingerprint over an authenticated
-channel before `watch-create`; choose `monitor` for observation or `allocator`
-for the single authorized issuer. A monitor holds no secrets and cannot issue or
-sign. A paired allocator can issue only finite generated entries covered by the
-backup. Exhaustion requires explicit extend/enrollment, backup, export and import.
-Retain an external backup before issuing receivers. `status` is cached confirmed
-history, not a claim of current spendability; incomplete history remains explicit.
+Creation saves an encrypted backup without addresses.
+For a single-key wallet, `extend` generates receive/change entries and saves a covering backup.
+`export` writes the public inventory.
+Before `watch-create`, keep an external backup and authenticate the inventory fingerprint.
 
-## Public multisig enrollment
+A `monitor` observes public inventory. It cannot issue addresses, sign, or submit payments.
+An `allocator` issues addresses and manages payments.
+Only one store can act as allocator.
+It can issue only generated entries covered by a backup.
+After exhaustion, generate and enroll more entries.
+Then save a backup, export the inventory, and import it into the watch store.
 
-No hand-authored descriptor is required. Every participant first creates its own
-wallet and exports its empty/current public inventory. For each next receive or
-change policy, participants export their own public key and origin:
+`status` reports cached confirmed history and identifies incomplete history.
+It does not guarantee current spendability.
+
+## Enroll a multisig policy
+
+Each participant needs a wallet and its exported public inventory.
+For each new policy, export each participant's own key and origin:
 
 ```text
 pq-wallet key-export profile.json alice.tpq receive 0 alice-key.json
@@ -57,10 +70,8 @@ pq-wallet key-export profile.json bob.tpq receive 0 bob-key.json
 pq-wallet key-export profile.json carol.tpq receive 0 carol-key.json
 ```
 
-Each output gives the public exchange and its fingerprint. Authenticate these
-fingerprints through a separate channel; a fingerprint copied beside an untrusted
-key file does not authenticate its sender. Each cosigner prepares its own
-cumulative candidate, naming every key file and authenticated fingerprint:
+Authenticate each key fingerprint separately.
+For each cosigner, prepare a cumulative inventory with all participant files and trusted fingerprints:
 
 ```text
 pq-wallet enroll-prepare profile.json alice-inventory.json receive 2 alice-candidate.json alice-key.json ALICE_KEY_FP bob-key.json BOB_KEY_FP carol-key.json CAROL_KEY_FP
@@ -68,50 +79,48 @@ pq-wallet enroll profile.json alice.tpq alice-candidate.json ALICE_CANDIDATE_FP 
 pq-wallet export profile.json alice-enrolled.tpq alice-inventory-next.json
 ```
 
-Repeat for Bob and Carol against their own inventories and backups. Review the
-candidate's suite `247` (`f7`), threshold, complete ordered origin mapping,
-participant wallet IDs and approved profile before `enroll`. Policy commitments
-are sorted by the existing native policy constructor; the matching origins move
-with their commitments. Every enrolled wallet independently regenerates its local
-key from its root and verifies its exact sorted slot. Their inventory fingerprints
-differ because local wallet/allocator identities differ; matching policy receivers
-must agree. Enrollment writes a new covering encrypted backup before making the
-candidate usable. An already issued policy is never overwritten.
+Repeat the procedure for Bob and Carol with their own files.
+Before enrollment, check suite `247` (`f7`), threshold, participants, origins, and profile.
 
-The same commands accept one through fifteen authenticated participants and any
-threshold from one through the participant count, including 15-of-15. Append one
-policy per enrollment/backup generation. Use each participant's actual next
-cumulative index; indices need not agree across participants. Repeat with `change`
-to enroll matching change policies. Payment inputs and change retain the same
-threshold and participant set. Every participant approves the full cumulative
-inventory; `enroll-prepare` is public construction, not signing approval.
+The wallet sorts commitments with their origins.
+It regenerates its local key to check the position.
+Participant inventories have different fingerprints, but the shared policy must produce the same receive address.
+Enrollment saves the covering backup first. It cannot overwrite an issued policy.
 
-## Payment exchange and retries
+A policy permits one through fifteen participants and any threshold up to that count.
+Each enrollment adds one policy.
+Use each participant's next cumulative index. These indices need not match.
+Repeat with `change` for matching change policies.
+Payment inputs and change must share the threshold and participant set.
+Inventory preparation does not approve a payment.
 
-The existing command help documents positional intent/proposal/approval-ID paths.
-Each cosigner uses its own backup, watch store and authenticated node. `review`
-displays full recipient, amount, fee, expiry, suite/policy/origins, approved profile
-and local change advancement. Supply its exact approval ID to `sign`; when change
-advancement is needed, separately approve the displayed local change ID first.
-`propose-preview` exports without reserving when preparing requires that jump.
+## Approve and exchange a payment
 
-`sign` durably reserves before signing and writes at most fifteen local partials.
-Copy the selected public partials into one collection directory. `assemble`
-accepts exactly each input's threshold of distinct signer slots: up to the sum of
-approved thresholds, never over 225 files. Every file is at most 16,384 bytes;
-indices and proposal IDs are checked and duplicates/subquorums rejected before
-primitive verification. A 15-of-15 input requires all fifteen partials. Extra
-cosigner files must be removed from the collection explicitly. Proposal and final
-transaction bounds remain independent at 262,144 bytes. Receiver/change dust is
-2,403 zatoshis; new fees use actual size and marginal fee 400.
+Each cosigner uses its own backup, watch store, and authenticated node.
+`review` shows the recipient, amount, fee, expiry, policy, origins, profile, and any change-index advance.
+Supply the complete approval ID to `sign`.
+If requested, use `change-approve` separately.
+`propose-preview` can export a proposal before change approval without input reservations.
 
-Assembly preserves verified signed bytes before submission. `submit` sends only
-those exact saved bytes; a transport failure leaves authority intact for retry.
-Archiving is bookkeeping and does not revoke partials or free reservations.
-`payment-history` pages archived events; `payment-history-export` writes exact
-saved proposals, partials and signed transaction hex into a new directory.
-Refresh changes tip metadata after renewed approval without changing effects,
-expiry or saved authorization bytes. Existing fee approvals are not rewritten.
+`sign` saves input/change reservations before signing.
+It writes at most fifteen local partials.
+For `assemble`, collect exactly the threshold of distinct signer slots for each input.
+Remove extra files explicitly.
+The file count cannot exceed the threshold sum or 225.
+Each partial has a 16 KiB limit.
+Duplicates, wrong proposal IDs, and insufficient signatures fail before cryptographic verification.
+Proposals and final transactions each have a separate 256 KiB limit.
+
+New fees use actual sizes and a 400-zatoshi marginal fee.
+SLH receive and change outputs have a 2,403-zatoshi dust floor.
+Existing fee approvals remain unchanged.
+Assembly saves the verified transaction before submission.
+`submit` and retries use those exact bytes.
+
+Archive operations do not revoke signatures or release reservations.
+History exports retain proposals, partials, and signed transactions.
+Tip refresh requires renewed approval.
+It preserves transaction effects, expiry, and signed bytes.
 
 ## Recovery commands
 
@@ -122,30 +131,21 @@ pq-wallet snapshot-restore profile.json new-snapshot new-directory unknown
 pq-wallet snapshot-restore profile.json new-snapshot new-directory known TRUSTED_RECEIPT_FP --retired-old-allocators
 ```
 
-`restore` requires an independently reconciled inventory fingerprint. It restores
-keys/inventory, retires covered issuance ranges, rotates allocation, writes
-`backup-restored.tpq`, and creates `watch/` in monitor mode. It cannot recover
-missing payment authority/history or infer safety from an empty mempool.
+`restore` recovers keys and inventory into a monitor.
+`snapshot-save` also retains known payment state and journal history.
+Protect the receipt fingerprint through an independent channel.
 
-`snapshot-save` captures the exact encrypted backup plus coherent watch/journal
-under the allocator lock. It outputs the receipt and its fingerprint; retain that
-fingerprint through a protected independent channel. The complete artifact set is
-`backup.tpq`, `receipt.json` and the complete `watch/` subtree. Journal objects,
-including legitimate retained orphans, must remain together.
+An `unknown` snapshot restore stays monitor-only.
+A `known` restore requires the trusted latest receipt and retirement of all old allocators.
+A source monitor always restores a monitor.
+Payments still require synchronization with a trusted node.
 
-`snapshot-restore ... unknown` stays monitor-only even after reconciliation or
-restart. `known` requires a separately trusted latest receipt fingerprint and an
-explicit assertion that every old allocator has stopped. A self-consistent
-snapshot does not authenticate completeness or prove no later signature exists.
-Known restoration still requires trusted-node reconciliation before payment use;
-a source monitor is never promoted. Both modes preserve exact existing authority,
-rotate allocation, retire old issuance and publish into a new private directory.
-They retain original backup artifacts, write `backup-restored.tpq` using the entered
-password, and preserve source files. Use `rekey` afterward for a new password.
-Never reuse an existing destination. Snapshot history does not recover signatures
-created after capture; receipt authentication and freshness remain human duties.
+Each restore needs a new private destination.
+It retains the original backup and writes `backup-restored.tpq`.
+It retires old address ranges but retains their scan coverage.
+To change the password after restore, use `rekey`.
+The [recovery guide](recovery.md) specifies all files, trust requirements, and failure behavior.
 
-Focused parser, public enrollment, bounded file collection and scripted loopback
-RPC tests run without live nodes or password terminals. They do not establish
-terminal behavior, live funded payments, full recovery/discovery or node
-acceptance. Those commands are prepared for separate human execution.
+Focused tests cover parsers, enrollment, and mocked RPC.
+[CLI/RPC provenance](../../crates/pq-wallet/CLI_RPC_PROVENANCE.json) records source mappings.
+The [acceptance guide](acceptance.md) lists live and terminal tests.

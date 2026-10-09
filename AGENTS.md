@@ -2,6 +2,10 @@
 
 These rules take precedence over the inherited upstream command examples below.
 This repository adds only experimental SLH-DSA-B-128s to pinned upstream Zakura.
+Use plain English guided by ASD-STE100 for SLH docs and the root README, aiming
+for 80% rather than strict conformity. Follow `docs/slh-dsa-b128s/writing.md`.
+Preserve inherited documentation, historical evidence, and license text.
+
 Read `docs/slh-dsa-b128s/protocol.md`. Preserve canonical encoding, trusted UTXO
 resolution, existing classical/shielded behavior, source pins and attribution.
 Reuse existing code and tests with the smallest necessary adaptations. Record

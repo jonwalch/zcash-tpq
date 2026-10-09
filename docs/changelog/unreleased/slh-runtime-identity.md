@@ -1,5 +1,4 @@
 ### Added
 
-- Add an offline SLH verifier identity query and optional daemon feature forwarding
-  to the existing consensus and mining integrations. Configured SLH activation
-  remains unavailable until the complete runtime gate is cleared.
+- Offline SLH verifier identity query and optional daemon feature forwarding to
+  consensus and mining. Support is off by default and activation is Regtest-only. Live acceptance remains pending.

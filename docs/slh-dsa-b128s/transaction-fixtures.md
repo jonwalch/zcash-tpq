@@ -9,24 +9,30 @@ no claim about shielded digest coverage. See [protocol](protocol.md) and
 
 ## JSON and resource rules
 
-All objects have exactly the fields described below. Reject duplicate and
-unknown keys recursively, non-ASCII decoded strings/keys, nesting beyond 16,
-and numeric tokens other than unsigned decimal integers (including `-0`,
-fractions and exponents). Integers are at most u64; booleans are not integers.
-Hex is lowercase, even-length, and has the specified decoded length. Bounds
-apply before expensive work. A complete request/response or artifact including
-its optional terminal newline is at most 16 MiB. Transaction bytes are at most
-2,000,000; input count is 1..32, output count 1..64, previous/output scripts
-at most 10,000 bytes, authorization at most 131,072 bytes and descriptors at
-most 484 bytes. Counts and lengths also obey the stricter protocol rules.
-Amounts and checked sums are at most 2,100,000,000,000,000 zatoshis. Indices,
-sequence, height and branch fields fit u32. Transactions have no coinbase,
-duplicate outpoints, Sapling, Orchard or Ironwood bundles.
+Objects contain exactly the fields specified below.
+The parser rejects duplicate or unknown keys at every depth.
+Decoded keys and strings must be ASCII.
+Numbers must be unsigned decimal integers within u64.
+Negative zero, fractions, exponents, and booleans are not valid integer values.
+Hex must be lowercase, even-length, and the specified decoded size.
 
-The hash of an artifact is SHA-256 of its JSON object after removing only
-top-level `artifact_sha256`, recursively sorting ASCII keys, preserving array
-order, and encoding compact ASCII JSON with standard escaping and unsigned
-decimal integers. There is no trailing newline in the hashed encoding.
+| Resource | Limit |
+| --- | --- |
+| Request, response, or artifact | 16 MiB, including an optional final newline |
+| JSON depth | 16 |
+| Transaction | 2,000,000 bytes |
+| Inputs / outputs | 1–32 / 1–64 |
+| Previous-output or created-output script | 10,000 bytes |
+| Authorization / descriptor | 131,072 / 484 bytes |
+| Amount and checked sum | 2,100,000,000,000,000 zatoshis |
+| Index, sequence, height, and branch | u32 |
+
+Bounds apply before expensive work. Stricter protocol limits also apply.
+Transactions exclude coinbase, duplicate outpoints, and shielded bundles.
+
+The artifact hash is SHA-256 of the canonical JSON object without the top-level `artifact_sha256` field.
+Canonicalization sorts ASCII keys recursively and preserves array order.
+It uses compact ASCII JSON, standard escaping, unsigned decimal integers, and no final newline.
 Python's `json.dumps(value, sort_keys=True, separators=(',', ':'),
 ensure_ascii=True, allow_nan=False).encode('ascii')` defines this encoding.
 `transaction_sha256` hashes the decoded transaction, independently.
@@ -48,10 +54,11 @@ expiry_height, inputs, outputs}`. `case_id` matches `[a-z0-9_-]{1,64}`;
 `network` is `Mainnet`, `Testnet` or `Regtest`; version is 5 or 6.
 `lock_time` is a block height below 500,000,000. Branch is NU7, `0x77190ad9`.
 Each recipe input is `{outpoint: {txid_display_hex, index}, sequence,
-value_zat, threshold, public_keys_hex, signer_indices}`. Public keys are
-distinct 32-byte values; the host sorts their commitments to construct the
-policy. Signer indices refer to this sorted policy and are strictly increasing
-and exactly threshold in number. Each recipe output is `{value_zat,
+value_zat, threshold, public_keys_hex, signer_indices}`.
+Public keys are distinct 32-byte values.
+The host sorts their commitments to construct the policy.
+Signer indices refer to this sorted policy.
+They must increase strictly, with exactly threshold indices. Each recipe output is `{value_zat,
 input_policy_index}` or `{value_zat, script_hex}`: exactly one selector.
 
 Success responses are `{schema_version: 1, contract, public_fixture: true,
@@ -67,11 +74,10 @@ operation; a successful response always names the requested operation.
 consensus_branch_id, unsigned_transaction_hex, inputs, outputs}`. Inputs use
 the artifact input layout below, replacing `records` with
 `signers: [{signer_index, public_key_hex}]`. This returns exact external
-101-byte signing messages with empty context. `assemble` accepts record arrays
-in that input order, checks their keys and signatures through the existing
-native API, installs canonical authorizations, round-trips the transaction
-with complete consumption, rechecks native authorization and returns the
-artifact as `result`. No secret keys, seeds or randomness occur in artifacts.
+101-byte signing messages with empty context. `assemble` accepts record arrays in input order.
+It checks keys and signatures through the native API and installs canonical authorizations.
+It serializes and fully decodes the transaction, then checks native authorization again.
+It returns the artifact as `result`. Artifacts contain no secret keys, seeds, or randomness.
 
 `check` result is `{observed, expectation_match}`. `observed` has the same
 layout as `expected` below; it is computed independently of claimed expected
@@ -101,28 +107,32 @@ SIGHASH_ALL, without byte reversal; `message_hex` is exactly 101 bytes and
 `{signer_index, public_key_hex, signature_hex}`, using 32- and 7,856-byte values.
 Each output is `{output_index, value_zat, script_hex}` and matches the wire.
 
-Check order is: bounded transport/schema; artifact and transaction hashes;
-complete transaction decoding and explicit wire/context correspondence;
-native transaction context; structural preflight of all authorizations;
-signature verification in input/index order; functional budget. Recompute
-digest/message fields wherever native context can derive them. A context
-failure skips only correspondence fields which cannot be computed. When raw
-authorization parsing fails, descriptor/record correspondence is not available;
-report that native failure rather than attempting to trust metadata. For all
-structurally valid inputs, descriptor and records must equal decoded bytes
-before any cryptographic check. Negative artifacts with changed context may
-recompute their hashes/digests/messages and retain stale signatures; distinct
-controls deliberately violate correspondence and expect interface failures.
+The host checks an artifact in this order:
+
+1. Bounded transport and schema.
+2. Artifact and transaction hashes.
+3. Complete transaction decoding and agreement between wire bytes and supplied context.
+4. Native transaction context.
+5. Structure of every authorization.
+6. Signatures in input/index order.
+7. The functional budget.
+
+Digest and message fields are recalculated wherever the native context permits.
+A context failure skips only fields that cannot be calculated.
+If authorization parsing fails, descriptor/record comparison is unavailable.
+The host reports that native failure instead of trusting metadata.
+For structurally valid inputs, descriptors and records must match decoded bytes before cryptography.
+Some negative artifacts change context and recalculate hashes, digests, and messages while retaining stale signatures.
+Separate mismatch controls deliberately violate field correspondence and expect interface errors.
 
 `expected` (and `observed`) is `{native_authorization, native_rejection,
 signature_checks, functional_profile}`. Authorization is `accept` or `reject`.
 Rejection is null on success, otherwise `{stage, reason, input_index}` with
 nullable input index for transaction context failures. Stages are `context`,
-`authorization`, or `signature`. Context errors use existing native
-`Rejection::name()` codes `transaction_version`, `backend_unavailable`,
-`consensus_branch`, `input_context`, `sighash`; structural/reservation errors
-use `authorization` and their native codes; crypto failures use `signature`
-and reason `signature`. Use the first failure in input order, with structural
+`authorization`, or `signature`. Context errors use native `Rejection::name()` codes:
+`transaction_version`, `backend_unavailable`, `consensus_branch`, `input_context`, and `sighash`.
+Structural/reservation errors use stage `authorization` and their native codes.
+Crypto failures use stage `signature` and reason `signature`. Use the first failure in input order, with structural
 preflight preceding all crypto. `signature_checks` is null for context or
 structural failure, otherwise the sum of canonical thresholds, even if crypto
 fails. These stage choices describe this test adapter, not consensus precedence.
@@ -142,9 +152,8 @@ Revisions are 40 lowercase hex characters. `zakura_revision`
 identifies pinned upstream `9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`, not a
 claim that upstream contains these extensions. Algorithm revision is
 `b392fe82d2d9770142477a576a758a233888bc0a`, BLAKE3 version `1.8.5`.
-All SHA-256 fields are 64 lowercase hex characters. These claims must be
-checked against actual sources/binaries by a production receipt; they alone
-are not authentication or evidence of independent acceptance.
+All SHA-256 fields are 64 lowercase hex characters. A production receipt must compare these claims with actual sources and binaries.
+The fields alone do not authenticate a build or establish independent acceptance.
 
 A source inventory is the canonical JSON hash (same rules as above) of an
 array of `{path, sha256}` objects sorted by repository-relative ASCII path.

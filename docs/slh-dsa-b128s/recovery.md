@@ -1,78 +1,88 @@
-# Encrypted inventory and operational recovery
+# Backup and recovery
 
-The feature-enabled wallet reuses the existing version 1 encrypted root and
-inventory envelope, strict canonical JSON, durable backup publication,
-enrollment, allocator lock, discovery/reorg bookkeeping and v2/v3 payment
-journal. Only SLH suite `f7` is supported. This document describes the library
-APIs; it does not claim CLI, live funded recovery or terminal backup validation.
+The wallet supports key backups and operational snapshots.
+The library and [CLI commands](cli.md#recovery-commands) implement both formats.
+Live recovery and terminal tests remain open.
 
-`Wallet::decrypt` and `Wallet::load_backup` authenticate the envelope against an
-independently approved profile and regenerate **every** enrolled local public
-root and commitment. The password rules, Argon2id parameters, 56-byte header,
-ChaCha20-Poly1305 authentication and 8 MiB plaintext bound are unchanged.
-`enroll_backup` checks the complete approved origin mapping and cumulative
-inventory, publishes and verifies the covering backup, then installs it.
-Publication failure never installs the candidate inventory. Export and pairing
-still require an independently authenticated inventory fingerprint and a
-recovery copy outside disposable working state.
+## Backup types
 
-`recovery::restore_inventory` takes the encrypted backup, approved profile and
-independently reconciled latest inventory fingerprint. It creates a new private
-directory with `backup-original.tpq`, a fresh `backup-restored.tpq`, and `watch/`.
-It rotates the allocator and retires the complete previous receive/change
-ranges, preserving all entries for scanning. The result is **monitor-only**:
-this mode cannot establish complete payment history or outstanding authority.
+| Type | Contents | Limit |
+| --- | --- | --- |
+| Encrypted root and inventory | Local keys, policies, cosigner details, and generated addresses | No payment journal. Restore stays monitor-only. |
+| Operational snapshot with matching encrypted backup | Keys, inventory, proposals, signatures, reservations, and journal history | Cannot prove that no newer state or signature was lost. |
 
-`WatchStore::save_operational_snapshot` holds the allocator lock while validating
-all reachable journal pages, capabilities, predecessors, historical aliases and
-reservations. Its documented artifact set is:
+An **allocator** is the watch store permitted to issue addresses and manage payment reservations.
+A **monitor** can scan public inventory. It cannot issue addresses, sign, or submit payments.
+A **fingerprint** is a hash that identifies exact data.
+A fingerprint from an untrusted backup cannot authenticate that backup.
 
-- `backup.tpq`: the exact matching encrypted root/inventory backup;
-- `receipt.json`: bounded canonical metadata binding the backup hash, exact
-  state-file hash, wallet, suite, profile, inventory, cursors and journal root;
-- `watch/state.json`: the exact authoritative existing state;
-- `watch/journal/`: the existing immutable object store, when present, including
-  **every retained orphan or temporary object** under its existing quotas.
+## Save backups
 
-This is a coherent state-and-journal copy, not a clone of unrelated files in the
-working directory. Non-authoritative root temporary files and old `state-pre-v3`
-copies remain untouched at the source. The destination obtains a new allocator
-lock file. Failed first journal migrations may legitimately leave a v2 state
-with an empty journal directory or retained orphan objects; those remain
-recoverable. No journal data is added to the encrypted root backup and no new
-encrypted journal container is introduced.
+Keep a backup for each required cosigner.
+A 2-of-3 policy needs two keys. A 15-of-15 policy needs all fifteen.
 
-`recovery::restore_operational_snapshot` can recover using only that documented
-artifact set. It copies bounded streams, validates the copied state again,
-rotates the allocator, retires issuance, saves a fresh covering encrypted backup,
-and preserves approved effects, exact saved authorization bytes and reservations.
-Cached coins and undo history remain available, but scan completeness and trusted
-node context are cleared. New payment operations must complete the existing
-trusted-node synchronization and approval checks. New receive/change issuance
-requires new generation/enrollment and its covering backup.
+Enrollment publishes and checks a backup before it makes new addresses available.
+Keep a recovery copy outside disposable working state before you issue or export addresses.
 
-A receipt is an integrity binding, **not proof that no outstanding authority was
-omitted**. `SnapshotTrust::KnownAuthority` requires a receipt fingerprint retained
-through an independently trusted channel, reconciliation of the latest known
-authority generation, and retirement of every previous allocator. It cannot
-prove that a newer lost snapshot or later signature never existed.
-`SnapshotTrust::Unknown` restores a monitor permanently; synchronization, an empty
-mempool and reopening do not promote it to an allocator. A snapshot originally
-held by a monitor also remains a monitor, even with a trusted receipt.
+For an operational snapshot, retain this complete set:
 
-All publication stages use private files and directories, file/directory sync,
-full validation before publication, and atomic no-clobber publication into a
-**new** destination under a trusted stable parent. The safe pinned Rustix wrapper
-provides atomic directory `NOREPLACE` on Linux and Apple targets; unsupported
-platforms return an explicit error. A destination race never overwrites existing
-state. As with existing backup publication, a directory-sync failure can leave a
-fully published new directory while returning an error; retain the previous
-recovery artifacts and reconcile before retrying.
+- `backup.tpq`: the matching encrypted keys and inventory.
+- `receipt.json`: identities and hashes for the snapshot.
+- `watch/state.json`: the exact watch state.
+- `watch/journal/`, when present: all retained objects, including valid orphan and temporary objects.
 
-Source and license attribution are recorded in
-[`RECOVERY_PROVENANCE.json`](../../crates/pq-wallet/RECOVERY_PROVENANCE.json).
-Focused library tests cover independent encrypted answers, strict schema/root
-validation, all receiver policy shapes, enrollment failure, discovery/reorg,
-corruption, private-file/path checks, trusted versus unknown recovery and atomic
-publication. Live payment/recovery/discovery, terminal backup and restart/reorg
-matrices remain pending human execution.
+`WatchStore::save_operational_snapshot` locks the allocator and checks payment history before the copy.
+The journal limits include retained orphan and temporary objects.
+Unrelated temporary files and root-level `state-pre-v3` files are outside the format.
+Journal files do not receive an additional encryption layer.
+
+Protect the snapshot directory.
+Retain the receipt fingerprint through an independent trusted channel.
+
+## Restore keys and inventory
+
+`Wallet::decrypt` and `Wallet::load_backup` check the approved profile and decrypt the backup.
+They regenerate enrolled local public keys and compare their commitments with the inventory.
+The format uses Argon2id, ChaCha20-Poly1305, a 56-byte header, and an 8 MiB plaintext limit.
+It contains no payment journal.
+
+`recovery::restore_inventory` requires the independently checked latest inventory fingerprint.
+It creates `backup-original.tpq`, `backup-restored.tpq`, and `watch/` in a new private directory.
+It replaces the allocator identity and retires old receive/change ranges.
+Those ranges remain available for scans.
+The restored store stays **monitor-only**, including after synchronization.
+
+## Restore an operational snapshot
+
+`recovery::restore_operational_snapshot` checks the files and their links.
+It preserves saved approvals, signatures, transactions, and reservations.
+It writes a new encrypted backup, replaces the allocator identity, and retires old address ranges.
+Cached coins remain available, but scan completeness is cleared.
+Payments require synchronization with a trusted node and the normal approval checks.
+New addresses require generation, enrollment, and a covering backup.
+
+The restore has two trust modes:
+
+| Mode | Requirement and result |
+| --- | --- |
+| Unknown | Restore stays monitor-only. Synchronization, restart, and an empty mempool cannot change this role. |
+| Known authority | Requires a separately trusted latest receipt fingerprint, reconciliation of outstanding signatures, and retirement of every old allocator. |
+
+A snapshot from a monitor always restores a monitor.
+Neither mode can recover signatures made after capture or prove that no newer state was lost.
+
+## Publication and failures
+
+Restore uses bounded copies and private files.
+It checks the files before atomic publication into a new directory under a trusted, stable parent.
+It does not overwrite an existing destination.
+Linux and Apple targets support publication. Other platforms return an error.
+A final directory-sync error can leave a complete new directory while it reports failure.
+
+Keep the original backups.
+After a publication error, inspect the destination before another attempt.
+
+Focused tests cover formats, key checks, enrollment, snapshots, trust modes, paths, and publication failures.
+They do not establish live funded recovery.
+The [acceptance guide](acceptance.md) describes human tests.
+[Recovery provenance](../../crates/pq-wallet/RECOVERY_PROVENANCE.json) records source reuse.
