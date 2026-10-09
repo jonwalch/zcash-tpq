@@ -7965,6 +7965,7 @@ name = "zakura-pq-slh-dsa-b-exp"
 version = "0.1.0"
 dependencies = [
  "hex",
+ "serde_json",
  "sha2 0.10.9",
  "zakura-chain",
  "zakura-pq-slh-dsa-b-verify",

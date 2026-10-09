@@ -19,6 +19,7 @@ zakura-pq-slh-dsa-b-verify = { path = "../pq-slh-dsa-b-verify" }
 [dev-dependencies]
 zakura-pq-test-support = { path = "../pq-test-support" }
 hex = "0.4.3"
+serde_json = "1.0"
 
 [lints.rust]
 unsafe_code = "forbid"
