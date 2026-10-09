@@ -41,7 +41,7 @@
     },
     {
       "target": "src/watch/tests.rs",
-      "target_sha256": "c9e56f0a8c090e421156ec6e9ccc4f7d549b014c2919e71176b41827e877117b",
+      "target_sha256": "11052be9ac3d37af042d7789c7c7035fdd818640ce37e192a31b963019fb2033",
       "source": "crates/pq-wallet/src/watch/tests.rs",
       "source_sha256": "17c4eaf4abdbdf7e52467691058368dabfa112fbcd8d25b69e18980f4165fccc",
       "adaptation": "Reused synthetic node, enrollment, persistence and reorg tests; replace crypto backend/corpus with SLH and all120 independent receiver answers. RPC transport test deferred with unavailable RPC/CLI lane."
@@ -67,12 +67,12 @@
     },
     {
       "target": "src/recovery.rs",
-      "target_sha256": "29112dfeea79aece19bbeb5b13947bcee0579098120c80843b157c7f8000083c",
+      "target_sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339",
       "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
     },
     {
       "target": "src/recovery/tests.rs",
-      "target_sha256": "ae21548e3f1d92da6926d18516cd87c6a560a89edb0b8e11bb94db4429257c1d",
+      "target_sha256": "d8ab13f759bbed882a61eca41e0cae9cea86e6ee06fb009c48d1cf44450f6017",
       "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
     }
   ],

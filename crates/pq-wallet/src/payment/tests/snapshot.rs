@@ -177,10 +177,16 @@ fn snapshot_rejects_dropped_historical_proposal_alias() {
     assert!(store.journal_snapshot().is_ok());
     let mut state: serde_json::Value =
         serde_json::from_slice(&fs::read(path.join("state.json")).unwrap()).unwrap();
-    let journal_id =
-        serde_json::from_value(state["payments"]["journal"]["journal_id"].clone()).unwrap();
-    let current_hash =
-        serde_json::from_value(state["payments"]["active"][0]["capability"].clone()).unwrap();
+    // Hex borrows canonical strings; an owned serde_json::Value cannot satisfy
+    // that reader contract. Feed the same exact JSON bytes as disk readers.
+    let journal_id = serde_json::from_slice(
+        &serde_json::to_vec(&state["payments"]["journal"]["journal_id"]).unwrap(),
+    )
+    .unwrap();
+    let current_hash = serde_json::from_slice(
+        &serde_json::to_vec(&state["payments"]["active"][0]["capability"]).unwrap(),
+    )
+    .unwrap();
     let root = Snapshot {
         journal_id,
         generation: state["payments"]["journal"]["generation"].as_u64().unwrap(),

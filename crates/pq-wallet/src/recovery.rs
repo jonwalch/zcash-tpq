@@ -309,10 +309,13 @@ fn staging(destination: &Path) -> Result<tempfile::TempDir, Error> {
     if fs::symlink_metadata(destination).is_ok() {
         return Err(Error::Storage(std::io::ErrorKind::AlreadyExists.into()));
     }
-    tempfile::Builder::new()
-        .prefix(".tpq-restore-")
-        .tempdir_in(parent)
-        .map_err(Error::Storage)
+    let mut builder = tempfile::Builder::new();
+    builder.prefix(".tpq-restore-");
+    // Set the creation mode, not a later chmod: no recovery staging directory
+    // may be exposed through a permissive process umask before publication.
+    #[cfg(unix)]
+    builder.permissions(fs::Permissions::from_mode(0o700));
+    builder.tempdir_in(parent).map_err(Error::Storage)
 }
 
 #[cfg(any(target_os = "linux", target_vendor = "apple"))]

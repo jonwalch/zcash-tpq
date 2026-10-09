@@ -10,7 +10,14 @@ fn all_120_policy_shapes_have_exact_sizes_and_current_fees() {
     .unwrap();
     for row in corpus["policies"].as_array().unwrap() {
         let entry = Entry {
-            origins: vec![],
+            origins: (0..row["participants"].as_u64().unwrap())
+                .map(|i| Origin {
+                    account: 0,
+                    index: 0,
+                    // The independent corpus has at most fifteen participants.
+                    wallet_id: Hex([u8::try_from(i + 1).unwrap(); 16]),
+                })
+                .collect(),
             policy_hex: row["policy_hex"].as_str().unwrap().into(),
             role: 0,
         };

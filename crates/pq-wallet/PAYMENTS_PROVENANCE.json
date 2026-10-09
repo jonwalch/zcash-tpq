@@ -190,7 +190,7 @@
     },
     {
       "target": "src/payment/tests/sequences.rs",
-      "target_sha256": "32e03107fe4955801e8a64e61b0f0148d0a1f21a61036c1b7f2a15095efc8167",
+      "target_sha256": "c3d5efffe470411f98bfa95c28baa21301d86d48d40b6420c1ceb41a6144de6b",
       "source": "crates/pq-wallet/src/payment/tests/sequences.rs",
       "source_sha256": "6e4a81e1c7e69b10caeddf131af4acd0d815fc2d46bd86f3e0d441db0823457a",
       "classification": "necessary SLH adaptation",
@@ -198,19 +198,19 @@
     },
     {
       "target": "src/payment/tests/slh_capacity.rs",
-      "target_sha256": "ec70eef3744740cde4583ed5086b8d1892437ff49224fab6bf24eb3b1dcab331",
+      "target_sha256": "9203a2043d6a65ab20b3ec09c5878f9c947660d5a262ec092c42ae54ee834423",
       "classification": "new recovery boundary or conformance test",
       "adaptation": "New bounded product comparisons against independent L1 size corpus, all policy-shape trusted approval and one real maximal authorization persistence control."
     },
     {
       "target": "src/payment/tests/snapshot.rs",
-      "target_sha256": "faa4437179dc7822162a3797f9a82de9f48dd4a7afa8e2646e70926a62f06aa6",
+      "target_sha256": "b894872f9caf268e7310696f1a4df7514740bec095fa80cfe540365cfe620017",
       "classification": "new recovery boundary or conformance test",
       "adaptation": "New bounded coherent snapshot validation of existing readers, index references, alias/history/reservation cross-links, immutable predecessor chain and orphan quotas; no storage or cryptographic container change."
     },
     {
       "target": "src/payment/tests.rs",
-      "target_sha256": "5707d8d03937d2a1ab386c63c37a470b171274201974867752f8960cc6010361",
+      "target_sha256": "7bcf5e27a62b3eff75ecb76a7c3ba9e6766ca8e44815a1b07820648e65a7f9e5",
       "source": "crates/pq-wallet/src/payment/tests.rs",
       "source_sha256": "be4c20c034314be53009ed47a873fe4cb8281f64280a45e6d232b98cc2ba6f2b",
       "classification": "necessary SLH adaptation",

@@ -160,6 +160,8 @@ impl Chain {
         });
     }
 }
+// Invalid synthetic blocks must panic, not simulate unavailable trusted history.
+#[allow(clippy::unwrap_in_result)]
 impl ChainSource for Chain {
     fn context(&mut self) -> Result<NodeContext, Error> {
         let height = self.blocks.len() as u32 - 1;
@@ -193,7 +195,9 @@ impl ChainSource for Chain {
         if self.missing.contains(&(height as u32)) {
             return Err(Error::HistoryUnavailable);
         }
-        Ok(block.zcash_serialize_to_vec().unwrap())
+        Ok(block
+            .zcash_serialize_to_vec()
+            .expect("synthetic blocks have serializable fields"))
     }
 }
 
