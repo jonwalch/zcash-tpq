@@ -32,8 +32,8 @@ pub fn network_byte(network: NetworkDomain) -> u8 {
 
 /// The fixed-width message for one input of an already validated context.
 ///
-/// Version, branch and input position are also committed by the digest or its
-/// selected input; they are repeated so binding does not rely on node rules.
+/// Version, branch and input position are bound explicitly by this wrapper.
+/// Position binding does not assume the selected-input digest encodes its index.
 pub fn message(
     prepared: &PreparedTransaction<'_>,
     input_index: usize,
