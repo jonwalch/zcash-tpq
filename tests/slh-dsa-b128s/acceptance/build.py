@@ -45,8 +45,8 @@ def build(args):
     record = {"schema_version": 1, "contract": CONTRACT, "kind": args.kind, "complete": False,
               "source": before, "command": argv, "features": features, "binary_sha256": None,
               "identity": None, "environment": environment,
-              "rustc": subprocess.check_output(["rustc", "-Vv"], text=True).strip(),
-              "cargo": subprocess.check_output(["cargo", "-V"], text=True).strip()}
+              "rustc": subprocess.check_output(["rustc", "-Vv"], cwd=ROOT, text=True).strip(),
+              "cargo": subprocess.check_output(["cargo", "-V"], cwd=ROOT, text=True).strip()}
     receipt = directory / "build.json"
     write_json(receipt, record)
     with (directory / "build.log").open("xb") as log:
