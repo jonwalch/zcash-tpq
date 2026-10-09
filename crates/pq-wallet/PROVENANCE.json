@@ -18,7 +18,7 @@
     },
     {
       "target": "src/lib.rs",
-      "target_sha256": "f0417bd29b34907b00154534e6b738b69584e66e9b161f622f44dd96ed4b0caa",
+      "target_sha256": "d9d0a02d5248e046d2e1b4362db2c7dfa6d053d564ad601d6425b27d2b3959cb",
       "sources": [
         {
           "path": "crates/pq-wallet/src/lib.rs",
@@ -26,7 +26,7 @@
         }
       ],
       "classification": "necessary SLH adaptation",
-      "adaptation": "Preserve core creation/identity/enrolled-policy/trusted-context APIs; singlef7suite, reuseH1keyderivation, OS-entropy signing via separate signer and native local partial check. Defer backup/enrollment/retirement consumer methods."
+      "adaptation": "Preserve creation, identity, enrollment, backup, retirement and trusted-context APIs; restrict to f7, reuse the shared 48-byte derivation and OS-entropy operational signer. Register payment, journal, watch and recovery modules; retain strict recovery schema and regenerate all local commitments on restore."
     },
     {
       "target": "src/suite.rs",
