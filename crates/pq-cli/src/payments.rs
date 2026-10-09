@@ -122,7 +122,7 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
     if args[0] == "refresh-propose" {
         let (proposal, review) = store.preview_payment_refresh(&wallet, &mut rpc, id(&args[5])?)?;
         write_transfer(Path::new(&args[6]), &proposal.to_json()?)?;
-        serde_json::to_writer(io::stdout(), &review)?;
+        serde_json::to_writer(io::stdout(), &review_display(&review, &proposal)?)?;
         writeln!(io::stdout())?;
         return Ok(());
     }
@@ -139,7 +139,7 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
                 id(&args[7])?,
             )?
         };
-        serde_json::to_writer(io::stdout(), &review)?;
+        serde_json::to_writer(io::stdout(), &review_display(&review, &proposal)?)?;
         writeln!(io::stdout())?;
         return Ok(());
     }
@@ -151,7 +151,7 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
             store.preview_payment(&wallet, &mut rpc, &intent)?
         };
         write_transfer(Path::new(&args[6]), &proposal.to_json()?)?;
-        serde_json::to_writer(io::stdout(), &review)?;
+        serde_json::to_writer(io::stdout(), &review_display(&review, &proposal)?)?;
         writeln!(io::stdout())?;
         return Ok(());
     }
@@ -165,12 +165,12 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
                 &intent,
                 id(&args[7])?,
             )?;
-            serde_json::to_writer(io::stdout(), &review)?;
+            serde_json::to_writer(io::stdout(), &review_display(&review, &proposal)?)?;
             writeln!(io::stdout())?;
         }
         "review" => {
             let review = store.review_payment(&wallet, &mut rpc, &proposal, &intent)?;
-            serde_json::to_writer(io::stdout(), &review)?;
+            serde_json::to_writer(io::stdout(), &review_display(&review, &proposal)?)?;
             writeln!(io::stdout())?;
         }
         "sign" => {
@@ -217,6 +217,34 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
         _ => return Err("unknown payment command".into()),
     }
     Ok(())
+}
+
+// Add public policy context to the existing approval fields without changing IDs.
+fn review_display(
+    review: &impl serde::Serialize,
+    proposal: &Proposal,
+) -> Result<serde_json::Value> {
+    let mut value = serde_json::to_value(review)?;
+    let fields = value.as_object_mut().ok_or("invalid review object")?;
+    fields.insert(
+        "suite".into(),
+        serde_json::json!({"byte":247,"contract":"slh-dsa-b-128s-exp-v1"}),
+    );
+    fields.insert("profile".into(), serde_json::to_value(&proposal.profile)?);
+    let inputs = proposal.inputs.iter().map(|input| {
+        Ok(serde_json::json!({"threshold":input.entry.policy()?.threshold(),"origins":input.entry.origins,"policy_hex":input.entry.policy_hex}))
+    }).collect::<std::result::Result<Vec<_>, zakura_pq_wallet::Error>>()?;
+    fields.insert("input_policies".into(), serde_json::to_value(inputs)?);
+    fields.insert(
+        "change_policy".into(),
+        serde_json::to_value(
+            proposal
+                .outputs
+                .iter()
+                .find_map(|output| output.entry.as_ref()),
+        )?,
+    );
+    Ok(value)
 }
 
 // Bound directory traversal, every file, and duplicate slots before primitive work.
