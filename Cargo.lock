@@ -7947,6 +7947,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "zakura-pq-test-support"
+version = "0.1.0"
+dependencies = [
+ "zakura-chain",
+]
+
+[[package]]
+name = "zakura-pq-tx-context"
+version = "0.1.0"
+dependencies = [
+ "thiserror 2.0.18",
+ "zakura-chain",
+ "zakura-protocol",
+]
+
+[[package]]
 name = "zakura-primitives"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

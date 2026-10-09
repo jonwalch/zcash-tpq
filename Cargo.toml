@@ -1,5 +1,7 @@
 [workspace]
 members = [
+        "crates/pq-tx-context",
+        "crates/pq-test-support",
         "crates/zakurad",
         "crates/zakura-chain",
         "crates/zakura-header-chain",

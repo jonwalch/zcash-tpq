@@ -1,0 +1,11 @@
+[package]
+name = "zakura-pq-test-support"
+version = "0.1.0"
+publish = false
+edition = "2021"
+rust-version = "1.97"
+description = "Neutral transaction and previous-output recipes for PQ tests and experiments"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+zakura-chain = { path = "../zakura-chain" }
