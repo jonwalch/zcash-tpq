@@ -65,11 +65,13 @@ signatures. Those comparisons require the payment implementation. The retained
 journal/watch caps are ledger expectations only, not implemented journal
 readers or a promise that maximal nested objects fit.
 
-Product comparisons against H2/I/J/K remain pending. In particular, root restore
-must regenerate every local public key, and operational recovery must compare
-actual durable objects and preserve exact authority bytes. No new operational
-snapshot schema is defined here. The following acceptance cases remain required
-for the existing file/journal design:
+The Rust wallet tests consume these answers for actual receiver, inventory,
+proposal, partial, size and encrypted-backup comparisons. Recovery tests regenerate
+every local public key, validate durable objects and preserve exact saved
+authority bytes. CLI/RPC transport comparisons remain pending. No operational
+snapshot schema is defined by this format oracle; the product's
+[recovery contract](../../../../docs/slh-dsa-b128s/recovery.md) owns that artifact.
+The existing file/journal design has these acceptance requirements:
 
 | Existing recovery case | Required outcome |
 | --- | --- |
@@ -80,5 +82,6 @@ for the existing file/journal design:
 | Self-consistent replacement or unknown newer authority | Keep authority restricted; empty mempool does not establish completeness |
 | Cached observations or unavailable/pruned history | Reconcile with trusted node; never turn uncertainty into a zero/current balance |
 
-These cases need product tests and separately evidenced human live/terminal
-acceptance. This corpus proves neither durable recovery nor funded spending.
+Focused product library tests cover these cases; separately evidenced human
+live/terminal acceptance remains required. This format corpus alone proves
+neither durable recovery nor funded spending.

@@ -26,5 +26,6 @@ remains pinned to 1.8.5 without its Rayon feature. Upstream node Rayon use is
 unaffected.
 
 This establishes dependency isolation, not source provenance, absence of secret
-handling bugs or runtime acceptance. The wallet key foundation and the node's
-false runtime support signal do not imply completed payments or relay/mining.
+handling bugs or runtime acceptance. The implemented wallet and relay/mining
+libraries do not establish complete CLI flows or live acceptance; the node's
+runtime support signal remains false.
