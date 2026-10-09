@@ -139,7 +139,7 @@ fn producer(value: &Producer) -> Result<()> {
     Ok(())
 }
 fn outpoint(display: &str, index: u32) -> Result<OutPoint> {
-    fixed_hex::<32>(display)?;
+    require(fixed_hex::<32>(display)? != [0; 32], "schema", "outpoint")?;
     Ok(OutPoint {
         hash: display.parse::<Hash>().map_err(|_| Failure {
             stage: "schema",
@@ -453,6 +453,7 @@ fn validate_artifact(artifact: &Artifact) -> Result<Vec<u8>> {
     value_sum(artifact.inputs.iter().map(|i| i.spent_output.value_zat))?;
     value_sum(artifact.outputs.iter().map(|o| o.value_zat))?;
     for input in &artifact.inputs {
+        require(u32::try_from(input.input_index).is_ok(), "schema", "fields")?;
         fixed_hex::<32>(&input.outpoint.txid_display_hex)?;
         fixed_hex::<36>(&input.outpoint.wire_hex)?;
         bounded_hex(&input.spent_output.script_hex, 10_000)?;
@@ -469,6 +470,11 @@ fn validate_artifact(artifact: &Artifact) -> Result<Vec<u8>> {
         }
     }
     for output in &artifact.outputs {
+        require(
+            u32::try_from(output.output_index).is_ok(),
+            "schema",
+            "fields",
+        )?;
         bounded_hex(&output.script_hex, 10_000)?;
     }
     Ok(bytes)
@@ -579,26 +585,27 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
         )?;
     }
     let previous = Arc::new(previous);
-    let context = match TransactionContext::new(
+    let context = TransactionContext::new(
         &tx,
         network(&artifact.network)?,
         NetworkUpgrade::Nu7,
         previous.clone(),
-    ) {
-        Ok(context) => context,
-        Err(error) => return Ok(outcome(Some(("context", error, None)), None)),
-    };
-    for (i, input) in artifact.inputs.iter().enumerate() {
-        let message = match context.message(i) {
-            Ok(message) => message,
-            Err(error) => return Ok(outcome(Some(("context", error, None)), None)),
-        };
-        require(
-            input.message_hex == hex::encode(message)
-                && input.sighash_all_digest_hex == hex::encode(&message[69..]),
-            "correspondence",
-            "message_digest",
-        )?;
+    );
+    let mut context_error = context.as_ref().err().copied();
+    if let Ok(context) = &context {
+        for (i, input) in artifact.inputs.iter().enumerate() {
+            match context.message(i) {
+                Ok(message) => require(
+                    input.message_hex == hex::encode(message)
+                        && input.sighash_all_digest_hex == hex::encode(&message[69..]),
+                    "correspondence",
+                    "message_digest",
+                )?,
+                Err(error) => {
+                    context_error.get_or_insert(error);
+                }
+            }
+        }
     }
     let mut authorizations = Vec::new();
     let mut first_error = None;
@@ -614,8 +621,8 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
         // Binding failures do not make canonically decoded wire fields unavailable.
         authorizations.push(Authorization::decode(unlock_script.as_raw_bytes()).ok());
     }
-    // Every decodable authorization must match metadata, including when another
-    // input is invalid. Metadata cannot hide an unrelated correspondence error.
+    // Every decodable authorization must match metadata, including when context
+    // derivation or another input fails. These fields do not require a digest.
     for (authorization, input) in authorizations.iter().zip(&artifact.inputs) {
         if let Some(authorization) = authorization {
             require(
@@ -631,9 +638,13 @@ fn check(artifact: &Artifact) -> Result<Outcome> {
             )?;
         }
     }
+    if let Some(error) = context_error {
+        return Ok(outcome(Some(("context", error, None)), None));
+    }
     if first_error.is_some() {
         return Ok(outcome(first_error, None));
     }
+    let context = context.expect("context errors returned after correspondence checks");
     let checks = authorizations
         .iter()
         .flatten()
@@ -864,6 +875,19 @@ mod tests {
         assert_eq!(run(invalid)["ok"], false);
     }
     #[test]
+    fn prepare_rejects_null_hashes_before_deriving_messages() {
+        for index in [1, u32::MAX] {
+            let mut value = request();
+            value["recipe"]["inputs"][0]["outpoint"]["index"] = json!(index);
+            assert_eq!(run(value.clone())["ok"], true);
+            value["recipe"]["inputs"][0]["outpoint"]["txid_display_hex"] = json!("00".repeat(32));
+            assert_eq!(
+                run(value)["error"],
+                json!({"stage":"schema","reason":"outpoint"})
+            );
+        }
+    }
+    #[test]
     fn fail_closed_assembly_and_exact_consumption() {
         let mut value = request();
         value["op"] = json!("assemble");
@@ -926,9 +950,18 @@ mod tests {
             .remove("input_index");
         assert!(serde_json::from_value::<Outcome>(rejected).is_err());
     }
-    #[test]
-    fn binding_rejection_does_not_hide_decodable_metadata_mismatch() {
-        let Request::Prepare { recipe, .. } = serde_json::from_value(request()).unwrap() else {
+    fn binding_rejected_artifact(input_count: usize) -> Artifact {
+        let mut value = request();
+        let first_input = value["recipe"]["inputs"][0].clone();
+        for index in 1..input_count {
+            let mut input = first_input.clone();
+            input["outpoint"]["index"] = json!(index + 1);
+            value["recipe"]["inputs"]
+                .as_array_mut()
+                .unwrap()
+                .push(input);
+        }
+        let Request::Prepare { recipe, .. } = serde_json::from_value(value).unwrap() else {
             unreachable!()
         };
         let mut prepared = prepare(&recipe).unwrap();
@@ -937,14 +970,22 @@ mod tests {
             public_key_hex: "11".repeat(32),
             signature_hex: "00".repeat(7856),
         };
-        let authorization = Authorization {
-            policy: prepared.policies[0].clone(),
-            records: vec![record(&entry).unwrap()],
-        };
-        install(&mut prepared.tx, 0, Script::new(&authorization.encode()));
+        for index in 0..input_count {
+            let authorization = Authorization {
+                policy: prepared.policies[index].clone(),
+                records: vec![record(&entry).unwrap()],
+            };
+            install(
+                &mut prepared.tx,
+                index,
+                Script::new(&authorization.encode()),
+            );
+        }
         Arc::make_mut(&mut prepared.previous)[0].lock_script = Script::new(&[0x51]);
         let mut inputs = input_fields(&recipe, &prepared).unwrap();
-        inputs[0].records = vec![entry];
+        for input in &mut inputs {
+            input.records = vec![entry.clone()];
+        }
         let bytes = prepared.tx.zcash_serialize_to_vec().unwrap();
         let producer: Producer = serde_json::from_value(json!({"zakura_revision":"9b175e9d3d46a6aa4cfb5552517c3d828852ecbc","algorithm_revision":"b392fe82d2d9770142477a576a758a233888bc0a","blake3_version":"1.8.5","host_source_inventory_sha256":"00".repeat(32),"host_lock_sha256":"00".repeat(32),"host_binary_sha256":"00".repeat(32),"signer_source_inventory_sha256":"00".repeat(32),"signer_lock_sha256":"00".repeat(32),"signer_binary_sha256":"00".repeat(32)})).unwrap();
         let mut artifact = Artifact {
@@ -968,6 +1009,11 @@ mod tests {
             artifact_sha256: String::new(),
         };
         artifact.artifact_sha256 = strict::artifact_hash(&encode(&artifact)).unwrap();
+        artifact
+    }
+    #[test]
+    fn binding_rejection_does_not_hide_decodable_metadata_mismatch() {
+        let artifact = binding_rejected_artifact(1);
         assert_eq!(check(&artifact).unwrap(), artifact.expected);
         for mutate_descriptor in [true, false] {
             let mut altered = artifact.clone();
@@ -982,6 +1028,73 @@ mod tests {
                 (failure.stage, failure.reason),
                 ("correspondence", "authorization_fields")
             );
+        }
+    }
+    #[test]
+    fn context_rejection_still_checks_every_decodable_authorization() {
+        let mut artifact = binding_rejected_artifact(2);
+        let mut bytes = hex::decode(&artifact.transaction_hex).unwrap();
+        bytes[8..12].copy_from_slice(&0xc2d6_d0b4u32.to_le_bytes());
+        artifact.transaction_hex = hex::encode(&bytes);
+        artifact.transaction_sha256 = strict::hash(&bytes);
+        artifact.consensus_branch_id = 0xc2d6_d0b4;
+        artifact.expected = outcome(Some(("context", Rejection::ConsensusBranch, None)), None);
+        artifact.artifact_sha256 = strict::artifact_hash(&encode(&artifact)).unwrap();
+        // Context rejection retains precedence over the first input's binding
+        // failure, and unavailable messages need not match the changed branch.
+        assert_eq!(check(&artifact).unwrap(), artifact.expected);
+        for input_index in 0..artifact.inputs.len() {
+            for mutate_descriptor in [true, false] {
+                let mut altered = artifact.clone();
+                if mutate_descriptor {
+                    altered.inputs[input_index].descriptor_hex = "00".into();
+                } else {
+                    altered.inputs[input_index].records[0].signature_hex = "01".repeat(7856);
+                }
+                altered.artifact_sha256 = strict::artifact_hash(&encode(&altered)).unwrap();
+                let failure = check(&altered).unwrap_err();
+                assert_eq!(
+                    (failure.stage, failure.reason),
+                    ("correspondence", "authorization_fields")
+                );
+            }
+        }
+        // An undecodable first input cannot hide the second input's metadata.
+        let mut tx = decode_transaction(&bytes).unwrap();
+        install(&mut tx, 0, Script::new(&[]));
+        let bytes = tx.zcash_serialize_to_vec().unwrap();
+        artifact.transaction_hex = hex::encode(&bytes);
+        artifact.transaction_sha256 = strict::hash(&bytes);
+        artifact.artifact_sha256 = strict::artifact_hash(&encode(&artifact)).unwrap();
+        assert_eq!(check(&artifact).unwrap(), artifact.expected);
+        artifact.inputs[1].records[0].signature_hex = "01".repeat(7856);
+        artifact.artifact_sha256 = strict::artifact_hash(&encode(&artifact)).unwrap();
+        let failure = check(&artifact).unwrap_err();
+        assert_eq!(
+            (failure.stage, failure.reason),
+            ("correspondence", "authorization_fields")
+        );
+    }
+    #[test]
+    fn metadata_indices_distinguish_width_from_wire_correspondence() {
+        let artifact = encode(binding_rejected_artifact(1));
+        for (array, field, reason) in [
+            ("inputs", "input_index", "input_wire"),
+            ("outputs", "output_index", "output_wire"),
+        ] {
+            for index in [1, u64::from(u32::MAX), u64::from(u32::MAX) + 1] {
+                let mut altered = artifact.clone();
+                altered[array][0][field] = json!(index);
+                altered["artifact_sha256"] = json!(strict::artifact_hash(&altered).unwrap());
+                let response = run(json!({"schema_version":1,"contract":CONTRACT,
+                    "public_fixture":true,"op":"check","artifact":altered}));
+                let (stage, reason) = if index > u64::from(u32::MAX) {
+                    ("schema", "fields")
+                } else {
+                    ("correspondence", reason)
+                };
+                assert_eq!(response["error"], json!({"stage":stage,"reason":reason}));
+            }
         }
     }
 }
