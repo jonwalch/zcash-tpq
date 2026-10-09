@@ -68,7 +68,10 @@ readers or a promise that maximal nested objects fit.
 The Rust wallet tests consume these answers for actual receiver, inventory,
 proposal, partial, size and encrypted-backup comparisons. Recovery tests regenerate
 every local public key, validate durable objects and preserve exact saved
-authority bytes. CLI/RPC transport comparisons remain pending. No operational
+authority bytes. The separate [interface comparisons](../interfaces/README.md)
+add independent public CLI enrollment answers and operational receipt/companion
+identities. Existing fake-loopback RPC tests cover transport and trusted block
+resolution; actual live CLI/RPC acceptance remains pending human execution. No operational
 snapshot schema is defined by this format oracle; the product's
 [recovery contract](../../../../docs/slh-dsa-b128s/recovery.md) owns that artifact.
 The existing file/journal design has these acceptance requirements:
