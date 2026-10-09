@@ -55,7 +55,7 @@ impl State {
 }
 
 /// One locked local allocator/monitor. Keep its directory and ancestors trusted
-/// and stable. Copying a live allocator directory is unsupported. After loss,
+/// and stable. Live copying requires `save_operational_snapshot` under this lock. After loss,
 /// restore/retire the covered inventory and reconcile the previous allocator.
 pub struct WatchStore {
     path: PathBuf,

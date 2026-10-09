@@ -1,8 +1,8 @@
 //! Recovery coordinates existing encrypted backups and coherent private watch stores.
 //! A receipt binds bytes; only independently trusted provenance establishes known authority.
 use crate::{
-    canonical, storage, watch::archive::JournalSnapshotMetadata, Error, Hex, Manifest, Profile,
-    Wallet, WatchMode, WatchStore,
+    canonical, storage, watch::archive::JournalSnapshotMetadata, Error, Hex, Profile, Wallet,
+    WatchMode, WatchStore,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -11,13 +11,13 @@ use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Write},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 const FORMAT: &str = "ZcashTransparentPQ/operational-snapshot-receipt/v1";
 const MAX_RECEIPT: usize = 4096;
 const MAX_ROOT_FILES: u64 = 4096;
-const MAX_ROOT_BYTES: u64 = 64 * 1024 * 1024;
+const MAX_ROOT_BYTES: u64 = 128 * 1024 * 1024;
 
 /// Independently supplied recovery authority. Hashing an untrusted receipt does
 /// not establish trust, backup freshness, or that another allocator has stopped.
@@ -307,7 +307,7 @@ fn parent(path: &Path) -> Result<&Path, Error> {
 
 fn staging(destination: &Path) -> Result<tempfile::TempDir, Error> {
     let parent = parent(destination)?;
-    private_directory(parent)?;
+    open_directory(parent)?;
     if fs::symlink_metadata(destination).is_ok() {
         return Err(Error::Storage(std::io::ErrorKind::AlreadyExists.into()));
     }
@@ -326,7 +326,7 @@ fn publish(
     private_directory(staging.path())?
         .sync_all()
         .map_err(Error::Storage)?;
-    let parent = private_directory(parent(destination)?)?;
+    let parent = open_directory(parent(destination)?)?;
     hook(RecoveryStage::Publish)?;
     rustix::fs::renameat_with(
         &parent,
@@ -347,6 +347,19 @@ fn publish(
     _destination: &Path,
     _hook: &mut impl FnMut(RecoveryStage) -> Result<(), Error>,
 ) -> Result<(), Error> {
+    Err(Error::UnsupportedContext)
+}
+
+#[cfg(unix)]
+fn open_directory(path: &Path) -> Result<File, Error> {
+    OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW)
+        .open(path)
+        .map_err(Error::Storage)
+}
+#[cfg(not(unix))]
+fn open_directory(_path: &Path) -> Result<File, Error> {
     Err(Error::UnsupportedContext)
 }
 
@@ -515,9 +528,6 @@ fn copy_journal(
     metadata: &JournalSnapshotMetadata,
 ) -> Result<(), Error> {
     private_directory(source)?;
-    if metadata.journal_id.is_none() {
-        return Err(Error::RecoveryIncomplete);
-    }
     for entry in fs::read_dir(source).map_err(Error::Storage)? {
         if entry.map_err(Error::Storage)?.file_name() != "objects" {
             return Err(Error::RecoveryIncomplete);
@@ -525,6 +535,19 @@ fn copy_journal(
     }
     create_directory(destination)?;
     let objects = source.join("objects");
+    match fs::symlink_metadata(&objects) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            if metadata.retained_bytes != 0 || metadata.retained_objects != 0 {
+                return Err(Error::RecoveryIncomplete);
+            }
+            // An interrupted initial migration can leave only journal/.
+            return private_directory(destination)?
+                .sync_all()
+                .map_err(Error::Storage);
+        }
+        Err(error) => return Err(Error::Storage(error)),
+        Ok(_) => (),
+    }
     private_directory(&objects)?;
     let target = destination.join("objects");
     create_directory(&target)?;

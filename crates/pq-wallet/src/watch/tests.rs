@@ -199,17 +199,36 @@ impl ChainSource for Chain {
 
 #[test]
 fn receiver_runtime_matches_all_public_answers_and_rejects_unsupported_senders() {
-    let corpus: Value =
-        serde_json::from_str(include_str!("../../../../tests/vectors/wallet-v1.json")).unwrap();
-    for row in corpus["receivers"].as_array().unwrap() {
+    let corpus: Value = serde_json::from_str(include_str!(
+        "../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
+    ))
+    .unwrap();
+    for row in corpus["policies"].as_array().unwrap() {
         let text = row["receiver"].as_str().unwrap();
         let receiver = Receiver::parse(text).unwrap();
         assert_eq!(receiver.encode(), text);
         assert_eq!(hex::encode(receiver.script()), row["script_hex"]);
         assert!(text.parse::<zakura_chain::transparent::Address>().is_err());
     }
-    for row in corpus["invalid_receivers"].as_array().unwrap() {
-        assert!(Receiver::parse(row["receiver"].as_str().unwrap()).is_err());
+    let good = corpus["policies"][0]["receiver"].as_str().unwrap();
+    for bad in [
+        good.to_uppercase(),
+        format!("{good}q"),
+        good.replacen("tpqreg", "tpqtest", 1),
+        good[..good.len() - 1].to_owned(),
+    ] {
+        assert!(Receiver::parse(&bad).is_err());
+    }
+    for suite in [0, 1, 0xf3, 0xf6, 0xf8] {
+        let mut payload = [0; 35];
+        payload[..3].copy_from_slice(&[1, 2, suite]);
+        let unsupported =
+            bech32::encode::<bech32::Bech32m>(bech32::Hrp::parse("tpqreg").unwrap(), &payload)
+                .unwrap();
+        assert!(matches!(
+            Receiver::parse(&unsupported),
+            Err(Error::UnsupportedFormat)
+        ));
     }
 }
 
@@ -254,7 +273,7 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
     });
     let mut participants = vec![
         (
-            local_zakura_pq_slh_dsa_b_exp::codec::key_commitment(key.public_key()),
+            zakura_pq_slh_dsa_b_exp::codec::key_commitment(local_key.public_key()),
             Origin {
                 account: 0,
                 index: 2,
