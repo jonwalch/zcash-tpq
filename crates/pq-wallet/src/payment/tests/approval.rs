@@ -171,7 +171,7 @@ fn public_signing_requires_approval_before_fresh_and_cached_release() {
                         "approval before release: cached={cached}, byte={index}: {result:?}"
                     );
                     assert_eq!(source.calls, 0, "approval before node calls");
-                    assert_eq!(rng.0, 0, "approval before signing randomness");
+                    assert_eq!(rng.0, 0, "approval before the test-only signing checkpoint");
                     assert_eq!(serde_json::to_vec(&store.state).unwrap(), state);
                     assert_eq!(fs::read(path.join("state.json")).unwrap(), disk);
                 }

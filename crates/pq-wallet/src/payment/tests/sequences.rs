@@ -649,10 +649,10 @@ fn restored_inventory_import_preserves_journal_and_requires_fresh_payment_approv
 
 #[test]
 fn signing_returns_no_partial_when_final_publication_fails_then_retries_after_reopen() {
-    // Move the journal directory only when signing requests hedging entropy:
-    // scanning and reservation have already published successfully. The real
-    // final commit now fails opening its old path. No runtime fault hook or
-    // manufactured candidate state is involved, and the old journal survives.
+    // Move the journal directory at the test-only pre-sign checkpoint, after
+    // scanning and reservation have published. The actual signer still uses
+    // OS entropy. The real final commit now fails opening its old path; the
+    // old journal survives, and no production fault hook is exposed.
     struct RelocatingRng {
         rng: TraceRng,
         from: PathBuf,

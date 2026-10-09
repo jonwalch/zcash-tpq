@@ -94,7 +94,7 @@
     },
     {
       "target": "src/payment/tests/approval.rs",
-      "target_sha256": "eacc498d36e4bb913d7aa48b92711471c045f321dd0b0d8d722ea24b4eb047fb",
+      "target_sha256": "87b04f7006750bc9197ae297f20e216bc80c5f55d03a980ece7e5958f91bb55b",
       "source": "crates/pq-wallet/src/payment/tests/approval.rs",
       "source_sha256": "0b4b4ea1ac2490883c955f4e1b441ca5374193f899306609b0378f1e305417a5",
       "classification": "necessary SLH adaptation",
@@ -190,7 +190,7 @@
     },
     {
       "target": "src/payment/tests/sequences.rs",
-      "target_sha256": "db752e841b2e4ad4dd2ad64f8728ca8ecea2a865f340dad2956ec4ac4a533a94",
+      "target_sha256": "32e03107fe4955801e8a64e61b0f0148d0a1f21a61036c1b7f2a15095efc8167",
       "source": "crates/pq-wallet/src/payment/tests/sequences.rs",
       "source_sha256": "6e4a81e1c7e69b10caeddf131af4acd0d815fc2d46bd86f3e0d441db0823457a",
       "classification": "necessary SLH adaptation",
