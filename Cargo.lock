@@ -5594,7 +5594,7 @@ name = "slh-dsa-b128s-fixture-host"
 version = "0.1.0"
 dependencies = [
  "hex",
- "ripemd",
+ "ripemd 0.1.3",
  "secp256k1",
  "serde",
  "serde_json",
