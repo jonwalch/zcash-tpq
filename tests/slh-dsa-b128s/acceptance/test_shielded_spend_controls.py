@@ -107,6 +107,9 @@ class Model:
         self.no_rollback = self.no_reconsider = self.no_reentry = self.no_relay = self.no_mining = False
         self.wrong_reason = self.no_tree = self.bad_parent = self.expired = False
         self.skip_replacement = False
+        self.no_regossip = self.refuse_reentry = self.duplicate_reentry = False
+        self.wrong_reentry_block = self.wrong_reentry_transaction = self.unconfirmed_reentry = False
+        self.wrong_reentry_membership = self.wrong_reentry_transaction_block = False
         self.anchor = dict(block_hash=identity("anchor-block"), block_hex="aabb", height=113)
         self.anchor["block_sha256"] = hashlib.sha256(bytes.fromhex("aabb")).hexdigest()
         self.spent_hash = None
@@ -166,6 +169,7 @@ class StateNode:
         self.anchor_rejected = False
         self.duplicate_preflight = False
         self.invalidated = set()
+        self.reentry_block = None
 
     def tip(self): return self.height, self.hash
 
@@ -183,7 +187,11 @@ class StateNode:
         if method == "getrawtransaction":
             tx = next(t for t in self.model.txs.values() if t["txid"] == params[0])
             if self.saved or tx["transaction_hex"] in self.pool:
-                return {"result": {"hex": tx["transaction_hex"], "confirmations": int(self.stage == 2)}}
+                replay_peer = self.index == 1 and self.reentry_block
+                raw = "ffff" if replay_peer and self.model.wrong_reentry_transaction else tx["transaction_hex"]
+                confirmed = self.stage == 2 and not (replay_peer and self.model.unconfirmed_reentry)
+                blockhash = identity("wrong-block") if replay_peer and self.model.wrong_reentry_transaction_block else self.hash
+                return {"result": {"hex": raw, "confirmations": int(confirmed), "blockhash": blockhash}}
             return {"error": {"code": -5, "message": "transaction not found"}}
         assert method == "sendrawtransaction"
         tx = self.model.txs[params[0]]
@@ -196,7 +204,8 @@ class StateNode:
             return {"error": {"code": -25, "message": fail[0]}}
         assert self.valid_after and self.negative == self.negative_submitted, "skipped final positive or negative submissions"
         if not self.model.no_relay and not (self.model.no_reentry and self.model.spent_hash):
-            for node in self.model.nodes: node.pool = [params[0]]
+            targets = [self] if self.model.no_regossip and self.model.spent_hash else self.model.nodes
+            for node in targets: node.pool = [params[0]]
         self.model.calls.append((self.index, "relay", params[0]))
         return {"result": tx["txid"]}
 
@@ -230,10 +239,22 @@ class StateNode:
             return None
         if method == "submitblock":
             tx = model.blocks[params[0]]["tx"]
-            assert self.failure(tx), "invalid block should be tested"
-            if "pool" in tx: self.negative_submitted.add((tx["pool"], tx["mutation"]))
-            model.calls.append((self.index, "reject-block", tx["transaction_hex"]))
-            return "rejected"
+            if self.failure(tx):
+                if "pool" in tx: self.negative_submitted.add((tx["pool"], tx["mutation"]))
+                model.calls.append((self.index, "reject-block", tx["transaction_hex"]))
+                return "rejected"
+            assert tx is model.positive and model.spent_hash and self.height == 115
+            assert all(n.valid_after and n.negative == n.negative_submitted ==
+                       {(p,m) for p in model.pools for m in ("spend_auth","binding","proof")}
+                       for n in model.nodes), "skipped replacement authorization bracket"
+            model.calls.append((self.index, "accept-block", params[0]))
+            if model.refuse_reentry and self.index == 1: return "rejected"
+            if not model.no_reentry:
+                block = model.blocks[params[0]]
+                self.height, self.hash, self.stage = block["height"], block["block_hash"], 2
+                self.chain[self.height] = self.hash
+                self.saved, self.pool, self.reentry_block = tx, [], self.hash
+            return "duplicate" if model.duplicate_reentry else None
         if method == "invalidateblock":
             self.invalidated.add(params[0])
             if not model.no_rollback:
@@ -252,16 +273,21 @@ class StateNode:
         if method == "getblockhash": return self.chain[params[0]]
         if method == "getblock":
             block = model.anchor if params[0] == model.anchor["block_hash"] else next(b for b in model.blocks.values() if b["block_hash"] == params[0])
-            return block["block_hex"] if params[1] == 0 else {"tx": ["coinbase", model.positive["txid"]]}
+            replay_peer = self.index == 1 and self.reentry_block
+            if params[1] == 0:
+                return "ffff" if replay_peer and model.wrong_reentry_block else block["block_hex"]
+            return {"tx": ["coinbase", identity("wrong-tx") if replay_peer and model.wrong_reentry_membership else model.positive["txid"]]}
         if method == "getrawtransaction": return self.response(method, *params)["result"]
         raise AssertionError((method, params))
 
 
 class PendingRelayNetwork:
-    """Peer lookup remains absent while gossip verification is in flight."""
+    """Model independent RPC admission and delayed or absent peer propagation."""
     def __init__(self):
         self.tx = row("funding", ("orchard",))
         self.mined = self.never_arrives = self.wrong_bytes = self.wrong_template = self.refused = False
+        self.no_gossip = self.peer_refused = self.already_in_mempool = self.observed_peer = False
+        self.no_admission = self.peer_wrong_template = self.peer_empty_template = False
         self.nodes = [PendingRelayNode(self, index) for index in range(2)]
         self.a, self.b = self.nodes
         self.block_hash = identity("funding-block")
@@ -284,12 +310,22 @@ class PendingRelayNode:
         if method == "sendrawtransaction":
             self.submissions.append(params[0])
             if self.index == 1:
+                if self.network.peer_refused:
+                    return {"error": {"code": -25, "message": "invalid proof"}}
+                if self.network.no_gossip:
+                    if not self.network.no_admission:
+                        self.raw = "ffff" if self.network.wrong_bytes else params[0]
+                    return {"result": tx["txid"]}
+                if self.network.already_in_mempool:
+                    self.raw = tx["transaction_hex"]
+                    return {"error": {"code": -1, "message": "transaction already exists in mempool"}}
                 return {"error": {"code": -1, "message": "transaction dropped because it is already queued for download"}}
             if self.network.refused:
                 return {"error": {"code": -25, "message": "invalid proof"}}
             assert params == (tx["transaction_hex"],)
             self.raw = params[0]
-            self.network.b.pending = True
+            self.network.b.pending = not self.network.no_gossip
+            if self.network.observed_peer: self.network.b.raw = params[0]
             return {"result": tx["txid"]}
         assert method == "getrawtransaction" and params == (tx["txid"], 1)
         self.lookups += 1
@@ -305,7 +341,10 @@ class PendingRelayNode:
             return [tx["txid"]] if self.raw and not self.network.mined else []
         if method == "getblocktemplate":
             self.template_seen = True
-            return {"transactions": [{"hash": tx["txid"], "data": "ffff" if self.network.wrong_template else self.raw}]}
+            if self.index == 1 and self.network.peer_empty_template:
+                return {"transactions": []}
+            wrong = self.network.wrong_template or (self.index == 1 and self.network.peer_wrong_template)
+            return {"transactions": [{"hash": tx["txid"], "data": "ffff" if wrong else self.raw}]}
         if method == "getblock":
             assert params[0] == self.network.block_hash
             return "aabb" if params[1] == 0 else {"tx": [tx["txid"]]}
@@ -328,7 +367,7 @@ class SpendTests(unittest.TestCase):
                 return
         raise AcceptanceError(reason)
 
-    def test_publication_waits_for_exact_peer_gossip_without_duplicate_submit(self):
+    def test_publication_queued_peer_requires_eventual_exact_presence(self):
         network = PendingRelayNetwork()
         with tempfile.TemporaryDirectory() as temp, patch.object(controls,"wait_for",self.poll_relay):
             block = controls.publish(network, network.tx, Path(temp), "funding")
@@ -337,24 +376,84 @@ class SpendTests(unittest.TestCase):
         self.assertTrue(network.mined)
         self.assertGreaterEqual(network.b.lookups, 3)
         self.assertEqual(network.a.submissions, [network.tx["transaction_hex"]])
-        self.assertEqual(network.b.submissions, [])
-        self.assertEqual(receipt, dict(txid=network.tx["txid"],
-            transaction_sha256=network.tx["transaction_sha256"], response={"result": network.tx["txid"]}))
+        self.assertEqual(network.b.submissions, [network.tx["transaction_hex"]])
+        self.assertEqual(receipt["mode"], "per-node-rpc-or-observed")
+        self.assertEqual(receipt["txid"], network.tx["txid"])
+        self.assertEqual(receipt["transaction_sha256"], network.tx["transaction_sha256"])
+        self.assertEqual(receipt["nodes"][0], dict(node_index=0, initial_state="absent",
+            response={"result": network.tx["txid"]}, exact_mempool_and_template=True))
+        self.assertEqual(receipt["nodes"][1], dict(node_index=1, initial_state="absent",
+            response={"error": {"code": -1, "message": "transaction dropped because it is already queued for download"}},
+            exact_mempool_and_template=True))
 
-    def test_publication_never_mines_missing_or_changed_bytes_or_refused_origin(self):
-        for field, reason in (("never_arrives", "spend_positive_mempool"), ("wrong_bytes", "saved_transaction_bytes"),
-                              ("wrong_template", "spend_positive_template"), ("refused", "spend_positive_relay")):
+    def test_publication_direct_peer_admission_without_gossip(self):
+        network = PendingRelayNetwork()
+        network.no_gossip = True
+        with tempfile.TemporaryDirectory() as temp, patch.object(controls,"wait_for",self.poll_relay):
+            controls.publish(network, network.tx, Path(temp), "funding")
+            receipt = json.loads((Path(temp) / "funding-relay.json").read_text())
+        self.assertTrue(network.mined)
+        for index, node in enumerate(network.nodes):
+            self.assertEqual(node.submissions, [network.tx["transaction_hex"]])
+            self.assertEqual(receipt["nodes"][index]["response"], {"result": network.tx["txid"]})
+            self.assertTrue(receipt["nodes"][index]["exact_mempool_and_template"])
+
+    def test_publication_observed_peer_and_mempool_race_are_authenticated(self):
+        for field in ("observed_peer", "already_in_mempool"):
             network = PendingRelayNetwork()
             setattr(network, field, True)
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp, \
+                    patch.object(controls,"wait_for",self.poll_relay):
+                controls.publish(network, network.tx, Path(temp), "funding")
+                receipt = json.loads((Path(temp) / "funding-relay.json").read_text())
+            peer = receipt["nodes"][1]
+            self.assertTrue(peer["exact_mempool_and_template"])
+            if field == "observed_peer":
+                self.assertEqual(network.b.submissions, [])
+                self.assertEqual(peer["initial_state"], "mempool")
+                self.assertIsNone(peer["response"])
+            else:
+                self.assertEqual(network.b.submissions, [network.tx["transaction_hex"]])
+                self.assertEqual(peer["response"]["error"]["message"], "transaction already exists in mempool")
+
+    def test_publication_never_mines_absent_changed_or_refused_transactions(self):
+        for field, reason in (("never_arrives", "spend_positive_mempool"), ("wrong_bytes", "saved_transaction_bytes"),
+                              ("wrong_template", "spend_positive_template"), ("refused", "spend_positive_relay"),
+                              ("peer_refused", "spend_positive_relay"), ("peer_empty_template", "spend_positive_template"),
+                              ("peer_wrong_template", "spend_positive_template"), ("no_admission", "spend_positive_mempool")):
+            network = PendingRelayNetwork()
+            setattr(network, field, True)
+            if field == "no_admission": network.no_gossip = True
             with self.subTest(field=field), tempfile.TemporaryDirectory() as temp, \
                     patch.object(controls,"wait_for",self.poll_relay):
                 with self.assertRaisesRegex(AcceptanceError, reason):
                     controls.publish(network, network.tx, Path(temp), "funding")
                 self.assertFalse(network.mined)
-                self.assertEqual(network.b.submissions, [])
                 receipt = json.loads((Path(temp) / "funding-relay.json").read_text())
-                if field == "refused":
-                    self.assertEqual(receipt["response"]["error"]["message"], "invalid proof")
+                if field in ("refused", "peer_refused"):
+                    self.assertEqual(receipt["nodes"][-1]["response"]["error"]["message"], "invalid proof")
+                self.assertFalse(receipt["nodes"][-1]["exact_mempool_and_template"])
+
+    def test_publication_unrelated_reply_cannot_be_excused_by_later_presence(self):
+        replies = [
+            {"error": {"code": -25, "message": "invalid proof"}},
+            {"error": {"code": -25, "message": "transaction already exists in mempool"}},
+            {"error": {"code": -1, "message": "unrecognized queue condition"}},
+            {"result": identity("wrong-txid")},
+        ]
+        for reply in replies:
+            network = PendingRelayNetwork()
+            original = network.b.response
+            def respond(method, *params):
+                if method == "sendrawtransaction":
+                    network.b.raw = network.tx["transaction_hex"]
+                    return reply
+                return original(method, *params)
+            with self.subTest(reply=reply), tempfile.TemporaryDirectory() as temp, \
+                    patch.object(controls,"wait_for",self.poll_relay), patch.object(network.b,"response",respond):
+                with self.assertRaisesRegex(AcceptanceError, "spend_positive_relay"):
+                    controls.publish(network, network.tx, Path(temp), "funding")
+                self.assertFalse(network.mined)
 
     def test_bounded_stable_history_and_exact_dual_node_bytes(self):
         nodes = [HistoryNode(), HistoryNode()]
@@ -415,8 +514,42 @@ class SpendTests(unittest.TestCase):
             self.assertEqual(len(receipt["authorization"]),2+3*len(pools))
             self.assertEqual(receipt["remined"]["values"],receipt["mined"]["state"]["values"])
             self.assertEqual(len(receipt["saved_reentry"]["mined_blocks"]),1)
+            self.assertEqual(receipt["saved_reentry"]["mode"], "direct-saved-block")
+            self.assertEqual(receipt["saved_reentry"]["initial_peer_states"], ["absent", "absent"])
+            self.assertEqual(receipt["saved_reentry"]["positive_proposals"], 2)
+            self.assertEqual(receipt["saved_reentry"]["transaction_sha256"], model.positive["transaction_sha256"])
             for index in (0,1):
                 self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[:2]==(index,"reject-relay")]),2+6*len(pools))
+                self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[:2]==(index,"accept-block")]),1)
+
+    def test_saved_block_reentry_does_not_require_fresh_transaction_propagation(self):
+        model = Model()
+        model.no_regossip = True
+        receipt = self.run_lifecycle(model)
+        self.assertEqual(receipt["saved_reentry"]["submitblock_results"], [None, None])
+        self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[1] == "relay"]), 1)
+
+    def test_saved_block_reentry_requires_both_nodes_exact_confirmed_best_chain(self):
+        for field, reason in (("refuse_reentry", "spend_reentry_block_rejected"),
+                              ("wrong_reentry_block", "spend_reentry_block_bytes"),
+                              ("wrong_reentry_membership", "spend_reentry_block_bytes"),
+                              ("wrong_reentry_transaction", "spend_reentry_transaction"),
+                              ("unconfirmed_reentry", "spend_reentry_transaction"),
+                              ("wrong_reentry_transaction_block", "spend_reentry_transaction")):
+            model = Model()
+            setattr(model, field, True)
+            with self.subTest(field=field), self.assertRaisesRegex(AcceptanceError, reason):
+                self.run_lifecycle(model)
+
+    def test_duplicate_block_response_requires_actual_reentry(self):
+        model = Model()
+        model.duplicate_reentry = True
+        receipt = self.run_lifecycle(model)
+        self.assertEqual(receipt["saved_reentry"]["submitblock_results"], ["duplicate", "duplicate"])
+        model = Model()
+        model.duplicate_reentry = model.no_reentry = True
+        with self.assertRaisesRegex(AcceptanceError, "spend_reentry_tip"):
+            self.run_lifecycle(model)
 
     def test_noop_wrong_failure_and_parent_confounders_cannot_pass(self):
         for field in ("no_rollback","no_reconsider","no_reentry","no_relay","no_mining","wrong_reason",
@@ -424,7 +557,7 @@ class SpendTests(unittest.TestCase):
             model=Model();setattr(model,field,True)
             with self.subTest(field=field),self.assertRaises((AcceptanceError,AssertionError)):
                 self.run_lifecycle(model)
-        for function in ("authorization_round","preflight","reject"):
+        for function in ("authorization_round","preflight","reject","reenter_saved_block"):
             model=Model()
             with self.subTest(function=function),self.assertRaises((AcceptanceError,AssertionError)):
                 self.run_lifecycle(model,patch.object(controls,function,return_value=[]))

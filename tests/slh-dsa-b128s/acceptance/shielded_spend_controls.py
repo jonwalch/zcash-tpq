@@ -14,7 +14,7 @@ from common import (CONTRACT, AcceptanceError, canonical, common_tip, read_json,
 from generate_transactions import MAX_HOST, hex_field, host_call, invoke, randomizer, seed, signer_call
 from lifecycle_controls import namespace, utxos
 from crash_controls import backup_observed, export_chain
-from node_live import authenticated_outputs, policy, reconcile_saved, transaction_state
+from node_live import authenticated_outputs, policy, transaction_state
 from nodes import BLOCK_LIMIT, SLH_HEIGHT, TX_LIMIT, Network, authenticate_coinbase
 import shielded_controls as outputs
 from transparent_controls import Controls, mine_to, reject_relay
@@ -314,18 +314,35 @@ def authorization_round(control, positive, variants, parents, label):
 
 def publish(network, tx, artifacts, label):
     saved = {"txid": tx["txid"], "raw": tx["transaction_hex"]}
-    # Submit once: the peer can already be verifying a gossiped transaction
-    # without exposing it through getrawtransaction or getrawmempool yet.
-    reply = network.a.response("sendrawtransaction", saved["raw"])
-    write_json(artifacts / (label + "-relay.json"), {
-        "txid": saved["txid"], "transaction_sha256": tx["transaction_sha256"], "response": reply})
-    require(reply.get("error") is None and reply.get("result") == saved["txid"]
-            or transaction_state(network.a, saved) == "mempool", "spend_positive_relay")
-    for node in network.nodes:
+    receipt = {"mode": "per-node-rpc-or-observed", "txid": saved["txid"],
+               "transaction_sha256": tx["transaction_sha256"], "nodes": []}
+    path = write_json(artifacts / (label + "-relay.json"), receipt)
+    for index, node in enumerate(network.nodes):
+        state = transaction_state(node, saved)
+        require(state in ("absent", "mempool"), "spend_publication_state")
+        row = {"node_index": index, "initial_state": state, "response": None,
+               "exact_mempool_and_template": False}
+        receipt["nodes"].append(row)
+        write_json(path, receipt, fresh=False)
+        if state == "absent":
+            reply = node.response("sendrawtransaction", saved["raw"])
+            row["response"] = reply
+            write_json(path, receipt, fresh=False)
+            error = reply.get("error")
+            # Gossip or an inherited retry can race this explicit submission.
+            # These queue diagnostics only permit waiting; neither is acceptance.
+            pending = (type(error) is dict and type(error.get("code")) is int
+                       and error["code"] == -1 and error.get("message") in (
+                           "transaction dropped because it is already queued for download",
+                           "transaction already exists in mempool"))
+            require((error is None and reply.get("result") == saved["txid"]) or pending,
+                    "spend_positive_relay")
         wait_for(lambda: transaction_state(node, saved) == "mempool", "spend_positive_mempool")
         template = node.rpc("getblocktemplate")
         require(any(row["hash"] == saved["txid"] and row["data"] == saved["raw"]
                     for row in template["transactions"]), "spend_positive_template")
+        row["exact_mempool_and_template"] = True
+        write_json(path, receipt, fresh=False)
     hashes = network.mine()
     require(len(hashes) == 1, "spend_mining_count")
     for node in network.nodes:
@@ -338,6 +355,42 @@ def publish(network, tx, artifacts, label):
              "height": common_tip(network.nodes)["height"], "transaction_sha256": tx["transaction_sha256"]}
     write_json(artifacts / (label + "-accepted-block.json"), block)
     return block
+
+
+def reenter_saved_block(control, tx, parents):
+    """Replay the pinned research's cached-transaction block path on both nodes."""
+    nodes = control.network.nodes
+    before = observe(nodes, parents)
+    require(before["tip"]["height"] + 1 <= EXPIRY, "spend_expired")
+    saved = {"txid": tx["txid"], "raw": tx["transaction_hex"]}
+    initial = [transaction_state(node, saved) for node in nodes]
+    require(all(state == "absent" for state in initial), "spend_reentry_initial_state")
+    require(hashlib.sha256(bytes.fromhex(saved["raw"])).hexdigest() == tx["transaction_sha256"],
+            "spend_reentry_authorization_bytes")
+    proposal = control.accept("saved-reentry", [tx], [tx["fee_zat"]], publish=False)
+    block = read_json(control.artifacts / "saved-reentry-block.json")
+    require(proposal["block_hash"] == block["block_hash"] and proposal["height"] == block["height"]
+            and proposal["txids"] == [saved["txid"]] and proposal["published"] is False,
+            "spend_reentry_block_context")
+    require(observe(nodes, parents) == before, "spend_reentry_proposal_changed_state")
+    replies = []
+    for node in nodes:
+        reply = node.rpc("submitblock", block["block_hex"])
+        require(reply in (None, "duplicate"), "spend_reentry_block_rejected")
+        replies.append(reply)
+        # A duplicate response can race block propagation; authenticate the
+        # actual best-chain block and saved transaction before counting success.
+        wait_for(lambda: node.tip() == (block["height"], block["block_hash"]), "spend_reentry_tip")
+        require(node.rpc("getblock", block["block_hash"], 0) == block["block_hex"]
+                and node.rpc("getblock", block["block_hash"], 1)["tx"][1:] == [saved["txid"]],
+                "spend_reentry_block_bytes")
+        actual = node.rpc("getrawtransaction", saved["txid"], 1)
+        require(actual["hex"] == saved["raw"] and actual.get("confirmations", 0) > 0
+                and actual.get("blockhash") == block["block_hash"], "spend_reentry_transaction")
+    return {"mode": "direct-saved-block", "initial_states": {saved["txid"]: initial[0]},
+            "initial_peer_states": initial, "mined_blocks": [block["block_hash"]],
+            "block_sha256": block["block_sha256"], "transaction_sha256": tx["transaction_sha256"],
+            "positive_proposals": len(nodes), "submitblock_results": replies}
 
 
 def backup_ready(network, *, excluded=()):
@@ -409,7 +462,7 @@ def lifecycle(control, positive, duplicate, variants, parents, baseline, anchor_
     same_effect_state(restored, anchored)
     receipt["reorg_authorization"] = authorization_round(control, positive, variants, parents, "replacement")
     saved = [{"txid": positive["txid"], "raw": positive["transaction_hex"]}]
-    receipt["saved_reentry"] = reconcile_saved(network, saved, 1)
+    receipt["saved_reentry"] = reenter_saved_block(control, positive, parents)
     require(common_tip(nodes)["height"] == restored["tip"]["height"] + 1, "spend_reentry_mining")
     remined = observe(nodes, parents, (0,))
     same_effect_state(remined, after)

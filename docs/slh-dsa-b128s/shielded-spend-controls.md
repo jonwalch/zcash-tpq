@@ -94,15 +94,27 @@ The driver performs the following bounded sequence:
    verification errors cannot stand in for this refusal.
 6. Invalidate the mined spend, restore exact roots, values and parents, and mine
    two replacement blocks above the retained anchor. Repeat positive-bracket
-   authorization controls, then use the existing `reconcile_saved` helper to
-   reenter and mine the exact original spend bytes. Require the same resulting
-   pool state and authenticated output.
+   authorization controls, then replay the exact cached spend in a block using
+   the pinned research flow. Both nodes must accept positive block proposals
+   before the exact block is submitted to each node. Require its exact best-chain
+   block bytes, transaction membership and confirmed saved transaction bytes on
+   both nodes, followed by the same resulting pool state and authenticated output.
 
-Publication submits saved bytes once to the first node and retains its public
-RPC reply. Bounded observation must then authenticate the same bytes in both
-mempools and templates before mining. The peer may still be verifying gossip
-when an immediate duplicate RPC submission would report an already queued
-transaction; queued work itself is never counted as acceptance.
+Publication records each node's initial saved-transaction state and submits the
+same bytes directly to each node where they are absent. Already observed exact
+mempool presence skips that node's RPC submission. Only the pinned already-queued
+or already-in-mempool race diagnostics permit bounded waiting after an RPC
+refusal; unrelated refusals fail. Exact bytes in both mempools and templates are
+required before mining, so a successful or queued RPC reply alone never counts
+as acceptance. These observations do not identify how an already-present peer
+obtained the transaction or claim fresh transaction gossip delivery.
+
+Final reentry records `mode: direct-saved-block`, both initial absent states,
+the accepted block hash and byte hash, and the original transaction byte hash.
+It reuses `Controls.accept(publish=False)` for the two positive proposals. A
+duplicate block-submission reply is accepted only after authenticating the
+actual best-chain block and confirmed transaction. This tests cached-byte
+acceptance after rollback without requiring renewed transaction gossip.
 
 The replacement branch is selected after explicit invalidation; it is not a
 competing-peer timing experiment. Anchor invalidation and reconsideration stay in the same node processes because
@@ -172,7 +184,10 @@ The focused models cover all ten host shapes and all seven pool combinations
 through the causal lifecycle. They reject forged/changed/disconnected history,
 changed effect or authorization identities, absent or expired-parent confounders,
 wrong refusal reasons, skipped subject operations, no-op rollback/reconsideration,
-missing replacement blocks and no-op saved-byte reentry. They also verify the
+missing replacement blocks and no-op saved-byte reentry. Publication models cover
+absent peer propagation, bounded queue races, actual refusal, missing/changed
+bytes and both templates; replay models reject wrong blocks, membership or
+unconfirmed transaction bytes even after duplicate submission replies. They also verify the
 pre-NU6.3 funding gate and one final-message SLH signing call per effect identity.
 Model proof/signature bytes are not cryptographic evidence; tests launch no nodes,
 signer, prover or subprocess transport.
@@ -190,7 +205,7 @@ repository's source mapping and MIT OR Apache-2.0
 [MIT](../../LICENSE-MIT) / [Apache](../../LICENSE-APACHE) licenses.
 
 The driver reuses product `shielded_controls`, `Network`, `Controls`,
-`authenticate_coinbase` and `reconcile_saved`, rather than copying node lifecycle,
+`authenticate_coinbase` and `transaction_state`, rather than copying node lifecycle,
 proof transport or signing implementations. Necessary adaptations are all-pool
 and v5/v6 support, native SLH final-message authorization, strict dual-node
 history/UTXO authentication, the legal Orchard funding profile, a later genuinely
