@@ -95,6 +95,12 @@ The driver performs the following bounded sequence:
    reenter and mine the exact original spend bytes. Require the same resulting
    pool state and authenticated output.
 
+Publication submits saved bytes once to the first node and retains its public
+RPC reply. Bounded observation must then authenticate the same bytes in both
+mempools and templates before mining. The peer may still be verifying gossip
+when an immediate duplicate RPC submission would report an already queued
+transaction; queued work itself is never counted as acceptance.
+
 The replacement branch is selected after explicit invalidation; it is not a
 competing-peer timing experiment. Anchor invalidation and reconsideration stay in the same node processes because
 inherited invalidated-block records are memory-only. Before a later clean restart,
@@ -145,8 +151,9 @@ Every proof request has a finite 1,800-second subprocess deadline and uses the
 existing bounded concurrent transport. `execution.json` starts incomplete, retains
 failures, and binds exact source/lock/build/binary/config/parameter identities.
 The output preserves public funding transactions, raw history, proof requests,
-host results, signed artifacts, proposals, accepted blocks and RPC request/reply
-hashes. Both signed artifact hashes are checked again after lifecycle execution;
+host results, signed artifacts, proposals, accepted blocks, publication replies
+and RPC request/reply hashes. Both signed artifact hashes are checked again after
+lifecycle execution;
 retries use the cached exact authorization. Local receipts are traceability, not
 hostile-host attestations. Proving, node execution and acceptance remain pending
 until an actual matching live receipt completes.

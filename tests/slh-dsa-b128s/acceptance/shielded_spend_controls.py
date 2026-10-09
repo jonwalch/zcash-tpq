@@ -314,10 +314,14 @@ def authorization_round(control, positive, variants, parents, label):
 
 def publish(network, tx, artifacts, label):
     saved = {"txid": tx["txid"], "raw": tx["transaction_hex"]}
+    # Submit once: the peer can already be verifying a gossiped transaction
+    # without exposing it through getrawtransaction or getrawmempool yet.
+    reply = network.a.response("sendrawtransaction", saved["raw"])
+    write_json(artifacts / (label + "-relay.json"), {
+        "txid": saved["txid"], "transaction_sha256": tx["transaction_sha256"], "response": reply})
+    require(reply.get("error") is None and reply.get("result") == saved["txid"]
+            or transaction_state(network.a, saved) == "mempool", "spend_positive_relay")
     for node in network.nodes:
-        reply = node.response("sendrawtransaction", saved["raw"])
-        require(reply.get("error") is None and reply.get("result") == saved["txid"]
-                or transaction_state(node, saved) == "mempool", "spend_positive_relay")
         wait_for(lambda: transaction_state(node, saved) == "mempool", "spend_positive_mempool")
         template = node.rpc("getblocktemplate")
         require(any(row["hash"] == saved["txid"] and row["data"] == saved["raw"]

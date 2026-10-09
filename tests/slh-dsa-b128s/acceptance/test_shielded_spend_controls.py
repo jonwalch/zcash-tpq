@@ -2,6 +2,7 @@
 from copy import deepcopy
 from decimal import Decimal
 import hashlib
+import json
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -256,7 +257,105 @@ class StateNode:
         raise AssertionError((method, params))
 
 
+class PendingRelayNetwork:
+    """Peer lookup remains absent while gossip verification is in flight."""
+    def __init__(self):
+        self.tx = row("funding", ("orchard",))
+        self.mined = self.never_arrives = self.wrong_bytes = self.wrong_template = self.refused = False
+        self.nodes = [PendingRelayNode(self, index) for index in range(2)]
+        self.a, self.b = self.nodes
+        self.block_hash = identity("funding-block")
+
+    def mine(self):
+        assert all(node.raw == self.tx["transaction_hex"] and node.template_seen for node in self.nodes)
+        self.mined = True
+        return [self.block_hash]
+
+
+class PendingRelayNode:
+    def __init__(self, network, index):
+        self.network, self.index = network, index
+        self.raw, self.pending, self.template_seen = None, False, False
+        self.lookups = 0
+        self.submissions = []
+
+    def response(self, method, *params):
+        tx = self.network.tx
+        if method == "sendrawtransaction":
+            self.submissions.append(params[0])
+            if self.index == 1:
+                return {"error": {"code": -1, "message": "transaction dropped because it is already queued for download"}}
+            if self.network.refused:
+                return {"error": {"code": -25, "message": "invalid proof"}}
+            assert params == (tx["transaction_hex"],)
+            self.raw = params[0]
+            self.network.b.pending = True
+            return {"result": tx["txid"]}
+        assert method == "getrawtransaction" and params == (tx["txid"], 1)
+        self.lookups += 1
+        if self.pending and self.lookups >= 3 and not self.network.never_arrives:
+            self.raw = "ffff" if self.network.wrong_bytes else tx["transaction_hex"]
+        if self.raw is None:
+            return {"error": {"code": -5, "message": "transaction not found"}}
+        return {"result": {"hex": self.raw, "confirmations": int(self.network.mined)}}
+
+    def rpc(self, method, *params):
+        tx = self.network.tx
+        if method == "getrawmempool":
+            return [tx["txid"]] if self.raw and not self.network.mined else []
+        if method == "getblocktemplate":
+            self.template_seen = True
+            return {"transactions": [{"hash": tx["txid"], "data": "ffff" if self.network.wrong_template else self.raw}]}
+        if method == "getblock":
+            assert params[0] == self.network.block_hash
+            return "aabb" if params[1] == 0 else {"tx": [tx["txid"]]}
+        if method == "gettxout":
+            assert self.network.mined and params == (tx["txid"], 0, False)
+            output = tx["outputs"][0]
+            return dict(value=Decimal(output["value_zat"])/100_000_000,
+                        scriptPubKey={"hex": output["script_hex"]}, confirmations=1, coinbase=False)
+        raise AssertionError((method, params))
+
+    def tip(self):
+        return (102, self.network.block_hash) if self.network.mined else (101, identity("funding-parent-block"))
+
+
 class SpendTests(unittest.TestCase):
+    @staticmethod
+    def poll_relay(predicate, reason, *_):
+        for _ in range(5):
+            if predicate():
+                return
+        raise AcceptanceError(reason)
+
+    def test_publication_waits_for_exact_peer_gossip_without_duplicate_submit(self):
+        network = PendingRelayNetwork()
+        with tempfile.TemporaryDirectory() as temp, patch.object(controls,"wait_for",self.poll_relay):
+            block = controls.publish(network, network.tx, Path(temp), "funding")
+            receipt = json.loads((Path(temp) / "funding-relay.json").read_text())
+        self.assertEqual(block["height"], 102)
+        self.assertTrue(network.mined)
+        self.assertGreaterEqual(network.b.lookups, 3)
+        self.assertEqual(network.a.submissions, [network.tx["transaction_hex"]])
+        self.assertEqual(network.b.submissions, [])
+        self.assertEqual(receipt, dict(txid=network.tx["txid"],
+            transaction_sha256=network.tx["transaction_sha256"], response={"result": network.tx["txid"]}))
+
+    def test_publication_never_mines_missing_or_changed_bytes_or_refused_origin(self):
+        for field, reason in (("never_arrives", "spend_positive_mempool"), ("wrong_bytes", "saved_transaction_bytes"),
+                              ("wrong_template", "spend_positive_template"), ("refused", "spend_positive_relay")):
+            network = PendingRelayNetwork()
+            setattr(network, field, True)
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp, \
+                    patch.object(controls,"wait_for",self.poll_relay):
+                with self.assertRaisesRegex(AcceptanceError, reason):
+                    controls.publish(network, network.tx, Path(temp), "funding")
+                self.assertFalse(network.mined)
+                self.assertEqual(network.b.submissions, [])
+                receipt = json.loads((Path(temp) / "funding-relay.json").read_text())
+                if field == "refused":
+                    self.assertEqual(receipt["response"]["error"]["message"], "invalid proof")
+
     def test_bounded_stable_history_and_exact_dual_node_bytes(self):
         nodes = [HistoryNode(), HistoryNode()]
         result = controls.collect_history(nodes, [nodes[0].parent], [nodes[0].funding])
