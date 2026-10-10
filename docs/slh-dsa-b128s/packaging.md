@@ -117,7 +117,9 @@ Build receipts record compiler versions, dependencies, features, flags, binaries
 
 ## Publication controls
 
-The product has no selected remote, visibility, installer, registry namespace, or release owner.
+The source repository, [jonwalch/zcash-tpq](https://github.com/jonwalch/zcash-tpq), is private.
+GitHub Actions is disabled in this repository, including inherited scheduled jobs.
+Binary and package releases are not configured.
 Inherited package names do not select publication destinations.
 
 The inherited `release-binaries.yml` can build `v*` tags in forks.

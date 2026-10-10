@@ -22,7 +22,8 @@ The [SLH guide](docs/slh-dsa-b128s/README.md) contains these instructions:
 
 Build from this checkout with the specified features.
 Upstream installers, packages, and releases do not contain this extension.
-The project has no selected destination for product releases.
+The source repository is [jonwalch/zcash-tpq](https://github.com/jonwalch/zcash-tpq).
+Binary and package releases are not configured.
 
 ## Technical documents
 

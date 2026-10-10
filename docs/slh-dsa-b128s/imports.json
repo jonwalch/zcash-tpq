@@ -61,7 +61,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases.",
-      "sha256": "994b1e50261f73a3f4785f51232e54858bc229390caca062efe27a2e8908373c"
+      "sha256": "cebbeb31597ca1b2770fbde36d864d65e2c5fd0ab4c7700709035ffccbf903c9"
     },
     {
       "disposition": "adapted",
@@ -2161,7 +2161,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "3b4afa60db596db8bd8493eee9e7938e335cb49c9dd70423a1c215d152363d48"
+      "sha256": "39a815c51550b98592a854354cc08f38c22d7772f4e1931b23070770613c1b06"
     },
     {
       "disposition": "new",
