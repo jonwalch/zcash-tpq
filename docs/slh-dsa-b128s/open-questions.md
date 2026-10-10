@@ -1,172 +1,120 @@
 # Open questions
 
-This page tracks unresolved choices for the SLH extension.
-These choices concern deployment beyond the current Regtest scope.
-The [protocol](protocol.md) and component guides describe the implemented rules.
+This page tracks unresolved ecosystem decisions for public adoption of SLH-protected transparent funds.
+Existing Zcash rules are the baseline. Each entry identifies a choice added by SLH.
+Keep prototype operation and wallet implementation details in the component guides.
 The [validation guide](validation.md) tracks evidence and tests that still need execution.
+Sources and ZIP status were checked on 2026-10-10.
 
-## F1: Fees beyond Regtest
+## F1: SLH fee policy
 
 Status: Open.
 
-Which fee rate should apply beyond Regtest?
-Should SLH have a separate fee adjustment for its resource costs?
-Should recipient-payment minimums reflect expected future spending costs?
-How should these minimums apply when the receiver hides its policy and signature count?
+[ZIP 317](https://zips.z.cash/zip-0317) already charges transparent inputs and outputs by serialized size.
+Larger SLH authorizations therefore incur more actions under the existing formula.
+The [fee comparison](relay-mining.md#fee-policy-discussion) records this effect and the public fee proposals.
 
-The implementation uses Zakura's 400-zatoshi rate and ZIP-317 action counts.
-It applies no SLH fee discount or surcharge.
-The [fee policy discussion](relay-mining.md#fee-policy-discussion) compares the ZIPs,
-shows the effect of SLH signature sizes, and lists the required decisions.
-Those decisions need cost evidence and a review of wallet and node compatibility.
-The current Regtest fees do not establish a production fee policy.
+Do measured SLH costs justify a change to this transparent fee accounting?
+If so, which SLH-specific rule should wallets, relay nodes, and miners adopt?
 
-The current [relay dust floor](relay-mining.md#relay-policy-and-fees) is 2,403 zatoshis.
-A one-input 1-of-1 SLH payment has a conventional fee of 21,600 zatoshis at the pinned rate.
-Relay acceptance does not guarantee an economical spend.
-The wallet already estimates future change costs.
-Its [change review](../../crates/pq-wallet/src/payment/review.rs) requires explicit approval
-to keep change below that estimate.
+Compare verification, bandwidth, and storage costs with fees under the existing rule.
+Assess small payments and multisig spending under both the baseline and any proposed change.
+Any change needs evidence that it preserves resistance to denial-of-service attacks.
+The prototype's rate and dust floor are implementation settings, not proposed ecosystem defaults.
 
 ## S1: Security target and key use
 
 Status: Open.
 
-What security target and protection period must the exact BLAKE3 construction meet?
-What limits on signatures per key and what key-rotation rules are required?
+The [proposed construction](protocol.md#source-and-signature-primitive) uses BLAKE3 signatures
+and SHA-256 key and policy commitments.
+It retains the BLAKE2b-256 transaction digests defined for v5 by [ZIP 244](https://zips.z.cash/zip-0244).
+The BLAKE3 signature construction is experimental and is not a FIPS 205 profile.
+
+What quantum security target and protection period must this complete authorization meet?
+What per-key signing limits and key-rotation assumptions can the ecosystem rely on?
+Does the combined signature, digest, and commitment construction meet that target?
+
 Include use across outputs and devices, replacement signatures, and released partials.
+Review risks across many keys and the guarantees required when a cosigner acts maliciously.
+Public adoption needs independent construction and implementation review.
+Agreement between implementations does not establish these security claims.
 
-What guarantees must hold across BLAKE3 signatures, SHA-256 key and policy commitments,
-and BLAKE2b-256 transaction digests?
-Review these components together as the complete authorization.
+## S2: Public SLH signing modes
 
-The [construction and parameters](protocol.md#source-and-signature-primitive) are fixed for this experiment.
-Independent implementation checks do not establish the construction's security.
-Select the required independent review of quantum assumptions and signer behavior.
-That review must cover each supported platform, including side channels and secret handling.
-The [signer guide](../../crates/pq-slh-dsa-b-sign/README.md#clearing-scope) records current limits.
+Status: Open for public adoption.
 
-## S2: Signing modes and message format
+[ZIP 244](https://zips.z.cash/zip-0244) already defines `SIGHASH_ALL`, `SIGHASH_NONE`,
+and `SIGHASH_SINGLE`, each with or without `ANYONECANPAY`, for transparent v5 inputs.
+Their signed fields and exclusions are specified behavior.
+The [prototype contract](protocol.md#byte-contract) permits only `SIGHASH_ALL` without `ANYONECANPAY`.
 
-Status: Current Regtest contract fixed. Future extensions open.
+Should public SLH preserve the existing transparent signing modes or deliberately restrict them?
+What SLH-specific security benefit would justify a restriction, and which existing uses would it prevent?
 
-The current [v5/v6 contract](protocol.md#byte-contract) permits only `SIGHASH_ALL`,
-with `ANYONECANPAY` disabled.
-It commits to all inputs and outputs, including trusted input amounts and scripts.
-The signing message also binds the signature suite, network, transaction version,
-upgrade branch, and input index.
+Resolve this compatibility choice before standardizing the public SLH authorization format.
+Use the existing digest semantics for retained modes.
 
-The authorization carries no selectable signing mode or sighash suffix.
-
-Before extending this contract, resolve these questions:
-
-- Should future versions remain `SIGHASH_ALL` only?
-- Which use case would justify `SIGHASH_SINGLE`, `SIGHASH_NONE`, or `ANYONECANPAY`?
-- What must each signer approve when some inputs or outputs can change?
-- How would new modes or message formats be versioned and activated?
-
-Specify the exact signed fields and intentional exclusions for each transaction version.
-`SIGHASH_ALL` does not mean every serialized byte is signed.
-
-## S3: Chain replay protection
-
-Status: Current Regtest contract fixed. Future extensions open.
-
-Should signatures bind to a specific chain instance?
-If required, which immutable chain identifier should the signing message include?
-How would a revised contract preserve historical validation and normal reorg behavior?
-
-The current [message](protocol.md#byte-contract) binds the network, upgrade branch,
-transaction version, input index, and transaction digest.
-It does not include an independent chain-instance identifier.
-An authorization can be valid on two private chains if the signed context, UTXOs, and applicable rules match.
-Wallet profile checks and separate state directories do not add this signature binding.
-
-## D1: Public activation and resource limits
+## D1: Public SLH resource limits
 
 Status: Open.
 
-What evidence and deployment process are required before public activation?
-Which transaction and block limits should apply?
-Which hardware, queue, memory, and verification-concurrency limits must nodes support?
+Zcash already has transaction, block, and signature-operation limits in its
+[protocol specification](https://zips.z.cash/protocol/protocol.pdf).
+[ZIP 200](https://zips.z.cash/zip-0200) defines network-upgrade activation and replay protection.
 
-The [runtime](runtime.md#configure-regtest) rejects SLH settings on public networks.
-The 16-check transaction and 64-check block settings are functional test values.
-Choose deployment limits from whole-node measurements, including hostile and cancelled work.
-Review the activation height, upgrade context, checkpoints, and state compatibility together.
-The [validation guide](validation.md) remains the record of evidence and pending tests.
+Which additional consensus limits should apply to SLH verification per transaction and block?
+Which limits permit useful multisig payments while keeping full-node operation practical?
 
-## I1: Receiver and payment interoperability
+Evaluate mixed SLH, classical, and shielded work under the existing block rules.
+Use adversarial whole-node measurements across implementations and representative hardware.
+Include the added bandwidth, historical storage, and synchronization costs of SLH authorizations.
+Select public limits through the existing network-upgrade process.
+The prototype's 16-check and 64-check settings do not select those limits.
+
+## I1: SLH receiver standard
 
 Status: Open.
 
-Which public address and payment-request formats should carry SLH receivers?
-How should other wallets identify support and authenticate the requested recipient?
+[ZIP 316](https://zips.z.cash/zip-0316) supplies Unified Addresses and receiver-selection rules.
+[ZIP 321](https://zips.z.cash/zip-0321) supplies payment-request URIs that can contain Unified Addresses.
+These are the interoperability baseline; ZIP 316 revision 2 remains a draft.
 
-The current [receiver](wallet.md#receivers-and-transport) uses the experimental `tpqreg` prefix.
-It is not an assigned Unified Address receiver.
-A checksum checks the encoding; it does not authenticate the recipient.
-Specify identifiers, sender behavior for unsupported receivers, and payment-request authentication.
-The existing [independent payment review](cli.md#approve-and-exchange-a-payment) remains required.
+Which SLH receiver encoding, type code, and selection priority should the ecosystem standardize?
+How should a recipient require SLH protection when an address also offers other receiver types?
 
-## W1: Wallet node trust
-
-Status: Current Regtest contract fixed. Future extensions open.
-
-Must users trust a full node, or should a later wallet support a reviewed remote-service or light-client model?
-What must authenticate chain history, spent outputs, current unspent status, and active rules in each model?
-
-The current wallet requires an operator-trusted full node.
-Its [RPC client](../../crates/pq-wallet/src/rpc.rs) accepts numeric loopback endpoints.
-Access to a remote trusted node requires an [authenticated local tunnel](cli.md#prepare-the-wallet).
-This transport retains the full-node trust requirement.
-The current [chain source](../../crates/pq-wallet/src/scan.rs) does not supply light-client proofs.
-Any new model needs a separate verification contract before the wallet can rely on it.
+Resolve SLH selection together with the existing privacy and unsupported-receiver rules.
+A request for SLH protection must not silently become a payment using another authorization scheme.
+The [experimental receiver](wallet.md#receivers-and-transport) is not a public allocation.
 
 ## M1: Migration, retirement, and legacy recovery
 
 Status: Open.
 
-What cutoff height and notice period should apply to ordinary ECDSA spending?
+Ordinary migration can use existing ECDSA authorization while it remains secure.
+The [current coinbase rule](https://zips.z.cash/protocol/protocol.pdf#txnconsensus)
+requires transactions that spend transparent coinbase outputs to have no transparent outputs.
+Such funds therefore need a shielded step before another transparent payment under existing rules.
+
+What cutoff and notice period should apply to ordinary ECDSA spending?
 Should creation of new classical outputs stop? If so, when?
 Which ownership evidence and PQ-safe recovery construction should admit preserved funds?
-How should a later signature-suite change preserve ownership and historical validation?
-How should transparent coinbase funds reach SLH outputs under the inherited shielded-spend restriction?
+Should the PQ transition retain the shielded route for coinbase funds or specify a different route?
+How should a later replacement of SLH preserve ownership and historical validation?
 
-The agreed direction is ordinary migration, followed by an announced ECDSA cutoff.
-Preserve remaining UTXOs for a separately specified recovery path.
+This project's proposed direction is ordinary migration, then an announced ECDSA cutoff,
+with remaining UTXOs preserved for a separately specified recovery path.
+Public adoption, eligibility, and activation remain open.
 Preservation does not guarantee recovery; funds without sufficient evidence remain frozen.
-Cutoff details and the recovery construction still need a separate specification and activation.
+[ZIP 2007](https://zips.z.cash/zip-2007) remains Reserved and does not specify an adopted recovery protocol.
 
-The current [migration path](protocol.md#network-and-state-rules) uses classical authorization to fund SLH outputs.
-Later SLH spends require SLH authorization.
-The Regtest implementation has no public ECDSA cutoff or legacy-recovery protocol.
-It rejects mixed classical and SLH transparent inputs.
-Classical and SLH outputs retain separate authorization rules.
-
-The inherited public-network rule requires a transaction that spends transparent coinbase funds
-to have no transparent outputs, even after maturity.
-The [node enforces this restriction](../../crates/zakura-chain/src/transaction.rs).
-Regtest allowances do not establish a public migration route.
-The current [wallet](wallet.md#policies-and-payments) constructs transparent-only payments.
-Specify a migration or recovery route for coinbase funds and its shielded-pool assumptions.
-
-## H1: History availability and recovery support
-
-Status: Open.
-
-What history must remain available to a wallet that returns after a long absence?
-Who provides that history if a node prunes transaction bodies?
-What backup retention and rescan support should users be able to rely on?
-
-Distinguish the UTXO set, historical transactions, and private wallet journals.
-The [recovery formats](recovery.md#backup-types) preserve different parts of wallet state.
-A key backup cannot reconstruct unknown signatures or complete payment history.
-The [wallet](wallet.md#recovery-and-watch-only-behavior) keeps observations cached until trusted synchronization.
-Unknown signing authority keeps a restore in monitor-only mode.
-Define a supported history and backup policy before promising long-term recovery.
+Evaluate the coinbase route against the agreed quantum security target, including shielded-pool assumptions.
+The open decision is whether the PQ transition needs to change that route.
+The existing restriction and the prototype wallet's payment scope are already specified behavior.
 
 ## Record a decision
 
-When a question is resolved, record the decision and its reason.
+For each new entry, state the existing Zcash baseline and the unresolved SLH change.
+Keep a question here only if existing rules cannot settle that change.
+When a question is resolved, record the ecosystem decision and its reason.
 Update the affected guide and mark the question as resolved here.

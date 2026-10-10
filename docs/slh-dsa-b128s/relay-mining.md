@@ -32,7 +32,7 @@ Created outputs cannot select the native input verifier.
 
 ## Fee policy discussion
 
-Fee policy remains [open for deployment beyond Regtest](open-questions.md#f1-fees-beyond-regtest).
+Any SLH-specific change to public fee accounting remains an [ecosystem question](open-questions.md#f1-slh-fee-policy).
 The current implementation retains Zakura's fee rules.
 It applies no SLH fee discount or surcharge.
 These are wallet, relay, and mining rules, not consensus fee minima.
@@ -56,14 +56,17 @@ Its fee is 21,600 zatoshis at the pinned rate.
 This is 27 times the classical example at the same rate.
 The larger SLH authorization causes this difference.
 
-Before deployment beyond Regtest, resolve these points:
+The existing ZIP-317 formula already determines the size-based action count.
+The prototype's 400-zatoshi rate and 2,403-zatoshi dust floor are implementation settings.
+They are not proposed public defaults.
+The open ecosystem choice is whether measured SLH costs justify changing the existing accounting:
 
-- Choose whether to retain 400 zatoshis per action or follow a public ZIP fee rate.
-- Assess whether size-based fees cover verification, memory, and network costs.
-  Any SLH discount or surcharge needs cost evidence and a compatibility review.
+- Compare SLH verification, bandwidth, and storage costs with fees under the existing rule.
+  Any SLH discount, surcharge, or action-count change needs cost evidence and a compatibility review.
   Signature-check limits remain a separate resource control.
-- Coordinate changes to wallet and node fee rules.
-  Preserve [saved fee approvals and change checks](wallet.md#capacity-limits).
+- Assess small payments and multisig spending under both the baseline and any proposed change.
+- If a change is justified, specify coordinated wallet, relay, and mining behavior.
+  Existing [saved fee approvals and change checks](wallet.md#capacity-limits) remain implementation safeguards.
 
 ## Mempool storage
 

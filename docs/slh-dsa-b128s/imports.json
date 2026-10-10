@@ -2041,7 +2041,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "b816dd25da0a95548fc920f2fb021f9ccbead3525db25bc232f8995fe5935132"
+      "sha256": "8b0ed6094359e9d6e77615bc58fb5c731df0289dcfa5b6e1961f0120e614c826"
     },
     {
       "disposition": "new",
@@ -2148,13 +2148,11 @@
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/relay-mining.md",
-        "docs/slh-dsa-b128s/runtime.md",
         "docs/slh-dsa-b128s/wallet.md",
-        "docs/slh-dsa-b128s/recovery.md",
         "docs/slh-dsa-b128s/writing.md"
       ],
-      "reason": "Track unresolved SLH security, deployment, fee, interoperability, migration and history choices. Link to current implementation guides and separate validation scope.",
-      "sha256": "16aad9509d4d1f9ce565de5df80a1b0881629f1050f4067f2e146026eac1cc06"
+      "reason": "Track unresolved ecosystem choices for public SLH adoption. State existing Zcash rules as the baseline and distinguish SLH security, fee, signing, resource, receiver and migration decisions from prototype operation.",
+      "sha256": "480e8e3ab68aba319fccd4304c39a95598cfd359863857af939df83a824dcf6e"
     },
     {
       "disposition": "new",
@@ -2199,7 +2197,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "9565a426206ab107b5a2acc2ecb13a7c67a5b77bfe59495aa202afee86cb42e3"
+      "sha256": "2ecbda3f24d63bc893f2d0025fae532b8235f4b9c47b314fe2eff72877510e58"
     },
     {
       "disposition": "new",
