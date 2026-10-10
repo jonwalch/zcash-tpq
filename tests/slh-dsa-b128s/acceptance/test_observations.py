@@ -223,7 +223,7 @@ class NodePlumbingTests(unittest.TestCase):
                 binary.write_bytes(b"never execute")
                 node = nodes.ManagedNode(binary, root, "node-a", "public-miner", 1234,
                                          observation_token=token)
-                node.rpc = Mock(return_value=0)
+                node.response = Mock(return_value={"jsonrpc": "2.0", "id": 1, "result": 0})
                 process = Mock(pid=42)
                 process.poll.return_value = None
                 process.wait.return_value = 0
@@ -240,6 +240,7 @@ class NodePlumbingTests(unittest.TestCase):
                      patch.object(observed, "source_state", return_value={"mock": True}):
                     node.start()
                     node.stop()
+                node.response.assert_called_once_with("getblockcount")
                 self.assertEqual(node.stops, [0])
                 self.assertEqual(len(node.observation_captures), int(token is not None))
                 if token:

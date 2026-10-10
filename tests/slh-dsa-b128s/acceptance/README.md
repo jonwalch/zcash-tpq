@@ -6,6 +6,13 @@ Importing these modules starts no workload.
 Execution receipts start incomplete and retain failed attempts.
 Historical results keep their original identities.
 
+Node startup waits for a nonnegative integer `getblockcount` result. Alongside
+transport readiness retries, it retries only the pinned Zakura empty-state error
+(`-1`, `No blocks in state`), which can precede the genesis commit. Other RPC
+errors and malformed heights fail immediately. The existing 60-second bound and
+process-exit checks still apply. This reuses the research drivers' startup retry
+flow with a narrower error check; it changes no node behavior.
+
 ## Offline tests
 
 Install the pinned [wallet-format requirements](../wallet/formats/requirements.txt).

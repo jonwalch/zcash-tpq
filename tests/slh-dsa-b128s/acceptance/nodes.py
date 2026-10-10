@@ -108,9 +108,20 @@ class ManagedNode(Node):
         def ready():
             require(self.process.poll() is None, "node_startup_failed")
             try:
-                return self.rpc("getblockcount") >= 0
+                reply = self.response("getblockcount")
             except (urllib.error.URLError, TimeoutError, ConnectionError):
                 return False
+            error = reply.get("error")
+            # The RPC endpoint can open before genesis reaches the chain tip.
+            # Retry only the pinned empty-state error, not arbitrary RPC failures.
+            if (type(error) is dict and type(error.get("code")) is int
+                    and error == {"code": -1, "message": "No blocks in state"}
+                    and "result" not in reply):
+                return False
+            require(error is None and "result" in reply, "rpc_rejected_getblockcount")
+            require(type(reply["result"]) is int and reply["result"] >= 0,
+                    "node_startup_height")
+            return True
         wait_for(ready, "node_startup_timeout", 60)
 
     def stop(self):
