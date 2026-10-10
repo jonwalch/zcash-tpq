@@ -33,6 +33,28 @@ Select the required independent review of quantum assumptions and signer behavio
 That review must cover each supported platform, including side channels and secret handling.
 The [signer guide](../../crates/pq-slh-dsa-b-sign/README.md#clearing-scope) records current limits.
 
+## S2: Signing modes and message format
+
+Status: Current Regtest contract fixed. Future extensions open.
+
+The current [v5/v6 contract](protocol.md#byte-contract) permits only `SIGHASH_ALL`,
+with `ANYONECANPAY` disabled.
+It commits to all inputs and outputs, including trusted input amounts and scripts.
+The signing message also binds the signature suite, network, transaction version,
+upgrade branch, and input index.
+
+The authorization carries no selectable signing mode or sighash suffix.
+
+Before extending this contract, resolve these questions:
+
+- Should future versions remain `SIGHASH_ALL` only?
+- Which use case would justify `SIGHASH_SINGLE`, `SIGHASH_NONE`, or `ANYONECANPAY`?
+- What must each signer approve when some inputs or outputs can change?
+- How would new modes or message formats be versioned and activated?
+
+Specify the exact signed fields and intentional exclusions for each transaction version.
+`SIGHASH_ALL` does not mean every serialized byte is signed.
+
 ## D1: Public activation and resource limits
 
 Status: Open.

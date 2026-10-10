@@ -2154,7 +2154,7 @@
         "docs/slh-dsa-b128s/writing.md"
       ],
       "reason": "Track unresolved SLH security, deployment, fee, interoperability, migration and history choices. Link to current implementation guides and separate validation scope.",
-      "sha256": "60d339dd10dfe617bc2b98baf54347c6f9cd1d16be288ebf954ff2ecf3addd8c"
+      "sha256": "82b59db921a032301ee3e1552fa9ac2f343bdc7533747b96ef5ce06cace38172"
     },
     {
       "disposition": "new",
