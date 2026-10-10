@@ -82,12 +82,7 @@ def source_state(root=ROOT):
               if (root / name).exists()]
     require(not git(root, "status", "--porcelain=v1", "--untracked-files=all", "--",
                     *paths, "Cargo.lock"), "dirty_build_inputs")
-    # These two unchanged upstream links are part of the broad crate inventory.
-    # The fixture producer's narrower inventory still refuses every symlink.
-    prefix = "crates/zakurad/tests/common/lightwalletd/"
-    links = {prefix + "proto/" + name: "../lightwallet-protocol/walletrpc/" + name
-             for name in ("compact_formats.proto", "service.proto")}
-    inventory = source_inventory(root, paths, allowed_symlinks=links)
+    inventory = source_inventory(root, paths)
     commit = git(root, "rev-parse", "HEAD")
     hex_field(commit, 20)
     return {"source_commit": commit, "source_inventory": inventory,

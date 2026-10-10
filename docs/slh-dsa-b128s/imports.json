@@ -2301,8 +2301,8 @@
         "tests/slh-dsa-b128s/acceptance/NOTICE",
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
-      "sha256": "4b7001d0666e56a976359d359051a04030ce79b926017506bd37f1fc004ab4e9"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Remove obsolete lightwalletd symlink exceptions after upstream deleted the harness; all current broad build-inventory inputs must be regular files, using the existing strict helper.",
+      "sha256": "065a8106c9d6ec40c355ba76b6f8ec0433d565f3bd8bec19971d5acb7c6d2efc"
     },
     {
       "disposition": "adapted",
@@ -2429,7 +2429,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "18f6a5edc6ce1f71d84a4aab0a9888851d5a59c760c872d364dc9f6700ac4d8a"
+      "sha256": "7f358a25d275bbdccbd51f5ba43b7e9efa1e3e7ae6d835fa35f6988c67fc0389"
     },
     {
       "disposition": "new",
@@ -2470,8 +2470,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Offline mocks bind exact optional host/test recipes, no-run artifact selection and source/features/binary receipts; no compilation or child execution.",
-      "sha256": "50c5854a36743ca0cffba06fab650989e6939a9f78b2dcd5146b9314373634d6"
+      "reason": "Offline mocks bind exact optional host/test recipes, no-run artifact selection and source/features/binary receipts. Miniature Git checkouts exercise current source inventories, dirty-input refusal and rejection of symlinks; no compilation or runtime process execution.",
+      "sha256": "4057be29aaf524ed5dac10a9faa882b7315676367bd0fb819e560eaff40a6271"
     },
     {
       "disposition": "new",

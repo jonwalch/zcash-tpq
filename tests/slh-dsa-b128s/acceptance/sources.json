@@ -9,7 +9,7 @@
   "reused_product": [
     {
       "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
-      "role": "Existing canonical/strict parser, transport, public fixture seeds, host/sign calls and default producer inventories remain unchanged. Only the inventory helper adds an explicit allowlist for pinned inherited links used by broad build receipts.",
+      "role": "Existing canonical/strict parser, transport, public fixture seeds, host/sign calls and default producer inventories remain unchanged. The inventory helper retains its explicit pinned-link opt-in, but current broad build receipts use its default rejection of all symlinks after upstream removed the lightwalletd links.",
       "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b"
     },
     {
@@ -554,10 +554,10 @@
       ]
     },
     {
-      "adaptation": "Retain bounded loopback RPC, exact source/build provenance and public diagnostics; reuse product canonical/parser/inventory functions and current SLH identity. Exact canonical wallet files omit trailing whitespace. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks. Validate host-shielded and wallet-faults receipts through the same exact build recipe and source/binary identity contract.",
+      "adaptation": "Retain bounded loopback RPC, exact source/build provenance and public diagnostics; reuse product canonical/parser/inventory functions and current SLH identity. Exact canonical wallet files omit trailing whitespace. After upstream 82ff9228e removed the lightwalletd harness and both protobuf links, use the inventory helper's default rejection of all symlinks; no current inventoried source path needs an exception. Validate host-shielded and wallet-faults receipts through the same exact build recipe and source/binary identity contract.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/common.py",
-      "sha256": "4b7001d0666e56a976359d359051a04030ce79b926017506bd37f1fc004ab4e9",
+      "sha256": "065a8106c9d6ec40c355ba76b6f8ec0433d565f3bd8bec19971d5acb7c6d2efc",
       "sources": [
         "build",
         "provenance",
@@ -714,10 +714,10 @@
       "sources": []
     },
     {
-      "adaptation": "Offline no-run recipe, artifact-selection and source/feature receipt controls; reject duplicates, foreign targets and symlink executables without invoking Cargo or tests.",
+      "adaptation": "Offline no-run recipe, artifact-selection and source/feature receipt controls; reject duplicates, foreign targets and symlink executables without invoking Cargo or runtime tests. Real miniature Git checkouts cover removal of the upstream lightwalletd aliases, exact inventory/lock/commit binding, dirty-input refusal and rejection of all tracked symlinks, including former alias paths.",
       "classification": "coordinated fixture build or public documentation extension",
       "path": "tests/slh-dsa-b128s/acceptance/test_build_tools.py",
-      "sha256": "50c5854a36743ca0cffba06fab650989e6939a9f78b2dcd5146b9314373634d6",
+      "sha256": "4057be29aaf524ed5dac10a9faa882b7315676367bd0fb819e560eaff40a6271",
       "sources": []
     },
     {

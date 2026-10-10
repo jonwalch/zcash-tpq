@@ -1,8 +1,10 @@
 """Offline recipe/receipt tests; no Cargo, wallet process or proof execution."""
 import copy
+import hashlib
 import io
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -10,6 +12,77 @@ from unittest.mock import patch
 
 import build
 import common
+from generate_transactions import FixtureError
+
+
+class SourceStateTests(unittest.TestCase):
+    def git(self, root, *arguments):
+        return subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false",
+                               "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                               "-C", str(root), *arguments], check=True, capture_output=True,
+                              text=True, timeout=30).stdout.strip()
+
+    def checkout(self, root):
+        files = {"Cargo.toml": "manifest", "Cargo.lock": "workspace lock",
+                 "crates/example.rs": "source", "scripts/check.py": "script",
+                 "tests/slh-dsa-b128s/acceptance/example.py": "adapter",
+                 "tests/slh-dsa-b128s/fixture-signer/Cargo.lock": "signer lock"}
+        for name, data in files.items():
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(data)
+        self.git(root, "init", "-q")
+        self.commit(root)
+        return files
+
+    def commit(self, root):
+        self.git(root, "add", "--all")
+        self.git(root, "commit", "-qm", "fixture source")
+
+    def test_source_state_accepts_checkout_without_removed_upstream_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            files = self.checkout(root)
+            self.assertFalse((root / "crates/zakurad/tests/common/lightwalletd").exists())
+            state = common.source_state(root)
+            expected = [{"path": name, "sha256": hashlib.sha256(data.encode()).hexdigest()}
+                        for name, data in sorted(files.items()) if Path(name).name != "Cargo.lock"]
+            self.assertEqual(state["source_inventory"], expected)
+            self.assertEqual(state["source_commit"], self.git(root, "rev-parse", "HEAD"))
+            self.assertEqual(state["lock_sha256"], hashlib.sha256(b"workspace lock").hexdigest())
+            self.assertEqual(state["fixture_lock_sha256"], hashlib.sha256(b"signer lock").hexdigest())
+
+    def test_source_state_rejects_dirty_inputs_and_binds_committed_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.checkout(root)
+            before = common.source_state(root)
+            (root / "crates/example.rs").write_text("changed source")
+            with self.assertRaisesRegex(common.AcceptanceError, "dirty_build_inputs"):
+                common.source_state(root)
+            self.commit(root)
+            after = common.source_state(root)
+            self.assertNotEqual(before["source_commit"], after["source_commit"])
+            self.assertNotEqual(before["source_inventory_sha256"], after["source_inventory_sha256"])
+            self.assertIn({"path": "crates/example.rs", "sha256": hashlib.sha256(b"changed source").hexdigest()},
+                          after["source_inventory"])
+            (root / "Cargo.lock").write_text("changed lock")
+            with self.assertRaisesRegex(common.AcceptanceError, "dirty_build_inputs"):
+                common.source_state(root)
+
+    def test_source_state_rejects_tracked_symlinks_including_removed_upstream_aliases(self):
+        aliases = ["crates/alias.rs"] + ["crates/zakurad/tests/common/lightwalletd/proto/" + name
+                   for name in ("compact_formats.proto", "service.proto")]
+        for name in aliases:
+            with self.subTest(path=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.checkout(root)
+                link = root / name
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(os.path.relpath(root / "crates/example.rs", link.parent))
+                self.commit(root)
+                with self.assertRaisesRegex(FixtureError, "source_file"):
+                    common.source_state(root)
 
 
 class ToolBuildTests(unittest.TestCase):
