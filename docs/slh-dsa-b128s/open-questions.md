@@ -11,6 +11,8 @@ Status: Open.
 
 Which fee rate should apply beyond Regtest?
 Should SLH have a separate fee adjustment for its resource costs?
+Should recipient-payment minimums reflect expected future spending costs?
+How should these minimums apply when the receiver hides its policy and signature count?
 
 The implementation uses Zakura's 400-zatoshi rate and ZIP-317 action counts.
 It applies no SLH fee discount or surcharge.
@@ -19,6 +21,13 @@ shows the effect of SLH signature sizes, and lists the required decisions.
 Those decisions need cost evidence and a review of wallet and node compatibility.
 The current Regtest fees do not establish a production fee policy.
 
+The current [relay dust floor](relay-mining.md#relay-policy-and-fees) is 2,403 zatoshis.
+A one-input 1-of-1 SLH payment has a conventional fee of 21,600 zatoshis at the pinned rate.
+Relay acceptance does not guarantee an economical spend.
+The wallet already estimates future change costs.
+Its [change review](../../crates/pq-wallet/src/payment/review.rs) requires explicit approval
+to keep change below that estimate.
+
 ## S1: Security target and key use
 
 Status: Open.
@@ -26,6 +35,10 @@ Status: Open.
 What security target and protection period must the exact BLAKE3 construction meet?
 What limits on signatures per key and what key-rotation rules are required?
 Include use across outputs and devices, replacement signatures, and released partials.
+
+What guarantees must hold across BLAKE3 signatures, SHA-256 key and policy commitments,
+and BLAKE2b-256 transaction digests?
+Review these components together as the complete authorization.
 
 The [construction and parameters](protocol.md#source-and-signature-primitive) are fixed for this experiment.
 Independent implementation checks do not establish the construction's security.
@@ -55,6 +68,20 @@ Before extending this contract, resolve these questions:
 Specify the exact signed fields and intentional exclusions for each transaction version.
 `SIGHASH_ALL` does not mean every serialized byte is signed.
 
+## S3: Chain replay protection
+
+Status: Current Regtest contract fixed. Future extensions open.
+
+Should signatures bind to a specific chain instance?
+If required, which immutable chain identifier should the signing message include?
+How would a revised contract preserve historical validation and normal reorg behavior?
+
+The current [message](protocol.md#byte-contract) binds the network, upgrade branch,
+transaction version, input index, and transaction digest.
+It does not include an independent chain-instance identifier.
+An authorization can be valid on two private chains if the signed context, UTXOs, and applicable rules match.
+Wallet profile checks and separate state directories do not add this signature binding.
+
 ## D1: Public activation and resource limits
 
 Status: Open.
@@ -82,14 +109,29 @@ A checksum checks the encoding; it does not authenticate the recipient.
 Specify identifiers, sender behavior for unsupported receivers, and payment-request authentication.
 The existing [independent payment review](cli.md#approve-and-exchange-a-payment) remains required.
 
+## W1: Wallet node trust
+
+Status: Current Regtest contract fixed. Future extensions open.
+
+Must users trust a full node, or should a later wallet support a reviewed remote-service or light-client model?
+What must authenticate chain history, spent outputs, current unspent status, and active rules in each model?
+
+The current wallet requires an operator-trusted full node.
+Its [RPC client](../../crates/pq-wallet/src/rpc.rs) accepts numeric loopback endpoints.
+Access to a remote trusted node requires an [authenticated local tunnel](cli.md#prepare-the-wallet).
+This transport retains the full-node trust requirement.
+The current [chain source](../../crates/pq-wallet/src/scan.rs) does not supply light-client proofs.
+Any new model needs a separate verification contract before the wallet can rely on it.
+
 ## M1: Migration, retirement, and legacy recovery
 
 Status: Open.
 
 What cutoff height and notice period should apply to ordinary ECDSA spending?
-When should creation of new classical outputs stop?
+Should creation of new classical outputs stop? If so, when?
 Which ownership evidence and PQ-safe recovery construction should admit preserved funds?
 How should a later signature-suite change preserve ownership and historical validation?
+How should transparent coinbase funds reach SLH outputs under the inherited shielded-spend restriction?
 
 The agreed direction is ordinary migration, followed by an announced ECDSA cutoff.
 Preserve remaining UTXOs for a separately specified recovery path.
@@ -101,6 +143,13 @@ Later SLH spends require SLH authorization.
 The Regtest implementation has no public ECDSA cutoff or legacy-recovery protocol.
 It rejects mixed classical and SLH transparent inputs.
 Classical and SLH outputs retain separate authorization rules.
+
+The inherited public-network rule requires a transaction that spends transparent coinbase funds
+to have no transparent outputs, even after maturity.
+The [node enforces this restriction](../../crates/zakura-chain/src/transaction.rs).
+Regtest allowances do not establish a public migration route.
+The current [wallet](wallet.md#policies-and-payments) constructs transparent-only payments.
+Specify a migration or recovery route for coinbase funds and its shielded-pool assumptions.
 
 ## H1: History availability and recovery support
 
