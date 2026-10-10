@@ -16,7 +16,7 @@ After activation, the SLH dust floor uses the existing dust rate and minimum inp
 ```
 
 The floor does not guarantee an economical spend of the hidden policy.
-The ZIP-317 marginal fee is 400 zatoshis per action.
+The pinned Zakura policy uses ZIP-317 action counts at 400 zatoshis per action.
 The retained transparent fixtures have these conventional fees:
 
 | Case | Fee in zatoshis |
@@ -29,6 +29,41 @@ The retained transparent fixtures have these conventional fees:
 The 17-check case exceeds the test profile's transaction limit, regardless of its fee.
 Classical funding still requires classical authorization and uses zero SLH checks.
 Created outputs cannot select the native input verifier.
+
+## Fee policy discussion
+
+Fee policy remains [open for deployment beyond Regtest](open-questions.md#f1-fees-beyond-regtest).
+The current implementation retains Zakura's fee rules.
+It applies no SLH fee discount or surcharge.
+These are wallet, relay, and mining rules, not consensus fee minima.
+
+The comparison below uses ZIP status checked on 2026-10-10.
+Each payment has one classical P2PKH (pay-to-public-key-hash) input,
+one recipient output, and one change output of the same type.
+The two-action minimum applies to each example.
+
+| Policy | Zatoshis per action | Payment fee in zatoshis |
+| --- | ---: | ---: |
+| [ZIP 317](https://zips.z.cash/zip-0317), active fee rule | 5,000 | 10,000 |
+| [ZIP 2009](https://zips.z.cash/zip-2009), draft proposal | 1,000 | 2,000 |
+| [Pinned Zakura policy](../../crates/zakura-chain/src/transaction/unmined/zip317.rs) | 400 | 800 |
+
+[ZIP 313](https://zips.z.cash/zip-0313) specified a flat 1,000-zatoshi fee.
+ZIP 317 replaced it. ZIP 2009 proposes a fee per action, not a flat fee.
+
+The one-input SLH 1-of-1 payment above uses 54 actions.
+Its fee is 21,600 zatoshis at the pinned rate.
+This is 27 times the classical example at the same rate.
+The larger SLH authorization causes this difference.
+
+Before deployment beyond Regtest, resolve these points:
+
+- Choose whether to retain 400 zatoshis per action or follow a public ZIP fee rate.
+- Assess whether size-based fees cover verification, memory, and network costs.
+  Any SLH discount or surcharge needs cost evidence and a compatibility review.
+  Signature-check limits remain a separate resource control.
+- Coordinate changes to wallet and node fee rules.
+  Preserve [saved fee approvals and change checks](wallet.md#capacity-limits).
 
 ## Mempool storage
 

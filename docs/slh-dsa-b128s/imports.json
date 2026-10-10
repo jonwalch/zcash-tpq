@@ -2041,7 +2041,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "68013cd1ad75ead6705f81956d9288b2a2a848f2f3f531c23390c19ae5c1e30f"
+      "sha256": "d3a82241d9c2b386c61251733cf684f9217f11fa50f460ef323f446967ef3af2"
     },
     {
       "disposition": "new",
@@ -2144,6 +2144,16 @@
     },
     {
       "disposition": "new",
+      "path": "docs/slh-dsa-b128s/open-questions.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/relay-mining.md",
+        "docs/slh-dsa-b128s/writing.md"
+      ],
+      "reason": "Track unresolved SLH deployment choices, starting with fee policy. Link to the implemented rules and separate validation scope.",
+      "sha256": "889e2fa1d5102b730198d39d1379a7eda1591d5439ebb0427bddc63264ad4444"
+    },
+    {
+      "disposition": "new",
       "path": "docs/slh-dsa-b128s/packaging.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
@@ -2185,7 +2195,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "31d1ab6fd094c42f5df3ad091d01f0b5b2af18cdd153044cb014a3d47199f441"
+      "sha256": "9565a426206ab107b5a2acc2ecb13a7c67a5b77bfe59495aa202afee86cb42e3"
     },
     {
       "disposition": "new",
@@ -2249,7 +2259,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "01b670b7717866aeb5853eba6f09c129cbbee4906e6d6d40d17da5f887e83168"
+      "sha256": "ef6ec73e83619ef89c8af0a5644477f7f67e10d538479969e6b7a74fbd8abe34"
     },
     {
       "disposition": "new",

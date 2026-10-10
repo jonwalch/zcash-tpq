@@ -156,8 +156,9 @@ A 15-of-15 authorization needs a five-byte CompactSize length.
 | Nine 2-of-3 | 18 | 143,492 | 143,493 | Reject check limit, not byte limit |
 | Two 15-of-15 | 30 | 237,967 | 237,968 | Reject check limit, not byte limit |
 
-ZIP-317 fees use actual sizes and the pinned marginal fee of 400 zatoshis.
-The old 5,000-zatoshi helper value does not apply.
+Wallet fees use actual sizes and Zakura's marginal fee of 400 zatoshis per action.
+The [fee policy discussion](relay-mining.md#fee-policy-discussion) compares this
+rate with the ZIPs and lists open choices for deployment beyond Regtest.
 The SLH recipient and change dust floor is 2,403 zatoshis.
 Boundary tests use 2,402, 2,403, and 2,404.
 Stored fee approvals remain unchanged.
