@@ -35,7 +35,8 @@ The acceptance guide gives the build commands.
 | --- | --- |
 | Encodings, signing messages, activation, and limits | [Protocol](protocol.md), [wallet specification](wallet.md) |
 | Verification, mempool admission, and mining | [Consensus](consensus.md), [relay and mining](relay-mining.md) |
-| Current fees and open policy choices | [Open questions](open-questions.md), [fee policy discussion](relay-mining.md#fee-policy-discussion) |
+| Open security, deployment, and wallet choices | [Open questions](open-questions.md) |
+| Current fees and fee policy choices | [Fee policy discussion](relay-mining.md#fee-policy-discussion) |
 | What has been checked and what remains | [Validation evidence](validation.md) |
 | Funding, rejection, restart, and reorg scenarios | [Lifecycle](lifecycle-controls.md), [transparent controls](transparent-controls.md) |
 | Missing or inconsistent node history | [Wallet history controls](history-controls.md) |

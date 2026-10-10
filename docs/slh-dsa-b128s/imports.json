@@ -2041,7 +2041,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "d3a82241d9c2b386c61251733cf684f9217f11fa50f460ef323f446967ef3af2"
+      "sha256": "b816dd25da0a95548fc920f2fb021f9ccbead3525db25bc232f8995fe5935132"
     },
     {
       "disposition": "new",
@@ -2146,11 +2146,15 @@
       "disposition": "new",
       "path": "docs/slh-dsa-b128s/open-questions.md",
       "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/relay-mining.md",
+        "docs/slh-dsa-b128s/runtime.md",
+        "docs/slh-dsa-b128s/wallet.md",
+        "docs/slh-dsa-b128s/recovery.md",
         "docs/slh-dsa-b128s/writing.md"
       ],
-      "reason": "Track unresolved SLH deployment choices, starting with fee policy. Link to the implemented rules and separate validation scope.",
-      "sha256": "889e2fa1d5102b730198d39d1379a7eda1591d5439ebb0427bddc63264ad4444"
+      "reason": "Track unresolved SLH security, deployment, fee, interoperability, migration and history choices. Link to current implementation guides and separate validation scope.",
+      "sha256": "60d339dd10dfe617bc2b98baf54347c6f9cd1d16be288ebf954ff2ecf3addd8c"
     },
     {
       "disposition": "new",
