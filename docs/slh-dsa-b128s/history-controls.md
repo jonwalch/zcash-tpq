@@ -59,6 +59,9 @@ Unmodified responses retain exact bytes, including decimal amounts.
 Request evidence records method, mode, and byte hashes.
 A marker must show that the selected fault occurred.
 Ordinary upstream errors cannot count as injected failures.
+The unavailable-context guard uses pinned Zakura's BIP70 chain name `test`,
+including for Regtest. The driver still authenticates its configured profile,
+tip and raw blocks; the RPC chain-name string alone does not establish Regtest.
 
 ## Human command
 

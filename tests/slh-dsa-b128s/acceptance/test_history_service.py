@@ -24,12 +24,27 @@ def reply(value):
 def relay(raw):
     call = json.loads(raw)
     if call["method"] == "getblockchaininfo":
-        return reply({"chain": "regtest", "blocks": 111, "bestblockhash": BLOCK})
+        return reply({"chain": "test", "blocks": 111, "bestblockhash": BLOCK})
     if call["method"] == "getblockhash":
         return reply(BLOCK)
     if call["method"] == "getblock":
         return reply("00" * 100)
     raise AssertionError("unexpected mocked method")
+
+
+def wallet_http(address, body):
+    """Pinned LocalRpc::call_nullable framing, with no wallet or node process."""
+    request = (f"POST / HTTP/1.0\r\nHost: {address}\r\nContent-Type: application/json\r\n"
+               f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n").encode() + body
+    with socket.create_connection(("127.0.0.1", int(address.split(":")[1])), timeout=2) as client:
+        client.sendall(request)
+        response = bytearray()
+        while data := client.recv(8192):
+            response.extend(data)
+            if len(response) > 16384:
+                raise AssertionError("mock response exceeds the small fixture bound")
+    header, raw = bytes(response).split(b"\r\n\r\n", 1)
+    return header, raw
 
 
 class ServiceTests(unittest.TestCase):
@@ -56,6 +71,40 @@ class ServiceTests(unittest.TestCase):
                 "request_sha256": hashlib.sha256(request).hexdigest(),
                 "upstream_sha256": hashlib.sha256(original).hexdigest(),
                 "response_sha256": hashlib.sha256(original).hexdigest()})
+
+    def test_wallet_http_context_fault_uses_pinned_regtest_name_then_reconciles(self):
+        raw = query()
+        upstream = Mock(side_effect=relay)
+        with history.HistoryService("127.0.0.1:1", "unavailable", relay=upstream) as service:
+            header, body = wallet_http(service.address, raw)
+            self.assertTrue(header.startswith(b"HTTP/1.0 200 "))
+            self.assertIn(f"Content-Length: {len(body)}".encode(), header)
+            self.assertEqual(body, history.error())
+            self.assertTrue(service.events[0]["fault_applied"])
+            self.assertEqual(service.events[0]["request_sha256"], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(service.events[0]["upstream_sha256"], hashlib.sha256(relay(raw)).hexdigest())
+            self.assertEqual(service.events[0]["response_sha256"], hashlib.sha256(body).hexdigest())
+            service.clear()
+            header, body = wallet_http(service.address, raw)
+            self.assertTrue(header.startswith(b"HTTP/1.0 200 "))
+            self.assertEqual(body, relay(raw))
+            self.assertEqual([event["fault_applied"] for event in service.events], [True, False])
+            self.assertEqual(service.count, 2)
+            self.assertEqual([call.args for call in upstream.call_args_list], [(raw,), (raw,)])
+
+    def test_wallet_http_invalid_context_and_real_upstream_error_do_not_count_as_faults(self):
+        for chain in ("main", "regtest", "", None, True):
+            with self.subTest(chain=chain), history.HistoryService("127.0.0.1:1", "unavailable",
+                    relay=lambda _: reply({"chain": chain, "blocks": 111, "bestblockhash": BLOCK})) as service:
+                header, _ = wallet_http(service.address, query())
+                self.assertTrue(header.startswith(b"HTTP/1.0 503 "))
+                self.assertEqual(service.events, [])
+        original = history.error(-8)
+        with history.HistoryService("127.0.0.1:1", "unavailable", relay=lambda _: original) as service:
+            header, body = wallet_http(service.address, query())
+            self.assertTrue(header.startswith(b"HTTP/1.0 200 "))
+            self.assertEqual(body, original)
+            self.assertFalse(service.events[0]["fault_applied"])
 
     def test_context_missing_tip_and_pruned_faults_clear_to_original_response(self):
         cases = [("unavailable", query(), None), ("missing-hash", query("getblockhash", [111]), None),

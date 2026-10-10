@@ -105,7 +105,8 @@ class HistoryService:
         if value.get("error") is None and "result" in value:
             method, params = query["method"], query["params"]
             if mode == "unavailable" and method == "getblockchaininfo":
-                require(type(value["result"]) is dict and value["result"].get("chain") == "regtest"
+                # Pinned Zakura reports BIP70's "test" name for Regtest too.
+                require(type(value["result"]) is dict and value["result"].get("chain") == "test"
                         and type(value["result"].get("blocks")) is int
                         and type(value["result"].get("bestblockhash")) is str, "history_upstream_context")
                 output, applied = error(), True
