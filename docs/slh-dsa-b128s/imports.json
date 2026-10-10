@@ -794,7 +794,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "367fbdf1a92f378e8649ccaf501fc7c6c524efe4ec090b1bc2d13f51d4ded2a8"
+      "sha256": "a83ef17629a1d8beb17d83210807a2acbf9904f55069cb4077cfedf6daef4ed3"
     },
     {
       "disposition": "attribution",
@@ -1047,7 +1047,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "2fc3b9780f6e5d807f930c10b9d353a8960026203b34f7512fff2c6f0da80dae"
+      "sha256": "1d4acf95a8a0528459a48be530e4e94bebff6faf72b4ba0159f2261b88752bc7"
     },
     {
       "disposition": "adapted",
@@ -2429,7 +2429,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "7f358a25d275bbdccbd51f5ba43b7e9efa1e3e7ae6d835fa35f6988c67fc0389"
+      "sha256": "0c76898696f760ff6c675b77417e5dfd6126046819c60fa3ce05c9054faaec27"
     },
     {
       "disposition": "new",

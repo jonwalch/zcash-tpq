@@ -210,11 +210,11 @@
     },
     {
       "target": "src/payment/tests.rs",
-      "target_sha256": "7bcf5e27a62b3eff75ecb76a7c3ba9e6766ca8e44815a1b07820648e65a7f9e5",
+      "target_sha256": "1d4acf95a8a0528459a48be530e4e94bebff6faf72b4ba0159f2261b88752bc7",
       "source": "crates/pq-wallet/src/payment/tests.rs",
       "source_sha256": "be4c20c034314be53009ed47a873fe4cb8281f64280a45e6d232b98cc2ba6f2b",
       "classification": "necessary SLH adaptation",
-      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation. Donation selection fixtures retain the research boundary cases with independent SLH input sizes: one-input fee 21,600, two-input fee 42,800 and donated fee 43,199; runtime fee policy is unchanged."
     },
     {
       "target": "src/watch/archive/commit.rs",

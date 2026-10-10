@@ -1008,8 +1008,12 @@ fn coordinator_cannot_redirect_recipient_or_downgrade_enrolled_change() {
 
 #[test]
 fn donation_over_fee_ceiling_continues_selection() {
+    // Independent SLH size vectors give 7,930 authorization bytes, plus 43
+    // input framing bytes. ZIP-317 charges ceil(input bytes / 150) * 400:
+    // 21,600 for one input and 42,800 for two. The first coin's 21,599
+    // remainder is below the future spend fee; donating it would cost 43,199.
     for version in [5, 6] {
-        for ceiling in [20_399, 20_500, 20_799] {
+        for ceiling in [42_799, 42_900, 43_199] {
             let wallets = wallets(1, 1, 2);
             let wallet = &wallets[0];
             let temp = tempfile::tempdir().unwrap();
@@ -1018,23 +1022,23 @@ fn donation_over_fee_ceiling_continues_selection() {
                 wallet.manifest(),
                 WatchMode::Allocator,
             );
-            let mut source = Source::funded(wallet, &[520_799, 512_000]);
+            let mut source = Source::funded(wallet, &[543_199, 512_000]);
             let mut approved = intent(version);
             approved.max_fee = ceiling;
             approved.remainder = Remainder::Fee;
             let result = store.prepare_payment(wallet, &mut source, &approved);
-            if ceiling == 20_399 {
+            if ceiling == 42_799 {
                 assert!(matches!(result, Err(Error::Fee)));
                 assert!(store.payments().unwrap().is_empty());
             } else {
                 let (proposal, review) = result.unwrap();
-                if ceiling == 20_500 {
+                if ceiling == 42_900 {
                     assert_eq!(proposal.inputs.len(), 2);
                     assert_eq!(review.fee, 42_800);
                     assert_eq!(review.change_value, 512_399);
                 } else {
                     assert_eq!(proposal.inputs.len(), 1);
-                    assert_eq!(review.fee, 20_799);
+                    assert_eq!(review.fee, 43_199);
                     assert_eq!(review.change_value, 0);
                 }
             }

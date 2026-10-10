@@ -364,10 +364,10 @@
       "sources": []
     },
     {
-      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Correct the reused donation-selection test amounts for independent SLH input sizes while preserving all three fee-ceiling outcomes.",
       "classification": "test-only human durable fault preparation",
       "path": "crates/pq-wallet/src/payment/tests.rs",
-      "sha256": "2fc3b9780f6e5d807f930c10b9d353a8960026203b34f7512fff2c6f0da80dae",
+      "sha256": "1d4acf95a8a0528459a48be530e4e94bebff6faf72b4ba0159f2261b88752bc7",
       "sources": []
     },
     {
