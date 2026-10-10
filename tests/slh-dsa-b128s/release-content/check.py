@@ -21,8 +21,10 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tests/slh-dsa-b128s/fixtures"))
 from generate_transactions import canonical, strict_json  # noqa: E402
 
-UPSTREAM = "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
-UPSTREAM_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
+FOUNDATION = "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
+FOUNDATION_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
+UPSTREAM = "a29a968575e37223cbeb8ac7a5d57aba135fb93a"
+UPSTREAM_TREE = "dbf61abd2440d12929350572894860a58a16a29e"
 LEDGER = "docs/slh-dsa-b128s/imports.json"
 KINDS = {"adapted", "new", "upstream-modification", "public-fixture", "attribution"}
 PRODUCT_PACKAGES = {"zakura-pq-cli", "zakura-pq-wallet", "zakura-pq-slh-dsa-b-sign",
@@ -87,9 +89,11 @@ def changed_paths(base, current):
 
 
 def validate_ledger(record, base, current, root):
-    require(set(record) == {"schema_version", "upstream", "upstream_tree", "files", "history_only", "note"},
+    require(set(record) == {"schema_version", "foundation", "foundation_tree", "upstream", "upstream_tree",
+                            "files", "history_only", "note"},
             "import ledger fields")
-    require(type(record["schema_version"]) is int and record["schema_version"] == 1
+    require(type(record["schema_version"]) is int and record["schema_version"] == 2
+            and record["foundation"] == FOUNDATION and record["foundation_tree"] == FOUNDATION_TREE
             and record["upstream"] == UPSTREAM and record["upstream_tree"] == UPSTREAM_TREE, "ledger pin")
     require(type(record["files"]) is list and type(record["history_only"]) is list, "ledger arrays")
     mapped = set()
@@ -209,20 +213,33 @@ def verify_paths(root, base, current, changed, *, require_tracked_paths=True):
     return packages
 
 
+def ancestor(root, earlier, later):
+    return subprocess.run(["git", "-C", str(root), "merge-base", "--is-ancestor", earlier, later],
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                          env=dict(os.environ, GIT_NO_LAZY_FETCH="1"), timeout=120).returncode == 0
+
+
 def history(root, base, allowed):
+    # The current baseline defines the final delta, but old product commits
+    # descend from the original foundation, not later upstream releases.
     revisions = git(root, "rev-list", "HEAD", "^" + UPSTREAM).decode().splitlines()
     paths = set()
+    upstream_entries = 0
     for revision in revisions:
-        require(subprocess.run(["git", "-C", str(root), "merge-base", "--is-ancestor", UPSTREAM, revision],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0,
+        require(ancestor(root, FOUNDATION, revision),
                 "foreign ancestry in selected history")
         parents = git(root, "rev-list", "--parents", "-n", "1", revision).decode().split()[1:]
         require(bool(parents), "foreign root commit")
         previous = tree(root, parents[0])
         state = tree(root, revision)
         touched = changed_paths(previous, state)
+        # Only exact entries from a merged, pinned upstream ancestor are
+        # inherited. A merge resolution with different bytes is product work.
+        inherited = [tree(root, parent) for parent in parents[1:] if ancestor(root, parent, UPSTREAM)]
         for path in touched:
-            # Upstream paths are allowed, but every post-pin change needs a disposition.
+            if any(state.get(path) == upstream.get(path) for upstream in inherited):
+                upstream_entries += 1
+                continue
             require(path in allowed, "unreviewed historical path: " + path)
             product_path(path)
             if path in state:
@@ -233,8 +250,10 @@ def history(root, base, allowed):
                     # path existence is enforced by verify_paths above.
                     manifest_paths(path, blob(root, state[path][2]), state, added=path not in base,
                                    require_tracked_paths=False)
-        paths.update(touched)
-    return {"commits": len(revisions), "changed_paths": len(paths), "commits_sha256": sha(canonical(sorted(revisions)))}
+            paths.add(path)
+    return {"commits": len(revisions), "changed_paths": len(paths),
+            "commits_sha256": sha(canonical(sorted(revisions))), "foundation": FOUNDATION,
+            "upstream": UPSTREAM, "inherited_merge_entries": upstream_entries}
 
 
 def refs(root):
@@ -259,11 +278,13 @@ def other_ref_history(root):
                 == "https://github.com/zakura-core/zakura.git", "unrecognized upstream ref source")
     extra = git(root, "rev-list", "--all", "--not", "HEAD", *upstream_refs).decode().splitlines()
     for revision in extra:
-        require(subprocess.run(["git", "-C", str(root), "merge-base", "--is-ancestor", UPSTREAM, revision],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0,
+        require(ancestor(root, FOUNDATION, revision),
                 "foreign ancestry on unselected ref")
         state = tree(root, revision)
-        base = tree(root, UPSTREAM)
+        # Workers may predate the refresh. Compare each against its own
+        # authenticated upstream ancestor, never an unrelated remote tip.
+        baseline = git(root, "merge-base", UPSTREAM, revision).decode().strip()
+        base = tree(root, baseline)
         verify_paths(root, base, state, changed_paths(base, state), require_tracked_paths=False)
     return {"extra_product_commits": len(extra), "extra_commits_sha256": sha(canonical(sorted(extra))),
             "upstream_refs_excluded_from_publication": upstream_refs}
@@ -339,20 +360,29 @@ def publication_guard(root, current):
     return {"workflow": path, "fork_gate": PUBLICATION_GATE, "default": "disabled"}
 
 
+def validate_baselines(root):
+    require(git(root, "rev-parse", FOUNDATION + "^{tree}").decode().strip() == FOUNDATION_TREE,
+            "foundation tree mismatch")
+    require(git(root, "rev-parse", UPSTREAM + "^{tree}").decode().strip() == UPSTREAM_TREE, "upstream tree mismatch")
+    require(ancestor(root, FOUNDATION, UPSTREAM), "upstream does not descend from foundation")
+    require(ancestor(root, UPSTREAM, "HEAD"), "current upstream is not integrated")
+
+
 def check(root, *, packages=False):
     root = root.resolve()
     require(not git(root, "status", "--porcelain", "--untracked-files=all"), "commit product inputs before auditing")
-    require(git(root, "rev-parse", UPSTREAM + "^{tree}").decode().strip() == UPSTREAM_TREE, "upstream tree mismatch")
+    validate_baselines(root)
     base, current = tree(root, UPSTREAM), tree(root, "HEAD")
     require(LEDGER in current, "import ledger missing")
     record = strict_json(blob(root, current[LEDGER][2]), 4 * 1024 * 1024)
     allowed = validate_ledger(record, base, current, root)
     changed = changed_paths(base, current)
     candidates = verify_paths(root, base, current, changed)
-    result = {"schema_version": 1, "source_commit": git(root, "rev-parse", "HEAD").decode().strip(),
+    result = {"schema_version": 2, "source_commit": git(root, "rev-parse", "HEAD").decode().strip(),
         "source_tree": git(root, "rev-parse", "HEAD^{tree}").decode().strip(), "upstream": UPSTREAM,
+        "upstream_tree": UPSTREAM_TREE, "foundation": FOUNDATION, "foundation_tree": FOUNDATION_TREE,
         "ledger_sha256": sha(blob(root, current[LEDGER][2])), "tracked_files": len(current),
-        "changed_files": len(changed), "history": history(root, base, allowed), "refs": refs(root),
+        "changed_files": len(changed), "history": history(root, tree(root, FOUNDATION), allowed), "refs": refs(root),
         "unselected_ref_audit": other_ref_history(root),
         "archive": archive(root, current), "publication": publication_guard(root, current),
         "package_lists": package_lists(root, candidates, current) if packages else None}

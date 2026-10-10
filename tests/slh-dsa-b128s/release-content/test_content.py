@@ -125,6 +125,105 @@ class PathTests(unittest.TestCase):
 
 
 class GitTests(unittest.TestCase):
+    def refreshed_fixture(self, root):
+        fixture = GitFixture(root)
+        main = fixture.run("branch", "--show-current")
+        fixture.write("product.txt", "attributable product\n")
+        fixture.commit("product before upstream refresh")
+        fixture.run("checkout", "-qb", "upstream-refresh", fixture.base)
+        fixture.write("upstream.txt", "authenticated upstream addition\n")
+        upstream = fixture.commit("upstream update")
+        fixture.run("checkout", "-q", main)
+        return fixture, upstream
+
+    def test_normal_upstream_merge_keeps_original_product_ancestry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream = self.refreshed_fixture(Path(temporary))
+            fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base):
+                result = audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+            self.assertEqual(result["commits"], 2)
+            self.assertEqual(result["changed_paths"], 1)
+            self.assertEqual(result["inherited_merge_entries"], 1)
+
+    def test_upstream_merge_does_not_exempt_changed_resolution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream = self.refreshed_fixture(Path(temporary))
+            fixture.run("merge", "-q", "--no-ff", "--no-commit", upstream)
+            fixture.write("upstream.txt", "different unreviewed merge resolution\n")
+            fixture.commit("merge with unrelated edit")
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), \
+                    self.assertRaisesRegex(ValueError, "unreviewed historical path"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+
+    def test_refresh_keeps_deleted_private_side_branch_history_visible(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream = self.refreshed_fixture(Path(temporary))
+            main = fixture.run("branch", "--show-current")
+            fixture.run("checkout", "-qb", "private-import")
+            fixture.write("experiments/notes.txt", "must never ship\n")
+            fixture.commit("private import on second parent")
+            (fixture.root / "experiments/notes.txt").unlink()
+            fixture.commit("delete private import")
+            fixture.run("checkout", "-q", main)
+            fixture.run("merge", "-q", "--no-ff", "private-import", "-m", "merge clean-looking side branch")
+            fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), self.assertRaises(ValueError):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt", "experiments/notes.txt"})
+
+    def test_second_parent_is_not_upstream_just_because_it_has_same_foundation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream = self.refreshed_fixture(Path(temporary))
+            main = fixture.run("branch", "--show-current")
+            fixture.run("checkout", "-qb", "unreviewed", fixture.base)
+            fixture.write("unreviewed.txt", "not authenticated upstream\n")
+            fixture.commit("unreviewed side branch")
+            fixture.run("checkout", "-q", main)
+            fixture.run("merge", "-q", "--no-ff", "unreviewed", "-m", "merge side branch")
+            fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), \
+                    self.assertRaisesRegex(ValueError, "unreviewed historical path"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+
+    def test_refresh_preserves_unselected_older_worker_and_rejects_its_deleted_notes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream = self.refreshed_fixture(Path(temporary))
+            main = fixture.run("branch", "--show-current")
+            fixture.run("checkout", "-qb", "older-worker", fixture.base)
+            fixture.write("worker.txt", "unpublished public work\n")
+            worker = fixture.commit("older worker")
+            fixture.run("checkout", "-q", main)
+            fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base):
+                self.assertEqual(audit.other_ref_history(fixture.root)["extra_product_commits"], 1)
+            fixture.run("checkout", "-q", "older-worker")
+            fixture.write("experiments/notes.txt", "must never ship\n")
+            fixture.commit("worker imports notes")
+            (fixture.root / "experiments/notes.txt").unlink()
+            fixture.commit("worker removes notes")
+            fixture.run("checkout", "-q", main)
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), self.assertRaises(ValueError):
+                audit.other_ref_history(fixture.root)
+            self.assertTrue(audit.ancestor(fixture.root, fixture.base, worker))
+
+    def test_baseline_tree_and_integration_requirements_are_exact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream = self.refreshed_fixture(Path(temporary))
+            pins = {"UPSTREAM": upstream, "UPSTREAM_TREE": fixture.run("rev-parse", upstream + "^{tree}"),
+                    "FOUNDATION": fixture.base, "FOUNDATION_TREE": fixture.run("rev-parse", fixture.base + "^{tree}")}
+            with patch.multiple(audit, **pins), self.assertRaisesRegex(ValueError, "not integrated"):
+                audit.validate_baselines(fixture.root)
+            fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(fixture.root)
+            for key in ("FOUNDATION_TREE", "UPSTREAM_TREE"):
+                with patch.multiple(audit, **(pins | {key: "00" * 20})), self.assertRaisesRegex(ValueError, "tree mismatch"):
+                    audit.validate_baselines(fixture.root)
+            swapped = {"UPSTREAM": pins["FOUNDATION"], "UPSTREAM_TREE": pins["FOUNDATION_TREE"],
+                       "FOUNDATION": pins["UPSTREAM"], "FOUNDATION_TREE": pins["UPSTREAM_TREE"]}
+            with patch.multiple(audit, **swapped), self.assertRaisesRegex(ValueError, "does not descend"):
+                audit.validate_baselines(fixture.root)
+
     def test_deleted_experiment_cannot_hide_in_history(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixture = GitFixture(Path(temporary))
@@ -132,7 +231,7 @@ class GitTests(unittest.TestCase):
             fixture.commit("accidental private import")
             (fixture.root / "experiments/notes.txt").unlink()
             fixture.commit("delete notes")
-            with patch.object(audit, "UPSTREAM", fixture.base), self.assertRaises(ValueError):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), self.assertRaises(ValueError):
                 audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"README.md", "experiments/notes.txt"})
 
     def test_foreign_root_merge_is_rejected_even_with_clean_current_tree(self):
@@ -145,7 +244,7 @@ class GitTests(unittest.TestCase):
             fixture.commit("foreign root")
             fixture.run("checkout", "-q", main)
             fixture.run("merge", "-q", "--allow-unrelated-histories", "foreign", "-m", "merge")
-            with patch.object(audit, "UPSTREAM", fixture.base), self.assertRaisesRegex(ValueError, "foreign ancestry"):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), self.assertRaisesRegex(ValueError, "foreign ancestry"):
                 audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"README.md", "foreign.txt"})
 
     def test_unselected_foreign_ref_is_not_ignored(self):
@@ -155,7 +254,7 @@ class GitTests(unittest.TestCase):
             fixture.run("checkout", "-q", "--orphan", "private-branch")
             fixture.commit("foreign root")
             fixture.run("checkout", "-q", main)
-            with patch.object(audit, "UPSTREAM", fixture.base), self.assertRaisesRegex(ValueError, "unselected ref"):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), self.assertRaisesRegex(ValueError, "unselected ref"):
                 audit.other_ref_history(fixture.root)
 
     def test_unselected_registration_history_is_bounded_without_requiring_source(self):
@@ -166,7 +265,7 @@ class GitTests(unittest.TestCase):
             fixture.write("Cargo.toml", '[[test]]\nname="public"\npath="tests/later.rs"\n')
             registration = fixture.commit("register source arriving later")
             fixture.run("checkout", "-q", main)
-            with patch.object(audit, "UPSTREAM", fixture.base):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base):
                 self.assertEqual(audit.other_ref_history(fixture.root)["extra_product_commits"], 1)
             base = audit.tree(fixture.root, fixture.base)
             state = audit.tree(fixture.root, registration)
@@ -176,7 +275,7 @@ class GitTests(unittest.TestCase):
             fixture.write("Cargo.toml", '[[test]]\nname="public"\npath="../outside.rs"\n')
             fixture.commit("outside path remains forbidden historically")
             fixture.run("checkout", "-q", main)
-            with patch.object(audit, "UPSTREAM", fixture.base), self.assertRaises(ValueError):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), self.assertRaises(ValueError):
                 audit.other_ref_history(fixture.root)
 
     def test_actual_archive_matches_tracked_bytes_and_preserves_upstream_symlink(self):
@@ -198,16 +297,20 @@ class GitTests(unittest.TestCase):
             fixture.write("public.txt", "attributable new source")
             fixture.commit("product")
             base, current = audit.tree(fixture.root, fixture.base), audit.tree(fixture.root, "HEAD")
-            record = {"schema_version": 1, "upstream": audit.UPSTREAM, "upstream_tree": audit.UPSTREAM_TREE,
+            record = {"schema_version": 2, "upstream": audit.UPSTREAM, "upstream_tree": audit.UPSTREAM_TREE,
+                "foundation": audit.FOUNDATION, "foundation_tree": audit.FOUNDATION_TREE,
                 "note": "public test", "history_only": [], "files": [{"path": "public.txt",
                     "sha256": audit.sha(b"attributable new source"), "disposition": "new",
                     "reason": "new bounded adapter", "provenance": ["README.md"]}]}
             audit.validate_ledger(record, base, current, fixture.root)
-            for change in ("missing", "stale", "provenance"):
+            for change in ("missing", "stale", "provenance", "old-schema", "foundation", "upstream", "extra-key"):
                 modified = copy.deepcopy(record)
                 if change == "missing": modified["files"] = []
                 elif change == "stale": modified["files"][0]["sha256"] = "00" * 32
-                else: modified["files"][0]["provenance"] = ["missing.md"]
+                elif change == "provenance": modified["files"][0]["provenance"] = ["missing.md"]
+                elif change == "old-schema": modified["schema_version"] = 1
+                elif change in ("foundation", "upstream"): modified[change] = "00" * 20
+                else: modified["extra"] = True
                 with self.subTest(change=change), self.assertRaises(ValueError):
                     audit.validate_ledger(modified, base, current, fixture.root)
 
