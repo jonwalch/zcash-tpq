@@ -148,11 +148,19 @@ has valid native signatures and fails only this explicit test profile.
 `producer` is exactly `{zakura_revision, algorithm_revision, blake3_version,
 host_source_inventory_sha256, host_lock_sha256, host_binary_sha256,
 signer_source_inventory_sha256, signer_lock_sha256, signer_binary_sha256}`.
-Revisions are 40 lowercase hex characters. `zakura_revision`
-identifies pinned upstream `9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`, not a
-claim that upstream contains these extensions. Algorithm revision is
+Revisions are 40 lowercase hex characters. For fixture schema version 1,
+`zakura_revision` identifies the immutable fixture foundation
+`9b175e9d3d46a6aa4cfb5552517c3d828852ecbc`. It stays fixed when the producing
+checkout updates upstream. It does not identify that checkout's current upstream
+revision or claim that upstream contains these extensions. Algorithm revision is
 `b392fe82d2d9770142477a576a758a233888bc0a`, BLAKE3 version `1.8.5`.
-All SHA-256 fields are 64 lowercase hex characters. A production receipt must compare these claims with actual sources and binaries.
+All SHA-256 fields are 64 lowercase hex characters.
+
+Verify the production receipt's `source_commit`, source inventories, lock hashes,
+and binary hashes against the actual producer inputs. The [protocol](protocol.md#source-and-signature-primitive)
+and [import ledger](imports.json) at that source commit record its current upstream
+pin. For corpus replay, the separate comparison build receipt identifies the
+current host; retained artifacts and receipts keep their original producer claims.
 The fields alone do not authenticate a build or establish independent acceptance.
 
 A source inventory is the canonical JSON hash (same rules as above) of an

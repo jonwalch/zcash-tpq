@@ -2221,7 +2221,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "0485dcf1bdc51e21836b06a869c1065981be53d372e86f9acfa4d617461042cf"
+      "sha256": "2771c96ac0e2634cb08a6b0c46b6dc36d49f4d548b90e5132954d61f15bf8420"
     },
     {
       "disposition": "new",
