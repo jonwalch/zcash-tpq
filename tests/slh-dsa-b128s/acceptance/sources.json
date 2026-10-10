@@ -600,9 +600,9 @@
       ]
     },
     {
-      "adaptation": "New bounded loopback fault proxy from the pinned scripted RPC server/read-only shapes and existing product fake discovery tests; reuses common.endpoint/canonical/strict_json. Honest responses preserve exact raw bytes. No production RPC or scanner rewrite.",
+      "adaptation": "New bounded loopback fault proxy from the pinned scripted RPC server/read-only shapes and existing product fake discovery tests; reuses common.endpoint/canonical/strict_json. Honest responses preserve exact raw bytes. No production RPC or scanner rewrite. Match the pinned upstream Regtest BIP70 chain name test in the unavailable-context guard, as already used by the pinned research RPC fixtures; preserve read-only transport bounds, upstream-error distinction and required fault markers.",
       "path": "tests/slh-dsa-b128s/acceptance/history_service.py",
-      "sha256": "df430e738b4e1a5c9d892bbc5921b6d687760d06baeeb0561289c093c3c2815a",
+      "sha256": "aed19f11ef948bc24b2dd857e8e9e1ebf98a7edd355e34672919da02bba2435e",
       "sources": [
         "wallet_fake_rpc",
         "wallet_node_scan"
@@ -748,9 +748,9 @@
       ]
     },
     {
-      "adaptation": "New offline fake-relay HTTP tests for exact bytes, fault selection, bounds, read-only methods and distinguishing genuine upstream failures; no wallet/node process.",
+      "adaptation": "New offline fake-relay HTTP tests for exact bytes, fault selection, bounds, read-only methods and distinguishing genuine upstream failures; no wallet/node process. Use the pinned test chain label and exact LocalRpc HTTP/1.0 request framing against the fake relay; verify injected-fault markers, byte-exact honest recovery, invalid contexts and genuine upstream errors without a node or wallet process.",
       "path": "tests/slh-dsa-b128s/acceptance/test_history_service.py",
-      "sha256": "9652cd0ed78b458c2a306f4f7e2c91a46895e1112dcd21421c5fbb983f5a15cb",
+      "sha256": "0b19eb4e7e657cb299da8f404d20e1cada2c4f3c1d304c5cfad4c8481c9d977a",
       "sources": [
         "wallet_fake_rpc"
       ]

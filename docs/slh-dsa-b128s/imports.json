@@ -2095,7 +2095,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
-      "sha256": "5dc68edcd28ed0cff542f91cada3027c94e972eacfad1579855e9783da610969"
+      "sha256": "60141cf252bc905450189d8b96e90ae8ee670fec5251c0f81786f72db2e5efaa"
     },
     {
       "disposition": "new",
@@ -2340,7 +2340,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
-      "sha256": "df430e738b4e1a5c9d892bbc5921b6d687760d06baeeb0561289c093c3c2815a"
+      "sha256": "aed19f11ef948bc24b2dd857e8e9e1ebf98a7edd355e34672919da02bba2435e"
     },
     {
       "disposition": "new",
@@ -2420,7 +2420,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "490ef6e365c70e35100144d829d12196bdcb1fcdc1276c35b4c0ea9a15749813"
+      "sha256": "2ef459810e0ec13a04c1d38854817fe2b7f53ba5fcac9d2c00a82fd8dad9b0fb"
     },
     {
       "disposition": "new",
@@ -2498,7 +2498,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
-      "sha256": "9652cd0ed78b458c2a306f4f7e2c91a46895e1112dcd21421c5fbb983f5a15cb"
+      "sha256": "0b19eb4e7e657cb299da8f404d20e1cada2c4f3c1d304c5cfad4c8481c9d977a"
     },
     {
       "disposition": "new",
@@ -2672,7 +2672,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "f1bc32c5ed9f145e454021c3c0bde4caa6174be06f4ec8562172217b1caa74fb"
+      "sha256": "f475e9e9b1fe27eeef2d40b7e34f45dbc9689b8fa2a4ca56d0950767f5683cdd"
     },
     {
       "disposition": "new",
