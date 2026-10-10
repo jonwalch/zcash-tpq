@@ -34,7 +34,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style.",
-      "sha256": "7a1b8ae3c3e5454f7758a2aef894040ab570b340d6f793560d60793000220bca"
+      "sha256": "a8d6b4e11b127fee4978080fda3d111c86e07394c6307ff94993f6ee8328f26f"
     },
     {
       "disposition": "upstream-modification",
@@ -43,7 +43,7 @@
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
       "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum.",
-      "sha256": "bb31440adc631cb31dd601fb5fc68b4c674658aef2106f4f4da867e4d2ff3eeb"
+      "sha256": "fe0c19213bc77d3b76cd24a9d571ad594d921e2be491e9a02eb6a6e72bd539bf"
     },
     {
       "disposition": "upstream-modification",
@@ -52,7 +52,7 @@
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
       "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities.",
-      "sha256": "16bce0294428853eb0a21e1869b6a54a4b585d6aff9f4508e52ae12c10be0765"
+      "sha256": "ed6deb2479e80bded93fee9efbfc706fc9c4cdf139b6605d9038c3de43c84f26"
     },
     {
       "disposition": "upstream-modification",
@@ -61,7 +61,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases.",
-      "sha256": "fb0fccb8e1dfd80ef71ddbed90077d72ca15c4672c2340e0f8cdde65481cd363"
+      "sha256": "994b1e50261f73a3f4785f51232e54858bc229390caca062efe27a2e8908373c"
     },
     {
       "disposition": "adapted",
@@ -1458,7 +1458,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "3231c4cb45458455799090e6b80a6582bc924c45727fbcd56285ce13e5cc2762"
+      "sha256": "43af0fe9e2c644e0547292c215dea7c3eeb072afc914d2f212f1d0008919251e"
     },
     {
       "disposition": "upstream-modification",
@@ -1528,7 +1528,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "9bd102cf5a12ebb5099e089c0f60042df0d8e13e569386c89555908941fe9787"
+      "sha256": "d34f98503f02b509614b9764f6c0d9af35d9e24d247ae436e7380f812f788428"
     },
     {
       "disposition": "attribution",
@@ -1548,7 +1548,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "5e912a0e52933bab6c823e08be0fd86ac9ef628701565eb89fbd6c1d49aab2e0"
+      "sha256": "1094b1ff90f10c7d563372eaa964391fa68adb6dffb455ad7e36f25601a965d1"
     },
     {
       "disposition": "upstream-modification",
@@ -1558,7 +1558,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "02497e973c6fa2a32602419391787bfc72f43be4f432ccf43dcd4873f9f3bdc1"
+      "sha256": "4737b99d9919ba909970e3df2470afcfa5c03640570ce90f57bd4b68f0107002"
     },
     {
       "disposition": "upstream-modification",
@@ -1568,7 +1568,16 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse cache lookup+insertion gate and focused inactive/active tests; SLH-only activation parameters.",
-      "sha256": "7d340a5c9a63e13ce02b365b4f496d09aeea00fff474cd47365ffe1bdcd62ca8"
+      "sha256": "91dca103aa096cbedafec15b530375e9a04cb7afa0f08ab06cca64df2cc7439a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/block/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Extend upstream server-template error drain regression with the typed SLH block budget error after current upstream migration.",
+      "sha256": "86b5b9fc0b0a02eb3c519bf84248e07f122aa362b0c89876ead6b0221b852c3a"
     },
     {
       "disposition": "upstream-modification",
@@ -1618,7 +1627,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Selective AsyncChecks success accounting, CPU task integration, trusted dispatch, shared output allocation and success-only publication; retain upstream ordered resolver and original fee ordering.",
-      "sha256": "8101f4bc1351c9e7f9da301227b2da9f18f0e0f1e6f3ea5ff6d9be9cc22191ef"
+      "sha256": "7922baf1aa8e6da679ad409130f53c0182965f83aa2985e7e40368607ce46f76"
     },
     {
       "disposition": "upstream-modification",
@@ -1688,7 +1697,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls.",
-      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30"
+      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
     },
     {
       "disposition": "new",
@@ -1708,7 +1717,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "63baf4d099177fbd70d5df9c008cc7b23d63447d2566680c0d0cfcc4d3b38bee"
+      "sha256": "9dde8f666d21976cc6ad8b25b0ab8eef589937a8053fa2469d3ed3dbdf5b43d3"
     },
     {
       "disposition": "upstream-modification",
@@ -1718,7 +1727,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "2de8605e48d653ec787dfd628fb8e40502fcafd44a4f2dafcb3f94ab94b455de"
+      "sha256": "280a512ee44c8bd235c6212f55ed0072f3ee7979b8b560da67bc84c117b0c3dc"
     },
     {
       "disposition": "upstream-modification",
@@ -1728,7 +1737,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "01fae22f85af3aeb7589cdd13ed194e8596024b030e777fbd0b73da1d9e184d8"
+      "sha256": "a043f6f3379695daae864128e905215cdea94c3ff982cebbbd97e22c7509966e"
     },
     {
       "disposition": "upstream-modification",
@@ -1738,7 +1747,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "4a013f47ebdf914d9397c1ef118bb617d0c6e341aeb2088491d89a694ee22228"
+      "sha256": "2328feb251289e267dc4425e3537d75b524892e5c66fd86dd95e0986baa3268a"
     },
     {
       "disposition": "upstream-modification",
@@ -1798,7 +1807,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "e73ab97342bdbed236d2cfffe9082e1072aef609eff3241b8a8854679bbbea03"
+      "sha256": "becfb9a319cbc4429776e24e06e7ec8bda620ae1ff19971fb2cf0822052f5bd6"
     },
     {
       "disposition": "upstream-modification",
@@ -1828,7 +1837,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "a300bfe30375722c1fb9110a230967842450cf31b7fbbcda068a1d58928e36e0"
+      "sha256": "5598978f12a53280259c9d1ba5a28f87a42986e1aa08fb723e54bf4588ae6731"
     },
     {
       "disposition": "upstream-modification",
@@ -1848,7 +1857,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "1024acaabbaf0fcc66c22e6fa2d3b09dd17ca4bd6310801617cf8e835424cbff"
+      "sha256": "7a8d70d961186202c30748aa9816b70caa37e9807213161217591ced94fda4b5"
     },
     {
       "disposition": "upstream-modification",
@@ -1858,7 +1867,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing network-aware storage construction pattern through chain_tip_change.network(); no new state or reset path.",
-      "sha256": "e9b5e3a463b4e1710bb0c21204e2599f0c5af0b525447a412d877d07a70e5703"
+      "sha256": "f501c6f236329e8fe2b197220eff4fe7babd355d833b0f2a7a7a2fa83c44632e"
     },
     {
       "disposition": "upstream-modification",
@@ -2113,7 +2122,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "8ca7eb4e21796e1a389860a6241d0ae0e248e0634d7ad9cbde4ed58cb64d7e9b"
+      "sha256": "7f2aa3fbf3dd61a2631091b56baf8c69bbd44c284225baae6d0c1d66d0ce44c6"
     },
     {
       "disposition": "new",
@@ -2140,7 +2149,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "6b6af365b060907ecf4e7c5f94b6a3eb9407fa8064851607af2aa677f80189b7"
+      "sha256": "3b4afa60db596db8bd8493eee9e7938e335cb49c9dd70423a1c215d152363d48"
     },
     {
       "disposition": "new",
@@ -2149,7 +2158,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "0139e0468584529f4a0f74f48eeb196df61dd61e3abbd942ccde8216f20b7109"
+      "sha256": "b24e0cbcd66ff331e49c400a0eb01a538156bc4fbc09d9c0966ab945026dd88b"
     },
     {
       "disposition": "new",
@@ -2231,7 +2240,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools.",
-      "sha256": "ae77e5df64ed9859767b1fe034dd6ee6571275472d83664cf92a77f22364d13d"
+      "sha256": "ded978b70915ed17de55f65b0b0bc56d49ac1c9bbd6fac7fa13cf184d66e9eac"
     },
     {
       "disposition": "new",
@@ -2420,7 +2429,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "2ef459810e0ec13a04c1d38854817fe2b7f53ba5fcac9d2c00a82fd8dad9b0fb"
+      "sha256": "18f6a5edc6ce1f71d84a4aab0a9888851d5a59c760c872d364dc9f6700ac4d8a"
     },
     {
       "disposition": "new",
@@ -2672,7 +2681,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "f475e9e9b1fe27eeef2d40b7e34f45dbc9689b8fa2a4ca56d0950767f5683cdd"
+      "sha256": "4e65043ff257d120105eb67087c97a388e42b30615ea61d987105818a50393b3"
     },
     {
       "disposition": "new",
@@ -2682,7 +2691,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Preserve pinned research inspiration and unchanged product oracle/reference source hashes.",
-      "sha256": "fc02313d80fc9dd6aee08f54bd2764e8eef32dca26b8b6b32938514f17210859"
+      "sha256": "1f03f6584513de23d307eeb87e0cd0691a66e93b22cb1e36205fbf14c6c33637"
     },
     {
       "disposition": "new",
@@ -3360,7 +3369,7 @@
         "tests/slh-dsa-b128s/release-content/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "cef423ccd63f3d7abaf96446a8895d28c31ebcc2e89c10e17a39ab2d2cb22eb7"
+      "sha256": "a471f75de6a29ac2e06ffe5ee6ebd30603aef333034be1ebb1d4c19edb0cba4e"
     },
     {
       "disposition": "new",
@@ -3370,7 +3379,7 @@
         "tests/slh-dsa-b128s/release-content/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "73b13b5792f3ae04eac4ad1e37ec32813b427fd8abb544d8c5ba806e7df0fe99"
+      "sha256": "f39ea25c98ba57ad6ff8d1c979f3f412c44ff8cd38ed448444893e02491188c0"
     },
     {
       "disposition": "new",
@@ -3488,7 +3497,7 @@
         "tests/slh-dsa-b128s/transactions/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "11b436637b9190f56c925a8e73734273dea82338a1e440f9f5b8de16ce31b5f0"
+      "sha256": "a68681702f1c063e2e98fe254fb805e529825146ebac5f38f779ab20138cee8f"
     },
     {
       "disposition": "new",
@@ -3497,7 +3506,7 @@
         "tests/slh-dsa-b128s/transactions/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "fa6cb198a8fbedce671055e9edfe5a2ee320002cc6c72e0eea22ff809a11ebf1"
+      "sha256": "99577595f1b618036476cbaa64236d1d6aa0a644a47109aa0e602353a82c0def"
     },
     {
       "disposition": "new",
@@ -3561,6 +3570,15 @@
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
       "sha256": "32ce5d9669c67c1e554caa9195c4d216813d02f6fb3898c9d1b75a77c608fdb3"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/test_replay.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Mocked standalone replay provenance controls; reuse existing build and independent reference interfaces.",
+      "sha256": "d7f19401ab0a4ab273bffed2e99c881ce233ff15456966a9d0f63fbefbab6810"
     },
     {
       "disposition": "new",
@@ -3743,9 +3761,11 @@
       "sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd"
     }
   ],
+  "foundation": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+  "foundation_tree": "ac1ad49b6262001d4c07b7458f9638859cc75c36",
   "history_only": [],
   "note": "Every current post-upstream changed file is listed. Per-module provenance supplies exact source mappings. This inventory omits its own hash, which the selected Git tree binds. Refresh only after reviewing intended changes.",
-  "schema_version": 1,
-  "upstream": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
-  "upstream_tree": "ac1ad49b6262001d4c07b7458f9638859cc75c36"
+  "schema_version": 2,
+  "upstream": "a29a968575e37223cbeb8ac7a5d57aba135fb93a",
+  "upstream_tree": "dbf61abd2440d12929350572894860a58a16a29e"
 }

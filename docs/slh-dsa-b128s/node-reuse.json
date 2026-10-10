@@ -111,7 +111,7 @@
       "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
     },
     {
-      "adaptation": "Selective AsyncChecks success accounting, CPU task integration, trusted dispatch, shared output allocation and success-only publication; retain upstream ordered resolver and original fee ordering.",
+      "adaptation": "Selective AsyncChecks success accounting, CPU task integration, trusted dispatch, shared output allocation and success-only publication; retain upstream ordered resolver and original fee ordering.; retain current upstream CandidateId cache and dispatched-work draining while preserving SLH active-cache bypass and success-only accounting",
       "license": "MIT OR Apache-2.0",
       "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
       "source_path": "node/zakura/crates/zakura-consensus/src/transaction.rs",
@@ -147,7 +147,7 @@
       "target_path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs"
     },
     {
-      "adaptation": "Reuse cache lookup+insertion gate and focused inactive/active tests; SLH-only activation parameters.",
+      "adaptation": "Reuse cache lookup+insertion gate and focused inactive/active tests; SLH-only activation parameters.; retain current upstream CandidateId cache and dispatched-work draining while preserving SLH active-cache bypass and success-only accounting",
       "license": "MIT OR Apache-2.0",
       "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
       "source_path": "node/zakura/crates/zakura-consensus/src/block/prepared.rs",
@@ -237,5 +237,5 @@
       "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
     }
   ],
-  "upstream_commit": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
+  "upstream_commit": "a29a968575e37223cbeb8ac7a5d57aba135fb93a"
 }

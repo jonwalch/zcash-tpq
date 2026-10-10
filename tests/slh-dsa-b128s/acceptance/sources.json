@@ -412,7 +412,7 @@
       "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
-      "sha256": "69f4a8f90d48df08da0c3e12a5a4514c0a26b121fb6ed7ba6cd8f892db8b5b30",
+      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f",
       "sources": []
     },
     {
@@ -987,6 +987,6 @@
       "sources": []
     }
   ],
-  "upstream_zakura": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+  "upstream_zakura": "a29a968575e37223cbeb8ac7a5d57aba135fb93a",
   "validation_boundary": "Only offline/mock and bounded fixture-host checks were executed during preparation. All dedicated binary builds, node/wallet/terminal/signing live cases, proof generation and performance runs require human execution. See docs/slh-dsa-b128s/acceptance.md for prepared and missing driver scenarios."
 }

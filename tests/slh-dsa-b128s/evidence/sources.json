@@ -10,10 +10,10 @@
   ],
   "inputs": [
     {
-      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "adaptation": "Reuse the unchanged bounded_file and check_corpus helpers; add standalone replay with retained producer identities and an independently bound current host build.",
       "path": "tests/slh-dsa-b128s/transactions/check.py",
-      "sha256": "fa6cb198a8fbedce671055e9edfe5a2ee320002cc6c72e0eea22ff809a11ebf1",
-      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+      "sha256": "99577595f1b618036476cbaa64236d1d6aa0a644a47109aa0e602353a82c0def",
+      "source_commit": "6be98afe15d3e3594c7a392bbed2d4e793fd9101"
     },
     {
       "adaptation": "Imported unchanged at runtime; no source edits.",
