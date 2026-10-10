@@ -2271,7 +2271,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "fde31b87039fb5cf00b89c5174609899dd4a7937fe3dd85009cd6cea025abd0e"
+      "sha256": "bc6a21f5ece3a134605a14c8be14be8e383a9c8ae917cbedfbf607e4c7daa982"
     },
     {
       "disposition": "new",
@@ -2373,7 +2373,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "f9498b6cf0455b2fcf4d52ca2998a545f4289d8c11e9dbde21a7e9a3732997e3"
+      "sha256": "f2ecb778e7dd36cf603cbdb414f0e3f99c7ccdbf44a7121e643519aab1db32a5"
     },
     {
       "disposition": "adapted",
@@ -2420,7 +2420,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "2fbbdfdf9b4b2c4474ecda0617063cff68ba5ea4d8a78f58c71ff4ca1f1dfeca"
+      "sha256": "490ef6e365c70e35100144d829d12196bdcb1fcdc1276c35b4c0ea9a15749813"
     },
     {
       "disposition": "new",
@@ -2524,6 +2524,16 @@
     },
     {
       "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_nodes.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE"
+      ],
+      "reason": "Check the narrow startup readiness retry against the pinned empty-state response; preserve healthy RPC, process, timeout and rejection boundaries.",
+      "sha256": "4ff7fb7bf4a2e4bd0f05cfba55c8608e66a7ddb6a2ec3a82078e55a2e3a1c1fd"
+    },
+    {
+      "disposition": "new",
       "path": "tests/slh-dsa-b128s/acceptance/test_observation_controls.py",
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
@@ -2538,7 +2548,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim.",
-      "sha256": "1f315f1f833da583c7f3457053696a52ed078c504ce27c807a2931e3e3a76789"
+      "sha256": "df3e39e6b14a33a71de03eb65263652ac22a73620be9acb3361d49ab2d5e3eb3"
     },
     {
       "disposition": "new",
@@ -2662,7 +2672,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "5997ff15ef36cd51bcb5d953fe45ca1d53d5260565821544a2ef3cca7f137865"
+      "sha256": "f1bc32c5ed9f145e454021c3c0bde4caa6174be06f4ec8562172217b1caa74fb"
     },
     {
       "disposition": "new",

@@ -537,10 +537,10 @@
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts. Document the narrow no-blocks readiness retry, valid height and unchanged timeout/process boundaries; no execution acceptance claim.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/acceptance/README.md",
-      "sha256": "fde31b87039fb5cf00b89c5174609899dd4a7937fe3dd85009cd6cea025abd0e",
+      "sha256": "bc6a21f5ece3a134605a14c8be14be8e383a9c8ae917cbedfbf607e4c7daa982",
       "sources": []
     },
     {
@@ -632,10 +632,10 @@
       ]
     },
     {
-      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes. Optional explicit capture token adds bounded source/binary/config/log binding; ordinary nodes remove inherited opt-in and retain prior behavior. Add only the exact isolated NU6.2=1, NU6.3=104, NU7=105 shielded-spend funding profile; preserve the default profile and SLH height/limits.",
+      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes. Optional explicit capture token adds bounded source/binary/config/log binding; ordinary nodes remove inherited opt-in and retain prior behavior. Add only the exact isolated NU6.2=1, NU6.3=104, NU7=105 shielded-spend funding profile; preserve the default profile and SLH height/limits. Restore the pinned research startup readiness retry only for the exact inherited no-blocks RPC error; preserve transport/process/timeout checks and hashed RPC evidence. Require a nonnegative integer readiness height and leave ordinary RPC rejection unchanged.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/nodes.py",
-      "sha256": "f9498b6cf0455b2fcf4d52ca2998a545f4289d8c11e9dbde21a7e9a3732997e3",
+      "sha256": "f2ecb778e7dd36cf603cbdb414f0e3f99c7ccdbf44a7121e643519aab1db32a5",
       "sources": [
         "rpc_node",
         "relay",
@@ -770,6 +770,13 @@
       "sources": []
     },
     {
+      "adaptation": "New focused offline startup regression controls based on pinned research readiness flows and the pinned upstream empty-state RPC contract. Mock process/HTTP/time only; exact failed public response hashes demonstrate error-to-genesis retry, unchanged healthy heights and transport retries, bounded timeout, exited-process refusal, malformed/error rejection, and unchanged non-startup RPC refusal. No node/runtime behavior is replaced.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_nodes.py",
+      "sha256": "4ff7fb7bf4a2e4bd0f05cfba55c8608e66a7ddb6a2ec3a82078e55a2e3a1c1fd",
+      "sources": []
+    },
+    {
       "adaptation": "Causal offline mock coverage or public guide for funded positive-bracket capture, precise lifecycle outcomes and queue visibility limits. Preserve the shared rollback backup receipt while comparing its exact height/hash with the prior tip. Reuse the existing transparent Ledger backup stub for capture mocks and reject either changed tip field. This adapts an introduced return shape only; publication, identity, observer boundaries and inherited runtime behavior stay unchanged.",
       "classification": "focused causal capture test or public guide",
       "path": "tests/slh-dsa-b128s/acceptance/test_observation_controls.py",
@@ -777,10 +784,10 @@
       "sources": []
     },
     {
-      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Keep the existing process-observation mock aligned with readiness now using Node.response, and assert exactly one getblockcount readiness request.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "tests/slh-dsa-b128s/acceptance/test_observations.py",
-      "sha256": "1f315f1f833da583c7f3457053696a52ed078c504ce27c807a2931e3e3a76789",
+      "sha256": "df3e39e6b14a33a71de03eb65263652ac22a73620be9acb3361d49ab2d5e3eb3",
       "sources": []
     },
     {
