@@ -415,6 +415,48 @@ async fn slh_accounting_waits_for_other_checks_and_never_refunds_cancelled_work(
     }
 }
 
+#[tokio::test]
+async fn slh_accounting_drains_held_work_after_an_early_error() {
+    let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    let budget = SlhDsaB128sBlockBudget::new(limits);
+    let worker_budget = budget.clone();
+    let fixture = fixture(6, "1of1");
+    let (failed, failure_seen) = tokio::sync::oneshot::channel();
+    let (entered, started) = tokio::sync::oneshot::channel();
+    let (release, waiting) = tokio::sync::oneshot::channel();
+    let mut checks = AsyncChecks::new();
+    checks.push(async move {
+        failed.send(()).unwrap();
+        Err(TransactionError::CoinbasePosition.into())
+    });
+    checks.push_slh_dsa_b128s(async move {
+        entered.send(()).unwrap();
+        waiting.await?;
+        crate::primitives::spawn_fifo_and_convert(move || worker(&fixture, limits, worker_budget))
+            .await
+    });
+    let handle = tokio::spawn(checks.check(None));
+    timeout(test_timeout(), failure_seen)
+        .await
+        .unwrap()
+        .unwrap();
+    timeout(test_timeout(), started).await.unwrap().unwrap();
+    assert!(!handle.is_finished());
+    assert_eq!(budget.remaining(), 64);
+
+    release.send(()).unwrap();
+    let error = timeout(test_timeout(), handle)
+        .await
+        .unwrap()
+        .unwrap()
+        .unwrap_err();
+    assert_eq!(
+        TransactionError::from(error),
+        TransactionError::CoinbasePosition
+    );
+    assert_eq!(budget.remaining(), 63);
+}
+
 #[test]
 fn slh_budget_error_wrappers_preserve_attempt_scope_and_peer_scores() {
     use zakura_header_chain::{BodyVerificationClass, TransientBodyFailureKind};

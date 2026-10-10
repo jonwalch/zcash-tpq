@@ -70,7 +70,7 @@ or target execution proved by an unrelated source-checkout run.
 
 ## Project Structure & Module Organization
 
-Zakura is a Rust workspace; the member crates live under `crates/` (except `deploy/zakura-watchdog`). Main crates include:
+Zakura is a Rust workspace; the member crates live under `crates/`. Main crates include:
 
 `crates/zakura-assets/` is a publish-only packaging crate and is deliberately excluded from the workspace because its payload is generated and not committed.
 

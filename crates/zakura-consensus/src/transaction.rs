@@ -1589,8 +1589,12 @@ impl AsyncChecks {
 
     /// Return the native check count only after every check in the set succeeds.
     ///
-    /// On failure, return the error and drop the remaining futures. Already-started CPU workers
-    /// can still finish, but their results are discarded and PQ reservations are not refunded.
+    /// Returns the first error, once every check has finished. Dropping a check does not stop the
+    /// batch work its request already dispatched, so returning early would report completion
+    /// while that work is still running. A caller that bounds its compute on this response reads
+    /// completion literally, and the wait costs nothing extra: the batches are already queued, and
+    /// the batch verifiers flush them on their own latency bound at the latest.
+    /// Failed checks discard the native count without refunding reservations.
     async fn check(
         mut self,
         block_batch_flush_key: Option<primitives::BlockVerifierBatchFlushKey>,
@@ -1608,6 +1612,7 @@ impl AsyncChecks {
 
         // Wait for all asynchronous checks to complete
         // successfully, or fail verification if they error.
+        let mut first_error = None;
         loop {
             tokio::select! {
                 biased;
@@ -1618,15 +1623,26 @@ impl AsyncChecks {
                             block_batch_flush.await;
                         }
 
-                        return Ok(verified);
+                        return match first_error {
+                            Some(error) => Err(error),
+                            None => Ok(verified),
+                        };
                     };
 
                     tracing::trace!(?check, remaining = self.0.len());
-                    let check = check?;
-                    verified = VerifiedChecks {
-                        slh_dsa_b128s: verified.slh_dsa_b128s.checked_add(check.slh_dsa_b128s)
-                            .ok_or(TransactionError::ExperimentalSlhDsaB128sBudgetContext)?,
-                    };
+                    match check {
+                        Ok(check) => match verified.slh_dsa_b128s.checked_add(check.slh_dsa_b128s) {
+                            Some(count) => verified.slh_dsa_b128s = count,
+                            None => {
+                                first_error.get_or_insert_with(|| {
+                                    TransactionError::ExperimentalSlhDsaB128sBudgetContext.into()
+                                });
+                            }
+                        },
+                        Err(error) => {
+                            first_error.get_or_insert(error);
+                        }
+                    }
                 }
 
                 () = &mut block_batch_flush, if needs_block_batch_flush => {
