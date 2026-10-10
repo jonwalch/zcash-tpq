@@ -91,6 +91,11 @@ This check binds signatures to transactions and **supplied previous outputs in i
 It does not authenticate UTXOs, check the producer build, establish node acceptance, or cover shielded transactions.
 It also does not compare the native implementation.
 The fixed-corpus checker supplies native comparison and producer-identity checks.
+Its [comparison mode](../../tests/slh-dsa-b128s/transactions/README.md) accepts a
+new host build with its matching build receipt. It keeps the retained artifact
+producer identity separate from the current comparison target. This lets a fresh
+checkout repeat the bounded comparison without a research checkout, old binaries,
+or new signatures.
 
 ## Historical evidence and independent scope
 

@@ -24,6 +24,8 @@ HOST_PATHS = (
     "crates/pq-slh-dsa-b-exp", "crates/pq-slh-dsa-b-verify", "crates/pq-tx-context", "crates/pq-test-support", "crates/zakura-chain",
 )
 SIGNER_PATHS = ("tests/slh-dsa-b128s/fixture-signer", "crates/pq-slh-dsa-b-verify")
+REPLAY_RECEIPT = HERE / "receipts/g2-review-2026-10-09.json"
+REPLAY_RECEIPT_SHA256 = "2313fb725ed873e59efef6e16fecf2ff742d6fec3584f7e93eeb5498c60470d4"
 
 
 def require(condition, reason):
@@ -174,17 +176,117 @@ def check_corpus(directory, reference, host=None, producer=None):
             "primitive_message_controls": {"old_message_domain": False, "double_pure_framing": False}}
 
 
-def main():
+def replay_inputs(directory):
+    """Retain the historical producer and exact corpus before any comparison."""
+    raw = bounded_file(REPLAY_RECEIPT)
+    require(oracle.sha256(raw) == REPLAY_RECEIPT_SHA256, "retained producer receipt changed")
+    original = oracle.strict_json(raw)
+    files = sorted(directory.glob("*.json"))
+    require({path.stem for path in files} == NAMES, "retained corpus requires the prescribed 18 artifacts")
+    hashes = {path.name: oracle.sha256(bounded_file(path)) for path in files}
+    require(hashes == original["corpus_files"], "retained corpus changed")
+    return original["artifact_producer_verification"], hashes
+
+
+def replay_checker_files():
+    paths = sorted(HERE.glob("*.py")) + sorted(REFERENCE.glob("*.py"))
+    paths += [REFERENCE / name for name in ("sources.json", "hash_shim.c")]
+    paths += [HERE.parent / name for name in (
+        "acceptance/common.py", "acceptance/build.py", "evidence/artifacts.py",
+        "fixtures/generate_transactions.py")]
+    return {path.relative_to(ROOT).as_posix(): oracle.sha256(path.read_bytes()) for path in paths}
+
+
+def replay_corpus(args):
+    """Reuse the checked comparison flow without attributing old signatures to a new host."""
+    sys.path[:0] = [str(REFERENCE), str(HERE.parent / "acceptance"), str(HERE.parent / "evidence")]
+    from reference import Reference
+    from prepare import SOURCES
+    from common import source_state, validate_build
+    from artifacts import reference_identity
+
+    source = args.candidate_source_tree.resolve()
+    host = args.comparison_host.resolve(strict=True)
+    require(not args.comparison_host.is_symlink() and host.is_file(), "comparison host must be regular")
+    before = source_state(source)
+    checker_files = replay_checker_files()
+    inventory_before = inventory(source, HOST_PATHS)
+    build_raw = bounded_file(args.comparison_build)
+    build = oracle.strict_json(build_raw)
+    validate_build(build, host, "host", root=source)
+    corpus = args.corpus.resolve()
+    original, corpus_hashes = replay_inputs(corpus)
+    inputs = args.reference_inputs.resolve()
+    reference_before = reference_identity(inputs)
+    reference = Reference(inputs)
+    hash_controls = reference.hash_vectors(inputs)
+    require(type(hash_controls) is int and hash_controls == 105, "official hash controls")
+    checked = check_corpus(corpus, reference, host, original)
+    require(len(checked["cases"]) == 18 and len(checked["mutations"]) == 60,
+            "bounded comparison coverage")
+    require(checked["corpus_files"] == corpus_hashes, "checked corpus changed")
+    require(replay_inputs(corpus) == (original, corpus_hashes), "retained corpus changed during comparison")
+    require(bounded_file(args.comparison_build) == build_raw, "comparison build receipt changed")
+    validate_build(build, host, "host", root=source)
+    require(source_state(source) == before and inventory(source, HOST_PATHS) == inventory_before,
+            "comparison source changed")
+    require(replay_checker_files() == checker_files, "comparison checker changed")
+    require(reference_identity(inputs) == reference_before, "comparison reference changed")
+    return {
+        "schema_version": 1,
+        "scope": "Bounded independent transparent corpus/native comparison; no signing, node, live, proof or wallet acceptance",
+        "completed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "python": sys.version, "platform": platform.platform(),
+        "artifact_producer_and_comparison_target_are_distinct": True,
+        "original_producer_receipt_sha256": REPLAY_RECEIPT_SHA256,
+        "artifact_producer_verification": original,
+        "comparison_target": {"source_commit": before["source_commit"],
+                              "host_source_inventory": inventory_before,
+                              "build": build, "build_receipt_sha256": oracle.sha256(build_raw)},
+        "official_blake3_controls": hash_controls,
+        "reference_sources": SOURCES,
+        "reference_identity": reference_before,
+        "checker_files": checker_files,
+        **checked,
+    }
+
+
+def parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("reference_inputs", type=Path)
     parser.add_argument("--corpus", type=Path, default=HERE.parent / "fixtures/data")
     parser.add_argument("--host", type=Path)
     parser.add_argument("--signer", type=Path)
+    parser.add_argument("--comparison-host", type=Path,
+                        help="compare a newly built host against the retained corpus; no signer required")
+    parser.add_argument("--comparison-build", type=Path,
+                        help="matching acceptance/build.py host receipt for --comparison-host")
     parser.add_argument("--candidate-source-tree", type=Path, default=ROOT)
     parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-    require(not args.output.exists(), "receipt destination must be new")
+    return parser
+
+
+def validate_mode(args):
+    require(not args.output.exists() and not args.output.is_symlink(), "receipt destination must be new")
+    comparison = args.comparison_host is not None or args.comparison_build is not None
+    if comparison:
+        require(args.comparison_host is not None and args.comparison_build is not None,
+                "supply comparison host and its build receipt")
+        require(args.host is None and args.signer is None, "comparison and producer modes are distinct")
     require((args.host is None) == (args.signer is None), "supply both binaries for producer verification")
+    return comparison
+
+
+def main():
+    args = parser().parse_args()
+    if validate_mode(args):
+        receipt = replay_corpus(args)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        with args.output.open("x") as stream:
+            json.dump(receipt, stream, sort_keys=True, indent=2)
+            stream.write("\n")
+        print("18 artifacts / 146 signatures, 60 mutations and 2 primitive-message controls passed against comparison host")
+        return
     sys.path.insert(0, str(REFERENCE))
     from reference import Reference
     from prepare import SOURCES
