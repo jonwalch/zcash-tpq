@@ -1307,6 +1307,18 @@ fn experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest() {
         let text = format!("network = {{ params = {{}}, {field} }}");
         assert!(toml::from_str::<Config>(&text).is_err());
     }
+    // Regtest rejects the overlay field even when it is explicitly disabled.
+    for inherit in [false, true] {
+        let text = format!(
+            "network = 'Regtest'\n[testnet_parameters]\nactivation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}\ninherit_activation_heights = {inherit}\n{}",
+            fields.join("\n")
+        );
+        let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+        assert!(
+            error.contains("only applies to configured Testnets"),
+            "{error}"
+        );
+    }
 }
 
 #[test]

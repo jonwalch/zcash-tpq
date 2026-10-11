@@ -1826,7 +1826,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "615dad05eef12a95088b5b24a56a70aa395968dc093cf607d4936e6f181f96cf"
+      "sha256": "b13f52385473fe330ebf19a45e4eccc06261ef8a138b4dbec0c2f47af2aff273"
     },
     {
       "disposition": "upstream-modification",
@@ -2829,7 +2829,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "9b79b89d107fe3c1eb16fb364d1ea33e627d973a433251b449bf191d94e27537"
+      "sha256": "c45dfb51886ae27ceaec5c1afe64b87b650f860f27f6037143f163316586378d"
     },
     {
       "disposition": "new",

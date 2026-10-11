@@ -71,21 +71,21 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "615dad05eef12a95088b5b24a56a70aa395968dc093cf607d4936e6f181f96cf"
+      "sha256": "b13f52385473fe330ebf19a45e4eccc06261ef8a138b4dbec0c2f47af2aff273"
     },
     "config-invalid": {
       "anchor": "experimental_slh_dsa_b128s_config_rejects_invalid_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "615dad05eef12a95088b5b24a56a70aa395968dc093cf607d4936e6f181f96cf"
+      "sha256": "b13f52385473fe330ebf19a45e4eccc06261ef8a138b4dbec0c2f47af2aff273"
     },
     "config-required": {
       "anchor": "experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "615dad05eef12a95088b5b24a56a70aa395968dc093cf607d4936e6f181f96cf"
+      "sha256": "b13f52385473fe330ebf19a45e4eccc06261ef8a138b4dbec0c2f47af2aff273"
     },
     "consensus-receipt": {
       "anchor": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
