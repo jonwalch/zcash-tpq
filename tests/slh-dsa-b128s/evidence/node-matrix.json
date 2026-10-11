@@ -113,7 +113,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      "sha256": "9a419618ba63657ac569c8cb6ed2a916e2eae3bb4be1231e01e8183d581ed807"
     },
     "funding-auth": {
       "anchor": "slh_relay_funding_uses_candidate_height_and_requires_classical_authorization",
@@ -421,7 +421,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Actual primitive callback parity and pre-entry controls; library coverage only.",
-      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+      "sha256": "648cbc696cbaec722e5a26b0e7df376282aeb83af9f465a9c4dc0860f27d2e9b"
     },
     "observation-receipts": {
       "anchor": "def analyze(",
@@ -498,7 +498,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      "sha256": "9a419618ba63657ac569c8cb6ed2a916e2eae3bb4be1231e01e8183d581ed807"
     },
     "publish": {
       "anchor": "slh_mempool_publishes_bound_counts_only_after_complete_success_including_zero_funding",
@@ -512,7 +512,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      "sha256": "9a419618ba63657ac569c8cb6ed2a916e2eae3bb4be1231e01e8183d581ed807"
     },
     "pushes": {
       "anchor": "every_field_rejects_nonminimal_pushes_and_wrong_fixed_lengths",
@@ -533,7 +533,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      "sha256": "9a419618ba63657ac569c8cb6ed2a916e2eae3bb4be1231e01e8183d581ed807"
     },
     "relay-order": {
       "anchor": "slh_relay_structural_precheck_precedes_worker_n1_ordering",
@@ -617,28 +617,28 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+      "sha256": "648cbc696cbaec722e5a26b0e7df376282aeb83af9f465a9c4dc0860f27d2e9b"
     },
     "signed-canonical": {
       "anchor": "canonicality_failures_on_real_signatures_precede_reservation",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+      "sha256": "648cbc696cbaec722e5a26b0e7df376282aeb83af9f465a9c4dc0860f27d2e9b"
     },
     "signed-max": {
       "anchor": "signed_high_index_and_maximum_size_controls",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+      "sha256": "648cbc696cbaec722e5a26b0e7df376282aeb83af9f465a9c4dc0860f27d2e9b"
     },
     "signed-quorum": {
       "anchor": "valid_partials_reject_wrong_count_index_key_and_signature",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+      "sha256": "648cbc696cbaec722e5a26b0e7df376282aeb83af9f465a9c4dc0860f27d2e9b"
     },
     "storage": {
       "anchor": "slh_funding_storage_requires_matching_success_metadata_and_finite_tip",

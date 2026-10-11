@@ -18,6 +18,10 @@ struct Kat {
 }
 
 fn decode(hex: &str) -> Vec<u8> {
+    assert!(
+        hex.len().is_multiple_of(2),
+        "KAT hex must contain complete bytes"
+    );
     hex.as_bytes()
         .as_chunks::<2>()
         .0
@@ -59,12 +63,15 @@ fn every_signature_node_and_both_key_halves_are_bound() {
     let case = &kats()[0];
     let pk = decode(&case.public_key);
     let mut signature = decode(&case.signature);
+    let message = decode(&case.message);
+    let context = decode(&case.context);
+    assert_eq!(verify(&pk, &signature, &message, &context), Ok(()));
     // One mutation in each encoded 16-byte node: randomizer, all FORS secret and
     // authentication nodes, every WOTS chain, and every XMSS authentication node.
     for offset in (0..SIGNATURE_BYTES).step_by(16) {
         signature[offset] ^= 1;
         assert_eq!(
-            verify(&pk, &signature, &[], &[]),
+            verify(&pk, &signature, &message, &context),
             Err(VerifyError::InvalidSignature),
             "signature node at byte {offset}"
         );
@@ -74,7 +81,7 @@ fn every_signature_node_and_both_key_halves_are_bound() {
         let mut altered = pk.clone();
         altered[offset] ^= 1;
         assert_eq!(
-            verify(&altered, &signature, &[], &[]),
+            verify(&altered, &signature, &message, &context),
             Err(VerifyError::InvalidSignature)
         );
     }

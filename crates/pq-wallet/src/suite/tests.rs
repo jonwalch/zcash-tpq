@@ -175,3 +175,59 @@ fn retained_independent_v5_v6_partials_verify_and_reassemble() {
         );
     }
 }
+
+#[test]
+fn verification_rejects_a_bad_signature_in_each_input() {
+    for version in [5, 6] {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
+            "../../tests/slh-dsa-b128s/fixtures/data/v{version}-16checks.json"
+        ));
+        let json: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+        let bytes = hex::decode(json["transaction_hex"].as_str().unwrap()).unwrap();
+        let transaction = Transaction::zcash_deserialize(bytes.as_slice()).unwrap();
+        let previous = Arc::new(
+            json["inputs"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|input| Output {
+                    value: input["spent_output"]["value_zat"]
+                        .as_u64()
+                        .unwrap()
+                        .try_into()
+                        .unwrap(),
+                    lock_script: Script::new(
+                        &hex::decode(input["spent_output"]["script_hex"].as_str().unwrap())
+                            .unwrap(),
+                    ),
+                })
+                .collect::<Vec<_>>(),
+        );
+        assert_eq!(transaction.inputs().len(), 2);
+        let suites = [Suite::SlhDsaB128sExpV1; 2];
+        verify_inputs(&transaction, previous.clone(), &suites).unwrap();
+        for input_index in 0..2 {
+            let mut changed = transaction.clone();
+            let (Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. }) = &mut changed
+            else {
+                panic!("public fixture uses v5 or v6")
+            };
+            let zakura_chain::transparent::Input::PrevOut { unlock_script, .. } =
+                &mut inputs[input_index]
+            else {
+                panic!("public fixture spends transparent outputs")
+            };
+            let mut authorization =
+                slh::Authorization::decode(unlock_script.as_raw_bytes()).unwrap();
+            authorization.records.last_mut().unwrap().signature[0] ^= 1;
+            *unlock_script = Script::new(&authorization.encode());
+            assert!(
+                matches!(
+                    verify_inputs(&changed, previous.clone(), &suites),
+                    Err(Error::Authorization(slh::Rejection::Signature))
+                ),
+                "v{version}, input {input_index}"
+            );
+        }
+    }
+}

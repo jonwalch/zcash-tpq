@@ -16,6 +16,7 @@ import node_live
 import nodes
 import wallet_live
 import terminal_smoke
+from generate_transactions import FixtureError
 
 
 class BuildReceiptTests(unittest.TestCase):
@@ -93,8 +94,10 @@ class BuildReceiptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             value = directory / "value"
+            value.write_bytes(b'{"x":1}')
+            self.assertEqual(common.read_json(value), {"x": 1})
             value.write_bytes(b'{"x":1,"x":2}')
-            with self.assertRaises(Exception):
+            with self.assertRaisesRegex(FixtureError, "^duplicate_key$"):
                 common.read_json(value)
             link = directory / "link"
             link.symlink_to(value)
