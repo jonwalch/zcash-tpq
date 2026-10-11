@@ -134,3 +134,8 @@ pub mod components;
 pub mod config;
 pub mod node;
 pub mod prelude;
+
+// The daemon binary disables its test harness; include its argument regressions here.
+#[cfg(test)]
+#[path = "bin/zakurad/slh_identity_args.rs"]
+mod slh_identity_args;

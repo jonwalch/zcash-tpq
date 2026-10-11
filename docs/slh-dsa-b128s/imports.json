@@ -2009,6 +2009,15 @@
       "sha256": "bc45bc06aac916a125ab0900a234171b56a7a16759b4651e61820c6df6f0cccf"
     },
     {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/lib.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/runtime.md"
+      ],
+      "reason": "Include the existing daemon argument-test module in the library test harness so Cargo and nextest discover exact-argument and non-UTF-8 regressions; runtime modules are unchanged.",
+      "sha256": "d5f754e8dd2ce2924c7f16115c33a00d5954726922ff7ec18d95d5b730ccd24f"
+    },
+    {
       "disposition": "new",
       "path": "docs/slh-dsa-b128s/README.md",
       "provenance": [
@@ -2324,7 +2333,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "0d313913edb9f15778c316d68360368551b52eaf8aa5df30a48f88be6dfb4d64"
+      "sha256": "13deb250bbccaf366a1ab65d7c75a6bda0767950af4b675199718199e04f5049"
     },
     {
       "disposition": "new",

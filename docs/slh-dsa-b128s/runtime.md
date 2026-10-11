@@ -88,11 +88,14 @@ They do not build a daemon or run live tests.
 cargo test --locked -p zakura-chain -p zakura-network -p zakura-state --lib slh
 cargo test --locked -p zakura-consensus --lib slh
 cargo test --locked -p zakura-consensus --lib --features slh-test-observer slh
+cargo test --locked -p zakura --lib slh_identity_args
+cargo test --locked -p zakura --lib --features experimental-slh-dsa-b128s slh_identity_args
 cargo clippy --locked -p zakura-chain -p zakura-network -p zakura-state -p zakura-consensus --all-targets -- -D warnings
 cargo clippy --locked -p zakura-consensus --all-targets --features slh-test-observer -- -D warnings
 ```
 
-The standalone identity argument predicate has isolated unit tests, including non-UTF-8 arguments.
+The library test harness includes the standalone identity argument tests, including non-UTF-8 arguments.
+Normal Cargo and nextest discovery includes these tests even though the daemon binary disables its test harness.
 The complete daemon entry point, feature forwarding, startup refusal, and reset consumers have source review only at this checkpoint.
 A human must build the daemon and run live acceptance under [AGENTS.md](../../AGENTS.md).
 
@@ -106,6 +109,7 @@ It uses the existing Serde dependencies and retains MIT/Apache-2.0 attribution.
 | Target | Research source at that revision | Adaptation |
 | --- | --- | --- |
 | `crates/zakurad/src/bin/zakurad/main.rs` and `slh_identity_args.rs` | `node/zakura/crates/zakurad/src/bin/zakurad/main.rs` | Exact-argument early exit with the SLH identity facade; extract the predicate for tests and compare OS arguments to preserve non-UTF-8 handling |
+| `crates/zakurad/src/lib.rs` | Existing product argument-test module above | Include the same source under `cfg(test)` so standard library test discovery runs both regressions; runtime code is unchanged |
 | `crates/zakura-consensus/src/slh_identity.rs` and `lib.rs` | `node/zakura/crates/zakura-consensus/src/transaction/sqisign.rs` | Typed fixed-profile identity, no alternate backend/CPU switch, independent runtime availability |
 | `crates/zakurad/Cargo.toml` | `node/zakura/crates/zakurad/Cargo.toml` | Forward only the existing SLH consensus and mining features |
 | `crates/zakura-state/src/service/chain_tip/tests/vectors.rs` | `node/zakura/crates/zakura-state/src/service/chain_tip/tests/vectors.rs` | Extend the existing C1 mock-tip test with SLH/NU7 rollback, reactivation, same-height fork and coalescing cases |
