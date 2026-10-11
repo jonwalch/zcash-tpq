@@ -2000,6 +2000,15 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/4.md",
+      "provenance": [
+        "docs/changelog/unreleased/README.md"
+      ],
+      "reason": "Record the required no-changelog fragment for the internal SLH test review pull request.",
+      "sha256": "705736afd9b668f013d3bbaaa6976f0b9d4f01382007dd1a5063be7f4dc1187c"
+    },
+    {
+      "disposition": "new",
       "path": "docs/slh-dsa-b128s/README.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
