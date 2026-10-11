@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 """Offline evidence-index validation; no referenced tests or drivers execute."""
 import copy
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import tempfile
 import unittest
 
@@ -47,6 +47,34 @@ class MatrixTests(unittest.TestCase):
                 self.invalid(lambda a: a["references"]["pure"].update(path=path), "relative_source_path")
         self.invalid(lambda a: a["references"]["pure"].update(kind="live_passed"), "reference_kind")
 
+    def only_reference(self, **changes):
+        value = copy.deepcopy(self.matrix)
+        value["references"] = {"pure": dict(value["references"]["pure"], **changes)}
+        return value
+
+    def test_symlinked_sources_fail_inside_or_outside_root(self):
+        value = self.only_reference()
+        top = PurePosixPath(value["references"]["pure"]["path"]).parts[0]
+        with tempfile.TemporaryDirectory() as directory:
+            escaped, inside = Path(directory) / "escaped", Path(directory) / "inside"
+            escaped.mkdir()
+            (escaped / top).symlink_to(matrix.ROOT / top, target_is_directory=True)
+            # A link that stays inside the root isolates the symlinked-component check.
+            (inside / "store" / top).mkdir(parents=True)
+            (inside / top).symlink_to(inside / "store" / top, target_is_directory=True)
+            for root in (escaped, inside):
+                with self.subTest(root=root.name), self.assertRaisesRegex(ValueError, "^regular_source_path$"):
+                    matrix.validate(copy.deepcopy(value), root=root)
+
+    def test_source_must_be_bounded_regular_file(self):
+        with self.assertRaisesRegex(ValueError, "^bounded_source_file$"):
+            matrix.validate(self.only_reference(path="crates"))
+        with tempfile.TemporaryDirectory() as directory:
+            with (Path(directory) / "large.rs").open("wb") as stream:
+                stream.truncate(8 * 1024 * 1024 + 1)
+            with self.assertRaisesRegex(ValueError, "^bounded_source_file$"):
+                matrix.validate(self.only_reference(path="large.rs"), root=Path(directory))
+
     def test_scope_and_exact_types_cannot_upgrade_to_acceptance(self):
         self.invalid(lambda a: a.update(functional_acceptance_complete=True), "no_acceptance_claim")
         self.invalid(lambda a: a.update(functional_acceptance_complete=0), "no_acceptance_claim")
@@ -65,8 +93,11 @@ class MatrixTests(unittest.TestCase):
             path.write_bytes(b" " * (256 * 1024 + 1))
             with self.assertRaisesRegex(ValueError, "bounded_matrix_file"):
                 matrix.load(path)
+            small = Path(directory) / "small.json"
+            small.write_text("{}")
+            self.assertEqual(matrix.load(small), {})
             link = Path(directory) / "link.json"
-            link.symlink_to(path)
+            link.symlink_to(small)
             with self.assertRaisesRegex(ValueError, "bounded_matrix_file"):
                 matrix.load(link)
 

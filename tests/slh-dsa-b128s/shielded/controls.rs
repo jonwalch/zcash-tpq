@@ -275,6 +275,7 @@ fn retained_public_sources_match_the_pinned_upstream_cases() {
         );
         let bytes = hex::decode(encoded.split_whitespace().collect::<String>()).unwrap();
         assert_eq!(entry["wire_sha256"], hex::encode(Sha256::digest(&bytes)));
+        assert_eq!(entry["wire_bytes"], bytes.len());
         let start = upstream
             .split_once(&format!("scenario: \"{scenario}\","))
             .unwrap()
@@ -293,6 +294,20 @@ fn retained_public_sources_match_the_pinned_upstream_cases() {
             .map(|s| u8::from_str_radix(s.strip_prefix("0x").unwrap(), 16).unwrap())
             .collect();
         assert_eq!(bytes, upstream_bytes, "{scenario}");
+    }
+    let lock = include_str!("../../../Cargo.lock");
+    let dependencies = inventory["reference_dependencies"].as_array().unwrap();
+    assert_eq!(dependencies.len(), 3);
+    for dependency in dependencies {
+        let field = |name: &str| dependency[name].as_str().unwrap();
+        let locked = format!(
+            "name = \"{}\"\nversion = \"{}\"\nsource = \"{}\"\nchecksum = \"{}\"\n",
+            field("name"),
+            field("version"),
+            field("source"),
+            field("checksum")
+        );
+        assert!(lock.contains(&locked), "{locked}");
     }
 }
 

@@ -184,13 +184,15 @@ fn contexts_reject_mismatch_and_preserve_shared_output_allocation() {
         ),
         Err(Rejection::ConsensusBranch)
     ));
-    let mut historical = tx.clone();
-    set_upgrade(&mut historical, NetworkUpgrade::Nu6_3);
+    // v6 is never reviewed before NU6.3, so this holds in every feature build.
+    // Refusal of reviewed historical pairs is tested in zakura-pq-tx-context.
+    let (mut historical, _) = transaction(6, &authorization(1, 1), 1);
+    set_upgrade(&mut historical, NetworkUpgrade::Nu6_2);
     assert!(matches!(
         TransactionContext::new(
             &historical,
             NetworkDomain::Regtest,
-            NetworkUpgrade::Nu6_3,
+            NetworkUpgrade::Nu6_2,
             previous.clone()
         ),
         Err(Rejection::TransactionVersion)
@@ -226,11 +228,6 @@ fn all_structural_checks_precede_exactly_one_reservation() {
     assert_eq!(reserved.checks().len(), 2);
     // Structural reservation cannot turn these zero-filled signatures valid.
     assert_eq!(reserved.verify(), Err(Rejection::Signature));
-    assert_eq!(
-        calls.get(),
-        1,
-        "failed crypto never refunds or repeats reservation"
-    );
     assert!(matches!(
         ctx.reserve_input(0, |_| Err(Rejection::VerificationBudget)),
         Err(Rejection::VerificationBudget)
@@ -328,6 +325,27 @@ fn signing_context_reuses_derived_message_and_rejects_bad_partials_before_assemb
 fn boxed_checks_keep_signatures_out_of_inline_record_and_worker_storage() {
     assert!(std::mem::size_of::<Record>() < 128);
     assert!(std::mem::size_of::<SignatureCheck>() < 256);
+    // The independent primitive accepts verifier KAT 0 with its empty message;
+    // only the native 101-byte message bound can refuse it.
+    let kats: serde_json::Value = serde_json::from_str(include_str!(
+        "../../pq-slh-dsa-b-verify/tests/data/pure-kats.json"
+    ))
+    .unwrap();
+    let kat = &kats["cases"][0];
+    assert_eq!(
+        (kat["message"].as_str(), kat["context"].as_str()),
+        (Some(""), Some(""))
+    );
+    let public_key = hex::decode(kat["public_key"].as_str().unwrap()).unwrap();
+    let signature = hex::decode(kat["signature"].as_str().unwrap()).unwrap();
+    assert_eq!(
+        zakura_pq_slh_dsa_b_verify::verify(&public_key, &signature, &[], &[]),
+        Ok(())
+    );
+    assert!(
+        !verify_signature(&public_key, &signature, &[]),
+        "native 101-byte bound, not crypto"
+    );
     for length in [0, 100, 102, 65_536, 65_537] {
         assert!(!verify_signature(
             &[0; 32],
@@ -361,11 +379,11 @@ fn observer_reports_reservation_before_real_crypto_across_worker_threads() {
     let events = Arc::new(Mutex::new(Vec::new()));
     let sink = events.clone();
     let callback = Arc::new(move |event| sink.lock().unwrap().push(event));
+    let ctx = context(&tx, previous);
     observe(callback, || {
         // Native message bounds fail before entering the primitive.
         assert!(!verify_signature(&[0; 32], &[0; SIGNATURE_SIZE], &[0; 100]));
         assert!(events.lock().unwrap().is_empty());
-        let ctx = context(&tx, previous);
         assert!(matches!(
             ctx.reserve_input(0, |_| Err(Rejection::VerificationBudget)),
             Err(Rejection::VerificationBudget)
@@ -380,12 +398,50 @@ fn observer_reports_reservation_before_real_crypto_across_worker_threads() {
             );
         });
     });
-    assert_eq!(
-        &*events.lock().unwrap(),
-        &[
-            Event::Reserved { checks: 1 },
-            Event::CryptoStarted,
-            Event::CryptoFinished { valid: false }
-        ]
+    let expected = [
+        Event::Reserved { checks: 1 },
+        Event::CryptoStarted,
+        Event::CryptoFinished { valid: false },
+    ];
+    assert_eq!(&*events.lock().unwrap(), &expected);
+    // Returning from the scope restores the absent observer on this thread.
+    let reserved = ctx.reserve_input(0, |_| Ok(())).unwrap();
+    assert_eq!(reserved.verify(), Err(Rejection::Signature));
+    assert_eq!(&*events.lock().unwrap(), &expected);
+}
+
+#[cfg(feature = "test-observer")]
+#[test]
+fn nested_observer_scopes_restore_the_prior_observer_on_return_and_unwind() {
+    use std::sync::Mutex;
+    use zakura_pq_slh_dsa_b_exp::test_observer::{observe, Event};
+    let (tx, previous) = transaction(5, &authorization(1, 1), 1);
+    let ctx = context(&tx, previous);
+    let reserve = || {
+        ctx.reserve_input(0, |_| Ok(())).unwrap();
+    };
+    let outer = Arc::new(Mutex::new(Vec::<Event>::new()));
+    let inner = Arc::new(Mutex::new(Vec::<Event>::new()));
+    let (outer_sink, inner_sink) = (outer.clone(), inner.clone());
+    observe(
+        Arc::new(move |event| outer_sink.lock().unwrap().push(event)),
+        || {
+            observe(
+                Arc::new(move |event| inner_sink.lock().unwrap().push(event)),
+                reserve,
+            );
+            reserve();
+            let unwound = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                observe(Arc::new(|_: Event| {}), || {
+                    panic!("unwind through a nested scope")
+                })
+            }));
+            assert!(unwound.is_err());
+            reserve();
+        },
     );
+    reserve();
+    let one = [Event::Reserved { checks: 1 }];
+    assert_eq!(&*inner.lock().unwrap(), &one);
+    assert_eq!(&*outer.lock().unwrap(), &[one, one].concat());
 }

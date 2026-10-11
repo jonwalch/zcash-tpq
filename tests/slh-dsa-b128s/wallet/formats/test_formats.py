@@ -14,6 +14,14 @@ SPEC = importlib.util.spec_from_file_location("slh_wallet_formats", Path(__file_
 r = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(r)
 
+# Literal domain bytes, independent of the oracle's PREFIX/identifier helpers.
+# The policy domain is in protocol.md; proposal and inventory match the Rust wallet.
+POLICY_DOMAIN = b"ZcashTransparentPQ/experimental/slh-dsa-b-128s/policy/v1\0"
+
+
+def domain_hash(domain, raw):
+    return hashlib.sha256(b"ZcashTransparentPQ/" + domain + b"/v1\0" + raw).hexdigest()
+
 
 class Formats(unittest.TestCase):
     @classmethod
@@ -82,13 +90,36 @@ class Formats(unittest.TestCase):
                 descriptor = r.check_entry(entry)
                 r.check_origin_mapping(entry, enrolled)
                 self.assertEqual(descriptor.hex(), row["policy_hex"])
+                self.assertEqual(descriptor[:4], bytes([1, 0xF7, m, n]))
                 self.assertEqual(len(descriptor), 4 + 32 * n)
-                self.assertEqual(row["receiver"], r.receiver(descriptor))
-                self.assertEqual(r.decode(row["receiver"]), r.commitment(descriptor))
+                commitment = hashlib.sha256(POLICY_DOMAIN + descriptor).digest()
+                self.assertEqual(r.commitment(descriptor), commitment)
+                self.assertEqual(row["commitment_hex"], commitment.hex())
+                self.assertEqual(r.decode(row["receiver"]), commitment)
+                self.assertTrue(row["receiver"].startswith("tpqreg1"))
                 self.assertEqual(len(row["receiver"]), 69)
-                self.assertEqual(bytes.fromhex(row["script_hex"]), b"\x53\x20" + r.commitment(descriptor) + b"\xc0")
+                self.assertEqual(bytes.fromhex(row["script_hex"]), b"\x53\x20" + commitment + b"\xc0")
                 seen.add((m, n))
         self.assertEqual(seen, {(m, n) for n in range(1, 16) for m in range(1, n + 1)})
+
+    def test_bech32m_bip350_known_answers(self):
+        # Valid BIP 350 Bech32m and BIP 173 Bech32 strings anchor polymod,
+        # HRP expansion and the Bech32m constant outside this corpus.
+        bech32m = ["a1lqfn3a", "abcdef1l7aum6echk45nj3s0wdvt2fg8x9yrzpqzd3ryx",
+                   "an83characterlonghumanreadablepartthatcontainsthetheexcludedcharactersbioandnumber11sg7hg6",
+                   "split1checkupstagehandshakeupstreamerranterredcaperredlc445v", "?1v759aa"]
+        bech32 = ["a12uel5l", "abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw",
+                  "an83characterlonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1tt5tgs",
+                  "split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w", "?1ezyfcl"]
+        for value in bech32m + bech32:
+            hrp, data = value.rsplit("1", 1)
+            words = [r.ALPHABET.index(c) for c in data[:-6]]
+            with self.subTest(value=value):
+                if value in bech32m:
+                    self.assertEqual(r.encode_words(words, hrp), value)
+                else:
+                    self.assertEqual(r.encode_words(words, hrp, constant=1), value)
+                    self.assertNotEqual(r.encode_words(words, hrp), value)
 
     def test_receiver_mutations(self):
         receiver = self.corpus["policies"][0]["receiver"]
@@ -187,7 +218,9 @@ class Formats(unittest.TestCase):
         self.assertEqual(r.push(bytes(256))[:3], b"\x4d\x00\x01")
         self.assertEqual(r.authorization_bytes(15, 15), 118882)
         self.assertEqual(len(r.compact_size(118882)), 5)
-        self.assertEqual(36 + 5 + 118882 + 4, 118927)
+        # Outpoint, CompactSize, authorization and sequence of each full input.
+        self.assertEqual(r.transaction_bytes(5, [(15, 15)] * 2) - r.transaction_bytes(5, [(15, 15)]),
+                         36 + 5 + 118882 + 4)
         self.assertEqual(r.authorization_bytes(8, 10), 63471)
         self.assertEqual(r.authorization_bytes(9, 10), 71364)
 
@@ -218,7 +251,7 @@ class Formats(unittest.TestCase):
         for row in self.corpus["proposals"]:
             proposal = r.canonical(row["proposal_json"].encode(), r.MAX_PROPOSAL)
             r.check_proposal_envelope(proposal)
-            self.assertEqual(r.identifier("wallet-proposal", proposal), row["proposal_id"])
+            self.assertEqual(domain_hash(b"wallet-proposal", row["proposal_json"].encode()), row["proposal_id"])
             tx = bytes.fromhex(proposal["transaction_hex"])
             self.assertEqual(len(tx), 154 + row["transaction_version"] - 5)
             self.assertEqual(tx[:4], struct.pack("<I", 0x80000000 | row["transaction_version"]))
@@ -247,8 +280,11 @@ class Formats(unittest.TestCase):
                     for row in r.key_answers()["cases"]}
         for entry in self.manifest["entries"]:
             r.check_origin_mapping(entry, enrolled)
-        self.assertEqual(r.identifier("wallet-inventory", self.manifest), self.corpus["inventory_id"])
-        self.assertEqual(r.identifier("wallet-profile", self.manifest["profile"]), self.corpus["profile_id"])
+        inventory = self.corpus["inventory_json"].encode()
+        profile = json.dumps(self.manifest["profile"], sort_keys=True, separators=(",", ":")).encode()
+        self.assertIn(b'"profile":' + profile, inventory)
+        self.assertEqual(domain_hash(b"wallet-inventory", inventory), self.corpus["inventory_id"])
+        self.assertEqual(domain_hash(b"wallet-profile", profile), self.corpus["profile_id"])
         candidate = copy.deepcopy(self.manifest)
         candidate["allocator_id"] = "ee" * 16
         self.assertNotEqual(r.identifier("wallet-inventory", candidate), self.corpus["inventory_id"])
@@ -311,21 +347,24 @@ class Formats(unittest.TestCase):
         r.check_manifest(rewritten)
         with self.assertRaisesRegex(ValueError, "entry history changed"):
             r.check_manifest_update(extended, rewritten)
+        # Keep the birthday unchanged so that only shrinkage can reject.
         shrunken = copy.deepcopy(previous)
-        shrunken["revision"] = 2
+        shrunken.update(revision=2, birthday_height=extended["birthday_height"])
         r.check_manifest(shrunken)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "^coverage rollback$"):
             r.check_manifest_update(extended, shrunken)
         exhausted = dict(rotated, revision=2**32 - 1)
         r.check_manifest_update(exhausted, copy.deepcopy(exhausted))
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "^revision rollback$"):
             r.check_manifest_update(exhausted, previous)
 
     def test_inventory_entry_and_byte_caps_are_independent(self):
         maximum_entry = json.loads(self.corpus["capacity"]["maximum_entry_json"])
         self.assertEqual(len(r.j(maximum_entry)), 2206)
-        self.assertEqual(2 + 4096 * 2206 + 4095, 9039873)
-        self.assertGreater(9039873, r.MAX_PLAINTEXT)
+        maximum_array = len(json.dumps([maximum_entry] * r.MAX_ENTRIES, sort_keys=True, separators=(",", ":")))
+        self.assertEqual(maximum_array, 9039873)
+        self.assertEqual(self.corpus["capacity"]["maximum_entry_array_bytes"], maximum_array)
+        self.assertGreater(maximum_array, r.MAX_PLAINTEXT)
         def inventory(count, participants):
             result = copy.deepcopy(self.manifest)
             result.update(receive_end=count, change_end=0, entries=[])
@@ -373,15 +412,17 @@ class Formats(unittest.TestCase):
             raise HeaderAccepted
         # Exact min/max ciphertext lengths reach KDF; max+1 cannot. No real KDF
         # or large plaintext encryption is required to exercise this boundary.
+        caps = self.corpus["capacity"]
         for size in (16, r.MAX_PLAINTEXT + 16):
             blob = r.backup_header(bytes(16), bytes(12), size) + bytes(size)
             with self.assertRaises(HeaderAccepted):
                 r.decrypt_backup(blob, b"public", stop_after_header)
+        self.assertEqual(len(blob), caps["encrypted_backup_bytes_cap"])
         size = r.MAX_PLAINTEXT + 17
         blob = r.backup_header(bytes(16), bytes(12), size) + bytes(size)
+        self.assertEqual(len(blob), caps["encrypted_backup_bytes_cap"] + 1)
         with self.assertRaisesRegex(ValueError, "length"):
             r.decrypt_backup(blob, b"public", stop_after_header)
-        caps = self.corpus["capacity"]
         self.assertEqual(caps["encrypted_backup_bytes_cap"], 8388680)
         self.assertEqual(caps["journal_capability_bytes_cap"], 1048576)
         self.assertEqual(caps["watch_v2_bytes_cap"], 33554432)
@@ -405,26 +446,30 @@ class Formats(unittest.TestCase):
                 r.decrypt_backup(self.backup, password, lambda *_: self.fail("invalid password reached KDF"))
 
     def test_authenticated_recovery_schema_mutations(self):
-        mutations = [("alternate suite", lambda c: c["manifest"].update(suite=0xF3)),
-                     ("unknown suite", lambda c: c["manifest"].update(suite=0xF8)),
-                     ("wrong recovery version", lambda c: c.update(format=r.PREFIX + "recovery/v2")),
-                     ("short root", lambda c: c.update(root_hex="00" * 31)),
-                     ("uppercase root", lambda c: c.update(root_hex="AA" * 32)),
-                     ("journal in root envelope", lambda c: c.update(journal={})),
-                     ("entries not array", lambda c: c["manifest"].update(entries={})),
-                     ("origins not array", lambda c: c["manifest"]["entries"][0].update(origins={}))]
+        mutations = [("alternate suite", lambda c: c["manifest"].update(suite=0xF3), "suite/version"),
+                     ("unknown suite", lambda c: c["manifest"].update(suite=0xF8), "suite/version"),
+                     ("wrong recovery version", lambda c: c.update(format=r.PREFIX + "recovery/v2"), "recovery format"),
+                     ("short root", lambda c: c.update(root_hex="00" * 31), "hex"),
+                     ("uppercase root", lambda c: c.update(root_hex="AA" * 32), "hex"),
+                     ("journal in root envelope", lambda c: c.update(journal={}), "fields"),
+                     ("entries not array", lambda c: c["manifest"].update(entries={}), "entries array"),
+                     ("origins not array", lambda c: c["manifest"]["entries"][0].update(origins={}), "origins array")]
         # Authenticated invalid schemas use separate public test salt/key and
         # distinct nonces. Encrypt raw JSON directly to reach the reader checks.
         key, salt = b"K" * 32, b"S" * 16
-        for index, (label, mutate) in enumerate(mutations):
-            candidate = copy.deepcopy(self.recovery)
-            mutate(candidate)
+        def blob(candidate, index):
             plaintext = r.j(candidate)
             nonce = index.to_bytes(12, "little")
             header = r.backup_header(salt, nonce, len(plaintext) + 16)
-            blob = header + r.ChaCha20Poly1305(key).encrypt(nonce, plaintext, header)
-            with self.subTest(mutation=label), self.assertRaises(ValueError):
-                r.decrypt_backup(blob, b"public schema test", lambda *_: key)
+            return header + r.ChaCha20Poly1305(key).encrypt(nonce, plaintext, header)
+        # The unmutated recovery authenticates and parses with this setup.
+        self.assertEqual(r.decrypt_backup(blob(self.recovery, len(mutations)), b"public schema test",
+                                          lambda *_: key), self.recovery)
+        for index, (label, mutate, reason) in enumerate(mutations):
+            candidate = copy.deepcopy(self.recovery)
+            mutate(candidate)
+            with self.subTest(mutation=label), self.assertRaisesRegex(ValueError, "^" + reason + "$"):
+                r.decrypt_backup(blob(candidate, index), b"public schema test", lambda *_: key)
 
 
 if __name__ == "__main__":

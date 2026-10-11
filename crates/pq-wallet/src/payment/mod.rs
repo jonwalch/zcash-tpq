@@ -66,5 +66,5 @@ pub trait PaymentSource: ChainSource {
     fn submit(&mut self, transaction: &[u8]) -> Result<Hex<32>, Error>;
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests;

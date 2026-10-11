@@ -55,13 +55,40 @@ fn independent_derivation_blocks_roots_and_suite_separation() {
         .unwrap();
         assert_eq!(&both_blocks[..32], &bytes::<32>(case, "t1"));
         assert_eq!(&both_blocks[32..], &bytes::<32>(case, "t2"));
+        // Tie the independent HKDF blocks to the production seed directly.
+        assert_eq!(&*root.seed(path), &both_blocks[..48]);
     }
+    // Mutation controls for the known answers above, not production coverage:
+    // production has no suite input. Each control changes only the info suite
+    // byte, and its independently derived seed differs from the f7 answer, so a
+    // wrong production suite byte would fail the seed equality above.
+    let f7 = &vectors["cases"][0];
+    assert_eq!(
+        (f7["role"].as_u64(), f7["index"].as_u64()),
+        (Some(0), Some(0))
+    );
+    let f7_info = hex::decode(f7["info"].as_str().unwrap()).unwrap();
+    let suite_byte = b"ZcashTransparentPQ/wallet-key/v1\0".len() + 2;
+    assert_eq!(f7_info[suite_byte], 0xf7);
     let seed = root.seed(KeyPath {
         role: Role::Receive,
         index: 0,
     });
     for control in vectors["suite_separation"].as_array().unwrap() {
-        assert_ne!(&*seed, &bytes::<48>(control, "seed"));
+        let info = hex::decode(control["info"].as_str().unwrap()).unwrap();
+        let mut expected_info = f7_info.clone();
+        expected_info[suite_byte] = u8::try_from(control["suite"].as_u64().unwrap()).unwrap();
+        assert_eq!(info, expected_info);
+        assert_ne!(info, f7_info);
+        let mut control_seed = Zeroizing::new([0; 48]);
+        Hkdf::<Sha256>::new(
+            Some(b"ZcashTransparentPQ/wallet-root/v1\0"),
+            root.bytes.as_ref(),
+        )
+        .expand(&info, control_seed.as_mut())
+        .unwrap();
+        assert_eq!(&*control_seed, &bytes::<48>(control, "seed"));
+        assert_ne!(&*seed, &*control_seed);
     }
 }
 

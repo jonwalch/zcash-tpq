@@ -8,7 +8,22 @@ fn all_120_policy_shapes_have_exact_sizes_and_current_fees() {
         "../../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
     ))
     .unwrap();
-    for row in corpus["policies"].as_array().unwrap() {
+    let rows = corpus["policies"].as_array().unwrap();
+    assert_eq!(rows.len(), 120);
+    let shapes: std::collections::BTreeSet<_> = rows
+        .iter()
+        .map(|row| {
+            (
+                row["threshold"].as_u64().unwrap(),
+                row["participants"].as_u64().unwrap(),
+            )
+        })
+        .collect();
+    let expected: std::collections::BTreeSet<_> = (1..=15u64)
+        .flat_map(|n| (1..=n).map(move |m| (m, n)))
+        .collect();
+    assert_eq!(shapes, expected);
+    for row in rows {
         let entry = Entry {
             origins: (0..row["participants"].as_u64().unwrap())
                 .map(|i| Origin {
@@ -88,6 +103,19 @@ fn recipient_dust_floor_is_2403_independent_of_signature_cost() {
 
 #[test]
 fn trusted_payment_review_accepts_all_120_enrolled_shapes_for_both_versions() {
+    let corpus: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
+    ))
+    .unwrap();
+    let authorization = |m: u8, n: u8| {
+        let row = corpus["policies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["threshold"] == m && row["participants"] == n)
+            .unwrap();
+        usize::try_from(row["authorization_bytes"].as_u64().unwrap()).unwrap()
+    };
     let mut owners = wallets(1, 1, 1);
     let wallet = &mut owners[0];
     let own = [
@@ -173,7 +201,17 @@ fn trusted_payment_review_accepts_all_120_enrolled_shapes_for_both_versions() {
                         .review_payment(wallet, &mut source, &proposal, &approved)
                         .unwrap()
                 );
-                assert!(reviewed.final_bytes <= MAX_TRANSACTION);
+                // One input with payment and change outputs, both 35-byte
+                // scripts: the same independent formula as the corpus test.
+                let size = authorization(m, n);
+                let input_bytes = 40 + if size <= 65_535 { 3 } else { 5 } + size;
+                let fee = (input_bytes as u64).div_ceil(150) * 400;
+                assert_eq!(
+                    reviewed.final_bytes,
+                    input_bytes + if version == 5 { 113 } else { 114 }
+                );
+                assert_eq!((reviewed.fee, reviewed.conventional_fee), (fee, fee));
+                assert_eq!(reviewed.change_value, 1_500_000 - fee);
                 assert_eq!(proposal.inputs[0].entry.origins.len(), usize::from(n));
                 assert_eq!(
                     proposal.outputs[1].entry.as_ref().unwrap().origins.len(),

@@ -1,18 +1,23 @@
 //! Bounded consensus controls using retained public synthetic SLH fixtures.
 //! The production service resolves outputs through mock trusted chain/mempool services.
 //! No signing, live node, proof generation or performance workload is used.
+//! Tests that need the verifier use its feature. The other tests run in the default build.
 
 mod policy;
 
 use super::*;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 use crate::transaction::{
     pq::SlhDsaB128sTransactionBudget, slh_dsa_b128s::verify_experimental_slh_dsa_b128s_inputs,
-    AsyncChecks, Response, SlhDsaB128sBlockBudget,
+    AsyncChecks,
 };
+use crate::transaction::{Response, SlhDsaB128sBlockBudget};
 use serde_json::Value;
 use zakura_chain::parameters::testnet::{ExperimentalSlhDsaB128sLimits, RegtestParameters};
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 use zakura_pq_slh_dsa_b_exp::{Authorization, Rejection};
 use zakura_pq_test_support::install;
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 use zakura_pq_tx_context::NetworkDomain;
 
 const SLH_HEIGHT: Height = Height(110);
@@ -96,6 +101,7 @@ impl Fixture {
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 fn rejected(input_index: usize, rejection: Rejection) -> TransactionError {
     TransactionError::ExperimentalSlhDsaB128s {
         input_index,
@@ -103,6 +109,7 @@ fn rejected(input_index: usize, rejection: Rejection) -> TransactionError {
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 fn corrupt_signature(transaction: &mut Transaction, index: usize) {
     let transparent::Input::PrevOut { unlock_script, .. } = &transaction.inputs()[index] else {
         unreachable!()
@@ -116,6 +123,7 @@ fn corrupt_signature(transaction: &mut Transaction, index: usize) {
     );
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 fn worker(
     fixture: &Fixture,
     limits: ExperimentalSlhDsaB128sLimits,
@@ -131,6 +139,7 @@ fn worker(
     )
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[test]
 fn slh_worker_real_signatures_and_exact_transaction_block_boundaries() {
     let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
@@ -162,6 +171,7 @@ fn slh_worker_real_signatures_and_exact_transaction_block_boundaries() {
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[test]
 fn slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_failure() {
     let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
@@ -192,37 +202,48 @@ fn slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_fail
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[tokio::test]
 async fn slh_trusted_block_dispatch_uses_real_worker_and_preserves_fresh_attempts() {
     let network = network(16, 64);
     for version in [5, 6] {
         for case in ["1of1", "1of15-index14", "16checks"] {
+            let checks = if case == "16checks" { 16 } else { 1 };
             let fixture = fixture(version, case);
             let budget =
                 SlhDsaB128sBlockBudget::new(network.experimental_slh_dsa_b128s_limits().unwrap());
             let state = service_fn(|_| async { unreachable!("known UTXOs cover every input") });
+            // One verifier serves both requests, so any reuse keyed by txid would show here.
+            let mut verifier = Verifier::new_for_tests(&network, state);
             let result = timeout(
                 test_timeout(),
-                Verifier::new_for_tests(&network, state)
-                    .oneshot(fixture.block_request(Some(budget.clone()))),
+                verifier
+                    .ready()
+                    .await
+                    .unwrap()
+                    .call(fixture.block_request(Some(budget.clone()))),
             )
             .await
             .unwrap()
             .unwrap();
             assert_eq!(result.tx_id(), fixture.transaction.unmined_id());
-            assert_eq!(budget.remaining(), if case == "16checks" { 48 } else { 63 });
+            assert_eq!(budget.remaining(), 64 - checks);
             let mut bad = fixture.clone();
             corrupt_signature(&mut bad.transaction, 0);
             assert_eq!(fixture.transaction.hash(), bad.transaction.hash());
-            let state = service_fn(|_| async { unreachable!("known UTXOs cover every input") });
             let result = timeout(
                 test_timeout(),
-                Verifier::new_for_tests(&network, state)
-                    .oneshot(bad.block_request(Some(budget.clone()))),
+                verifier
+                    .ready()
+                    .await
+                    .unwrap()
+                    .call(bad.block_request(Some(budget.clone()))),
             )
             .await
             .unwrap();
             assert_eq!(result, Err(rejected(0, Rejection::Signature)));
+            // The failed attempt reserved its own checks and did not refund them.
+            assert_eq!(budget.remaining(), 64 - 2 * checks);
         }
     }
 }
@@ -258,6 +279,35 @@ async fn slh_dispatch_rejects_mixed_inputs_before_any_budget_or_authorization_wo
             Err(TransactionError::ExperimentalSlhDsaB128sMixedInputs)
         );
         assert_eq!(budget.remaining(), 64);
+    }
+}
+
+/// A build without the verifier rejects active SLH spends in blocks and relay.
+#[cfg(not(feature = "experimental-slh-dsa-b128s"))]
+#[tokio::test]
+async fn slh_spends_fail_closed_without_the_compiled_verifier() {
+    let network = network(16, 64);
+    let unavailable = || TransactionError::ExperimentalSlhDsaB128sContext {
+        reason: "backend_unavailable".to_owned(),
+    };
+    for version in [5, 6] {
+        let fixture = fixture(version, "1of1");
+        let budget =
+            SlhDsaB128sBlockBudget::new(network.experimental_slh_dsa_b128s_limits().unwrap());
+        let state = service_fn(|_| async { unreachable!("known UTXOs cover every input") });
+        let result = timeout(
+            test_timeout(),
+            Verifier::new_for_tests(&network, state)
+                .oneshot(fixture.block_request(Some(budget.clone()))),
+        )
+        .await
+        .unwrap();
+        assert_eq!(result, Err(unavailable()));
+        assert_eq!(budget.remaining(), 64);
+        assert_eq!(
+            mempool_result(&network, SLH_HEIGHT, fixture, false).await,
+            Err(unavailable())
+        );
     }
 }
 
@@ -298,43 +348,66 @@ async fn mempool_result(
 }
 
 fn funding(version: u8) -> Fixture {
+    classical_funding(version, true)
+}
+
+/// SLH funding from one standard P2SH input whose script passes or fails.
+fn classical_funding(version: u8, script_should_succeed: bool) -> Fixture {
     let mut fixture = fixture(version, "1of1");
-    let (input, _, utxos) =
-        mock_transparent_transfer(Height(1), true, 0, 100_000.try_into().unwrap());
+    let (input, _, utxos) = mock_transparent_transfer(
+        Height(1),
+        script_should_succeed,
+        0,
+        100_000.try_into().unwrap(),
+    );
     fixture.previous = Arc::new(vec![utxos[&input.outpoint().unwrap()].utxo.output.clone()]);
     fixture.transaction.inputs_mut()[0] = input;
     fixture
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[tokio::test]
 async fn slh_mempool_publishes_bound_counts_only_after_complete_success_including_zero_funding() {
+    // A structural count equal to the transaction limit passes the relay precheck.
+    let exact = network(1, 64);
     let network = network(16, 64);
     for version in [5, 6] {
-        for (fixture, expected) in [(fixture(version, "1of1"), 1), (funding(version), 0)] {
+        for (rules, fixture, expected) in [
+            (&network, fixture(version, "1of1"), 1),
+            (&network, funding(version), 0),
+            (&exact, fixture(version, "1of1"), 1),
+        ] {
             let Response::Mempool { transaction, .. } =
-                mempool_result(&network, SLH_HEIGHT, fixture.clone(), false)
+                mempool_result(rules, SLH_HEIGHT, fixture.clone(), false)
                     .await
                     .unwrap()
             else {
                 unreachable!()
             };
             assert_eq!(
-                transaction.verified_slh_dsa_b128s_checks(&network, SLH_HEIGHT),
+                transaction.verified_slh_dsa_b128s_checks(rules, SLH_HEIGHT),
                 Ok(expected)
             );
             assert_eq!(
-                transaction.verified_slh_dsa_b128s_checks(&network, Height(111)),
+                transaction.verified_slh_dsa_b128s_checks(rules, Height(111)),
                 Ok(expected)
             );
             assert!(transaction
-                .verified_slh_dsa_b128s_checks(&network, Height(109))
+                .verified_slh_dsa_b128s_checks(rules, Height(109))
                 .is_err());
             assert!(transaction.slh_dsa_b128s_verification.is_some());
             assert_eq!(transaction.spent_outputs, fixture.previous);
-            assert!(mempool_result(&network, SLH_HEIGHT, fixture, true)
-                .await
-                .is_err());
+            // The late state check fails after every other check succeeded.
+            assert!(matches!(
+                mempool_result(rules, SLH_HEIGHT, fixture, true).await,
+                Err(TransactionError::InternalDowncastError(error))
+                    if error.contains("state check failed")
+            ));
         }
+        assert_eq!(
+            mempool_result(&exact, SLH_HEIGHT, fixture(version, "2of3"), false).await,
+            Err(TransactionError::ExperimentalSlhDsaB128sTransactionBudget { limit: 1 })
+        );
         let mut corrupt = fixture(version, "1of1");
         corrupt_signature(&mut corrupt.transaction, 0);
         assert_eq!(
@@ -351,6 +424,7 @@ async fn slh_mempool_publishes_bound_counts_only_after_complete_success_includin
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[tokio::test]
 async fn slh_accounting_waits_for_other_checks_and_never_refunds_cancelled_work() {
     let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
@@ -415,6 +489,7 @@ async fn slh_accounting_waits_for_other_checks_and_never_refunds_cancelled_work(
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[tokio::test]
 async fn slh_accounting_drains_held_work_after_an_early_error() {
     let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
@@ -472,7 +547,10 @@ fn slh_budget_error_wrappers_preserve_attempt_scope_and_peer_scores() {
     for error in [
         block_budget,
         transaction_budget,
-        rejected(0, Rejection::Signature),
+        TransactionError::ExperimentalSlhDsaB128s {
+            input_index: 0,
+            reason: "signature".to_owned(),
+        },
         TransactionError::ExperimentalSlhDsaB128sMixedInputs,
     ] {
         assert_eq!(TransactionError::from(BoxError::from(error.clone())), error);
@@ -663,6 +741,8 @@ fn slh_exact_recognition_ignores_created_outputs_and_native_looking_witnesses() 
         [&[0x52][..], &script[1..]].concat(),
         [script, &[0x00][..]].concat(),
         script[..34].to_vec(),
+        [&script[..34], &[0xc1][..]].concat(),
+        [&[0x53, 0x21][..], &script[2..]].concat(),
     ] {
         let mut output = signed.previous[0].clone();
         output.lock_script = transparent::Script::new(&alternate);
@@ -673,6 +753,7 @@ fn slh_exact_recognition_ignores_created_outputs_and_native_looking_witnesses() 
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[tokio::test]
 async fn slh_relay_structural_precheck_precedes_worker_n1_ordering() {
     let network = network(16, 64);
@@ -742,7 +823,13 @@ fn slh_diagnostics_match_actual_primitive_entries_and_authorization_identity() {
                         )
                     },
                 );
-                assert_eq!(result.is_ok(), condition == "valid");
+                let expected = match condition {
+                    "valid" => Ok(if case == "16checks" { 16 } else { 1 }),
+                    "bad-signature" => Err(rejected(0, Rejection::Signature)),
+                    "bad-encoding" => Err(rejected(0, Rejection::Encoding)),
+                    _ => Err(TransactionError::ExperimentalSlhDsaB128sBlockBudget { limit: 64 }),
+                };
+                assert_eq!(result, expected, "{version} {case} {condition}");
                 let native = native.lock().unwrap();
                 let started = native
                     .iter()

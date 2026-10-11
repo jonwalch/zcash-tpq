@@ -3,7 +3,7 @@
 
 use serde_json::Value;
 use std::{fs, os::unix::fs::PermissionsExt};
-use zakura_pq_wallet::{recovery::SnapshotReceipt, Manifest, WatchMode, WatchStore};
+use zakura_pq_wallet::{recovery::SnapshotReceipt, Error, Manifest, WatchMode, WatchStore};
 
 fn corpus() -> Value {
     serde_json::from_slice(include_bytes!(
@@ -48,12 +48,27 @@ fn snapshot_receipt_encoding_and_every_identity_component_match_independent_answ
 
 #[test]
 fn snapshot_receipt_rejects_independent_schema_and_canonical_mutations() {
-    for case in corpus()["snapshot"]["invalid_receipts"].as_array().unwrap() {
-        assert!(
-            SnapshotReceipt::from_json(case["json"].as_str().unwrap().as_bytes()).is_err(),
-            "{}",
-            case["reason"]
-        );
+    let cases = corpus()["snapshot"]["invalid_receipts"]
+        .as_array()
+        .unwrap()
+        .clone();
+    assert_eq!(cases.len(), 9);
+    for case in cases {
+        let reason = case["reason"].as_str().unwrap();
+        let result = SnapshotReceipt::from_json(case["json"].as_str().unwrap().as_bytes());
+        let matched = match reason {
+            "byte limit" => matches!(result, Err(Error::Limits)),
+            "suite" => matches!(result, Err(Error::UnsupportedFormat)),
+            "profile.network" => matches!(result, Err(Error::UnsupportedContext)),
+            "receive_next" | "journal.generation" | "journal.journal_id" => {
+                matches!(result, Err(Error::RecoveryIncomplete))
+            }
+            "trailing newline" | "duplicate field" | "unknown field" => {
+                matches!(result, Err(Error::Encoding))
+            }
+            _ => panic!("unexpected invalid receipt case: {reason}"),
+        };
+        assert!(matched, "{reason}: {:?}", result.err());
     }
 }
 

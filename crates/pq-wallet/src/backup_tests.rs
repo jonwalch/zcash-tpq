@@ -9,6 +9,7 @@ struct TestRng {
     next: u8,
     calls: usize,
     fail_at: Option<usize>,
+    fixed: Option<u8>,
 }
 impl TestRng {
     fn new() -> Self {
@@ -16,6 +17,7 @@ impl TestRng {
             next: 0,
             calls: 0,
             fail_at: None,
+            fixed: None,
         }
     }
     fn failing(call: usize) -> Self {
@@ -44,6 +46,10 @@ impl RngCore for TestRng {
             return Err(rand_core::Error::from(
                 NonZeroU32::new(rand_core::Error::CUSTOM_START).unwrap(),
             ));
+        }
+        if let Some(fixed) = self.fixed {
+            bytes.fill(fixed);
+            return Ok(());
         }
         for byte in bytes {
             *byte = self.next;
@@ -220,18 +226,24 @@ fn recovery_schema_profile_and_owned_commitments_are_mandatory() {
     ] {
         assert!(Wallet::from_plaintext(bad.as_bytes(), &profile).is_err());
     }
-    let too_many = [
-        b"{\"allocator_id\":\"00000000000000000000000000000000\",\"entries\":".as_slice(),
-        serde_json::to_vec(&vec![
-            original["manifest"]["entries"][0].clone();
-            MAX_ENTRIES + 1
-        ])
-        .unwrap()
-        .as_slice(),
-        b"}",
-    ]
-    .concat();
-    assert!(Manifest::from_json(&too_many).is_err());
+    // A complete manifest isolates the entry count: the bounded deserializer
+    // rejects it as Encoding; without that bound validate() returns Limits.
+    let mut too_many = original["manifest"].clone();
+    too_many["entries"] = json!(vec![
+        original["manifest"]["entries"][0].clone();
+        MAX_ENTRIES + 1
+    ]);
+    too_many["receive_end"] = (MAX_ENTRIES + 1).into();
+    too_many["change_end"] = 0.into();
+    assert!(matches!(
+        Manifest::from_json(&serde_json::to_vec(&too_many).unwrap()),
+        Err(Error::Encoding)
+    ));
+    let mut direct = manifest();
+    direct.entries = vec![direct.entries[0].clone(); MAX_ENTRIES + 1];
+    direct.receive_end = u64::try_from(MAX_ENTRIES + 1).unwrap();
+    direct.change_end = 0;
+    assert!(matches!(direct.validate(), Err(Error::Limits)));
 }
 
 #[test]
@@ -359,6 +371,17 @@ fn restored_allocator_entropy_and_revision_failures_preserve_the_inventory() {
         Err(Error::Entropy)
     ));
     assert_eq!(wallet.manifest(), &original);
+    // A fresh allocator ID equal to the current one is an entropy failure.
+    assert_eq!(original.allocator_id, Hex([0xdd; 16]));
+    let mut collision = TestRng {
+        fixed: Some(0xdd),
+        ..TestRng::new()
+    };
+    assert!(matches!(
+        wallet.retire_for_restore_with_rng(&mut collision),
+        Err(Error::Entropy)
+    ));
+    assert_eq!(wallet.manifest(), &original);
     wallet
         .retire_for_restore_with_rng(&mut TestRng::new())
         .unwrap();
@@ -366,6 +389,11 @@ fn restored_allocator_entropy_and_revision_failures_preserve_the_inventory() {
     assert_eq!(wallet.manifest().entries, original.entries);
     assert_eq!(wallet.manifest().retired_receive_end, original.receive_end);
     assert_eq!(wallet.manifest().retired_change_end, original.change_end);
+    assert_eq!(
+        &wallet.manifest().allocator_id.0[..],
+        &(0..16).collect::<Vec<u8>>()
+    );
+    assert_eq!(wallet.manifest().revision, original.revision + 1);
     wallet.manifest.revision = u32::MAX;
     let mut rng = TestRng::new();
     assert!(matches!(

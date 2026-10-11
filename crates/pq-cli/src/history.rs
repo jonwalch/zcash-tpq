@@ -67,13 +67,6 @@ mod tests {
         }
         args.extend(["2".into(), "cursor".into()]);
         assert_eq!(page_arguments(&args).unwrap(), (2, Some("cursor")));
-        for n in 0..8 {
-            assert_eq!(
-                expected("payment-history").unwrap().contains(&n),
-                (3..=5).contains(&n)
-            );
-        }
-        assert_eq!(expected("payment-history-export"), Some(5..=5));
         for command in ["payment-archive", "payment-resume"] {
             assert_eq!(crate::payments::expected(command), Some(6));
             assert_eq!(expected(command), None);

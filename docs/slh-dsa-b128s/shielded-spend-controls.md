@@ -163,6 +163,7 @@ python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance \
 ```
 
 Models cover ten host shapes and seven pool combinations through the lifecycle.
+They also cover the driver's funding order, duplicate-note check, and saved history and authorization checks.
 They reject false history, changed identities, missing parents, wrong diagnostics,
 omitted operations, no-op state changes, and incorrect reentry.
 Publication models cover absent peer propagation, bounded races, refusal, exact bytes, and both templates.

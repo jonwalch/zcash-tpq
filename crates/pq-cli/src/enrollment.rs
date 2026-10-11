@@ -280,8 +280,18 @@ mod tests {
         let key = keys(&manifest, 1).pop().unwrap();
         let raw = key.to_json().unwrap();
         assert_eq!(KeyExchange::from_json(&raw).unwrap(), key);
-        assert!(KeyExchange::from_json(&[raw.as_slice(), b"\n"].concat()).is_err());
-        assert!(KeyExchange::from_json(&vec![b' '; MAX_KEY + 1]).is_err());
+        assert_eq!(
+            KeyExchange::from_json(&[raw.as_slice(), b"\n"].concat())
+                .unwrap_err()
+                .to_string(),
+            "public key exchange must be canonical JSON"
+        );
+        assert_eq!(
+            KeyExchange::from_json(&vec![b' '; MAX_KEY + 1])
+                .unwrap_err()
+                .to_string(),
+            "public key exchange exceeds limit"
+        );
         let original = key.fingerprint().unwrap();
         for mut changed in [key.clone(), key.clone(), key.clone(), key.clone()]
             .into_iter()
@@ -297,7 +307,10 @@ mod tests {
         }
         let mut other = key.clone();
         other.suite = 1;
-        assert!(other.to_json().is_err());
+        assert_eq!(
+            other.to_json().unwrap_err().to_string(),
+            "unsupported public key exchange"
+        );
         let value = String::from_utf8(raw)
             .unwrap()
             .replace("\"suite\":247", "\"suite\":247,\"suite\":247");

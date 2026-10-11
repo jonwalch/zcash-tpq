@@ -152,6 +152,9 @@ fn every_field_rejects_nonminimal_pushes_and_wrong_fixed_lengths() {
         // Key through PUSHDATA1 or PUSHDATA2 instead of direct 32.
         [&good[..1], &[0x4c, 32], &good[2..]].concat(),
         [&good[..1], &[0x4d, 32, 0], &good[2..]].concat(),
+        // Key short or extended by one byte, each still minimally pushed.
+        [&good[..1], &[31], &good[2..33], &good[34..]].concat(),
+        [&good[..1], &[33], &good[2..34], &[0], &good[34..]].concat(),
         // PUSHDATA4 is not a permitted spelling for an individual signature.
         [&good[..34], &[0x4e, 0xb0, 0x1e, 0, 0], &good[37..]].concat(),
         // Signature short or extended; not a suffix-bearing signature format.

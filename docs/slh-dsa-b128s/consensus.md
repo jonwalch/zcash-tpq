@@ -61,12 +61,15 @@ They cover these cases:
 - Real primitive entry and structural rejection before cryptography.
 - Counts after full success, zero counts for funding, and metadata freshness.
 - Both paths that bypass the cache.
+- One shared budget for each block attempt, and a fresh budget for the next attempt.
+- Fail-closed rejection of active SLH spends in builds without the verifier.
 
 Generic late-failure tests use the same result merge as shielded checks.
 They do not establish acceptance of new shielded proofs.
 
 ```sh
 cargo test --locked -p zakura-consensus --lib --features slh-test-observer slh
+cargo test --locked -p zakura-consensus --lib slh
 cargo test --locked -p zakura-chain --lib slh
 cargo test --locked -p zakura-script --lib shared_previous_outputs
 cargo test --locked -p zakura-consensus --lib --features slh-test-observer utxo_lookups

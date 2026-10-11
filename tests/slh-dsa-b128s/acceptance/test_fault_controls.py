@@ -1,26 +1,48 @@
 """Offline receipt/process mocks; never signs, spawns, kills or fills storage."""
 import copy
 from pathlib import Path
+import re
 import signal
+import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-from common import AcceptanceError, read_json, write_json
+from common import ROOT, AcceptanceError, read_json, write_json
 import fault_controls as controls
+
+WALLET = ROOT / "crates/pq-wallet/src"
+SOURCE = (WALLET / "payment/tests/faults.rs").read_text()
+# The ignored Rust driver's own receipt check lists: prepare, run, reopen.
+COMPLETE = [re.findall(r'"([a-z_]+)"', block)
+            for block in re.findall(r'receipt\(\s*"complete",\s*&\[(.*?)\]', SOURCE, re.S)]
 
 
 def receipt(request, pid, event):
     checks = (["named_stage_reached"] if event == "reached" else
-              controls.PREPARED if request["phase"] == "prepare" else
-              controls.RECOVERED if request["phase"] == "reopen" else
-              ["operation_succeeded" if request["mode"] == "positive" else "exact_fault_error"])
+              COMPLETE[0] if request["phase"] == "prepare" else
+              COMPLETE[2] if request["phase"] == "reopen" else
+              [COMPLETE[1][1] if request["mode"] == "positive" else COMPLETE[1][2]])
     return dict(schema_version=1, **{key: request[key] for key in ("case", "stage", "mode", "phase", "token")},
                 pid=pid, event=event, state_sha256="ab" * 32, checks=list(checks))
 
 
+def rust_request(request):
+    """The ignored driver's Request deny_unknown_fields and validate() rules."""
+    assert set(request) == {"directory", "token", "case", "stage", "mode", "phase"}
+    directory = Path(request["directory"])
+    assert directory.is_absolute() and directory.resolve() == directory
+    assert directory.stat().st_mode & 0o077 == 0
+    assert re.fullmatch("[0-9a-f]{32}", request["token"])
+    assert request["mode"] in ("positive", "io", "kill") and request["phase"] in ("prepare", "run", "reopen")
+    assert request["stage"] in controls.CASES[request["case"]]
+    assert request["mode"] != "kill" or request["case"] in ("migration", "receive", "backup")
+
+
 class FakeProcess:
     def __init__(self, owner, request):
+        rust_request(request)
         self.owner, self.request = owner, request
         self.pid = 1000 + len(owner.calls)
         self.closed = self.killed = False
@@ -81,15 +103,36 @@ class FaultControlsTests(unittest.TestCase):
             self.assertTrue(all(not Path(p.request["directory"]).exists() for p in factory.calls))
             self.assertEqual(sum(p.killed for p in factory.calls), 1 if mode == "kill" else 0)
 
+    def failed_case(self, mode, mutation, reason):
+        records, factory = [], Factory(mutation)
+        with self.assertRaisesRegex(AcceptanceError, reason):
+            controls.bracket(Path("/unused"), "migration", "FileSync", mode, records, factory=factory)
+        self.assertFalse(records[0]["complete"])
+        self.assertTrue(all(process.closed for process in factory.calls))
+        return factory
+
     def test_negative_never_accepts_arbitrary_exit_or_noop(self):
-        for mutation in ("exit", "timeout", "missing-stage", "wrong-token", "wrong-stage", "wrong-pid", "missing-invariant", "after-positive"):
-            with self.subTest(mutation=mutation), self.assertRaises(AcceptanceError):
-                self.run_case(mutation=mutation)
+        # Fault-attempt processes are 4..6; the final positive attempt starts at 7.
+        for mutation, reason, launched in (("exit", "fault_driver_assertion_failed", 4),
+                                           ("timeout", "fault_process_timeout", 4),
+                                           ("missing-stage", "fault_stage_not_reached", 5),
+                                           ("wrong-token", "fault_receipt_identity", 5),
+                                           ("wrong-stage", "fault_receipt_identity", 5),
+                                           ("wrong-pid", "fault_receipt_process", 5),
+                                           ("missing-invariant", "fault_invariants_missing", 6),
+                                           ("after-positive", "fault_driver_assertion_failed", 7)):
+            with self.subTest(mutation=mutation):
+                factory = self.failed_case("io", mutation, reason)
+                self.assertEqual(len(factory.calls), launched)
 
     def test_kill_requires_matching_reached_marker_and_sigkill(self):
-        for mutation in ("missing-stage", "wrong-token", "wrong-stage", "wrong-pid", "wrong-exit", "kill-noop"):
-            with self.subTest(mutation=mutation), self.assertRaises(AcceptanceError):
-                self.run_case("kill", mutation)
+        for mutation, reason in (("missing-stage", "fault_stage_timeout"), ("wrong-token", "fault_receipt_identity"),
+                                 ("wrong-stage", "fault_receipt_identity"), ("wrong-pid", "fault_receipt_process"),
+                                 ("wrong-exit", "wrong_fault_process_exit"), ("kill-noop", "killed_operation_completed")):
+            with self.subTest(mutation=mutation):
+                factory = self.failed_case("kill", mutation, reason)
+                self.assertEqual(len(factory.calls), 5)
+                self.assertEqual(factory.calls[-1].killed, mutation in ("wrong-exit", "kill-noop"))
 
     def test_failed_attempt_keeps_receipts_and_prevents_after_control(self):
         records, factory = [], Factory("wrong-exit")
@@ -105,15 +148,47 @@ class FaultControlsTests(unittest.TestCase):
 
     def test_stage_identity_is_validated_before_any_kill(self):
         records, factory = [], Factory("wrong-token")
-        with self.assertRaises(AcceptanceError):
+        with self.assertRaisesRegex(AcceptanceError, "fault_receipt_identity"):
             controls.bracket(Path("/unused"), "migration", "FileSync", "kill", records, factory=factory)
         self.assertFalse(any(p.killed for p in factory.calls))
 
     def test_each_prepared_case_and_stage_has_offline_bracketing(self):
+        seen = set()
         for case, stages in controls.CASES.items():
             for stage in stages:
-                self.run_case(case=case, stage=stage)
-        self.assertIn("ObjectsSyncAfterPublish", controls.CASES["migration"])
+                records, factory, _ = self.run_case(case=case, stage=stage)
+                self.assertTrue(records[0]["complete"])
+                # Every launched request passed the Rust driver's validate() rules.
+                self.assertEqual([(p.request["mode"], p.request["phase"]) for p in factory.calls],
+                                 [(mode, phase) for mode in ("positive", "io", "positive")
+                                  for phase in ("prepare", "run", "reopen")])
+                seen.update((p.request["case"], p.request["stage"]) for p in factory.calls)
+        self.assertEqual(seen, {(case, stage) for case, rows in controls.CASES.items() for stage in rows})
+
+    def test_python_cases_checks_and_test_identity_match_rust_driver(self):
+        validate = SOURCE.split("fn validate(&self) {", 1)[1].split('_ => panic!("unknown fault case")', 1)[0]
+        cases = {}
+        for names, stages in re.findall(r'((?:"[a-z-]+"\s*\|\s*)*"[a-z-]+")\s*=>\s*&\[(.*?)\]', validate, re.S):
+            for name in re.findall(r'"([a-z-]+)"', names):
+                cases[name] = tuple(re.findall(r'"(\w+)"', stages))
+        self.assertEqual(cases, controls.CASES)
+        kill = re.search(r'self\.mode != "kill" \|\| matches!\(self\.case\.as_str\(\), ([^)]*)\)', SOURCE)
+        self.assertEqual(set(re.findall(r'"([a-z-]+)"', kill.group(1))), {"migration", "receive", "backup"})
+        self.assertEqual([case for case in controls.CASES if controls.selection(case, "both")[-1][2] == "kill"],
+                         ["migration", "receive", "backup"])
+        self.assertEqual(COMPLETE, [controls.PREPARED, ["positive", "operation_succeeded", "exact_fault_error"],
+                                    controls.RECOVERED])
+        self.assertEqual(SOURCE.count('receipt("reached", &["named_stage_reached"])'), 3)
+        fields = SOURCE.split("struct Request {", 1)[1].split("}", 1)[0]
+        self.assertEqual(re.findall(r"(\w+): \w+,", fields), ["directory", "token", "case", "stage", "mode", "phase"])
+        self.assertIn("#[serde(deny_unknown_fields)]\nstruct Request {", SOURCE)
+        self.assertIn(f'std::env::var_os("{controls.ENV}")', SOURCE)
+        self.assertRegex(SOURCE, r'#\[test\]\n#\[ignore = "[^"]+"\]\nfn human_fault_case\(\) \{')
+        module, test = controls.TEST.rsplit("::", 1)
+        self.assertEqual((module, test), ("payment::tests::faults", "human_fault_case"))
+        self.assertRegex((WALLET / "lib.rs").read_text(), r"(?m)^pub mod payment;$")
+        self.assertRegex((WALLET / "payment/mod.rs").read_text(), r"(?m)^mod tests;$")
+        self.assertRegex((WALLET / "payment/tests.rs").read_text(), r"(?m)^mod faults;$")
 
     def test_unsupported_kill_scope_and_unknown_stage_refuse(self):
         for case in ("entropy", "final-publication", "quota"):
@@ -128,6 +203,19 @@ class FaultControlsTests(unittest.TestCase):
         self.assertEqual(controls.selection("entropy", "both"), [("entropy", "BeforeSign", "io")])
         with self.assertRaisesRegex(AcceptanceError, "fault_mode"):
             controls.selection("all", "kill")
+        for case, mode, reason in (("entropy", "kill", "fault_mode"), ("all", "kill", "fault_mode"),
+                                   ("unknown", "io", "fault_case")):
+            with self.subTest(case=case, mode=mode), tempfile.TemporaryDirectory() as directory:
+                args = SimpleNamespace(case=case, mode=mode, artifacts=Path(directory) / "run",
+                                       wallet_tests=Path(directory) / "tests", wallet_build=Path(directory) / "build.json")
+                with patch.object(controls, "source_state", side_effect=AssertionError("source read")) as source, \
+                        patch.object(controls, "validate_build", side_effect=AssertionError("build read")) as build, \
+                        patch.object(controls, "bracket", side_effect=AssertionError("launched")) as bracket, \
+                        self.assertRaisesRegex(AcceptanceError, reason):
+                    controls.run(args)
+                self.assertFalse(args.artifacts.exists())
+                for mock in (source, build, bracket):
+                    mock.assert_not_called()
 
     def test_distinct_attempt_tokens_are_required(self):
         with patch.object(controls.secrets, "token_hex", return_value="ab" * 16):
@@ -138,12 +226,17 @@ class FaultControlsTests(unittest.TestCase):
         request = dict(token="12" * 16, case="migration", stage="FileWrite", mode="io", phase="reopen")
         value = receipt(request, 42, "complete")
         self.assertIs(controls.validate_receipt(value, request, 42, "complete"), value)
-        for mutate in (lambda v: v.update(secret="forbidden"), lambda v: v.update(pid=True),
-                       lambda v: v.update(schema_version=True), lambda v: v.update(state_sha256="ff"),
-                       lambda v: v.update(checks=controls.RECOVERED[:-1])):
+        for mutate, reason in ((lambda v: v.update(secret="forbidden"), "fault_receipt_schema"),
+                               (lambda v: v.update(pid=True), "fault_receipt_process"),
+                               (lambda v: v.update(schema_version=True), "fault_receipt_process"),
+                               (lambda v: v.update(state_sha256="ff"), "fault_state_hash"),
+                               (lambda v: v.update(state_sha256="AB" * 32), "fault_state_hash"),
+                               (lambda v: v.update(event="reached"), "fault_receipt_identity"),
+                               (lambda v: v.update(checks=COMPLETE[2][:-1]), "fault_invariants_missing"),
+                               (lambda v: v.update(checks=COMPLETE[2][::-1]), "fault_invariants_missing")):
             invalid = copy.deepcopy(value)
             mutate(invalid)
-            with self.assertRaises(AcceptanceError):
+            with self.subTest(reason=reason), self.assertRaisesRegex(AcceptanceError, reason):
                 controls.validate_receipt(invalid, request, 42, "complete")
 
     def test_exact_test_process_command_no_cargo_or_wallet_cli(self):
@@ -159,6 +252,42 @@ class FaultControlsTests(unittest.TestCase):
                 self.assertEqual(kwargs["stdout"], controls.subprocess.DEVNULL)
                 process.close()
                 child.kill.assert_not_called()
+
+    def actual(self, directory, child, mode="kill"):
+        request = dict(directory=directory, token="12" * 16, case="migration", stage="FileWrite", mode=mode, phase="run")
+        with patch.object(controls.subprocess, "Popen", return_value=child):
+            return controls.Process(Path("/test-executable"), request), request
+
+    def test_actual_process_adapter_converts_timeouts_and_kills_after_validated_stage(self):
+        with tempfile.TemporaryDirectory() as directory:
+            child = Mock(pid=73)
+            child.wait.side_effect = subprocess.TimeoutExpired("test-executable", 240)
+            process, _ = self.actual(directory, child, "io")
+            with self.assertRaisesRegex(AcceptanceError, "fault_process_timeout"):
+                process.wait(240)
+        with tempfile.TemporaryDirectory() as directory:
+            child = Mock(pid=73)
+            child.poll.return_value = None
+            child.wait.return_value = -signal.SIGKILL
+            process, request = self.actual(directory, child)
+            with patch.object(controls, "STAGE_WAIT", 0), \
+                    self.assertRaisesRegex(AcceptanceError, "fault_stage_timeout"):
+                process.reached()
+            value = write_json(Path(directory) / "run-reached.json", receipt(request, 73, "reached"))
+            self.assertEqual(process.reached(), read_json(value))
+            self.assertEqual(process.kill(), -signal.SIGKILL)
+            child.kill.assert_called_once_with()
+            child.wait.assert_called_once_with(timeout=10)
+            write_json(value, receipt(request, 74, "reached"), fresh=False)
+            with self.assertRaisesRegex(AcceptanceError, "fault_receipt_process"):
+                process.reached()
+            write_json(value, receipt(request, 73, "reached"), fresh=False)
+            child.poll.return_value = 0
+            with self.assertRaisesRegex(AcceptanceError, "fault_process_exited_before_kill"):
+                process.reached()
+            with self.assertRaisesRegex(AcceptanceError, "fault_process_exited_before_kill"):
+                process.kill()
+            child.kill.assert_called_once_with()
 
     def test_actual_process_adapter_refuses_early_exit_before_stage(self):
         with tempfile.TemporaryDirectory() as directory:

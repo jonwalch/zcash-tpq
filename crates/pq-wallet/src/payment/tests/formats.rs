@@ -105,7 +105,11 @@ fn decoded_partials_still_require_proposal_input_signer_and_signature_agreement(
             match case {
                 "proposal" => bad[0].proposal_id.0[0] ^= 1,
                 "input" => bad[0].input_index = 1, // In parser range, absent in this proposal.
-                "signer" => bad[0].signer_index = (bad[0].signer_index + 1) % 3,
+                // A valid key at the absent third slot reaches the key check;
+                // the cosigner's slot would hit the duplicate-slot check first.
+                "signer" => {
+                    bad[0].signer_index = 3 - partials[0].signer_index - partials[1].signer_index;
+                }
                 "signature" => {
                     let replacement = if bad[0].signature_hex.starts_with("00") {
                         "01"
@@ -124,17 +128,14 @@ fn decoded_partials_still_require_proposal_input_signer_and_signature_agreement(
             let error = store
                 .assemble_payment(&owners[0], &mut source, &proposal, &approved, &decoded)
                 .unwrap_err();
-            if matches!(case, "proposal" | "input") {
-                assert!(
-                    matches!(error, Error::ProposalMismatch),
-                    "{case}: {error:?}"
-                );
-            } else {
-                assert!(
-                    matches!(error, Error::Authorization(_)),
-                    "{case}: {error:?}"
-                );
-            }
+            assert!(
+                match case {
+                    "signer" => matches!(error, Error::Authorization(Rejection::KeyCommitment)),
+                    "signature" => matches!(error, Error::Authorization(Rejection::Signature)),
+                    _ => matches!(error, Error::ProposalMismatch),
+                },
+                "{case}: {error:?}"
+            );
             assert_eq!(fs::read(path.join("state.json")).unwrap(), before);
             assert!(source.sent.is_empty());
         }

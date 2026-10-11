@@ -90,6 +90,12 @@ pub(super) fn exact(wallet: &Wallet, version: u8) -> (Intent, u64) {
 fn budget() -> ReadBudget {
     ReadBudget::new(4096).unwrap()
 }
+fn recovery_copy(path: &Path, original: &[u8]) -> bool {
+    fs::read_dir(path).unwrap().filter_map(Result::ok).any(|p| {
+        p.file_name().to_string_lossy().starts_with("state-pre-v3-")
+            && fs::read(p.path()).unwrap() == original
+    })
+}
 fn reopen(store: WatchStore, path: &Path) -> WatchStore {
     drop(store);
     WatchStore::open(path, &profile()).unwrap()
@@ -540,6 +546,8 @@ fn v1_empty_migration_and_v3_corruption_never_fall_back_to_recovery_copy() {
     store.migrate_payment_journal().unwrap();
     assert_eq!(store.receive_next(), 1);
     assert!(!store.status().unwrap().complete_at_checkpoint);
+    // The exact v1 copy exists, so the rejections below cannot fall back to it.
+    assert!(recovery_copy(&path, &original));
     let mut root = disk(&path);
     drop(store);
     root["payments"]["journal"]["lineages"] = json!({"count":1,"hash":"00".repeat(32),"level":0,"max":"00".repeat(32),"min":"00".repeat(32)});
@@ -640,7 +648,10 @@ fn native_reservation_queries_match_retained_book_with_ties_exclusions_and_archi
     ));
     assert!(matches!(store.payments(), Err(Error::ReopenRequired)));
     drop(store);
-    assert!(WatchStore::open(&path, &profile()).is_err());
+    assert!(matches!(
+        WatchStore::open(&path, &profile()),
+        Err(Error::Storage(_))
+    ));
 }
 
 #[test]
@@ -921,6 +932,9 @@ fn v1_recovery_copy_failures_cannot_publish_v3_and_matching_retry_resyncs() {
         ));
         assert_eq!(fs::read(path.join("state.json")).unwrap(), bytes);
         assert!(matches!(store.payments(), Err(Error::ReopenRequired)));
+        // Only a failed final directory sync leaves a published copy.
+        let published = failed == Stage::RecoveryDirectorySync;
+        assert_eq!(recovery_copy(&path, &bytes), published);
         store = reopen(store, &path);
         let mut stages = Vec::new();
         store
@@ -935,18 +949,21 @@ fn v1_recovery_copy_failures_cannot_publish_v3_and_matching_retry_resyncs() {
                 < at(StateStage::Journal(Stage::RecoveryDirectorySync))
         );
         assert!(at(StateStage::Journal(Stage::RecoveryDirectorySync)) < at(StateStage::Publish));
-        assert!(fs::read_dir(&path)
-            .unwrap()
-            .filter_map(Result::ok)
-            .any(
-                |p| p.file_name().to_string_lossy().starts_with("state-pre-v3-")
-                    && fs::read(p.path()).unwrap() == bytes
-            ));
+        // A matching published copy is verified and synced, never rewritten.
+        for stage in [Stage::RecoveryWrite, Stage::RecoveryPublish] {
+            assert_eq!(
+                stages.contains(&StateStage::Journal(stage)),
+                !published,
+                "{failed:?} {stage:?}"
+            );
+        }
+        assert!(stages.contains(&StateStage::Journal(Stage::RecoveryVerify)));
+        assert!(recovery_copy(&path, &bytes));
     }
 }
 
 #[test]
-fn selection_and_final_review_share_one_lookup_budget_and_failed_work_reserves_nothing() {
+fn selection_and_final_review_share_one_lookup_budget_without_changing_state() {
     let owners = wallets(1, 1, 0);
     let wallet = &owners[0];
     let temp = tempfile::tempdir().unwrap();
@@ -1015,16 +1032,13 @@ fn automatic_archival_uses_lineage_order_not_active_insertion_order() {
         .payments
         .records
         .sort_by_cached_key(|record| std::cmp::Reverse(record.proposal.id().unwrap()));
-    let earliest = legacy
-        .payments
-        .records
-        .last()
-        .unwrap()
-        .proposal
-        .id()
-        .unwrap();
+    // Put the earliest lineage in the middle, so neither first-in nor
+    // last-in archival selects it.
+    legacy.payments.records.swap(16, 31);
+    let earliest = legacy.payments.records[16].proposal.id().unwrap();
     let first = legacy.payments.records[0].proposal.id().unwrap();
-    assert_ne!(earliest, first);
+    let last = legacy.payments.records[31].proposal.id().unwrap();
+    assert!(earliest < first && earliest < last);
     store.commit(legacy).unwrap();
     while source.chain.blocks.len() < 25 {
         source.mine();
@@ -1040,12 +1054,14 @@ fn automatic_archival_uses_lineage_order_not_active_insertion_order() {
             .location,
         crate::journal::Location::Archived
     );
-    assert_eq!(
-        store
-            .resolve_payment(first, &mut budget())
-            .unwrap()
-            .unwrap()
-            .location,
-        crate::journal::Location::Active
-    );
+    for active in [first, last] {
+        assert_eq!(
+            store
+                .resolve_payment(active, &mut budget())
+                .unwrap()
+                .unwrap()
+                .location,
+            crate::journal::Location::Active
+        );
+    }
 }

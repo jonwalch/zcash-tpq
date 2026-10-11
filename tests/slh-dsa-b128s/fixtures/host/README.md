@@ -28,6 +28,14 @@ cargo clippy --locked -p slh-dsa-b128s-fixture-host --all-targets -- -D warnings
 python3 -m unittest discover -s tests/slh-dsa-b128s/fixtures -p 'test_generate_transactions.py'
 ```
 
+The default build omits the `shielded-fixtures` tests. These tests do not create
+proofs, so run them as focused checks too:
+
+```sh
+cargo test --locked -p slh-dsa-b128s-fixture-host --features shielded-fixtures --bin slh-dsa-b128s-fixture-host
+cargo clippy --locked -p slh-dsa-b128s-fixture-host --features shielded-fixtures --all-targets -- -D warnings
+```
+
 After integrating and building the exact host and isolated primitive signer,
 produce the single bounded corpus into a new directory:
 

@@ -103,7 +103,12 @@ cargo test --locked -p zakura-rpc --lib --features experimental-slh-dsa-b128s sl
 cargo test --locked -p zakura-rpc --lib methods::types::get_block_template::zip317::tests
 ```
 
-Daemon storage tests are prepared but still need human compilation and execution.
+Daemon storage tests are not feature-gated, so the default unit-test build runs them:
+
+```sh
+cargo test --locked -p zakura --lib slh_
+```
+
 Live relay, mining, reset, and reorg tests also remain open under [AGENTS.md](../../AGENTS.md).
 
 ## Source attribution

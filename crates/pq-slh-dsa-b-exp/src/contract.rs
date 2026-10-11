@@ -85,9 +85,19 @@ mod tests {
         }
         assert_ne!(KEY_DOMAIN, POLICY_DOMAIN);
         assert_ne!(POLICY_DOMAIN, MESSAGE_DOMAIN);
-        // Other experimental suite/template bytes do not identify this contract.
-        assert_ne!(SUITE, 0x01);
-        assert_ne!(TEMPLATE_VERSION, 0x51);
+        // Literal protocol.md byte contract, independent of the constants above.
+        assert_eq!(
+            [KEY_DOMAIN, POLICY_DOMAIN, MESSAGE_DOMAIN],
+            [
+                b"ZcashTransparentPQ/experimental/slh-dsa-b-128s/key/v1\0".as_slice(),
+                b"ZcashTransparentPQ/experimental/slh-dsa-b-128s/policy/v1\0",
+                b"ZcashTransparentPQ/experimental/slh-dsa-b-128s/message/v1\0",
+            ]
+        );
+        assert_eq!(
+            (FORMAT_VERSION, SUITE, TEMPLATE_VERSION),
+            (0x01, 0xf7, 0x53)
+        );
         assert_eq!(MESSAGE_DOMAIN.len(), 58);
         assert_eq!(MESSAGE_SIZE, 101);
     }

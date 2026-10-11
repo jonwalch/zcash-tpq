@@ -2,10 +2,17 @@
 use super::*;
 use crate::{
     payment::PaymentSource,
-    watch::tests::{transaction, Chain},
+    watch::tests::{external, transaction, Chain},
     Outpoint,
 };
-use std::{net::TcpListener, thread};
+use std::{
+    net::TcpListener,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+};
 use zakura_chain::{
     serialization::{BytesInDisplayOrder, ZcashSerialize},
     transparent::{OutPoint, Output, Script},
@@ -23,10 +30,14 @@ fn reply(method: &'static str, params: Value, result: Value) -> Step {
         envelope: json!({"id":1,"result":result}),
     }
 }
+// Serves exactly `steps`, then fails the test on any further request until
+// the client call has returned.
 fn scripted<T>(steps: Vec<Step>, call: impl FnOnce(&mut LocalRpc) -> T) -> T {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     listener.set_nonblocking(true).unwrap();
     let address = listener.local_addr().unwrap();
+    let stop = Arc::new(AtomicBool::new(false));
+    let done = stop.clone();
     let server = thread::spawn(move || {
         for step in steps {
             let deadline = Instant::now() + Duration::from_secs(5);
@@ -85,8 +96,18 @@ fn scripted<T>(steps: Vec<Step>, call: impl FnOnce(&mut LocalRpc) -> T) -> T {
             .unwrap();
             stream.write_all(&body).unwrap();
         }
+        while !done.load(Ordering::SeqCst) {
+            match listener.accept() {
+                Ok(_) => panic!("unexpected extra RPC request"),
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(error) => panic!("mock accept: {error}"),
+            }
+        }
     });
     let result = call(&mut LocalRpc::new(address).unwrap());
+    stop.store(true, Ordering::SeqCst);
     server.join().unwrap();
     result
 }
@@ -241,7 +262,9 @@ fn transaction_lookup_binds_raw_bytes_id_and_confirmation() {
                 hash: Hex(chain.blocks[1].hash().bytes_in_display_order())
             })
         );
-        let mempool = json!({"hex":hex::encode(&raw),"confirmations":0});
+        // Pinned Zakura omits both height and confirmations for a mempool
+        // transaction (TransactionObject::from_transaction).
+        let mempool = json!({"hex":hex::encode(&raw)});
         assert!(scripted(
             vec![reply("getrawtransaction", params.clone(), mempool)],
             |rpc| rpc.transaction(point.txid)
@@ -250,7 +273,12 @@ fn transaction_lookup_binds_raw_bytes_id_and_confirmation() {
         .unwrap()
         .block
         .is_none());
-        for missing in [Value::Null, json!({"hex":hex::encode(&raw),"height":-1})] {
+        // Pinned Zakura reports a side-chain transaction with height -1 and
+        // zero confirmations.
+        for missing in [
+            Value::Null,
+            json!({"hex":hex::encode(&raw),"height":-1,"confirmations":0}),
+        ] {
             assert!(scripted(
                 vec![reply("getrawtransaction", params.clone(), missing)],
                 |rpc| rpc.transaction(point.txid)
@@ -258,8 +286,12 @@ fn transaction_lookup_binds_raw_bytes_id_and_confirmation() {
             .unwrap()
             .is_none());
         }
-        let mut missing = reply("getrawtransaction", params.clone(), Value::Null);
-        missing.envelope["error"] = json!({"code":-5});
+        // The jsonrpsee not-found error envelope has no result member.
+        let missing = Step {
+            method: "getrawtransaction",
+            params: params.clone(),
+            envelope: json!({"jsonrpc":"2.0","id":1,"error":{"code":-5,"message":"Transaction not found in mempool or best chain"}}),
+        };
         assert!(scripted(vec![missing], |rpc| rpc.transaction(point.txid))
             .unwrap()
             .is_none());
@@ -300,7 +332,7 @@ fn transaction_lookup_binds_raw_bytes_id_and_confirmation() {
         absent.push(vec![], None);
         let mut steps = vec![reply(
             "getrawtransaction",
-            params,
+            params.clone(),
             json!({"hex":hex::encode(&raw),"height":1}),
         )];
         steps.extend(block_steps(&absent));
@@ -308,6 +340,43 @@ fn transaction_lookup_binds_raw_bytes_id_and_confirmation() {
             scripted(steps, |rpc| rpc.transaction(point.txid)),
             Error::ChainChanged,
         );
+        // Each block still contains the transaction, so only the trailing-byte,
+        // Merkle or coinbase-height check of confirmed_block can reject it.
+        let block = &chain.blocks[1];
+        let hash = Hex(block.hash().bytes_in_display_order());
+        let mut extra = block.clone();
+        extra
+            .transactions
+            .push(transaction(5, 8, external(), vec![]));
+        assert_eq!(Hex(extra.hash().bytes_in_display_order()), hash);
+        let mut later = chain.clone();
+        later.push(vec![block.transactions[1].clone()], None);
+        let moved = &later.blocks[2];
+        let mut trailing = block.zcash_serialize_to_vec().unwrap();
+        trailing.push(0);
+        for (served, bytes) in [
+            (hash, trailing),
+            (hash, extra.zcash_serialize_to_vec().unwrap()),
+            (
+                Hex(moved.hash().bytes_in_display_order()),
+                moved.zcash_serialize_to_vec().unwrap(),
+            ),
+        ] {
+            let served = hex::encode(served.0);
+            let steps = vec![
+                reply(
+                    "getrawtransaction",
+                    params.clone(),
+                    json!({"hex":hex::encode(&raw),"height":1}),
+                ),
+                reply("getblockhash", json!([1]), json!(served)),
+                reply("getblock", json!([served, 0]), json!(hex::encode(bytes))),
+            ];
+            assert_error(
+                scripted(steps, |rpc| rpc.transaction(point.txid)),
+                Error::ChainChanged,
+            );
+        }
     }
 }
 
@@ -375,9 +444,24 @@ fn slh_large_transaction_transport_preserves_exact_bytes_and_independent_caps() 
             vec![reply(
                 "getrawtransaction",
                 json!([hex::encode(txid.0), 1]),
-                json!({"hex":too_large,"confirmations":0}),
+                json!({"hex":too_large}),
             )],
             |rpc| rpc.transaction(txid),
+        ),
+        Error::Limits,
+    );
+    // A block hex string longer than the consensus block cap is refused
+    // before decoding, even though it fits in the response cap.
+    let oversized_block =
+        "00".repeat(usize::try_from(zakura_chain::block::MAX_BLOCK_BYTES).unwrap() + 1);
+    assert_error(
+        scripted(
+            vec![reply(
+                "getblock",
+                json!([hex::encode(txid.0), 0]),
+                json!(oversized_block),
+            )],
+            |rpc| rpc.block_bytes(txid),
         ),
         Error::Limits,
     );

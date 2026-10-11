@@ -184,11 +184,16 @@ mod tests {
             &pk[16..],
             &[0, 0, 0, 1, 33, 34, 35, 36, 0, 0, 0, 0, 0, 0, 0, 0]
         );
-        let tree = address.tree_adrs().bytes();
-        assert_eq!(&tree[..16], &address.bytes()[..16]);
+        let mut tree = address.tree_adrs();
+        assert_eq!(&tree.bytes()[..16], &address.bytes()[..16]);
         assert_eq!(
-            &tree[16..],
+            &tree.bytes()[16..],
             &[0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        (tree.height, tree.index) = (5, 9);
+        assert_eq!(
+            &tree.bytes()[16..],
+            &[0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 9]
         );
         let prf = address.prf_adrs().bytes();
         assert_eq!(&prf[..16], &address.bytes()[..16]);
@@ -202,10 +207,20 @@ mod tests {
             height: 12,
             index: 42,
         };
+        // FORS addresses force layer 0 and keep the full tree address.
+        assert_eq!(
+            fors.bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 17, 18, 19, 20, 21, 22, 23, 24, 0, 0, 0, 3, 33, 34, 35, 36,
+                0, 0, 0, 12, 0, 0, 0, 42
+            ]
+        );
+        assert_eq!(&fors.fors_roots().bytes()[..16], &fors.bytes()[..16]);
         assert_eq!(
             &fors.fors_roots().bytes()[16..],
             &[0, 0, 0, 4, 33, 34, 35, 36, 0, 0, 0, 0, 0, 0, 0, 0]
         );
+        assert_eq!(&fors.prf_adrs(42).bytes()[..16], &fors.bytes()[..16]);
         assert_eq!(
             &fors.prf_adrs(42).bytes()[16..],
             &[0, 0, 0, 6, 33, 34, 35, 36, 0, 0, 0, 0, 0, 0, 0, 42]

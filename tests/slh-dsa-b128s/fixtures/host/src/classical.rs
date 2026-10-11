@@ -290,12 +290,33 @@ mod tests {
                 )
                 .unwrap();
                 let parent = decode_transaction(&hex::decode(&recipe.parent_hex).unwrap()).unwrap();
-                let (_, redeem, _) = scripts(kind).unwrap();
-                let digest = tx
-                    .sighasher(NetworkUpgrade::Nu7, Arc::new(parent.outputs().to_vec()))
-                    .unwrap()
-                    .sighash(HashType::ALL, Some((0, redeem.clone())))
-                    .0;
+                let (lock, redeem, _) = scripts(kind).unwrap();
+                // Requested output, then change: 10_000_000 - 3_000_000 - 20_000.
+                assert_eq!(
+                    output_fields(&tx)
+                        .into_iter()
+                        .map(|o| (o.value_zat, o.script_hex))
+                        .collect::<Vec<_>>(),
+                    vec![
+                        (3_000_000, recipe.outputs[0].script_hex.clone()),
+                        (6_980_000, hex::encode(lock.as_raw_bytes())),
+                    ]
+                );
+                let digest_of = |tx: &Transaction| {
+                    tx.sighasher(NetworkUpgrade::Nu7, Arc::new(parent.outputs().to_vec()))
+                        .unwrap()
+                        .sighash(HashType::ALL, Some((0, redeem.clone())))
+                        .0
+                };
+                let digest = digest_of(&tx);
+                let mut changed = tx.clone();
+                match &mut changed {
+                    Transaction::V5 { outputs, .. } | Transaction::V6 { outputs, .. } => {
+                        outputs[0].value = 3_000_001u64.try_into().unwrap()
+                    }
+                    _ => unreachable!("fixture v5/v6"),
+                }
+                let changed_digest = digest_of(&changed);
                 let ChainInput::PrevOut { unlock_script, .. } = &tx.inputs()[0] else {
                     panic!("previous output")
                 };
@@ -320,10 +341,8 @@ mod tests {
                     assert!(Secp256k1::new()
                         .verify_ecdsa(&Message::from_digest(digest), &signature, &public)
                         .is_ok());
-                    let mut wrong = digest;
-                    wrong[0] ^= 1;
                     assert!(Secp256k1::new()
-                        .verify_ecdsa(&Message::from_digest(wrong), &signature, &public)
+                        .verify_ecdsa(&Message::from_digest(changed_digest), &signature, &public)
                         .is_err());
                     cursor += length;
                 }
@@ -345,35 +364,56 @@ mod tests {
             recipe.outputs[0].script_hex = format!("{prefix:02x}20{}c0", "11".repeat(32));
             assert_eq!(spend(&recipe).unwrap_err().reason, "classical_destination");
             assert_eq!(control_spend(&recipe).unwrap()["ecdsa_checks"], 2);
-            recipe.outputs[0].script_hex.push_str("00");
-            assert!(control_spend(&recipe).is_err());
+            for script in [
+                format!("{prefix:02x}21{}c0", "11".repeat(32)),
+                format!("{prefix:02x}20{}c1", "11".repeat(32)),
+                format!("{prefix:02x}20{}", "11".repeat(32)),
+            ] {
+                recipe.outputs[0].script_hex = script;
+                assert_eq!(
+                    control_spend(&recipe).unwrap_err().reason,
+                    "classical_destination"
+                );
+            }
+            // A 36-byte script fails the generic 35-byte hex bound first.
+            recipe.outputs[0].script_hex = format!("{prefix:02x}20{}c000", "11".repeat(32));
+            assert_eq!(control_spend(&recipe).unwrap_err().reason, "hex");
         }
         let mut recipe = fixture("single", 6);
         recipe.outputs[0].value_zat = 2402;
         assert!(spend(&recipe).is_ok()); // Dust is relay policy, not fixture validity.
         recipe.outputs[0].script_hex = format!("5020{}c0", "11".repeat(32));
-        assert!(control_spend(&recipe).is_err());
+        assert_eq!(
+            control_spend(&recipe).unwrap_err().reason,
+            "classical_destination"
+        );
     }
 
     #[test]
     fn funding_rejects_foreign_parents_and_unbounded_shapes() {
         let mut recipe = fixture("single", 5);
         recipe.kind = "multisig".into();
-        assert!(spend(&recipe).is_err());
+        assert_eq!(
+            spend(&recipe).unwrap_err().reason,
+            "classical_previous_script"
+        );
         let mut recipe = fixture("single", 5);
         recipe.parent_hex.push_str("00");
-        assert!(spend(&recipe).is_err());
+        assert_eq!(
+            spend(&recipe).unwrap_err().reason,
+            "trailing_transaction_bytes"
+        );
         let mut recipe = fixture("single", 5);
         recipe.output_index = 1;
-        assert!(spend(&recipe).is_err());
+        assert_eq!(spend(&recipe).unwrap_err().reason, "classical_outpoint");
         let mut recipe = fixture("single", 5);
         recipe.outputs[0].value_zat = u64::MAX;
-        assert!(spend(&recipe).is_err());
+        assert_eq!(spend(&recipe).unwrap_err().reason, "amount");
         let mut recipe = fixture("single", 5);
         recipe.outputs[0].script_hex = "51".into();
-        assert!(spend(&recipe).is_err());
+        assert_eq!(spend(&recipe).unwrap_err().reason, "classical_destination");
         let mut recipe = fixture("single", 5);
         recipe.transaction_version = 4;
-        assert!(spend(&recipe).is_err());
+        assert_eq!(spend(&recipe).unwrap_err().reason, "classical_shape");
     }
 }

@@ -156,19 +156,27 @@ mod tests {
     use super::*;
     #[test]
     fn rejects_ambiguous_json_before_deserialization() {
-        for bytes in [
-            b"{\"a\":1,\"a\":2}".as_slice(),
-            b"{\"a\":-0}",
-            b"[1.0]",
-            b"[1e0]",
-            b"[18446744073709551616]",
-            b"[\"\\u00e9\"]",
-            b"[NaN]",
+        for (bytes, reason) in [
+            (b"{\"a\":1,\"a\":2}".as_slice(), "json"),
+            (b"{\"a\":-0}", "numeric_token"),
+            (b"[1.0]", "numeric_token"),
+            (b"[1e0]", "json"),
+            (b"[18446744073709551616]", "json"),
+            (b"[\"\\u00e9\"]", "json"),
+            (b"[\"\xc3\xa9\"]", "non_ascii"),
+            (b"[NaN]", "json"),
         ] {
-            assert!(parse(bytes).is_err(), "{:?}", bytes);
+            assert_eq!(parse(bytes), Err(reason), "{:?}", bytes);
         }
-        assert!(parse(format!("{}0{}", "[".repeat(17), "]".repeat(17)).as_bytes()).is_err());
-        assert!(parse(&vec![b' '; MAX_BYTES + 1]).is_err());
+        let nested = |depth| format!("{}0{}", "[".repeat(depth), "]".repeat(depth));
+        assert!(parse(nested(16).as_bytes()).is_ok());
+        assert_eq!(parse(nested(17).as_bytes()), Err("nesting"));
+        // Pad a valid document so only the size bound can reject it.
+        let mut bounded = b"[0]".to_vec();
+        bounded.resize(MAX_BYTES + 1, b' ');
+        assert_eq!(parse(&bounded), Err("encoded_size"));
+        bounded.pop();
+        assert_eq!(parse(&bounded), Ok(serde_json::json!([0])));
         assert_eq!(
             canonical(&parse(br#"{"z":{"b":2,"a":1},"a":[true,null,"x"]}"#).unwrap()),
             br#"{"a":[true,null,"x"],"z":{"a":1,"b":2}}"#

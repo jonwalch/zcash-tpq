@@ -154,4 +154,5 @@ python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance -p 'test_fault_co
 Mocks cover every case, bracket order, command selection, receipts, stage identities,
 missing invariants, arbitrary failures, no-op interruptions, and failed final positives.
 They launch no process.
+A source check compares the cases, receipt checks, request rules, and test name with the ignored Rust driver.
 Compilation and lint checks of the ignored driver do not establish an actual fault-matrix result.

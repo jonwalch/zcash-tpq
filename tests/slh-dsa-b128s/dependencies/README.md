@@ -21,6 +21,8 @@ The guard checks each dependency graph separately:
 Every graph uses `--target all`, including dependencies for other operating systems.
 This avoids hidden edges and misleading workspace-wide feature combinations.
 A regression test resolves small Windows and non-Windows dependencies without compiling them.
+Other tests run the guard on prepared metadata and graphs. They check each
+graph's required and forbidden packages, local paths, and product packages.
 
 The guard rejects alternate PQ packages, including optional and test-only packages.
 Local dependency paths must stay inside the repository.

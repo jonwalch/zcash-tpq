@@ -345,9 +345,18 @@ mod tests {
                 .unwrap()
                 .is_null()
         );
-        let missing = response(json!({"id":1,"result":null,"error":{"code":-5}}));
-        assert!(parse_response_kind(&missing, true).unwrap().is_null());
-        assert!(parse_response_kind(&missing, false).is_err());
+        // The pinned jsonrpsee error envelope omits result; also accept null.
+        for missing in [
+            json!({"jsonrpc":"2.0","id":1,"error":{"code":-5,"message":"Transaction not found in mempool or best chain"}}),
+            json!({"id":1,"result":null,"error":{"code":-5}}),
+        ] {
+            let missing = response(missing);
+            assert!(parse_response_kind(&missing, true).unwrap().is_null());
+            assert!(matches!(
+                parse_response_kind(&missing, false),
+                Err(Error::HistoryUnavailable)
+            ));
+        }
         for body in [
             json!({"id":1}),
             json!({"id":1,"error":{"code":-1}}),

@@ -718,23 +718,29 @@ mod tests {
                     .collect::<Vec<_>>();
                 let request = recipe(version, &pools);
                 validate_shape(&request).unwrap();
+                // Sapling and Ironwood each receive 50,000 zatoshis; Orchard receives zero.
                 assert_eq!(
                     deposit(&request.pools),
-                    DEPOSIT
-                        * u64::try_from(pools.iter().filter(|p| **p != "orchard").count()).unwrap()
+                    [0, 50_000, 0, 50_000, 50_000, 100_000, 50_000, 100_000][mask]
                 );
                 // Empty parent fails before parameter reads/key construction/proofs.
-                assert!(prepare(&request).is_err());
+                assert_eq!(
+                    prepare(&request).unwrap_err().reason,
+                    "transaction_encoding"
+                );
             }
         }
-        for pools in [
-            vec!["ironwood"],
-            vec!["sapling", "sapling"],
-            vec!["orchard", "sapling"],
-            vec!["bogus"],
-            vec![],
+        for (pools, reason) in [
+            (vec!["ironwood"], "shielded_pools"),
+            (vec!["sapling", "sapling"], "shielded_pools"),
+            (vec!["orchard", "sapling"], "shielded_pools"),
+            (vec!["bogus"], "shielded_pools"),
+            (vec![], "shielded_shape"),
         ] {
-            assert!(validate_shape(&recipe(5, &pools)).is_err());
+            assert_eq!(
+                validate_shape(&recipe(5, &pools)).unwrap_err().reason,
+                reason
+            );
         }
     }
     #[test]
@@ -744,12 +750,13 @@ mod tests {
         assert_eq!(prepare(&request).unwrap_err().reason, "human_run_required");
         request.human_run = true;
         request.public_key_hex = Some("00".repeat(32));
-        assert!(validate_shape(&request).is_err());
+        let reason = |request: &ShieldedRecipe| validate_shape(request).unwrap_err().reason;
+        assert_eq!(reason(&request), "shielded_authorization");
         request.public_key_hex = None;
         request.sapling_parameters.as_mut().unwrap().spend_path = "relative.params".into();
-        assert!(validate_shape(&request).is_err());
+        assert_eq!(reason(&request), "parameter_path");
         request.sapling_parameters = None;
-        assert!(validate_shape(&request).is_err());
+        assert_eq!(reason(&request), "sapling_parameters");
         let mut value = encode(
             json!({"human_run":true,"transaction_version":6,"pools":["orchard"],
             "parent_hex":"", "output_index":0, "expiry_height":210,"authorization":"single",
@@ -782,17 +789,23 @@ mod tests {
             assert_eq!(tx.inputs()[0].outpoint().unwrap().hash, parent.hash());
             assert_eq!(u64::from(previous[0].value), 2_000_000);
             assert_eq!(u64::from(tx.outputs()[0].value), 1_900_000);
-            assert!(finalize(
-                &request,
-                &hex::encode(tx.zcash_serialize_to_vec().unwrap()),
-                None
-            )
-            .is_err());
+            // The unsigned base lacks the requested Orchard bundle.
+            assert_eq!(
+                finalize(
+                    &request,
+                    &hex::encode(tx.zcash_serialize_to_vec().unwrap()),
+                    None
+                )
+                .unwrap_err()
+                .reason,
+                "shielded_pools"
+            );
+            let reason = |request: &ShieldedRecipe| context(request).err().unwrap().reason;
             request.output_index = 1;
-            assert!(context(&request).is_err());
+            assert_eq!(reason(&request), "missing_bundle");
             request.output_index = 0;
             request.authorization = "multisig".into();
-            assert!(context(&request).is_err());
+            assert_eq!(reason(&request), "shielded_parent_script");
         }
     }
     #[test]

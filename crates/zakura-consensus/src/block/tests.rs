@@ -2131,6 +2131,111 @@ async fn server_template_error_waits_for_checks(slh_budget: bool) {
     }
 }
 
+/// Every transaction in an active SLH block attempt shares one allowance,
+/// and a repeated attempt for the same block receives a fresh allowance.
+#[tokio::test]
+async fn slh_block_attempts_share_one_fresh_budget() {
+    use std::sync::Mutex;
+    use zakura_chain::parameters::testnet::{ExperimentalSlhDsaB128sLimits, RegtestParameters};
+
+    let _init_guard = zakura_test::init();
+    let height = Height(110);
+    let network = Network::new_regtest(RegtestParameters {
+        activation_heights: ConfiguredActivationHeights {
+            nu6_3: Some(1),
+            nu7: Some(105),
+            ..Default::default()
+        },
+        experimental_slh_dsa_b128s_activation_height: Some(height),
+        experimental_slh_dsa_b128s_limits: Some(
+            ExperimentalSlhDsaB128sLimits::new(16, 64).expect("valid functional limits"),
+        ),
+        ..Default::default()
+    });
+    let mut block =
+        Block::zcash_deserialize(&zakura_test::vectors::BLOCK_MAINNET_GENESIS_BYTES[..])
+            .expect("the genesis block deserializes");
+    block.transactions = vec![Arc::new(v5_coinbase_transaction(
+        NetworkUpgrade::Nu7,
+        height,
+        &network,
+    ))];
+    for index in 0..2 {
+        block.transactions.push(Arc::new(Transaction::V5 {
+            network_upgrade: NetworkUpgrade::Nu7,
+            lock_time: LockTime::unlocked(),
+            expiry_height: height,
+            inputs: vec![transparent::Input::PrevOut {
+                outpoint: transparent::OutPoint {
+                    hash: zakura_chain::transaction::Hash([1; 32]),
+                    index,
+                },
+                unlock_script: transparent::Script::new(&[]),
+                sequence: 0,
+            }],
+            outputs: vec![],
+            sapling_shielded_data: None,
+            orchard_shielded_data: None,
+        }));
+    }
+    Arc::make_mut(&mut block.header).merkle_root = block.transactions.iter().collect();
+    let block = Arc::new(block);
+
+    let state = service_fn(|request: zs::Request| async move {
+        let response = match request {
+            zs::Request::KnownBlock(_) => zs::Response::KnownBlock(None),
+            zs::Request::CheckBlockProposalValidity(_) => zs::Response::ValidBlockProposal,
+            zs::Request::CheckParentInputs { .. } => {
+                zs::Response::ParentInputs(zs::ParentInputs::Inconclusive)
+            }
+            _ => panic!("the budget test received an unexpected state request: {request:?}"),
+        };
+        Ok::<_, BoxError>(response)
+    });
+    let budgets = Arc::new(Mutex::new(Vec::new()));
+    let transaction = service_fn({
+        let budgets = budgets.clone();
+        move |request: tx::Request| {
+            let tx::Request::Block {
+                slh_dsa_b128s_budget,
+                ..
+            } = &request
+            else {
+                panic!("the budget test received a mempool transaction request");
+            };
+            budgets
+                .lock()
+                .expect("the budget list is not poisoned")
+                .push(slh_dsa_b128s_budget.clone());
+            async move { Ok::<_, BoxError>(accept_block_transaction(request)) }
+        }
+    });
+    let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+
+    let mut attempts = Vec::new();
+    for _ in 0..2 {
+        verifier
+            .ready()
+            .await
+            .expect("the verifier is ready")
+            .call(Request::CheckProposal(block.clone()))
+            .await
+            .expect("the proposal is valid");
+        let requests: Vec<_> = budgets
+            .lock()
+            .expect("the budget list is not poisoned")
+            .drain(..)
+            .collect();
+        assert_eq!(requests.len(), block.transactions.len());
+        let budget = requests[0]
+            .clone()
+            .expect("active SLH block attempts carry a budget");
+        assert!(requests.iter().all(|other| other.as_ref() == Some(&budget)));
+        attempts.push(budget);
+    }
+    assert_ne!(attempts[0], attempts[1]);
+}
+
 /// A retry must observe the queued commit's outcome before reporting a duplicate.
 #[tokio::test(start_paused = true)]
 async fn pending_commit_retry_waits_for_state_outcome() {

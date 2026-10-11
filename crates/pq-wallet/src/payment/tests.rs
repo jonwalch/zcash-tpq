@@ -30,7 +30,7 @@ use zakura_chain::{
     transaction::Transaction,
     transparent::{Input, OutPoint},
 };
-use zakura_pq_slh_dsa_b_exp::Policy;
+use zakura_pq_slh_dsa_b_exp::{Policy, Rejection};
 
 fn wallets(n: usize, receive: u32, change: u32) -> Vec<Wallet> {
     wallets_with_rng(n, receive, change, &mut rand_core::OsRng)
@@ -263,7 +263,15 @@ fn published_proposals_and_partials_remain_canonical() {
     }
     let bytes = corpus["partial_json"].as_str().unwrap().as_bytes();
     assert_eq!(Partial::from_json(bytes).unwrap().to_json().unwrap(), bytes);
-    assert!(Partial::from_json(&vec![b' '; MAX_PARTIAL + 1]).is_err());
+    // Spaces are invalid JSON at any length; only the size cap returns Limits.
+    assert!(matches!(
+        Partial::from_json(&vec![b' '; MAX_PARTIAL + 1]),
+        Err(Error::Limits)
+    ));
+    assert!(matches!(
+        Partial::from_json(&vec![b' '; MAX_PARTIAL]),
+        Err(Error::Encoding)
+    ));
 }
 
 #[test]
@@ -386,9 +394,27 @@ fn separate_two_of_three_signers_reject_foreign_duplicate_and_invalid_partials()
                     bad.pop();
                 }
             }
-            assert!(stores[0]
+            let error = stores[0]
                 .assemble_payment(&wallets[0], &mut source, &proposal, &intent, &bad)
-                .is_err());
+                .unwrap_err();
+            // Count, routing and slot checks run in the wallet before native
+            // verification; without the count check, native returns SignatureCount.
+            let expected = match mutation {
+                0 => Some(Rejection::SignerIndex),
+                3 => Some(Rejection::Signature),
+                4 => Some(Rejection::KeyCommitment),
+                _ => None,
+            };
+            assert!(
+                match expected {
+                    Some(rejection) => matches!(error, Error::Authorization(r) if r == rejection),
+                    None => matches!(error, Error::ProposalMismatch),
+                },
+                "{mutation}: {error:?}"
+            );
+            assert!(stores[0].payments().unwrap()[0]
+                .signed_transaction_hex
+                .is_none());
         }
         partials.reverse();
         let signed = stores[0]
@@ -504,7 +530,7 @@ fn review_rechecks_intent_trusted_inputs_policy_and_current_ancestry() {
 fn remainder_requires_explicit_choice_and_respects_dust_and_fee_ceiling() {
     let wallets = wallets(1, 1, 1);
     let wallet = &wallets[0];
-    for remainder in [0, DUST - 1, DUST, 21_599, 21_600] {
+    for remainder in [0, 2_402, 2_403, 21_599, 21_600] {
         for choice in [Remainder::Reject, Remainder::Keep, Remainder::Fee] {
             let temp = tempfile::tempdir().unwrap();
             let mut store = create(
@@ -519,8 +545,11 @@ fn remainder_requires_explicit_choice_and_respects_dust_and_fee_ceiling() {
             let allowed = remainder == 0
                 || remainder >= 21_600
                 || choice == Remainder::Fee
-                || (remainder >= DUST && choice == Remainder::Keep);
+                || (remainder >= 2_403 && choice == Remainder::Keep);
             assert_eq!(result.is_ok(), allowed, "{remainder} {choice:?}");
+            if !allowed {
+                assert!(matches!(result, Err(Error::Fee)), "{remainder} {choice:?}");
+            }
             if let Ok((proposal, review)) = result {
                 let donated = remainder > 0 && remainder < 21_600 && choice == Remainder::Fee;
                 assert_eq!(review.fee, 21_600 + if donated { remainder } else { 0 });
@@ -835,9 +864,15 @@ fn maturity_activation_monitor_and_check_limits_fail_closed() {
         WatchMode::Allocator,
     );
     let mut source = Source::funded(wallet, &[2_000_000]);
-    assert!(store
-        .prepare_payment(wallet, &mut source, &intent(6))
-        .is_err());
+    // Selection would otherwise stop on 2 > 1 checks and return Funds.
+    assert!(matches!(
+        store.prepare_payment(wallet, &mut source, &intent(6)),
+        Err(Error::PolicyLimit {
+            required: 2,
+            transaction: 1,
+            ..
+        })
+    ));
     let mut monitor = create(
         &temp.path().join("monitor"),
         wallet.manifest(),
@@ -865,22 +900,33 @@ fn maturity_activation_monitor_and_check_limits_fail_closed() {
         store.prepare_payment(wallet, &mut source, &intent(6)),
         Err(Error::Funds)
     ));
-    while source.chain.blocks.len() < 103 {
+    // Coinbase at height 3: age 99 for next block 102 is still immature in
+    // selection. Review would return InputContext if selection accepted it.
+    while source.chain.blocks.len() < 102 {
         source.mine();
     }
+    assert!(matches!(
+        store.prepare_payment(wallet, &mut source, &intent(6)),
+        Err(Error::Funds)
+    ));
+    source.mine();
     store
         .prepare_payment(wallet, &mut source, &intent(6))
         .unwrap();
 }
 
 #[test]
-fn input_check_and_final_size_boundaries_are_independent() {
-    for (n, limit, values, amount, expected_inputs) in [
-        (1, 15, vec![200_000; 15], 2_600_000, Some(15)),
-        (1, 15, vec![200_000; 16], 2_810_000, None),
+fn input_count_and_check_limit_boundaries_are_independent() {
+    // Final v6 sizes with change: fifteen 1-of-1 inputs, then the wallet.md
+    // rows for eight and nine 2-of-3 inputs. The 16-coin case has a spare
+    // check, so only the input cap stops selection.
+    for (n, limit, values, amount, expected) in [
+        (1, 15, vec![200_000; 15], 2_600_000, Some((15, 119_709))),
+        (1, 16, vec![200_000; 16], 2_810_000, None),
         (3, 14, vec![400_000; 8], 2_840_000, None),
-        (3, 16, vec![400_000; 8], 2_840_000, Some(8)),
+        (3, 16, vec![400_000; 8], 2_840_000, Some((8, 127_562))),
         (3, 16, vec![400_000; 9], 3_200_000, None),
+        (3, 18, vec![400_000; 9], 3_200_000, Some((9, 143_493))),
     ] {
         let mut wallets = wallets(n, 1, 1);
         let wallet = &mut wallets[0];
@@ -897,10 +943,15 @@ fn input_check_and_final_size_boundaries_are_independent() {
         intent.max_fee = 3_000_000;
         intent.remainder = Remainder::Keep;
         let result = store.prepare_payment(wallet, &mut source, &intent);
-        if let Some(count) = expected_inputs {
+        if let Some((count, final_bytes)) = expected {
             let (proposal, review) = result.unwrap();
             assert_eq!(proposal.inputs.len(), count);
-            assert!(review.final_bytes <= MAX_TRANSACTION);
+            assert_eq!(review.final_bytes, final_bytes);
+            if count == 9 {
+                // Selection-only control for the nine-input rejection. The
+                // eight-input case already assembles the same 2-of-3 shape.
+                continue;
+            }
             // The limit and estimator also hold after real full assembly.
             let mut partials = store
                 .sign_payment(wallet, &mut source, &proposal, &intent, review.proposal_id)
@@ -932,7 +983,9 @@ fn input_check_and_final_size_boundaries_are_independent() {
                 review.final_bytes
             );
         } else {
-            assert!(result.is_err());
+            // Without the selection limit, review would reject the larger
+            // proposal with Limits instead.
+            assert!(matches!(result, Err(Error::Funds)), "{limit}: {result:?}");
             assert!(store.payments().unwrap().is_empty());
         }
     }
@@ -1003,6 +1056,19 @@ fn coordinator_cannot_redirect_recipient_or_downgrade_enrolled_change() {
         store.review_payment(wallet, &mut source, &changed, &intent),
         Err(Error::ProposalMismatch)
     ));
+    // Signing also refuses the redirected proposal; without the recipient
+    // check, its reused change entry would give Reserved instead.
+    assert!(matches!(
+        store.sign_payment(
+            wallet,
+            &mut source,
+            &changed,
+            &intent,
+            changed.id().unwrap()
+        ),
+        Err(Error::ProposalMismatch)
+    ));
+    assert_eq!(store.payments().unwrap().len(), 1);
     assert!(store.payments().unwrap()[0].partials.is_empty());
 }
 
@@ -1199,6 +1265,12 @@ fn all_payment_paths_require_the_reviewed_tip_to_be_scanned() {
         assert!(
             matches!(result, Err(Error::ChainChanged)),
             "{action}: {result:?}"
+        );
+        // A stable() read succeeds after the push; otherwise ChainChanged came
+        // from the tip moving inside stable(), not from scanned-tip gating.
+        assert!(
+            advancing.contexts > advancing.advance_at,
+            "{action}: tip moved inside stable()"
         );
         assert!(signer.payments().unwrap().is_empty());
         assert!(advancing.source.sent.is_empty());

@@ -2,8 +2,8 @@
 //! a coordinator or attest that other participants approved the same policy.
 use super::profile;
 use crate::{
-    export_inventory, Entry, Error, Hex, KeyPath, Manifest, Origin, Receiver, Role, Wallet,
-    WatchMode, WatchStore,
+    export_inventory, Entry, Error, Hex, KeyPath, Manifest, Origin, Role, Wallet, WatchMode,
+    WatchStore,
 };
 use std::{collections::BTreeSet, fs, path::PathBuf};
 use zakura_pq_slh_dsa_b_exp::{codec::key_commitment, Policy};
@@ -380,7 +380,7 @@ fn multisig_enrollment_binds_independent_approval_and_preserves_rejected_state()
 }
 
 #[test]
-fn multisig_enrollment_coordinator_supplied_hash_is_not_authentication() {
+fn enroll_backup_accepts_any_matching_fingerprint_without_cosigner_handshake() {
     let _serial = crate::tests::BACKUPS.lock().unwrap();
     let directory = tempfile::tempdir().unwrap();
     let mut wallet = Wallet::create(profile(), 0).unwrap();
@@ -454,25 +454,4 @@ fn multisig_enrollment_coordinator_supplied_hash_is_not_authentication() {
     assert_eq!(restored.manifest(), wallet.manifest());
     let issued = restored.manifest().entries[0].receiver().unwrap();
     assert_eq!(issued, policy.receiver().unwrap());
-
-    // A valid alternative receiver can be detected by an external comparison,
-    // but its advertised text is not an argument to enroll_backup. This is not
-    // evidence of an automatic receiver-agreement check in that API.
-    let other = entry(
-        Role::Receive,
-        1,
-        vec![(
-            owned,
-            Origin {
-                account: 0,
-                index: 0,
-                wallet_id: wallet.manifest().wallet_id,
-            },
-        )],
-    )
-    .receiver()
-    .unwrap();
-    assert_eq!(Receiver::parse(&other.encode()).unwrap(), other);
-    assert_ne!(issued, other);
-    assert_ne!(issued.script(), other.script());
 }

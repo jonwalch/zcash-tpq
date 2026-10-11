@@ -3,8 +3,18 @@
 //! Inputs come from the public offline corpus and remain synthetic. Loading an
 //! ordered spent-output vector does not authenticate UTXOs or test node admission.
 //! Independent digest and signature expectations live in the external checker.
+//! Messages are also compared with the separately parsed shielded-control
+//! reference, which never calls the native `SigHasher` or SLH framing.
 
-use std::{cell::Cell, io::Cursor, path::Path, sync::Arc};
+#[path = "../../../tests/slh-dsa-b128s/shielded/reference.rs"]
+mod reference;
+
+use std::{
+    cell::{Cell, RefCell},
+    io::Cursor,
+    path::Path,
+    sync::Arc,
+};
 
 use serde_json::Value;
 use zakura_chain::{
@@ -143,6 +153,16 @@ fn signed_corpus_verifies_and_reassembles_from_public_partials() {
                     message.as_slice(),
                     bytes(&fixture.json["inputs"][index]["message_hex"])
                 );
+                assert_eq!(
+                    message,
+                    reference::message(
+                        &fixture.transaction,
+                        &fixture.previous,
+                        index,
+                        NetworkDomain::Regtest
+                    ),
+                    "native message matches the separate digest reference"
+                );
                 let calls = Cell::new(0);
                 let reserved = ctx
                     .reserve_input(index, |checks| {
@@ -231,13 +251,20 @@ fn signed_high_index_and_maximum_size_controls() {
 #[test]
 fn exact_and_excess_check_profiles_use_atomic_caller_reservations() {
     for version in [5, 6] {
-        for (case, succeeds, remaining) in [("16checks", true, 0), ("17checks", false, 1)] {
+        // 16checks spends 15-of-15 and 1-of-1; 17checks spends 15-of-15 and
+        // 2-of-3, so its requests distinguish the threshold from the key count.
+        for (case, succeeds, expected_requests, remaining) in [
+            ("16checks", true, [15, 1], 0),
+            ("17checks", false, [15, 2], 1),
+        ] {
             let fixture = fixture(version, case);
             let ctx = context(&fixture.transaction, fixture.previous);
             let available = Cell::new(16_usize);
+            let requests = RefCell::new(Vec::new());
             let mut accepted = true;
             for index in 0..fixture.transaction.inputs().len() {
                 let result = ctx.reserve_input(index, |checks| {
+                    requests.borrow_mut().push(checks);
                     let next = available
                         .get()
                         .checked_sub(checks)
@@ -245,18 +272,28 @@ fn exact_and_excess_check_profiles_use_atomic_caller_reservations() {
                     available.set(next);
                     Ok(())
                 });
-                if let Err(error) = result {
-                    assert_eq!(error, Rejection::VerificationBudget);
-                    assert_eq!(index, 1);
-                    accepted = false;
+                match result {
+                    Ok(reserved) => {
+                        assert_eq!(reserved.checks().len(), requests.borrow()[index]);
+                    }
+                    Err(error) => {
+                        assert_eq!(
+                            error,
+                            Rejection::VerificationBudget,
+                            "reserve error propagates; no ReservedInput"
+                        );
+                        assert_eq!(index, 1);
+                        accepted = false;
+                    }
                 }
             }
-            assert_eq!(accepted, succeeds);
             assert_eq!(
-                available.get(),
-                remaining,
-                "failed reservation does not partly deduct"
+                *requests.borrow(),
+                expected_requests,
+                "one reservation per input for exactly its threshold"
             );
+            assert_eq!(accepted, succeeds);
+            assert_eq!(available.get(), remaining);
         }
     }
 }
@@ -521,19 +558,15 @@ fn signed_observation_cannot_run_before_binding_and_reservation() {
             }
             let context = context(&fixture.transaction, fixture.previous);
             let reservations = Cell::new(0);
-            let entries = Cell::new(0);
+            // Observation needs a `ReservedInput`, which neither failure returns.
             let result = context.reserve_input(0, |_| {
                 reservations.set(reservations.get() + 1);
                 Err(Rejection::VerificationBudget)
             });
-            let result = result.and_then(|reserved| {
-                reserved.checks()[0].verify_with_observation(|| entries.set(entries.get() + 1))
-            });
-            assert_eq!(entries.get(), 0);
             assert_eq!(reservations.get(), usize::from(!malformed));
             assert_eq!(
-                result,
-                Err(if malformed {
+                result.err(),
+                Some(if malformed {
                     Rejection::Encoding
                 } else {
                     Rejection::VerificationBudget

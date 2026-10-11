@@ -10,6 +10,10 @@ fn only_frozen_suite_and_partial_identity_are_accepted() {
     assert_eq!(suite.template_version(), 0x53);
     assert_eq!(suite.key_and_signature_sizes(), (32, 7856));
     assert_eq!(
+        suite.partial_format(),
+        "ZcashTransparentPQ/experimental/slh-dsa-b-128s/partial/v1"
+    );
+    assert_eq!(
         Suite::from_partial_format(suite.partial_format()).unwrap(),
         suite
     );
@@ -34,6 +38,7 @@ fn only_frozen_suite_and_partial_identity_are_accepted() {
 #[test]
 fn every_policy_shape_reuses_native_codec_and_exact_capacity() {
     let mut shapes = 0;
+    let mut documented_shapes = 0;
     for participants in 1..=15u8 {
         for threshold in 1..=participants {
             let policy = SuitePolicy::new(
@@ -59,6 +64,20 @@ fn every_policy_shape_reuses_native_codec_and_exact_capacity() {
             .encode();
             assert_eq!(encoded.len(), policy.authorization_size());
             assert!(policy.authorization_size() <= 118_882);
+            // Independent protocol.md capacity table.
+            let documented = match (threshold, participants) {
+                (1, 1) => Some(7_930),
+                (2, 3) => Some(15_888),
+                (8, 10) => Some(63_471),
+                (9, 10) => Some(71_364),
+                (10, 10) => Some(79_257),
+                (15, 15) => Some(118_882),
+                _ => None,
+            };
+            if let Some(documented) = documented {
+                assert_eq!(policy.authorization_size(), documented);
+                documented_shapes += 1;
+            }
             assert_eq!(
                 slh::template_commitment(policy.lock_script().as_raw_bytes()),
                 Some(policy.commitment())
@@ -70,6 +89,7 @@ fn every_policy_shape_reuses_native_codec_and_exact_capacity() {
         }
     }
     assert_eq!(shapes, 120);
+    assert_eq!(documented_shapes, 6);
     assert!(SuitePolicy::new(Suite::SlhDsaB128sExpV1, 1, vec![[1; 32]; 2]).is_err());
     assert!(SuitePolicy::new(
         Suite::SlhDsaB128sExpV1,

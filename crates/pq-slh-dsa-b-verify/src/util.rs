@@ -43,6 +43,12 @@ mod tests {
         assert_eq!(message, &[255; 21]);
         assert_eq!(tree, (1u64 << 54) - 1);
         assert_eq!(leaf, 511);
+        // Distinct bytes 1..=30 also pin each field's byte range, not only its mask.
+        let digest: [u8; 30] = std::array::from_fn(|i| u8::try_from(i + 1).unwrap());
+        let (message, tree, leaf) = split_digest(&digest);
+        assert_eq!(message, &digest[..21]);
+        assert_eq!(tree, 0x16_1718_191a_1b1c);
+        assert_eq!(leaf, 0x11e);
         assert_eq!(base_2b::<2, 12>(&[0x12, 0x34, 0x56]), [0x123, 0x456]);
         assert_eq!(base_2b::<3, 4>(&[0x12, 0x30]), [1, 2, 3]);
     }

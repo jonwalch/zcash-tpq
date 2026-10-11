@@ -1287,37 +1287,26 @@ fn experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest() {
         for text in [
             format!("network = 'Mainnet'\n[testnet_parameters]\n{field}"),
             format!("network = 'Testnet'\n[testnet_parameters]\n{field}"),
-            format!("initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, {field} }}"),
             format!("network = {{ params = {{}} }}\n[testnet_parameters]\n{field}"),
         ] {
             let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
-            assert!(error.contains("Regtest"), "{error}");
+            assert!(
+                error.contains("in testnet_parameters requires network = 'Regtest'"),
+                "{error}"
+            );
+        }
+        // Configured Testnets reject the fields, including with the activation overlay.
+        for text in [
+            format!("initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, {field} }}"),
+            format!("initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, inherit_activation_heights = true, activation_heights = {{ NU7 = 4420652 }}, {field} }}"),
+        ] {
+            let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+            assert!(error.contains("is only supported on Regtest"), "{error}");
         }
         // The untagged inline Regtest form must not swallow misplaced fields.
         let text = format!("network = {{ params = {{}}, {field} }}");
         assert!(toml::from_str::<Config>(&text).is_err());
     }
-}
-
-#[test]
-fn experimental_slh_dsa_b128s_config_cannot_use_testnet_activation_overlay() {
-    let fields = "experimental_slh_dsa_b128s_activation_height = 110\nexperimental_slh_dsa_b128s_max_checks_per_transaction = 16\nexperimental_slh_dsa_b128s_max_checks_per_block = 64";
-    for inherit in [false, true] {
-        let text = format!(
-            "network = 'Regtest'\n[testnet_parameters]\nactivation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}\ninherit_activation_heights = {inherit}\n{fields}"
-        );
-        let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
-        assert!(
-            error.contains("only applies to configured Testnets"),
-            "{error}"
-        );
-    }
-    let text = format!(
-        "initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, inherit_activation_heights = true, activation_heights = {{ NU7 = 4420652 }}, {} }}",
-        fields.replace('\n', ", ")
-    );
-    let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
-    assert!(error.contains("only supported on Regtest"), "{error}");
 }
 
 #[test]
@@ -1329,7 +1318,13 @@ fn experimental_slh_dsa_b128s_config_rejects_invalid_boundaries() {
     };
     let nu7 = "activation_heights = { 'NU6.3' = 1, NU7 = 105 }";
     for (upgrade, height, transaction, block, expected) in [
-        ("", "110", "16", "64", "NU7"),
+        (
+            "",
+            "110",
+            "16",
+            "64",
+            "strictly after NU7 activation (NU7: None)",
+        ),
         (nu7, "104", "16", "64", "strictly after NU7"),
         (nu7, "105", "16", "64", "strictly after NU7"),
         (nu7, "0", "16", "64", "Height::MAX"),
@@ -1372,7 +1367,15 @@ fn experimental_slh_dsa_b128s_config_rejects_invalid_boundaries() {
             [7u8; 32]
         );
         let result = toml::from_str::<Config>(&text);
-        assert_eq!(result.is_ok(), checkpoint_height < 110, "{result:?}");
+        if checkpoint_height < 110 {
+            assert!(result.is_ok(), "{result:?}");
+        } else {
+            let error = result.unwrap_err().to_string();
+            assert!(
+                error.contains("must be after every configured and mandatory checkpoint"),
+                "{error}"
+            );
+        }
     }
 }
 

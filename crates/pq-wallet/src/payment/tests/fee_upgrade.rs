@@ -195,6 +195,15 @@ fn legacy_fee_requires_exact_local_approval_and_still_checks_trusted_inputs() {
             store.review_payment(wallet, &mut source, &old, &changed),
             Err(Error::ProposalMismatch)
         ));
+        // A different retained intent that still rejects overpayment gets
+        // ordinary fee validation. It cannot inherit the legacy fee and reach
+        // the later intent comparison.
+        changed = approved.clone();
+        changed.max_fee -= 1;
+        assert!(matches!(
+            store.review_payment(wallet, &mut source, &old, &changed),
+            Err(Error::Fee)
+        ));
         source.corrupt_value = true;
         assert!(matches!(
             store.sign_payment(wallet, &mut source, &old, &approved, id),

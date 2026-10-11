@@ -150,12 +150,16 @@ fn public_enrollment_rejects_transport_and_pairing_mutations_without_output() {
             "{mutation}"
         );
         assert!(output.stdout.is_empty(), "{mutation}");
-        if matches!(mutation, "fingerprint" | "key") {
-            assert!(
-                String::from_utf8_lossy(&output.stderr)
-                    .contains("public key pairing fingerprint mismatch"),
-                "{mutation}"
-            );
+        let expected = match mutation {
+            "fingerprint" | "key" => Some("public key pairing fingerprint mismatch"),
+            "newline" => Some("public key exchange must be canonical JSON"),
+            "oversize" => Some("wallet size or resource limit exceeded"),
+            "suite" => Some("unsupported public key exchange"),
+            _ => None,
+        };
+        if let Some(expected) = expected {
+            let error = String::from_utf8_lossy(&output.stderr);
+            assert!(error.contains(expected), "{mutation}: {error}");
         }
     }
 }

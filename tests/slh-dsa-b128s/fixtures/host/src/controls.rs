@@ -451,7 +451,7 @@ mod tests {
                         mixed_prepare(&request).unwrap()["slh_input_index"],
                         usize::from(first)
                     );
-                    let (_, previous, _, slh_index) = mixed(&request).unwrap();
+                    let (tx, previous, _, slh_index) = mixed(&request).unwrap();
                     assert_eq!(
                         previous[1 - slh_index].lock_script.as_raw_bytes()[0],
                         prefix
@@ -461,9 +461,24 @@ mod tests {
                         public_key_hex: request.public_key_hex.clone(),
                         signature_hex: "00".repeat(7856),
                     };
-                    assert!(mixed_assemble(&request, &entry).is_err());
+                    // The zero signature stops assembly at the SLH input; reaching the
+                    // unsupported-template branch needs a real signature (human run only).
+                    assert_eq!(
+                        mixed_assemble(&request, &entry).unwrap_err().reason,
+                        "mixed_authorization"
+                    );
+                    // No classical or other backend can sign either unsupported template.
+                    assert_eq!(
+                        classical::signature(&tx, previous, &request.kind, 1 - slh_index)
+                            .unwrap_err()
+                            .reason,
+                        "classical_kind"
+                    );
                     request.kind = "unsupported50".into();
-                    assert!(mixed_prepare(&request).is_err());
+                    assert_eq!(
+                        mixed_prepare(&request).unwrap_err().reason,
+                        "classical_kind"
+                    );
                 }
             }
         }
@@ -473,26 +488,83 @@ mod tests {
     fn mixed_parents_and_partial_are_checked() {
         let mut recipe = recipe(true, 5);
         recipe.classical.output_index = 1;
-        assert!(mixed_prepare(&recipe).is_err());
+        assert_eq!(
+            mixed_prepare(&recipe).unwrap_err().reason,
+            "mixed_previous_outputs"
+        );
         recipe.classical.output_index = 0;
         let entry = Record {
             signer_index: 0,
             public_key_hex: recipe.public_key_hex.clone(),
             signature_hex: "00".repeat(7856),
         };
-        assert!(mixed_assemble(&recipe, &entry).is_err());
+        assert_eq!(
+            mixed_assemble(&recipe, &entry).unwrap_err().reason,
+            "mixed_authorization"
+        );
         recipe.fee_zat = u64::MAX;
-        assert!(mixed_prepare(&recipe).is_err());
+        assert_eq!(mixed_prepare(&recipe).unwrap_err().reason, "mixed_value");
+    }
+    fn control_template(version: u8, height: u32) -> Value {
+        let (lock, _, _) = classical::scripts("single").unwrap();
+        let (mut coinbase, _) = TransactionRecipe {
+            version,
+            network_upgrade: NetworkUpgrade::Nu7,
+            lock_time: LockTime::Height(Height(0)),
+            expiry_height: Height(height),
+            spends: vec![],
+            outputs: vec![chain_output(100_000_000, lock.as_raw_bytes().to_vec()).unwrap()],
+        }
+        .build();
+        match &mut coinbase {
+            Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. } => {
+                inputs.push(ChainInput::Coinbase {
+                    height: Height(height),
+                    data: vec![],
+                    sequence: u32::MAX,
+                })
+            }
+            _ => unreachable!("fixture v5/v6"),
+        }
+        json!({"transactions":[],"coinbasetxn":{"data":hex::encode(coinbase.zcash_serialize_to_vec().unwrap())},
+            "height":height,"version":4,"previousblockhash":"11".repeat(32),"curtime":1_700_000_000,
+            "bits":"200f0f0f","defaultroots":{"chainhistoryroot":"22".repeat(32)}})
+    }
+    /// Distinct valid mixed transactions; each differs only in its fee.
+    fn control_transactions(version: u8, count: u64) -> Vec<ControlTransaction> {
+        (0..count)
+            .map(|i| {
+                let mut request = recipe(true, version);
+                request.fee_zat += i;
+                let (transaction, _, _, _) = mixed(&request).unwrap();
+                ControlTransaction {
+                    transaction_hex: hex::encode(transaction.zcash_serialize_to_vec().unwrap()),
+                    fee_zat: request.fee_zat,
+                }
+            })
+            .collect()
     }
     #[test]
     fn control_block_rejects_nonempty_templates_and_unbounded_inputs() {
-        let recipe = ControlBlockRecipe {
-            template: json!({"transactions":[{}]}),
+        let request = |template: Value, count| ControlBlockRecipe {
+            template,
             kind: "single".into(),
-            nonce: 1,
-            transactions: vec![],
+            nonce: 64,
+            transactions: control_transactions(5, count),
         };
-        assert!(block(&recipe).is_err());
+        let template = control_template(5, 105);
+        // Each rejection changes one dimension of an otherwise valid request.
+        assert!(block(&request(template.clone(), 1)).is_ok());
+        assert!(block(&request(template.clone(), 5)).is_ok());
+        let mut nonempty = template.clone();
+        nonempty["transactions"] = json!([{}]);
+        for invalid in [
+            request(nonempty, 1),
+            request(template.clone(), 6),
+            request(template, 0),
+        ] {
+            assert_eq!(block(&invalid).unwrap_err().reason, "control_block_shape");
+        }
     }
 
     #[test]
@@ -501,32 +573,10 @@ mod tests {
             .into_iter()
             .flat_map(|v| [104, 105, 106, 107, 108, 109, 111].map(|h| (v, h)))
         {
-            let (lock, _, _) = classical::scripts("single").unwrap();
-            let (mut coinbase, _) = TransactionRecipe {
-                version,
-                network_upgrade: NetworkUpgrade::Nu7,
-                lock_time: LockTime::Height(Height(0)),
-                expiry_height: Height(height),
-                spends: vec![],
-                outputs: vec![chain_output(100_000_000, lock.as_raw_bytes().to_vec()).unwrap()],
-            }
-            .build();
-            match &mut coinbase {
-                Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. } => {
-                    inputs.push(ChainInput::Coinbase {
-                        height: Height(height),
-                        data: vec![],
-                        sequence: u32::MAX,
-                    })
-                }
-                _ => unreachable!("fixture v5/v6"),
-            }
             let (transaction, _, _, _) = mixed(&recipe(true, version)).unwrap();
             let transaction_bytes = transaction.zcash_serialize_to_vec().unwrap();
             let request = ControlBlockRecipe {
-                template: json!({"transactions":[],"coinbasetxn":{"data":hex::encode(coinbase.zcash_serialize_to_vec().unwrap())},
-                    "height":height,"version":4,"previousblockhash":"11".repeat(32),"curtime":1_700_000_000,
-                    "bits":"200f0f0f","defaultroots":{"chainhistoryroot":"22".repeat(32)}}),
+                template: control_template(version, height),
                 kind: "single".into(),
                 nonce: 64,
                 transactions: vec![ControlTransaction {

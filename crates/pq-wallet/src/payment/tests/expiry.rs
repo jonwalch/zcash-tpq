@@ -16,7 +16,7 @@ pub(super) fn with_expiry(proposal: &Proposal, expiry: u32) -> Proposal {
 }
 
 #[test]
-fn expiry_approval_rejects_an_overflowing_trusted_height_before_input_resolution() {
+fn overflowing_trusted_tip_is_rejected_before_input_resolution() {
     struct OverflowingTip(Source);
     impl ChainSource for OverflowingTip {
         fn context(&mut self) -> Result<NodeContext, Error> {

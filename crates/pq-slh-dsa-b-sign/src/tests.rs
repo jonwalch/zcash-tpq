@@ -52,12 +52,18 @@ impl RngCore for TestEntropy {
 
 #[test]
 fn independent_keys_and_prescribed_randomness_signatures() {
-    for case in vectors()["cases"].as_array().unwrap() {
+    let vectors = vectors();
+    let cases = vectors["cases"].as_array().unwrap();
+    // Six independent roots, two of which also carry a reference signature.
+    assert_eq!(cases.len(), 6);
+    let mut signed = 0;
+    for case in cases {
         let key = SigningKey::from_seed(Zeroizing::new(bytes(case, "seed")));
         assert_eq!(key.public_key(), &bytes::<32>(case, "public_key"));
         if !case["signature"].is_string() {
             continue;
         }
+        signed += 1;
         let message = bytes(case, "message");
         let mut entropy = TestEntropy {
             bytes: bytes(case, "randomness"),
@@ -90,6 +96,10 @@ fn independent_keys_and_prescribed_randomness_signatures() {
         )
         .is_err());
     }
+    assert_eq!(
+        signed, 2,
+        "every reference signature is compared byte for byte"
+    );
 }
 
 #[test]

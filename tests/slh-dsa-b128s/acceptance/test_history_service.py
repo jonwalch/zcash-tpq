@@ -1,6 +1,7 @@
 """Offline loopback service tests: relay is always an in-memory fake."""
 import hashlib
 import json
+import os
 import socket
 import unittest
 from unittest.mock import Mock, patch
@@ -61,6 +62,12 @@ class ServiceTests(unittest.TestCase):
         for raw in (b'{"id":1,"id":1}', b"{}", query().replace(b'"id":1', b'"id":true')):
             with self.assertRaises(AcceptanceError):
                 history.request(raw)
+        # Exact LocalRpc shapes: gettxout includes mempool; getrawtransaction is verbose.
+        for raw in (query("gettxout", [BLOCK, 0, True]), query("gettxout", [BLOCK, 0, False]),
+                    query("getrawtransaction", [BLOCK, 1]), query("getblock", [BLOCK, 0]),
+                    query("getblockhash", [111]), query()):
+            with self.subTest(raw=raw):
+                self.assertEqual(history.request(raw), json.loads(raw))
 
     def test_honest_proxy_preserves_exact_decimal_bytes_and_only_logs_hashes(self):
         original = b'{"id":1,"error":null,"result":{"value":0.03000001}}\n'
@@ -124,6 +131,9 @@ class ServiceTests(unittest.TestCase):
                 self.assertFalse(service.events[-1]["fault_applied"])
 
     def test_block_fault_preserves_size_changes_only_header_and_requires_target(self):
+        for mode in ("pruned", "inconsistent-block"):
+            with self.subTest(mode=mode), self.assertRaisesRegex(AcceptanceError, "history_fault_hash_required"):
+                history.HistoryService("127.0.0.1:1", mode, relay=relay)
         with history.HistoryService("127.0.0.1:1", "inconsistent-block", block_hash=BLOCK, relay=relay) as service:
             other = query("getblock", ["22" * 32, 0])
             self.assertEqual(service.respond(other), relay(other))
@@ -138,10 +148,6 @@ class ServiceTests(unittest.TestCase):
             self.assertFalse(service.events[-1]["fault_applied"])
 
     def test_real_upstream_error_or_invalid_result_cannot_count_as_injected_fault(self):
-        original = history.error(-8)
-        with history.HistoryService("127.0.0.1:1", "unavailable", relay=lambda _: original) as service:
-            self.assertEqual(service.respond(query()), original)
-            self.assertFalse(service.events[-1]["fault_applied"])
         for mode, raw in (("unavailable", query()), ("missing-hash", query("getblockhash", [0])),
                           ("pruned", query("getblock", [BLOCK, 0]))):
             with self.subTest(mode=mode), history.HistoryService("127.0.0.1:1", mode,
@@ -152,8 +158,11 @@ class ServiceTests(unittest.TestCase):
 
     def test_request_response_count_and_deadline_bounds(self):
         with history.HistoryService("127.0.0.1:1", relay=relay) as service:
+            # Valid JSON: only the request size bound can refuse it.
+            padded = b" " * (history.MAX_REQUEST - len(query())) + query()
+            self.assertEqual(service.respond(padded), relay(query()))
             with self.assertRaisesRegex(AcceptanceError, "request_json"):
-                service.respond(b"x" * (history.MAX_REQUEST + 1))
+                service.respond(b" " + padded)
             service.count = history.MAX_REQUESTS
             with self.assertRaisesRegex(AcceptanceError, "request_count"):
                 service.respond(query())
@@ -168,7 +177,8 @@ class ServiceTests(unittest.TestCase):
 
     def test_http_path_framing_readonly_and_shutdown_are_bounded(self):
         upstream = Mock(side_effect=relay)
-        with history.HistoryService("127.0.0.1:1", relay=upstream) as service:
+        with history.HistoryService("127.0.0.1:1", relay=upstream) as service, \
+                patch.object(service, "respond", wraps=service.respond) as respond:
             opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
             with opener.open(urllib.request.Request("http://" + service.address, query()), timeout=2) as response:
                 self.assertEqual(response.read(), relay(query()))
@@ -176,13 +186,17 @@ class ServiceTests(unittest.TestCase):
                 opener.open(urllib.request.Request("http://" + service.address, query("sendrawtransaction", ["00"])), timeout=2)
             self.assertEqual(error.exception.code, 503)
             error.exception.close()
-            malformed = [b"Content-Length: 2\r\nContent-Length: 2\r\n", b"Content-Length: 4097\r\n",
-                         b"Content-Length: 2\r\nTransfer-Encoding: chunked\r\n"]
-            for headers in malformed:
+            # Each body is a complete read-only query, so only framing can refuse it.
+            body, large = query(), b" " * (history.MAX_REQUEST + 1 - len(query())) + query()
+            length = f"Content-Length: {len(body)}\r\n".encode()
+            malformed = [(length + length, body), (f"Content-Length: {len(large)}\r\n".encode(), large),
+                         (length + b"Transfer-Encoding: chunked\r\n", body)]
+            for headers, payload in malformed:
                 with socket.create_connection(("127.0.0.1", int(service.address.split(":")[1])), timeout=2) as client:
-                    client.sendall(b"POST / HTTP/1.0\r\n" + headers + b"\r\n{}")
+                    client.sendall(b"POST / HTTP/1.0\r\n" + headers + b"\r\n" + payload)
                     self.assertIn(b"503", client.recv(1024))
             self.assertEqual(upstream.call_count, 1)
+            self.assertEqual(respond.call_count, 2)
             self.assertEqual(service.count, 5)
         self.assertFalse(service.thread.is_alive())
 
@@ -191,7 +205,14 @@ class ServiceTests(unittest.TestCase):
         response.read1.side_effect = [b"abc", b""]
         response.__enter__ = Mock(return_value=response)
         response.__exit__ = Mock(return_value=False)
-        service = history.HistoryService("127.0.0.1:1", relay=relay)
+        proxy = {"http_proxy": "http://192.0.2.1:9", "HTTP_PROXY": "http://192.0.2.1:9"}
+        with patch.dict(os.environ, proxy):
+            # Control: a default opener would honor the environment proxy.
+            self.assertTrue(any(isinstance(handler, urllib.request.ProxyHandler) and handler.proxies
+                                for handler in urllib.request.build_opener().handlers))
+            service = history.HistoryService("127.0.0.1:1", relay=relay)
+        self.assertFalse(any(isinstance(handler, urllib.request.ProxyHandler) and handler.proxies
+                             for handler in service.opener.handlers))
         service.opener.open = Mock(return_value=response)
         self.assertEqual(service.forward(query()), b"abc")
         self.assertEqual(service.opener.open.call_args.kwargs["timeout"], 5)

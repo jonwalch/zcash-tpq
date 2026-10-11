@@ -89,7 +89,7 @@ class FakeDemo:
                 reason = controls.INCONSISTENT if service.mode in ("inconsistent-tip", "inconsistent-block") else controls.UNAVAILABLE
                 return ("unrelated rejection" if self.mutation == "wrong-diagnostic" else reason).encode()
             assert success and command == "sync"
-            if arguments[2] == 1:
+            if arguments[2] == 1 and self.mutation != "bounded-complete":
                 value["scan"].update(checkpoint={"height": 0, "hash": "00" * 32},
                     complete=False, context=None)
             else:
@@ -182,9 +182,11 @@ class ControlsTests(unittest.TestCase):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
                 with self.assertRaisesRegex(AcceptanceError, reason):
                     self.rescan(Path(directory), mutation=mutation)
-        with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaisesRegex(AcceptanceError, "bounded_scan_no_history"):
-                self.rescan(Path(directory), "incomplete", "no-fault-event")
+        for mutation, reason in (("no-fault-event", "bounded_scan_no_history"),
+                                 ("bounded-complete", "bounded_scan_not_incomplete")):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
+                with self.assertRaisesRegex(AcceptanceError, reason):
+                    self.rescan(Path(directory), "incomplete", mutation)
 
     def test_state_projection_allows_only_scan_and_v3_commit_generation(self):
         value = {"format": "ZcashTransparentPQ/watch-state/v3", "scan": {"complete": True},
@@ -215,16 +217,36 @@ class ControlsTests(unittest.TestCase):
                     controls.restored(demo, owner, Path("destination"), snapshot=snapshot)
 
     def test_chain_guard_checks_both_real_outpoints_and_rejects_submission(self):
-        output = {"value": "0.03", "coinbase": False, "confirmations": 1, "scriptPubKey": {"hex": "script"}}
-        rpc = Mock(side_effect=lambda method, *args: [] if method == "getrawmempool" else output)
-        nodes = [SimpleNamespace(tip=lambda: (TIP["height"], TIP["hash"]), rpc=rpc)] * 2
-        network = SimpleNamespace(nodes=nodes)
         funding = {"txid": "44" * 32, "outputs": [{"script_hex": "script"}] * 2}
-        controls.unchanged_chain(network, funding, TIP, [[], []])
-        self.assertEqual([call.args[2] for call in rpc.call_args_list if call.args[0] == "gettxout"], [0, 1, 0, 1])
-        rpc.side_effect = lambda method, *args: ["unexpected-payment"] if method == "getrawmempool" else output
-        with self.assertRaisesRegex(AcceptanceError, "submitted_payment"):
+        tip = (TIP["height"], TIP["hash"])
+        def guard(tips=(tip, tip), pool=(), change=None):
+            """Two independent nodes; `change` alters only the second node's output 1."""
+            def node(position):
+                def rpc(method, *args):
+                    if method == "getrawmempool":
+                        return list(pool) if position else []
+                    output = {"value": "0.03", "coinbase": False, "confirmations": 1, "scriptPubKey": {"hex": "script"}}
+                    return change(output) if change and position and args[1] == 1 else output
+                return SimpleNamespace(tip=lambda: tips[position], rpc=Mock(side_effect=rpc))
+            network = SimpleNamespace(nodes=[node(0), node(1)])
             controls.unchanged_chain(network, funding, TIP, [[], []])
+            return network
+        network = guard()
+        for node in network.nodes:
+            self.assertEqual([call.args for call in node.rpc.call_args_list if call.args[0] == "gettxout"],
+                             [("gettxout", funding["txid"], index, False) for index in (0, 1)])
+        moved = (TIP["height"] + 1, "12" * 32)
+        for arguments, reason in (({"pool": ["unexpected-payment"]}, "history_control_submitted_payment"),
+                                  ({"tips": (moved, moved)}, "history_control_changed_chain"),
+                                  ({"tips": (tip, moved)}, "nodes_do_not_share_tip"),
+                                  ({"change": lambda output: None}, "history_control_changed_funding"),
+                                  ({"change": lambda output: dict(output, coinbase=True)}, "history_control_changed_funding"),
+                                  ({"change": lambda output: dict(output, confirmations=0)}, "history_control_changed_funding"),
+                                  ({"change": lambda output: dict(output, value="0.02")}, "history_control_changed_funding"),
+                                  ({"change": lambda output: dict(output, scriptPubKey={"hex": "other"})},
+                                   "history_control_changed_funding")):
+            with self.subTest(reason=reason, arguments=arguments), self.assertRaisesRegex(AcceptanceError, reason):
+                guard(**arguments)
 
 
 class ReceiptTests(unittest.TestCase):

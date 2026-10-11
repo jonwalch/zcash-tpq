@@ -53,6 +53,6 @@ Synthetic trusted-source tests do not establish real UTXO provenance or funded a
 
 ```sh
 cargo test --locked -p zakura-pq-wallet --lib
-cargo test --locked -p zakura-pq-wallet --features experimental-slh-dsa-b128s --lib
+cargo test --locked -p zakura-pq-wallet --features experimental-slh-dsa-b128s --lib --tests
 cargo clippy --locked -p zakura-pq-wallet --all-targets --features experimental-slh-dsa-b128s -- -D warnings
 ```

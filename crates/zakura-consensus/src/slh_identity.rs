@@ -53,11 +53,18 @@ mod tests {
         assert_eq!(json["schema_version"], 1);
         assert_eq!(json["contract"], "slh-dsa-b-128s-exp-v1");
         assert_eq!(json["suite_id"], "f7");
+        // The receipt pins must match the verifier crate's recorded source and hash dependency.
+        let provenance: serde_json::Value =
+            serde_json::from_str(include_str!("../../pq-slh-dsa-b-verify/PROVENANCE.json"))
+                .unwrap();
+        assert_eq!(json["algorithm_revision"], provenance["algorithm_revision"]);
+        let blake3 = json["blake3_version"].as_str().unwrap();
         assert_eq!(
-            json["algorithm_revision"],
-            "b392fe82d2d9770142477a576a758a233888bc0a"
+            provenance["hash_dependency"]["version"],
+            format!("={blake3}")
         );
-        assert_eq!(json["blake3_version"], "1.8.5");
+        assert!(include_str!("../../pq-slh-dsa-b-verify/Cargo.toml")
+            .contains(&format!("blake3 = {{ version = \"={blake3}\"")));
         assert_eq!(
             json["verifier_compiled"],
             cfg!(feature = "experimental-slh-dsa-b128s")

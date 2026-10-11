@@ -337,7 +337,17 @@ fn quota(request: &Request, store: &mut WatchStore) {
         result.unwrap();
         assert!(writes > 0);
     }
+    // File-level evidence: the refused preflight leaves no object or temporary file.
+    assert_eq!(
+        fs::read_dir(request.path("watch/journal/objects"))
+            .unwrap()
+            .next()
+            .is_none(),
+        request.mode == "io"
+    );
     drop(journal);
+    // Sanity check only: journal publication never writes the wallet root in
+    // either mode, so this comparison does not distinguish them.
     assert_eq!(
         read(&request.path("watch/state.json")),
         read(&request.path("before.json"))

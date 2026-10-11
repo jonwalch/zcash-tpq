@@ -3,11 +3,14 @@
 
 import copy
 import unittest
+from unittest.mock import patch
 
 import check
 import mutations
 import oracle
 import wire
+
+CORPUS = check.HERE.parent / "fixtures/data"
 
 
 def synthetic_artifacts():
@@ -41,6 +44,22 @@ def synthetic_artifacts():
     return result
 
 
+def membership(artifacts):
+    """Structural stand-in for crypto: accept only unchanged (key, signature, message) triples."""
+    valid = {(record["public_key_hex"], record["signature_hex"], item["message_hex"])
+             for artifact in artifacts.values() for item in artifact["inputs"] for record in item["records"]}
+    calls = []
+
+    def verify(public_key, signature, message, context):
+        calls.append((public_key, signature, message, context))
+        return context == b"" and (public_key.hex(), signature.hex(), message.hex()) in valid
+    return verify, calls
+
+
+def committed_corpus():
+    return {path.stem: oracle.strict_json(path.read_bytes()) for path in sorted(CORPUS.glob("*.json"))}
+
+
 class OracleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -71,22 +90,58 @@ class OracleTests(unittest.TestCase):
         self.assertEqual(len(bytes.fromhex(self.artifacts["v5-15of15"]["transaction_hex"])), 119040)
         self.assertEqual(len(bytes.fromhex(self.artifacts["v6-15of15"]["transaction_hex"])), 119041)
 
+    def test_committed_corpus_digests_messages_and_codecs_match(self):
+        # The host produced these digests, messages and authorizations natively.
+        paths = sorted(CORPUS.glob("*.json"))
+        self.assertEqual({path.stem for path in paths}, check.NAMES)
+        count = 0
+        for path in paths:
+            with self.subTest(case=path.stem):
+                # Crypto acceptance is the reference gate's claim, not this test's.
+                artifact, observed = oracle.evaluate(path.read_bytes(), lambda *args: True)
+                check.corpus_contract(artifact)
+                self.assertEqual(observed, artifact["expected"])
+                count += observed["signature_checks"]
+        self.assertEqual(count, 146)
+
     def test_typed_mutations_precede_crypto_where_required(self):
-        for case in mutations.controls(self.artifacts):
+        verify, _ = membership(self.artifacts)
+        for artifact in self.artifacts.values():
+            self.assertEqual(oracle.evaluate(oracle.canonical(artifact), verify)[1], artifact["expected"])
+        cases = mutations.controls(self.artifacts)
+        self.assertEqual(len(cases), 60)
+        for case in cases:
             with self.subTest(case=case["name"]):
-                calls = []
-                def reject(*args):
-                    calls.append(args)
-                    return False
+                # A mutation that leaves the signed triple unchanged is accepted here.
+                verify, calls = membership(self.artifacts)
                 if case["interface_stage"] is not None:
                     with self.assertRaises(oracle.InterfaceFailure) as caught:
-                        oracle.evaluate(case["raw"], reject)
+                        oracle.evaluate(case["raw"], verify)
                     self.assertEqual(caught.exception.stage, case["interface_stage"])
                     self.assertEqual(calls, [])
                 else:
-                    _, observed = oracle.evaluate(case["raw"], reject)
+                    _, observed = oracle.evaluate(case["raw"], verify)
                     self.assertEqual(observed, case["outcome"])
                     self.assertEqual(bool(calls), observed["native_rejection"]["stage"] == "signature")
+
+    def test_committed_mutations_match_retained_review_receipt(self):
+        # Pin request bytes and the oracle's exact stage/reason to the hash-pinned receipt.
+        raw = check.REPLAY_RECEIPT.read_bytes()
+        self.assertEqual(oracle.sha256(raw), check.REPLAY_RECEIPT_SHA256)
+        retained = oracle.strict_json(raw)["mutations"]
+        corpus = committed_corpus()
+        cases = mutations.controls(corpus)
+        self.assertEqual([case["name"] for case in cases], [row["name"] for row in retained])
+        for case, row in zip(cases, retained):
+            with self.subTest(case=case["name"]):
+                self.assertEqual(oracle.sha256(case["raw"]), row["request_sha256"])
+                verify, calls = membership(corpus)
+                try:
+                    independent = {"observed": oracle.evaluate(case["raw"], verify)[1]}
+                except oracle.InterfaceFailure as failure:
+                    independent = {"error": {"stage": failure.stage, "reason": failure.reason}}
+                    self.assertEqual(calls, [])
+                self.assertEqual(independent, row["independent"])
 
     def test_required_nullable_fields_and_outcome_consistency(self):
         outcomes = [oracle.observation(count=1), oracle.observation("context", "consensus_branch"),
@@ -121,13 +176,23 @@ class OracleTests(unittest.TestCase):
         value = {"z": "\x7f/\b\t\n\f\r\"\\", "a": [True, None, 0, 2**64-1]}
         self.assertEqual(oracle.strict_json(oracle.canonical(value)), value)
         self.assertIn(b"\\u007f", oracle.canonical(value))
-        for raw in (b'{"a":1,"a":2}', b'{"a":{"z":1,"z":2}}', b'-0', b'0.0', b'1e0',
-                    b'NaN', b'18446744073709551616', b'"\\ud800"', b'['*17+b'0'+b']'*17,
-                    '{"a":1}'.encode("utf-16"), b'\xef\xbb\xbf{"a":1}'):
-            with self.subTest(raw=raw), self.assertRaises(oracle.InterfaceFailure):
+        for raw, reason in ((b'{"a":1,"a":2}', "duplicate_key"), (b'{"a":{"z":1,"z":2}}', "duplicate_key"),
+                            (b'-0', "integer"), (b'0.0', "number"), (b'1e0', "number"), (b'NaN', "number"),
+                            (b'18446744073709551616', "integer"), (b'"\\ud800"', "ascii"),
+                            (b'['*17+b'0'+b']'*17, "nesting"), ('{"a":1}'.encode("utf-16"), "json"),
+                            (b'\xef\xbb\xbf{"a":1}', "json")):
+            with self.subTest(raw=raw), self.assertRaises(oracle.InterfaceFailure) as caught:
                 oracle.strict_json(raw)
-        with self.assertRaises(oracle.InterfaceFailure):
-            oracle.strict_json(b" " * (oracle.MAX_JSON + 1))
+            self.assertEqual((caught.exception.stage, caught.exception.reason), ("schema", reason))
+        # Pad a valid document so only the size bound can reject it.
+        with self.assertRaises(oracle.InterfaceFailure) as caught:
+            oracle.strict_json(b"[0]".ljust(oracle.MAX_JSON + 1))
+        self.assertEqual((caught.exception.stage, caught.exception.reason), ("transport", "size"))
+        with patch.object(oracle, "MAX_JSON", 100):
+            self.assertEqual(oracle.strict_json(b"[0]".ljust(100)), [0])
+            with self.assertRaises(oracle.InterfaceFailure) as caught:
+                oracle.strict_json(b"[0]".ljust(101))
+            self.assertEqual((caught.exception.stage, caught.exception.reason), ("transport", "size"))
 
     def test_digest_binds_order_context_and_outputs_but_excludes_scriptsig(self):
         a = self.artifacts["v6-16checks"]

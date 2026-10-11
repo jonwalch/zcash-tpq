@@ -23,11 +23,17 @@ fn normal_profile_is_explicit_and_cannot_reopen_small_profile_inventory() {
     let wallet = limited_owners(1, 100, 500).remove(0);
     let raw = wallet.plaintext().unwrap();
     Wallet::from_plaintext(&raw, &limited(100, 500)).unwrap();
-    assert!(Wallet::from_plaintext(&raw, &limited(15, 42)).is_err());
+    assert!(matches!(
+        Wallet::from_plaintext(&raw, &limited(15, 42)),
+        Err(Error::UnsupportedContext)
+    ));
     let old = limited_owners(1, 15, 42).remove(0);
     let raw = old.plaintext().unwrap();
     Wallet::from_plaintext(&raw, &limited(15, 42)).unwrap();
-    assert!(Wallet::from_plaintext(&raw, &limited(100, 500)).is_err());
+    assert!(matches!(
+        Wallet::from_plaintext(&raw, &limited(100, 500)),
+        Err(Error::UnsupportedContext)
+    ));
 }
 fn is_policy_limit<T>(result: Result<T, Error>, tx: u32, block: u32) {
     assert!(
@@ -279,10 +285,20 @@ fn small_profile_payments_work_and_multi_input_budget_still_applies() {
                         .unwrap(),
                 );
             }
-            assert!(!store
-                .assemble_payment(wallet, &mut source, &proposal, &approved, &partials)
-                .unwrap()
-                .is_empty());
+            if n == 1 {
+                // wallet.md: one 1-of-1 input with recipient and change.
+                assert_eq!(
+                    summary.final_bytes,
+                    if version == 5 { 8_086 } else { 8_087 }
+                );
+            }
+            assert_eq!(
+                store
+                    .assemble_payment(wallet, &mut source, &proposal, &approved, &partials)
+                    .unwrap()
+                    .len(),
+                summary.final_bytes
+            );
         }
     }
     let mut owners = wallets(1, 1, 1);

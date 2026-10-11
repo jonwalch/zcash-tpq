@@ -218,23 +218,26 @@ mod tests {
 
     #[test]
     fn rejects_before_crypto() {
+        const ENVELOPE: &str = "schema, contract or public-fixture declaration mismatch";
+        const LENGTH: &str = "incorrect encoded field length";
+        const SCHEMA: &str = "invalid request schema";
         let mut keygen = request("keygen");
         keygen["seed"] = json!("00".repeat(48));
         assert!(checked(&keygen).is_ok());
-        for (field, value) in [
-            ("public_fixture", json!(false)),
-            ("version", json!(2)),
-            ("contract", json!("hash-four-payments-v1")),
-            ("seed", json!("00".repeat(47))),
-            ("seed", json!("00".repeat(49))),
-            ("seed", json!("gg".repeat(48))),
-            ("internal", json!(true)),
-            ("profile", json!("b128s")),
-            ("repeats", json!(1)),
+        for (field, value, reason) in [
+            ("public_fixture", json!(false), ENVELOPE),
+            ("version", json!(2), ENVELOPE),
+            ("contract", json!("hash-four-payments-v1"), ENVELOPE),
+            ("seed", json!("00".repeat(47)), LENGTH),
+            ("seed", json!("00".repeat(49)), LENGTH),
+            ("seed", json!("gg".repeat(48)), "invalid hex field"),
+            ("internal", json!(true), SCHEMA),
+            ("profile", json!("b128s"), SCHEMA),
+            ("repeats", json!(1), SCHEMA),
         ] {
             let mut altered = keygen.clone();
             altered[field] = value;
-            assert!(checked(&altered).is_err(), "{field}");
+            assert_eq!(checked(&altered).err(), Some(reason), "{field}");
         }
         let mut sign = request("sign");
         sign["secret_key"] = json!("00".repeat(64));
@@ -251,12 +254,20 @@ mod tests {
         ] {
             let mut altered = sign.clone();
             altered[field] = json!("00".repeat(length));
-            assert!(checked(&altered).is_err(), "{field}/{length}");
+            assert_eq!(checked(&altered).err(), Some(LENGTH), "{field}/{length}");
         }
         sign["context"] = json!("");
-        assert!(checked(&sign).is_err());
-        assert!(read_request(&vec![b' '; 32_769][..]).is_err());
-        assert!(read_request(b"{}".as_slice()).is_err());
+        assert_eq!(checked(&sign).err(), Some(SCHEMA));
+        // Pad a valid request so only the size bound can reject it.
+        let mut bounded = serde_json::to_vec(&keygen).unwrap();
+        bounded.resize(32_769, b' ');
+        assert_eq!(
+            read_request(bounded.as_slice()).err(),
+            Some("request exceeds 32768 bytes")
+        );
+        bounded.pop();
+        assert!(read_request(bounded.as_slice()).is_ok());
+        assert_eq!(read_request(b"{}".as_slice()).err(), Some(SCHEMA));
     }
 
     #[test]
@@ -286,14 +297,18 @@ mod tests {
         assert_eq!(signed.signature.unwrap().len(), 7856 * 2);
         assert_eq!(signed.locally_verified, Some(true));
         assert!(signed.secret_key.is_none());
+        // A wrong PK.root fails the first (upstream) post-sign check. A negative
+        // case for the extracted verifier needs a divergent valid upstream
+        // signature; the reference/G1 primitive gate covers that layer.
         secret_key[48] ^= 1;
-        assert!(
+        assert_eq!(
             execute(CheckedRequest::Sign {
                 secret_key,
                 message,
                 randomizer: [0x24; 16],
             })
-            .is_err()
+            .err(),
+            Some("upstream post-sign verification failed")
         );
     }
 }

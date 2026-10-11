@@ -6,13 +6,14 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from common import AcceptanceError, read_json, sha256, write_json
+from common import AcceptanceError, read_json
+import nodes
 import observation_controls as capture
 import observations
 import transparent_controls
-from test_transparent_controls import FakeNode, Ledger, identity
+from test_transparent_controls import FakeNode, Ledger, host_shape, identity
 
 TOKEN = "0123456789abcdef0123456789abcdef"
 SOURCE = {"mock_source": "source-only-test"}
@@ -21,36 +22,50 @@ SOURCE = {"mock_source": "source-only-test"}
 class ObservedLedger(Ledger):
     def __init__(self):
         super().__init__()
-        self.nodes = [ObservedNode(self, index) for index in range(2)]
-        self.a, self.b = self.nodes
         self.no_capture = self.no_rollback = self.no_reactivation = False
-        self.late_subject = self.wrong_identity = self.unrelated_rejection = False
+        self.late_subject = self.wrong_witness = self.unrelated_rejection = False
         self.omit_saved_entry = self.dirty_shutdown = False
         self.proposal_counts = {}
+        self.authorizations, self.pid = 0, 40
 
-    def attach(self, binary, directory, _miner, *, observation_token):
+    def attach(self, binary, directory, miner, *, observation_token):
         assert observation_token == TOKEN
+        # A network that drops the opt-in token runs nodes without any capture.
+        token = None if self.no_capture else observation_token
+        self.nodes = [ObservedNode(self, index, binary, directory, label, miner, token)
+                      for index, label in enumerate(("node-a", "node-b"))]
+        self.a, self.b = self.nodes
         for node in self.nodes:
-            node.binary = binary
-            node.directory = directory / f"node-{node.index}"
-            node.directory.mkdir()
-            node.config = node.directory / "node.toml"
-            node.config.write_text("mock Regtest enabled only")
-            (node.directory / "node.log").write_bytes(b"")
             node.start()
         return self
 
-    def __exit__(self, *_):
-        for node in self.nodes:
-            node.stop()
+    def launch(self, command, *, stdout, stderr, env):
+        """The only process fake: actual ManagedNode start, stop and capture run."""
+        node = next(node for node in self.nodes
+                    if command == [str(node.binary), "--config", str(node.config), "start"])
+        assert stderr == nodes.subprocess.STDOUT
+        assert env.get(observations.ENVIRONMENT) == node.observation_token
+        node.sequence = 0
+        stdout.write(b"mock startup\n")
+        stdout.flush()
+        self.pid += 1
+        process = Mock(pid=self.pid)
+        process.poll.return_value = None
+        process.wait.return_value = 1 if self.dirty_shutdown else 0
+        process.terminate.side_effect = node.shutdown_entries
+        return process
+
+    def __exit__(self, *args):
+        nodes.Network.__exit__(self, *args)
         self.closed = True
 
     def restart(self):
-        result = super().restart()
-        for node in self.nodes:
-            node.stop()
-            node.start()
-        return result
+        super().restart()
+        return nodes.Network.restart(self)
+
+    def metadata(self):
+        assert self.closed
+        return nodes.Network.metadata(self)
 
     def mine(self, count=1):
         if self.no_reactivation and self.height == 108 and self.restarts:
@@ -61,10 +76,12 @@ class ObservedLedger(Ledger):
         assert keys == {self.public: "public mock key"}
         assert capture.zat(self.output(txid, index)["value"]) == 3_000_000
         _, script = capture.policy([self.public], 1)
-        return self.tx(case, [{"value_zat": 2_000_000, "script_hex": script}], [(txid, index)])
+        return host_shape(self.tx(case, [{"value_zat": 2_000_000, "script_hex": script}], [(txid, index)]),
+                          "txid", "auth_digest")
 
     def host(self, binary, operation, **fields):
         if operation == "classical-spend":
+            self.calls.append((operation, deepcopy(fields)))
             recipe = fields["recipe"]
             parent = self.transactions[recipe["parent_hex"]]
             name = "classical-positive" if parent["name"] == "funding" else "classical-funding"
@@ -73,7 +90,7 @@ class ObservedLedger(Ledger):
             outputs.append({"value_zat": parent["outputs"][index]["value_zat"]
                 - sum(row["value_zat"] for row in outputs) - recipe["fee_zat"],
                 "script_hex": self.classical_script})
-            return self.tx(name, outputs, [(parent["txid"], index)])
+            return host_shape(self.tx(name, outputs, [(parent["txid"], index)]), "auth_digest")
         # Authorization controls have unique serialized variants for every
         # original, just as the host does. Preserve pre-existing source fixtures.
         if operation == "control-authorization":
@@ -84,7 +101,9 @@ class ObservedLedger(Ledger):
             self.transactions.update(prior)
             raw = (row["name"] + ":" + original["name"]).encode().hex()
             result.update(transaction_hex=raw, transaction_sha256=observations.digest(bytes.fromhex(raw)))
-            if self.wrong_identity:
+            # The first four calls are authorization_variants; later ones are identity witnesses.
+            self.authorizations += 1
+            if self.wrong_witness and self.authorizations > 4:
                 result["positive_auth_digest"] = identity("wrong")
             self.transactions[raw] = dict(row, **result)
         else:
@@ -97,18 +116,12 @@ class ObservedLedger(Ledger):
         return result
 
 
-class ObservedNode(FakeNode):
-    def __init__(self, ledger, index):
-        super().__init__(ledger)
-        self.index, self.process, self.sequence = index, None, 0
-        self.stops, self.observation_captures = [], []
-
-    def start(self):
-        self.sequence = 0
-        self.process = SimpleNamespace(pid=40 + self.index + 2 * len(self.stops))
-        self.capture = observations.begin(self.directory / "node.log", self.binary, self.config, TOKEN)
-        with (self.directory / "node.log").open("ab") as output:
-            output.write(b"mock startup\n")
+class ObservedNode(FakeNode, nodes.ManagedNode):
+    def __init__(self, ledger, index, binary, directory, label, miner, token):
+        nodes.ManagedNode.__init__(self, binary, directory, label, miner, 18000 + index,
+                                   observation_token=token)
+        FakeNode.__init__(self, ledger)
+        self.index, self.sequence = index, 0
 
     def entry(self, tx):
         if tx["name"] not in ("saved", "zero-before", "zero-after", "cache-before", "cache-after", "corrupt-slh"):
@@ -122,23 +135,14 @@ class ObservedNode(FakeNode):
         with (self.directory / "node.log").open("ab") as output:
             output.write(raw)
 
-    def stop(self):
-        if self.process is None:
-            return
+    def shutdown_entries(self):
         if self.state.late_subject:
             tx = next(tx for tx in self.state.transactions.values() if tx["name"] == "classical-on-slh")
             self.entry(dict(tx, name="saved"))
-        status = 1 if self.state.dirty_shutdown else 0
-        if not self.state.no_capture:
-            record = observations.finish(self.capture, self.directory / "node.log", self.binary,
-                                         self.config, self.process.pid, status)
-            name = f"observation-{len(self.observation_captures)}.json"
-            path = write_json(self.directory / name, record)
-            self.observation_captures.append({"file": name, "sha256": sha256(path)})
-        self.stops.append(status)
-        self.process = None
 
     def response(self, method, *args):
+        if method == "getblockcount":
+            return {"result": self.state.height}
         if method == "sendrawtransaction":
             tx = self.state.transactions[args[0]]
             self.entry(tx)
@@ -152,10 +156,6 @@ class ObservedNode(FakeNode):
             block = self.state.blocks[args[0]]
             if block["block_hex"].startswith("generated-"):
                 return {"tx": [self.state.transactions[raw]["txid"] for raw in block["raws"]]}
-        if method == "getrawtransaction":
-            result = super().rpc(method, *args)
-            tx = self.state.transactions[result["hex"]]
-            return dict(result, txid=tx["txid"], authdigest=tx["auth_digest"])
         if method == "invalidateblock" and self.state.no_rollback:
             return None
         if method == "submitblock" or method == "getblocktemplate" and args:
@@ -189,6 +189,7 @@ class CaptureDriverTests(unittest.TestCase):
                                              side_effect=state.restart_backed))
             stack.enter_context(patch.object(observations, "source_state", return_value=SOURCE))
             stack.enter_context(patch.object(observations, "validate_build"))
+            stack.enter_context(patch.object(nodes.subprocess, "Popen", side_effect=state.launch))
             # Fail immediately in a mock on a no-op lifecycle rather than waiting a minute.
             def wait(action, reason, *_):
                 capture.require(action(), reason)
@@ -209,6 +210,7 @@ class CaptureDriverTests(unittest.TestCase):
         self.assertEqual(receipt["final_tip"]["height"], 110)
         self.assertEqual(len(reports), 12)
         self.assertEqual([len(node.observation_captures) for node in state.nodes], [3, 3])
+        self.assertEqual([row["shutdown_exit_codes"] for row in receipt["nodes"]], [[0, 0, 0]] * 2)
         self.assertTrue(all(row["complete"] for row in attempts))
         for stage in receipt["stages"]:
             self.assertEqual(len(stage["windows"][0]["subjects"]), 8)
@@ -236,7 +238,10 @@ class CaptureDriverTests(unittest.TestCase):
         receipt, reports, _ = self.run_flow(state, version=6)
         self.assertEqual(len(reports), 12)
         self.assertEqual(receipt["final_tip"]["height"], 110)
-        self.assertTrue(all(recipe["transaction_version"] == 6 for recipe in state.mixed_recipes))
+        versions = [(operation, fields["recipe"]["transaction_version"]) for operation, fields in state.calls
+                    if operation in ("control-funding", "classical-spend", "mixed-prepare", "mixed-assemble")]
+        self.assertEqual(sorted(versions), [("classical-spend", 6)] * 2 + [("control-funding", 6)]
+                         + [("mixed-assemble", 6)] * 6 + [("mixed-prepare", 6)] * 6)
 
     def test_rollback_receipt_requires_exact_prior_height_and_hash(self):
         for field, value in (("height", 0), ("hash", identity("wrong-reopened-tip"))):
@@ -272,7 +277,7 @@ class CaptureDriverTests(unittest.TestCase):
         for field, error in (("no_capture", "capture_missing_closed_process"),
                 ("late_subject", "capture_zero_work_failed"),
                 ("omit_saved_entry", "capture_revalidation_not_observed"),
-                ("dirty_shutdown", "observation_clean_shutdown")):
+                ("dirty_shutdown", "node_shutdown_failed")):
             with self.subTest(field=field), self.assertRaisesRegex(AcceptanceError, error):
                 state = ObservedLedger()
                 setattr(state, field, True)
@@ -291,13 +296,24 @@ class CaptureDriverTests(unittest.TestCase):
 
     def test_unrelated_failure_missing_parent_and_wrong_identity_cannot_complete(self):
         for field, error in (("unrelated_rejection", "transparent_wrong_relay_rejection"),
-                ("wrong_identity", "transparent_positive_identity_changed"),
-                ("missing_parent", "authenticated_funding_output"),
+                ("wrong_positive_auth", "capture_replay_wrong_bytes"),
+                ("corrupt_positive_auth", "transparent_positive_identity_changed"),
+                ("wrong_witness", "capture_fixture_identity"),
                 ("change_on_reject", "capture_control_changed_state")):
             with self.subTest(field=field), self.assertRaisesRegex(AcceptanceError, error):
                 state = ObservedLedger()
                 setattr(state, field, True)
                 self.run_flow(state)
+        # The positive proposals succeed; the funding disappears before the first negative.
+        state = ObservedLedger()
+        original = capture.CaptureControls.reject
+        def parent_removed(control, *args):
+            state.missing_parent = True
+            return original(control, *args)
+        with self.assertRaisesRegex(AcceptanceError, "capture_parent_missing"):
+            self.run_flow(state, lambda stack: stack.enter_context(
+                patch.object(capture.CaptureControls, "reject", parent_removed)))
+        self.assertEqual(state.relays, [])
 
     def test_attempt_receipt_retains_failure_before_rpc_result(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -313,8 +329,6 @@ class CaptureDriverTests(unittest.TestCase):
             self.assertEqual(row["identity"], capture.transaction_identity(tx))
 
     def test_identity_uses_exact_host_original_and_no_invented_rpc(self):
-        with self.assertRaisesRegex(AssertionError, "no decoderawtransaction"):
-            ObservedLedger().a.rpc("decoderawtransaction", "00")
         raw, changed = "00", "01"
         tx = {"transaction_hex": raw, "transaction_sha256": observations.digest(bytes.fromhex(raw)),
               "txid": "11" * 32, "outputs": []}

@@ -303,31 +303,44 @@ mod tests {
             "../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
         ))
         .unwrap();
-        let mut proposal = Proposal::from_json(
-            corpus["proposals"][1]["proposal_json"]
-                .as_str()
-                .unwrap()
-                .as_bytes(),
-        )
-        .unwrap();
-        let policy =
-            zakura_pq_slh_dsa_b_exp::Policy::new(15, (0..15).map(|i| [i; 32]).collect()).unwrap();
-        proposal.inputs[0].entry.policy_hex = hex::encode(policy.descriptor());
-        proposal.inputs[0].entry.origins = (0..15)
-            .map(|i| Origin {
-                account: 0,
-                index: 0,
-                wallet_id: Hex([i; 16]),
-            })
-            .collect();
-        let mut output = 100_000u64.to_le_bytes().to_vec();
-        output.push(35);
-        output.extend_from_slice(policy.lock_script().as_raw_bytes());
-        proposal.inputs[0].spent_output_hex = hex::encode(output);
+        // The fixture's single input, with a threshold-of-participants policy.
+        let with_policy = |threshold, participants: u8| {
+            let mut proposal = Proposal::from_json(
+                corpus["proposals"][1]["proposal_json"]
+                    .as_str()
+                    .unwrap()
+                    .as_bytes(),
+            )
+            .unwrap();
+            let policy = zakura_pq_slh_dsa_b_exp::Policy::new(
+                threshold,
+                (0..participants).map(|i| [i; 32]).collect(),
+            )
+            .unwrap();
+            proposal.inputs[0].entry.policy_hex = hex::encode(policy.descriptor());
+            proposal.inputs[0].entry.origins = (0..participants)
+                .map(|i| Origin {
+                    account: 0,
+                    index: 0,
+                    wallet_id: Hex([i; 16]),
+                })
+                .collect();
+            let mut output = 100_000u64.to_le_bytes().to_vec();
+            output.push(35);
+            output.extend_from_slice(policy.lock_script().as_raw_bytes());
+            proposal.inputs[0].spent_output_hex = hex::encode(output);
+            proposal
+        };
+        let proposal = with_policy(15, 15);
         let mut partial =
             Partial::from_json(corpus["partial_json"].as_str().unwrap().as_bytes()).unwrap();
         partial.input_index = 0;
         partial.proposal_id = proposal.id().unwrap();
+        let error = |directory: &Path, proposal: &Proposal| {
+            collect_partials(directory, proposal)
+                .unwrap_err()
+                .to_string()
+        };
         let display = review_display(
             &serde_json::json!({"proposal_id":proposal.id().unwrap(),"fee":1234}),
             &proposal,
@@ -360,7 +373,10 @@ mod tests {
             )
             .unwrap();
             if i < 14 {
-                assert!(collect_partials(dir.path(), &proposal).is_err());
+                assert_eq!(
+                    error(dir.path(), &proposal),
+                    "not enough distinct partials for every input threshold"
+                );
             }
         }
         assert_eq!(collect_partials(dir.path(), &proposal).unwrap().len(), 15);
@@ -370,16 +386,78 @@ mod tests {
             &partial.to_json().unwrap(),
         )
         .unwrap();
-        assert!(collect_partials(dir.path(), &proposal)
-            .unwrap_err()
-            .to_string()
-            .contains("duplicate"));
+        assert_eq!(
+            error(dir.path(), &proposal),
+            "partial proposal, signer index or duplicate slot mismatch"
+        );
         fs::remove_file(dir.path().join("duplicate.json")).unwrap();
+        // The other 14 files are valid, so only the per-file cap can fail.
         write_transfer(
             &dir.path().join("oversized.json"),
             &vec![b' '; MAX_PARTIAL + 1],
         )
         .unwrap();
-        assert!(collect_partials(dir.path(), &proposal).is_err());
+        assert_eq!(
+            error(dir.path(), &proposal),
+            zakura_pq_wallet::Error::Limits.to_string()
+        );
+
+        // One otherwise valid partial per directory isolates each slot check.
+        // A 1-of-2 input admits a transferable signer index 2 that has no slot.
+        let pair = with_policy(1, 2);
+        for (case, expected) in [
+            (
+                "proposal",
+                "partial proposal, signer index or duplicate slot mismatch",
+            ),
+            (
+                "signer",
+                "partial proposal, signer index or duplicate slot mismatch",
+            ),
+            ("input", "partial input is out of range"),
+        ] {
+            let mut bad = partial.clone();
+            bad.proposal_id = pair.id().unwrap();
+            bad.signer_index = 1;
+            match case {
+                "proposal" => bad.proposal_id = Hex([0; 32]),
+                "signer" => bad.signer_index = 2,
+                "input" => bad.input_index = 1,
+                _ => unreachable!(),
+            }
+            let single = tempfile::tempdir().unwrap();
+            write_transfer(&single.path().join("bad.json"), &bad.to_json().unwrap()).unwrap();
+            assert_eq!(error(single.path(), &pair), expected, "{case}");
+            if case == "input" {
+                bad.input_index = 0;
+                fs::remove_file(single.path().join("bad.json")).unwrap();
+                write_transfer(&single.path().join("bad.json"), &bad.to_json().unwrap()).unwrap();
+                assert_eq!(collect_partials(single.path(), &pair).unwrap().len(), 1);
+            }
+        }
+
+        // With a 1-of-15 input, a second distinct partial exceeds the approved
+        // allowance in either directory order.
+        let single = with_policy(1, 15);
+        let collected = tempfile::tempdir().unwrap();
+        for signer in [0, 1] {
+            let mut file = partial.clone();
+            file.proposal_id = single.id().unwrap();
+            file.signer_index = signer;
+            write_transfer(
+                &collected.path().join(format!("{signer}.json")),
+                &file.to_json().unwrap(),
+            )
+            .unwrap();
+        }
+        assert_eq!(
+            error(collected.path(), &single),
+            "too many partials for the approved thresholds"
+        );
+        fs::remove_file(collected.path().join("1.json")).unwrap();
+        assert_eq!(
+            collect_partials(collected.path(), &single).unwrap().len(),
+            1
+        );
     }
 }

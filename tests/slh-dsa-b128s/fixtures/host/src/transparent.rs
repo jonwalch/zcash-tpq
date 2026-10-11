@@ -268,6 +268,38 @@ mod tests {
                     push(&mut expected, &redeem);
                     assert_eq!(&bytes[end..], expected);
                 }
+                let before = unlock(&original, 0).unwrap();
+                let after = unlock(&changed, 0).unwrap();
+                if matches!(variant, SlhOnClassical) {
+                    // Dummy and first ECDSA push stay; the donor SLH signature is the
+                    // second push (OP_PUSHDATA2); the 105-byte redeem push stays last.
+                    let donor = hex::decode(&valid.inputs[0].records[0].signature_hex).unwrap();
+                    assert_eq!(donor.len(), 7856);
+                    let first = 2 + usize::from(before[1]);
+                    let mut expected = before[..first].to_vec();
+                    expected.extend([0x4d, 0xb0, 0x1e]);
+                    expected.extend(donor);
+                    expected.extend(&before[before.len() - 107..]);
+                    assert_eq!(
+                        &before[before.len() - 107..before.len() - 105],
+                        &[0x4c, 105]
+                    );
+                    assert_eq!(after, expected);
+                }
+                if matches!(variant, ClassicalOnSlh) {
+                    // Record 0 (OP_0, 32-byte key push) keeps its key; the donor's first
+                    // ECDSA push replaces the 7,856-byte signature push.
+                    assert_eq!(Authorization::decode(after), Err(Rejection::Encoding));
+                    let donor = unlock(&transaction(classical_raw).unwrap(), 0)
+                        .unwrap()
+                        .to_vec();
+                    let ecdsa = &donor[1..2 + usize::from(donor[1])];
+                    let mut expected = before[..34].to_vec();
+                    expected.extend(ecdsa);
+                    expected.extend(&before[34 + 3 + 7856..]);
+                    assert_eq!(&before[34..37], &[0x4d, 0xb0, 0x1e]);
+                    assert_eq!(after, expected);
+                }
             }
         }
     }
@@ -318,16 +350,19 @@ mod tests {
             variant: AuthorizationVariant::MissingClassicalQuorum,
             donor_transaction_hex: None,
         };
-        assert!(authorization(&recipe).is_err());
+        // An SLH authorization is not the fixed public 2-of-3 classical script.
+        let reason =
+            |recipe: &ControlAuthorizationRecipe| authorization(recipe).unwrap_err().reason;
+        assert_eq!(reason(&recipe), "control_classical_signature");
         recipe.variant = AuthorizationVariant::CorruptSlh;
         recipe.input_index = u32::MAX;
-        assert!(authorization(&recipe).is_err());
+        assert_eq!(reason(&recipe), "control_input_index");
         recipe.input_index = 0;
         recipe.donor_transaction_hex = Some(recipe.transaction_hex.clone());
-        assert!(authorization(&recipe).is_err());
+        assert_eq!(reason(&recipe), "control_donor");
         recipe.variant = AuthorizationVariant::ClassicalOnSlh;
-        assert!(authorization(&recipe).is_err());
+        assert_eq!(reason(&recipe), "control_classical_signature");
         recipe.donor_transaction_hex = None;
-        assert!(authorization(&recipe).is_err());
+        assert_eq!(reason(&recipe), "control_donor");
     }
 }

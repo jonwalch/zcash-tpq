@@ -70,7 +70,8 @@ fn every_signature_node_and_both_key_halves_are_bound() {
         );
         signature[offset] ^= 1;
     }
-    for offset in [0, 16] {
+    // First and last byte of the seed and root halves.
+    for offset in [0, 15, 16, 31] {
         let mut altered = pk.clone();
         altered[offset] ^= 1;
         assert_eq!(
@@ -130,13 +131,14 @@ fn exact_lengths_and_public_bounds() {
         );
     }
     assert_eq!(
-        verify(&pk, &signature, &vec![0; MAX_MESSAGE_BYTES], &[]),
+        verify(&pk, &signature, &vec![0; 65_536], &[]),
         Err(VerifyError::InvalidSignature)
     );
     assert_eq!(
-        verify(&pk, &signature, &vec![0; MAX_MESSAGE_BYTES + 1], &[]),
+        verify(&pk, &signature, &vec![0; 65_537], &[]),
         Err(VerifyError::MessageTooLong)
     );
+    assert_eq!(MAX_MESSAGE_BYTES, 65_536);
     assert_eq!(
         verify(&pk, &signature, &[], &[0; 255]),
         Err(VerifyError::InvalidSignature)
@@ -145,8 +147,17 @@ fn exact_lengths_and_public_bounds() {
         verify(&pk, &signature, &[], &[0; 256]),
         Err(VerifyError::ContextTooLong)
     );
+    // Documented precedence: public key, signature, message, then context.
     assert_eq!(
-        verify(&[], &[], &vec![0; MAX_MESSAGE_BYTES + 1], &[0; 256]),
+        verify(&[], &[], &vec![0; 65_537], &[0; 256]),
         Err(VerifyError::PublicKeyLength)
+    );
+    assert_eq!(
+        verify(&pk, &[], &vec![0; 65_537], &[0; 256]),
+        Err(VerifyError::SignatureLength)
+    );
+    assert_eq!(
+        verify(&pk, &signature, &vec![0; 65_537], &[0; 256]),
+        Err(VerifyError::MessageTooLong)
     );
 }

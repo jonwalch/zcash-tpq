@@ -12,7 +12,7 @@ import sys
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE.parent / "reference"))
-from check import native, require
+from check import KAT_PATH, KAT_SHA256, native, require
 from prepare import checked, digest, SOURCES
 from reference import Reference
 from extract import extract, SELECTION, SOURCE
@@ -27,6 +27,16 @@ def check(inputs, source_cache, binary):
     require(retained == extract(checked(source_cache, SOURCE["sha256"])), "exact NIST selection")
     require(len(retained["cases"]) == len(SELECTION) == 2, "two fixed profile controls")
     reference = Reference(inputs)
+    # The BLAKE3 rejections below count only if the portable-C hash and both
+    # verifiers accept a retained valid BLAKE3 signature in the same run.
+    hash_controls = reference.hash_vectors(inputs)
+    require(type(hash_controls) is int and hash_controls == 105, "official hash controls")
+    kat = json.loads(checked(ROOT / KAT_PATH, KAT_SHA256))["cases"][0]
+    positive = {field: kat[field] for field in FIELDS}
+    require(reference.verify(*(bytes.fromhex(positive[field]) for field in FIELDS)) is True,
+            "independent BLAKE3 positive")
+    positive_result = native(binary, positive)
+    require(positive_result == {"valid": True, "error": None}, "native BLAKE3 positive")
     records = []
     for case in retained["cases"]:
         request = {field: case[field] for field in FIELDS}
@@ -62,6 +72,12 @@ def check(inputs, source_cache, binary):
         "scope": "Two valid FIPS 205 wrong-profile primitive controls; no native/node/wallet acceptance",
         "completed_at_utc": datetime.now(timezone.utc).isoformat(),
         "nist_source": SOURCE,
+        "official_blake3_controls": hash_controls,
+        "blake3_positive": {
+            "known_answers_sha256": KAT_SHA256, "kat_id": kat["id"],
+            "request_sha256": digest(json.dumps(positive, sort_keys=True).encode()),
+            "independent_blake3": True, "candidate": positive_result,
+        },
         "independent_source": SOURCES["reference"],
         "candidate_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
         "candidate_or_controls_dirty": bool(dirty),
@@ -94,4 +110,4 @@ if __name__ == "__main__":
     with args.output.open("x") as output:
         json.dump(result, output, indent=2, sort_keys=True)
         output.write("\n")
-    print("PASS: two valid source-profile signatures and mutations; both reject under BLAKE3")
+    print("PASS: BLAKE3 hash and KAT positives; two valid source-profile signatures and mutations reject under BLAKE3")

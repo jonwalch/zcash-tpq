@@ -4,6 +4,7 @@ import copy
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
@@ -50,8 +51,12 @@ class ArtifactEvidenceTests(unittest.TestCase):
     def run_check(self, paths):
         return artifacts.run(paths, self.root, self.output, reference_factory=self.factory)
 
-    def assert_preflight_failure(self, paths):
-        with self.assertRaises((ValueError, oracle.InterfaceFailure)):
+    def assert_preflight_failure(self, paths, reason=None):
+        if reason is None:
+            context = self.assertRaises((ValueError, oracle.InterfaceFailure))
+        else:
+            context = self.assertRaisesRegex((ValueError, oracle.InterfaceFailure), "^" + re.escape(reason) + "$")
+        with context:
             self.run_check(paths)
         self.factory.assert_not_called()
         self.reference.verify.assert_not_called()
@@ -87,18 +92,42 @@ class ArtifactEvidenceTests(unittest.TestCase):
             self.assert_preflight_failure([good, self.write(bad, "bad.json")])
 
     def test_transport_duplicate_keys_and_operation_envelopes_rejected(self):
-        for raw in (b'{"schema_version":1,"schema_version":1}', b'{"op":"mixed"}',
-                    b'{"schema_version":1.0}', b'[]', b'\xff'):
-            path = self.root / "bad.json"
-            path.write_bytes(raw)
-            self.assert_preflight_failure([path])
+        value = self.artifact()
+        value["artifact_sha256"] = oracle.artifact_hash(value)
+        raw = oracle.canonical(value)
+        # The duplicate repeats a valid artifact's final value, so only the
+        # duplicate-key check can reject it.
+        duplicate = raw.replace(b'"case_id":', b'"case_id":"x","case_id":', 1)
+        decimal = raw.replace(b'"schema_version":1,', b'"schema_version":1.0,', 1)
+        self.assertNotIn(raw, (duplicate, decimal))
+        for payload, reason in ((duplicate, "schema/duplicate_key"), (b'{"op":"mixed"}', "schema/fields"),
+                                (decimal, "schema/number"), (b'[]', "schema/fields"), (b'\xff', "schema/json")):
+            with self.subTest(reason=reason):
+                path = self.root / "bad.json"
+                path.write_bytes(payload)
+                self.assert_preflight_failure([path], reason)
 
     def test_empty_excess_count_and_per_file_bounds_precede_reference(self):
-        self.assert_preflight_failure([])
-        self.assert_preflight_failure([self.root / str(i) for i in range(19)])
+        self.assert_preflight_failure([], "artifact_count")
+        paths = [self.write(self.artifact(f"case-{i}"), f"a{i}.json") for i in range(artifacts.MAX_ARTIFACTS + 1)]
+        self.assertEqual(len(self.run_check(paths[:-1])["artifacts"]), artifacts.MAX_ARTIFACTS)
+        self.output.unlink()
+        self.factory.reset_mock()
+        self.reference.verify.reset_mock()
+        self.assert_preflight_failure(paths, "artifact_count")
+        value = self.artifact()
+        value["artifact_sha256"] = oracle.artifact_hash(value)
+        raw = oracle.canonical(value)
         path = self.root / "large.json"
-        path.write_bytes(b" " * (artifacts.MAX_FILE_BYTES + 1))
-        self.assert_preflight_failure([path])
+        # Trailing JSON whitespace keeps the artifact valid, so only the per-file
+        # byte bound can reject one more byte.
+        path.write_bytes(raw + b" " * (artifacts.MAX_FILE_BYTES - len(raw)))
+        self.run_check([path])
+        self.output.unlink()
+        self.factory.reset_mock()
+        self.reference.verify.reset_mock()
+        path.write_bytes(raw + b" " * (artifacts.MAX_FILE_BYTES + 1 - len(raw)))
+        self.assert_preflight_failure([path], "bounded regular input required")
 
     def test_aggregate_signature_bound_precedes_reference(self):
         paths = [self.write(self.artifact(f"case-{i}", self.large), f"a{i}.json") for i in range(9)]
@@ -120,25 +149,27 @@ class ArtifactEvidenceTests(unittest.TestCase):
 
     def test_paths_regular_files_and_unique_identities(self):
         good = self.write()
-        self.assert_preflight_failure([self.root])
-        self.assert_preflight_failure([self.root / "missing.json"])
+        self.assert_preflight_failure([self.root], "bounded regular input required")
+        self.assert_preflight_failure([self.root / "missing.json"], "bounded regular input required")
         symlink = self.root / "link.json"
         symlink.symlink_to(good)
-        self.assert_preflight_failure([symlink])
+        self.assert_preflight_failure([symlink], "bounded regular input required")
         hardlink = self.root / "hard.json"
         os.link(good, hardlink)
-        self.assert_preflight_failure([good, hardlink])
+        self.assert_preflight_failure([good, hardlink], "duplicate_artifact_path")
         same = self.root / "same.json"
         same.write_bytes(good.read_bytes())
-        self.assert_preflight_failure([good, same])
+        self.assert_preflight_failure([good, same], "duplicate_artifact_bytes")
         nested = self.root / "nested"
         nested.mkdir()
-        (nested / good.name).write_bytes(oracle.canonical(self.artifact("different")))
-        self.assert_preflight_failure([good, nested / good.name])
+        different = self.artifact("different")
+        different["artifact_sha256"] = oracle.artifact_hash(different)
+        (nested / good.name).write_bytes(oracle.canonical(different))
+        self.assert_preflight_failure([good, nested / good.name], "duplicate_artifact_path")
         value = self.artifact()
         value["producer"]["host_binary_sha256"] = "11" * 32
-        self.assert_preflight_failure([good, self.write(value, "case-collision.json")])
-        self.assert_preflight_failure([self.write(name="bad name.json")])
+        self.assert_preflight_failure([good, self.write(value, "case-collision.json")], "duplicate_case_identity")
+        self.assert_preflight_failure([self.write(name="bad name.json")], "artifact_filename")
 
     def test_fresh_output_and_existing_parent_required_before_work(self):
         good = self.write()

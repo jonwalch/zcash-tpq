@@ -56,7 +56,8 @@ fn snapshot_validates_predecessors_and_preserves_retained_orphans() {
     // The bounded ordinary open reads the latest capability, while snapshot
     // validation additionally traverses its retained predecessor authority.
     let mut store = WatchStore::open(&path, &profile()).unwrap();
-    assert!(store.journal_snapshot().is_err());
+    assert!(matches!(store.journal_snapshot(), Err(Error::Storage(_))));
+    assert!(matches!(store.payments(), Err(Error::ReopenRequired)));
     assert_eq!(fs::read(path.join("state.json")).unwrap(), before);
 }
 
@@ -120,7 +121,7 @@ fn snapshot_keeps_failed_first_migration_orphans_under_existing_quota() {
                 Ok(())
             }
         });
-        assert!(result.is_err());
+        assert!(matches!(result, Err(Error::Storage(_))));
         assert_eq!(fs::read(path.join("state.json")).unwrap(), before);
         drop(store);
         let mut store = WatchStore::open(&path, &profile()).unwrap();
@@ -129,9 +130,22 @@ fn snapshot_keeps_failed_first_migration_orphans_under_existing_quota() {
         assert_eq!(metadata.generation, None);
         assert_eq!(metadata.reachable_objects, 0);
         let objects = path.join("journal/objects");
+        // Objects are published before the root's FileWrite stage, but the
+        // CreateObjects failure precedes the objects directory.
+        assert_eq!(objects.exists(), failure == StateStage::FileWrite);
         if objects.exists() {
-            assert!(metadata.retained_objects > 0);
-            assert!(metadata.retained_bytes > 0);
+            let (count, bytes) =
+                fs::read_dir(&objects)
+                    .unwrap()
+                    .fold((0, 0), |(count, bytes), entry| {
+                        (count + 1, bytes + entry.unwrap().metadata().unwrap().len())
+                    });
+            // More than one orphan distinguishes a full count from a single object.
+            assert!(count > 1);
+            assert_eq!(
+                (metadata.retained_objects, metadata.retained_bytes),
+                (count, bytes)
+            );
             let entry = fs::read_dir(objects)
                 .unwrap()
                 .next()

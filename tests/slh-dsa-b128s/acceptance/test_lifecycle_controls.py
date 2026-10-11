@@ -6,8 +6,11 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
+import common
 import lifecycle_controls as controls
 from common import AcceptanceError
+
+MIXED = "active SLH transparent inputs cannot be mixed with other transparent input types"
 
 
 class FakeNetwork:
@@ -16,52 +19,62 @@ class FakeNetwork:
         self.accepted = False
         self.bad_proposal = False
         self.changed_on_reject = False
+        self.relay_error = {"code": -26, "message": MIXED}
+        self.mixed_proposal, self.mixed_submit = "transaction-experimentalslhdsab128smixedinputs", "rejected"
+        self.mempool, self.template = [], []
+        # Raw transaction -> spent outpoints, and block -> raw transactions.
+        self.spends, self.blocks, self.spent = {}, {}, set()
+        self.spend_error = set()  # Outpoints whose accepted-block spend state is wrong.
         self.calls = []
         self.nodes = [FakeNode(self), FakeNode(self)]
         self.a, self.b = self.nodes
 
 
-class FakeNode:
+class FakeNode(common.Node):
+    """Actual Node.rpc/reject diagnostics over an in-memory JSON-RPC response."""
     def __init__(self, network):
         self.network = network
 
     def tip(self):
         return self.network.height, self.network.block_hash
 
-    def rpc(self, method, *arguments):
+    def response(self, method, *arguments):
         state = self.network
         state.calls.append((method, arguments))
+        if method == "sendrawtransaction":
+            if state.changed_on_reject:
+                state.height += 1
+            return {"id": 1, "result": None, "error": state.relay_error}
+        return {"id": 1, "result": self.result(method, *arguments), "error": None}
+
+    def result(self, method, *arguments):
+        state = self.network
         if method == "gettxout":
-            index = arguments[1]
-            return None if state.accepted and 2 <= index < 10 else {"index": index, "value": "0.03"}
+            return None if tuple(arguments[:2]) in state.spent else {"index": arguments[1], "value": "0.03"}
         if method == "getrawmempool":
-            return []
+            return list(state.mempool)
         if method == "getblocktemplate":
             if not arguments:
-                return {"transactions": []}
+                return {"previousblockhash": state.block_hash, "transactions": list(state.template)}
             if arguments[0]["data"] == "mixed-block":
-                return "transaction-experimentalslhdsab128smixedinputs"
+                return state.mixed_proposal
             if arguments[0]["data"] == "65":
                 return "wrong-parent" if state.bad_proposal else "block-toomanyexperimentalslhdsab128schecks-limit-64"
             return None
         if method == "submitblock":
             if arguments == ("mixed-block",):
-                return "rejected"
+                return state.mixed_submit
             if arguments == ("65",):
                 if state.changed_on_reject:
                     state.height += 1
                 return "rejected"
             state.accepted, state.height, state.block_hash = True, 112, "64" * 32
+            state.spent.update(point for raw in state.blocks[arguments[0]] for point in state.spends[raw])
+            state.spent ^= state.spend_error
             return None
         if method == "getblock":
             return "64"
         raise AssertionError(method)
-
-    def reject(self, method, reason, raw):
-        self.network.calls.append((method, (reason, raw)))
-        if self.network.changed_on_reject:
-            self.network.height += 1
-        return {"reason_contains": reason, "error_sha256": "22" * 32}
 
 
 class ControlFlowTests(unittest.TestCase):
@@ -86,45 +99,71 @@ class ControlFlowTests(unittest.TestCase):
             result.update(transaction_hex="88", txid="99" * 32, slh_checks=1)
         return result
 
-    def test_mixed_both_orders_bind_real_parent_context_and_precise_rejection(self):
-        network = FakeNetwork()
+    def mixed(self, network):
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(controls, "host_call", side_effect=self.mixed_host) as host, \
                 patch.object(controls, "signer_call", return_value={"public_key": next(iter(self.keys)), "signature": "77"}):
-            rows = controls.mixed_controls(self.args, Path(directory), network, self.funding, self.keys)
+            return controls.mixed_controls(self.args, Path(directory), network, self.funding, self.keys), host
+
+    def test_mixed_both_orders_bind_real_parent_context_and_precise_rejection(self):
+        network = FakeNetwork()
+        rows, host = self.mixed(network)
         self.assertEqual([row["classical_first"] for row in rows], [True, False])
         self.assertEqual(host.call_count, 6)
-        rejections = [entry for entry in network.calls if entry[0] == "sendrawtransaction"]
-        self.assertEqual(len(rejections), 4)
-        self.assertTrue(all(entry[1][0] == "cannot be mixed" for entry in rejections))
+        relays = [arguments for method, arguments in network.calls if method == "sendrawtransaction"]
+        self.assertEqual(relays, [("88",)] * 4)
+        error = hashlib.sha256(common.canonical(network.relay_error)).hexdigest()
+        self.assertEqual([observed for row in rows for observed in row["rejections"]],
+                         [{"reason_contains": "cannot be mixed", "error_sha256": error}] * 4)
+
+    def test_mixed_controls_refuse_unrelated_or_accepted_mixed_results(self):
+        for change, reason in (
+                ({"relay_error": {"code": -25, "message": "bad-txns-inputs-missingorspent"}},
+                 "unexpected_rejection_reason"),
+                ({"relay_error": None}, "unexpected_rejection_reason"),
+                ({"mempool": ["99" * 32]}, "mixed_transaction_in_mempool"),
+                ({"template": [{"hash": "99" * 32, "data": "88"}]}, "mixed_template_must_be_empty"),
+                ({"mixed_proposal": "bad-parent"}, "wrong_mixed_block_proposal_rejection"),
+                ({"mixed_proposal": None}, "wrong_mixed_block_proposal_rejection"),
+                ({"mixed_submit": None}, "mixed_block_not_rejected")):
+            with self.subTest(change=change):
+                network = FakeNetwork()
+                vars(network).update(change)
+                with self.assertRaisesRegex(AcceptanceError, reason):
+                    self.mixed(network)
 
     def test_mixed_rejection_must_preserve_state(self):
         network = FakeNetwork()
         network.changed_on_reject = True
-        with tempfile.TemporaryDirectory() as directory, \
-                patch.object(controls, "host_call", side_effect=self.mixed_host), \
-                patch.object(controls, "signer_call", return_value={"public_key": next(iter(self.keys)), "signature": "77"}):
-            with self.assertRaisesRegex(AcceptanceError, "rejected_control_changed_tip"):
-                controls.mixed_controls(self.args, Path(directory), network, self.funding, self.keys)
+        with self.assertRaisesRegex(AcceptanceError, "rejected_control_changed_tip"):
+            self.mixed(network)
 
     def block_host(self, _host, operation, **fields):
         if operation == "prepare":
             self.assertEqual(fields["recipe"]["inputs"][0]["outpoint"]["index"], 10)
             return {"inputs": [{"message_hex": "66" * 101}]}
         if operation == "assemble":
+            outpoint = fields["recipe"]["inputs"][0]["outpoint"]
+            self.network.spends["aa"] = [(outpoint["txid_display_hex"], outpoint["index"])]
             return {"transaction_hex": "aa", "expected": {"native_authorization": "accept", "signature_checks": 1}}
         self.assertEqual(operation, "control-block")
         recipe = fields["recipe"]
         count = recipe["nonce"]
-        self.assertEqual(len(recipe["transactions"]), 4 if count == 64 else 5)
+        self.templates.append(recipe["template"])
+        self.network.blocks[str(count)] = [row["transaction_hex"] for row in recipe["transactions"]]
         self.assertTrue(all(row["fee_zat"] == 1_000_000 for row in recipe["transactions"]))
         return {"block_hex": str(count), "block_hash": str(count) * 32, "height": 112}
 
     def blocks(self, network):
+        self.network, self.templates = network, []
+        def signed(_args, _keys, _producer, txid, slots, *_rest):
+            # Tag each artifact with the outpoints it spends.
+            raw = "".join(f"{slot:02x}" for slot in slots)
+            network.spends[raw] = [(txid, slot) for slot in slots]
+            return {"transaction_hex": raw, "expected": {"native_authorization": "accept", "signature_checks": 16}}
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(controls, "host_call", side_effect=self.block_host), \
-                patch.object(controls, "signed_artifact", return_value={"transaction_hex": "bb",
-                    "expected": {"native_authorization": "accept", "signature_checks": 16}}), \
+                patch.object(controls, "signed_artifact", side_effect=signed) as self.signed, \
                 patch.object(controls, "signer_call", return_value={"public_key": next(iter(self.keys)), "signature": "77"}):
             return controls.block_controls(self.args, Path(directory), network, self.funding, self.keys, {})
 
@@ -135,6 +174,23 @@ class ControlFlowTests(unittest.TestCase):
         submits = [params[0] for method, params in network.calls if method == "submitblock"]
         self.assertEqual(submits, ["65", "65", "64"])
         self.assertTrue(network.accepted)
+        txid = self.funding["txid"]
+        self.assertEqual([call.args[3:] for call in self.signed.call_args_list],
+                         [(txid, [2 + 2 * index, 3 + 2 * index], [3_000_000] * 2, [(15, 15), (1, 1)], 5, 131,
+                           f"block-control-{index}") for index in range(4)])
+        sixteen = ["0203", "0405", "0607", "0809"]
+        self.assertEqual(network.blocks, {"64": sixteen, "65": [*sixteen, "aa"]})
+        self.assertEqual(self.templates, [{"previousblockhash": "11" * 32, "transactions": []}] * 2)
+        self.assertEqual(network.spent, {(txid, index) for index in range(2, 10)})
+
+    def test_accepted_exact_block_must_spend_only_its_inputs(self):
+        for outpoint in (("55" * 32, 9), ("55" * 32, 10)):
+            with self.subTest(outpoint=outpoint):
+                network = FakeNetwork()
+                network.spend_error = {outpoint}
+                with self.assertRaisesRegex(AcceptanceError, "exact_block_wrong_spends"):
+                    self.blocks(network)
+                self.assertTrue(network.accepted)
 
     def test_other_block_failure_cannot_stand_in_for_budget_rejection(self):
         network = FakeNetwork()
@@ -149,7 +205,7 @@ class ControlFlowTests(unittest.TestCase):
         with self.assertRaisesRegex(AcceptanceError, "rejected_control_changed_tip"):
             self.blocks(network)
 
-    def test_identical_slh_spend_accepts_only_with_enabled_consensus(self):
+    def compatibility(self, mutation=None):
         class Comparator:
             def __init__(self, enabled):
                 self.enabled, self.height, self.hash = enabled, 111, "11" * 32
@@ -160,14 +216,26 @@ class ControlFlowTests(unittest.TestCase):
                 if method == "getblocktemplate":
                     if not args:
                         return {"transactions": []}
-                    return None if args[0]["data"] == "fund" or self.enabled else "transaction-script-invalid"
+                    if args[0]["data"] == "fund":
+                        return None
+                    if self.enabled:
+                        return "bad-txns" if mutation == "enabled-proposal-rejected" else None
+                    return {"default-proposal-accepted": None,
+                            "default-proposal-bad-parent": "bad-parent"}.get(mutation, "transaction-script-invalid")
                 if method == "submitblock":
                     if args[0] == "fund":
                         self.height, self.hash = 112, "12" * 32
                         return None
                     if not self.enabled:
+                        if mutation == "default-block-accepted":
+                            return None
+                        if mutation == "default-rejection-spends":
+                            self.spent = True
+                        if mutation == "default-rejection-advances":
+                            self.height, self.hash = 113, "13" * 32
                         return "rejected"
-                    self.height, self.hash, self.spent = 113, "13" * 32, True
+                    self.height, self.hash = 113, "13" * 32
+                    self.spent = mutation != "enabled-output-unspent"
                     return None
                 if method == "getblock":
                     return "fund" if args[0] == "12" * 32 else "slh"
@@ -194,12 +262,25 @@ class ControlFlowTests(unittest.TestCase):
                 patch.object(controls, "signer_call", return_value={"public_key": public, "secret_key": "public", "signature": "77"}), \
                 patch.object(controls, "producer_identity", return_value=({}, {})), \
                 patch.object(controls, "authenticate_coinbase", return_value={"parent_hex": "actual-parent", "output_index": 0}):
-            result = controls.slh_compatibility(self.args, Path(directory), {"script_hex": "fixture-script"}, nodes)
+            return nodes, controls.slh_compatibility(self.args, Path(directory), {"script_hex": "fixture-script"}, nodes)
+
+    def test_identical_slh_spend_accepts_only_with_enabled_consensus(self):
+        nodes, result = self.compatibility()
         self.assertEqual(result["common_parent"], {"height": 112, "hash": "12" * 32})
+        self.assertEqual(result["default_rejection"], "transaction-script-invalid")
         self.assertEqual(nodes[0].tip(), (112, "12" * 32))
         self.assertEqual(nodes[1].tip(), (113, "13" * 32))
         self.assertFalse(nodes[0].spent)
         self.assertTrue(nodes[1].spent)
+        for mutation, reason in (("enabled-proposal-rejected", "enabled_slh_proposal_rejected"),
+                                 ("default-proposal-accepted", "disabled_slh_wrong_rejection"),
+                                 ("default-proposal-bad-parent", "disabled_slh_wrong_rejection"),
+                                 ("default-block-accepted", "disabled_slh_block_accepted"),
+                                 ("default-rejection-spends", "disabled_slh_rejection_changed_state"),
+                                 ("default-rejection-advances", "disabled_slh_rejection_changed_state"),
+                                 ("enabled-output-unspent", "enabled_slh_block_state")):
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(AcceptanceError, reason):
+                self.compatibility(mutation)
 
 
 class FilesAndRefusalTests(unittest.TestCase):
@@ -248,19 +329,36 @@ class FilesAndRefusalTests(unittest.TestCase):
                 controls.state_files(root, name)
 
     def test_default_refusal_requires_specific_error_before_state_open(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            node = SimpleNamespace(directory=root, binary=Path("default-node"), config=root / "node.toml", close=Mock())
-            node.config.write_text("public fixture config")
-            def stopped(_argv, **kwargs):
-                kwargs["stdout"].write(b"requires complete SLH-DSA-B-128s runtime support")
-                return SimpleNamespace(returncode=1)
-            with patch.object(controls, "ManagedNode", return_value=node), \
-                    patch.object(controls, "port", return_value=1234), \
-                    patch.object(controls.subprocess, "run", side_effect=stopped):
-                result = controls.startup_refusal(SimpleNamespace(node_default=node.binary), root, "fixture")
-            self.assertTrue(result["before_state_initialization"])
-            node.close.assert_called_once()
+        # zakurad/src/commands/start.rs startup refusal for the default build.
+        refusal = (b"experimental_slh_dsa_b128s_activation_height requires complete SLH-DSA-B-128s "
+                   b"runtime support; this build does not provide it")
+        for mutation, reason in ((None, None), ("exit-zero", "default_build_accepted_slh_configuration"),
+                                 ("other-error", "wrong_startup_refusal"),
+                                 ("oversized-log", "refusal_log_size"),
+                                 ("opened-state", "refusal_opened_state")):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                node = SimpleNamespace(directory=root, binary=Path("default-node"), config=root / "node.toml", close=Mock())
+                node.config.write_text("public fixture config")
+                def stopped(argv, **kwargs):
+                    self.assertEqual(argv, ["default-node", "--config", str(node.config), "start"])
+                    kwargs["stdout"].write(b"Error: configuration rejected" if mutation == "other-error" else refusal)
+                    if mutation == "oversized-log":
+                        kwargs["stdout"].write(b"\0" * 1024 * 1024)
+                    if mutation == "opened-state":
+                        (root / "state").mkdir()
+                    return SimpleNamespace(returncode=0 if mutation == "exit-zero" else 1)
+                with patch.object(controls, "ManagedNode", return_value=node), \
+                        patch.object(controls, "port", return_value=1234), \
+                        patch.object(controls.subprocess, "run", side_effect=stopped):
+                    if reason is None:
+                        result = controls.startup_refusal(SimpleNamespace(node_default=node.binary), root, "fixture")
+                        self.assertTrue(result["before_state_initialization"])
+                        self.assertEqual(result["exit_code"], 1)
+                    else:
+                        with self.assertRaisesRegex(AcceptanceError, reason):
+                            controls.startup_refusal(SimpleNamespace(node_default=node.binary), root, "fixture")
+                node.close.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -54,7 +54,6 @@ use super::{check, Request, Verifier};
 
 #[cfg(test)]
 mod prop;
-#[cfg(feature = "experimental-slh-dsa-b128s")]
 mod slh_dsa_b128s;
 
 /// Returns the timeout duration for tests, extended when running under coverage

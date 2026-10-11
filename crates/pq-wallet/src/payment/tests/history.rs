@@ -39,8 +39,12 @@ fn history_pages_are_dated_repeatable_and_bound_to_the_exact_snapshot() {
     assert!(store.payment_history(16, None).unwrap().entries.is_empty());
     assert_eq!(disk(&path), before); // Read-only lookup does not migrate v2.
     expire(&mut source);
+    // Each archival happens at a new tip, so every row has its own date.
+    let mut tips = Vec::new();
     for event in 0..18 {
+        source.mine();
         store.archive_payment(wallet, &mut source, id).unwrap();
+        tips.push(source.context().unwrap().tip);
         if event != 17 {
             store.resume_payment(wallet, &mut source, id).unwrap();
         }
@@ -53,7 +57,7 @@ fn history_pages_are_dated_repeatable_and_bound_to_the_exact_snapshot() {
         assert_eq!(row.proposal_id, id);
         assert_eq!(row.lineage_id, id);
         assert_eq!(row.state, PaymentState::Expired);
-        assert_eq!(row.checkpoint, source.context().unwrap().tip);
+        assert_eq!(row.checkpoint, tips[sequence]);
         assert_eq!(row.amount, approved.amount);
     }
     let cursor = page.next_cursor.unwrap();
@@ -62,6 +66,13 @@ fn history_pages_are_dated_repeatable_and_bound_to_the_exact_snapshot() {
     assert_eq!(
         tail.entries.iter().map(|r| r.sequence).collect::<Vec<_>>(),
         [16, 17]
+    );
+    assert_eq!(
+        tail.entries
+            .iter()
+            .map(|r| r.checkpoint)
+            .collect::<Vec<_>>(),
+        tips[16..]
     );
     assert!(tail.next_cursor.is_none());
     let mut cursor_small = None;
@@ -224,12 +235,26 @@ fn saved_alias_exports_preserve_authorization_and_partial_failures_leave_store_u
         store.export_payment_history(id, &out),
         Err(Error::Storage(_))
     ));
+    // A destination symlink is never followed, even when its target is absent.
+    let target = temp.path().join("symlink-target");
     let link = temp.path().join("symlink");
-    symlink(&out, &link).unwrap();
+    symlink(&target, &link).unwrap();
     assert!(matches!(
         store.export_payment_history(id, &link),
         Err(Error::Storage(_))
     ));
+    assert!(!target.exists());
+    // A symlinked parent outside the store passes the alias check but is
+    // refused when opened without following it.
+    let outside = temp.path().join("outside");
+    fs::create_dir(&outside).unwrap();
+    let parent_link = temp.path().join("parent-link");
+    symlink(&outside, &parent_link).unwrap();
+    assert!(matches!(
+        store.export_payment_history(id, &parent_link.join("export")),
+        Err(Error::Storage(_))
+    ));
+    assert!(!outside.join("export").exists());
     for parent in [&path, &path.join("journal/objects")] {
         let inside = parent.join("export");
         assert!(matches!(

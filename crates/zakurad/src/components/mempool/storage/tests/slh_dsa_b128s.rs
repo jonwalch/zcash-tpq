@@ -27,6 +27,11 @@ fn network() -> Network {
 // Only storage is tested here. Real ECDSA/SLH verification is covered by the
 // transaction service and in-process mempool tests, not by this trusted-result fixture.
 fn funding(value: i64) -> VerifiedUnminedTx {
+    funding_with_script_sig(value, &[0x00, 0x00])
+}
+
+/// Funding with an exact scriptSig and verified metadata bound to that transaction.
+fn funding_with_script_sig(value: i64, script_sig: &[u8]) -> VerifiedUnminedTx {
     let mut slh = vec![0x53, 0x20];
     slh.extend([73; 32]);
     slh.push(0xc0);
@@ -39,7 +44,7 @@ fn funding(value: i64) -> VerifiedUnminedTx {
                 hash: Hash([92; 32]),
                 index: 0,
             },
-            unlock_script: zakura_chain::transparent::Script::new(&[0x00, 0x00]),
+            unlock_script: zakura_chain::transparent::Script::new(script_sig),
             sequence: u32::MAX,
         }],
         outputs: vec![zakura_chain::transparent::Output {
@@ -63,54 +68,64 @@ fn funding(value: i64) -> VerifiedUnminedTx {
 #[test]
 fn slh_funding_dust_context_and_unknown_height_are_checked() {
     let net = network();
-    for (value, accepted) in [(2_402, false), (2_403, true), (2_404, true)] {
-        let mut storage = Storage::with_network(&config::Config::default(), &net);
-        assert_eq!(
-            storage
-                .insert(funding(value), Vec::new(), Some(Height(109)))
-                .is_ok(),
-            accepted
-        );
+    let insert = |tx, tip| {
+        Storage::with_network(&config::Config::default(), &net)
+            .insert(tx, Vec::new(), tip)
+            .map(|_| ())
+    };
+    let non_standard = |error| Err(MempoolError::NonStandardTransaction(error));
+    for (value, expected) in [
+        (2_402, non_standard(NonStandardTransactionError::IsDust)),
+        (2_403, Ok(())),
+        (2_404, Ok(())),
+    ] {
+        assert_eq!(insert(funding(value), Some(Height(109))), expected);
     }
-    let mut storage = Storage::with_network(&config::Config::default(), &net);
     assert_eq!(
-        storage.insert(funding(10_000), Vec::new(), None),
-        Err(MempoolError::NonStandardTransaction(
-            NonStandardTransactionError::SlhDsaB128sVerificationContext
-        ))
+        insert(funding(10_000), None),
+        non_standard(NonStandardTransactionError::SlhDsaB128sVerificationContext)
     );
-    assert!(Storage::with_network(&config::Config::default(), &net)
-        .insert(funding(10_000), Vec::new(), Some(Height(108)))
-        .is_err());
-    for corruption in 0..3 {
+    // Active-rule metadata cannot be used at an inactive candidate height.
+    assert_eq!(
+        insert(funding(10_000), Some(Height(108))),
+        non_standard(NonStandardTransactionError::SlhDsaB128sVerificationContext)
+    );
+    for (corruption, expected) in [
+        (
+            0,
+            NonStandardTransactionError::SlhDsaB128sVerificationContext,
+        ),
+        (1, NonStandardTransactionError::NonStandardInputs),
+        (
+            2,
+            NonStandardTransactionError::SlhDsaB128sVerificationContext,
+        ),
+    ] {
         let mut tx = funding(10_000);
         match corruption {
             0 => tx.slh_dsa_b128s_verification = None,
             1 => tx.spent_outputs = Arc::new(Vec::new()),
             _ => Arc::make_mut(&mut tx.spent_outputs)[0].value = 1.try_into().unwrap(),
         }
-        assert!(Storage::with_network(&config::Config::default(), &net)
-            .insert(tx, Vec::new(), Some(Height(109)))
-            .is_err());
+        assert_eq!(
+            insert(tx, Some(Height(109))),
+            non_standard(expected),
+            "corruption {corruption}"
+        );
     }
     // Ordinary forward growth with the same rules preserves a verified entry.
-    assert!(Storage::with_network(&config::Config::default(), &net)
-        .insert(funding(10_000), Vec::new(), Some(Height(111)))
-        .is_ok());
-    assert!(Storage::new(&config::Config::default())
-        .insert(funding(10_000), Vec::new(), Some(Height(111)))
-        .is_err());
+    assert_eq!(insert(funding(10_000), Some(Height(111))), Ok(()));
+    assert_eq!(
+        Storage::new(&config::Config::default())
+            .insert(funding(10_000), Vec::new(), Some(Height(111)))
+            .map(|_| ()),
+        non_standard(NonStandardTransactionError::SlhDsaB128sVerificationContext)
+    );
     let mut inactive = funding(10_000);
     inactive.slh_dsa_b128s_verification = None;
     assert_eq!(
-        Storage::with_network(&config::Config::default(), &net).insert(
-            inactive,
-            vec![],
-            Some(Height(108))
-        ),
-        Err(MempoolError::NonStandardTransaction(
-            NonStandardTransactionError::ScriptPubKeyNonStandard
-        ))
+        insert(inactive, Some(Height(108))),
+        non_standard(NonStandardTransactionError::ScriptPubKeyNonStandard)
     );
 }
 
@@ -122,7 +137,15 @@ fn slh_funding_storage_requires_matching_success_metadata_and_finite_tip() {
         .unwrap();
     let mut stale = funding(10_000);
     stale.spent_outputs = Arc::new(stale.spent_outputs.as_ref().clone());
-    for tx in [wrong_count, stale] {
+    // A standard but different authorization invalidates the verified metadata.
+    let mut unauthorized = funding(10_000);
+    let mut tx = unauthorized.transaction.transaction().as_ref().clone();
+    let transparent::Input::PrevOut { unlock_script, .. } = &mut tx.inputs_mut()[0] else {
+        unreachable!()
+    };
+    *unlock_script = transparent::Script::new(&[0x01, 0x07, 0x00]);
+    unauthorized.transaction = tx.into();
+    for tx in [wrong_count, stale, unauthorized] {
         let mut storage = Storage::with_network(&config::Config::default(), &net);
         assert_eq!(
             storage.insert(tx, vec![], Some(Height(109))),
@@ -142,14 +165,38 @@ fn slh_funding_storage_requires_matching_success_metadata_and_finite_tip() {
             NonStandardTransactionError::SlhDsaB128sVerificationContext
         ))
     );
-    let mut unauthorized = funding(10_000);
-    let mut tx = unauthorized.transaction.transaction().as_ref().clone();
-    let transparent::Input::PrevOut { unlock_script, .. } = &mut tx.inputs_mut()[0] else {
-        unreachable!()
-    };
-    *unlock_script = transparent::Script::new(&[]);
-    unauthorized.transaction = tx.into();
+}
+
+#[test]
+fn slh_active_storage_keeps_input_script_and_sigop_policy() {
+    let net = network();
+    let mut too_large = vec![0x4d];
+    let size = u16::try_from(policy::MAX_STANDARD_SCRIPTSIG_SIZE).unwrap();
+    too_large.extend(size.to_le_bytes());
+    too_large.extend(vec![0; usize::from(size)]);
+    let mut too_many_sigops = funding(10_000);
+    too_many_sigops.legacy_sigop_count = policy::MAX_STANDARD_TX_SIGOPS + 1;
+    for (tx, expected) in [
+        (
+            funding_with_script_sig(10_000, &too_large),
+            NonStandardTransactionError::ScriptSigTooLarge,
+        ),
+        (
+            funding_with_script_sig(10_000, &[0x76]),
+            NonStandardTransactionError::ScriptSigNotPushOnly,
+        ),
+        (too_many_sigops, NonStandardTransactionError::TooManySigops),
+    ] {
+        let mut storage = Storage::with_network(&config::Config::default(), &net);
+        assert_eq!(
+            storage.insert(tx, vec![], Some(Height(109))),
+            Err(MempoolError::NonStandardTransaction(expected))
+        );
+        assert_eq!(storage.transaction_count(), 0);
+    }
+    let mut at_limit = funding(10_000);
+    at_limit.legacy_sigop_count = policy::MAX_STANDARD_TX_SIGOPS;
     assert!(Storage::with_network(&config::Config::default(), &net)
-        .insert(unauthorized, vec![], Some(Height(109)))
-        .is_err());
+        .insert(at_limit, vec![], Some(Height(109)))
+        .is_ok());
 }

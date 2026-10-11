@@ -84,7 +84,14 @@ fn negative_recipes_are_not_repaired_or_validated() {
         }
         .build();
         assert_eq!(tx.inputs()[0].outpoint(), tx.inputs()[1].outpoint());
-        assert_ne!(previous[0], previous[1]);
+        // Both claimed outputs stay paired with their inputs, in recipe order.
+        assert_eq!(
+            previous
+                .iter()
+                .map(|output| (u64::from(output.value), output.lock_script.as_raw_bytes()))
+                .collect::<Vec<_>>(),
+            [(1, [].as_slice()), (2, [0x4c].as_slice())]
+        );
         assert!(tx.outputs().is_empty());
         assert_eq!(tx.network_upgrade(), Some(NetworkUpgrade::Nu5));
         install(&mut tx, 0, Script::new(&[0xff]));
@@ -98,11 +105,6 @@ fn negative_recipes_are_not_repaired_or_validated() {
         inputs_mut(&mut tx).clear();
         assert!(tx.inputs().is_empty());
         assert_eq!(tx.outputs(), &[previous[1].clone()]);
-        assert_eq!(
-            previous.len(),
-            2,
-            "mutations do not repair deliberately mismatched context"
-        );
 
         let (empty, previous) = TransactionRecipe {
             version,

@@ -16,7 +16,9 @@ adaptation were made on 2026-10-09.
 
 `extract.py` reuses the existing bounded, hash-checked test-source fetcher.
 `check_controls.py` reuses the existing [independent reference](../reference/README.md)
-and bounded native adapter without changing either. The checker first accepts each signature under its original SHA2 or SHAKE profile.
+and bounded native adapter without changing either. The checker first checks the 105 official BLAKE3 hash vectors.
+Both verifiers must then accept one retained BLAKE3 known answer, so a broken hash or an adapter that always rejects cannot pass.
+Next, the checker accepts each signature under its original SHA2 or SHAKE profile.
 It then rejects a signature mutation under that profile.
 Finally, it rejects the original signature under BLAKE3 and compares the Rust verifier's error.
 The independent reference and checker remain test-only LGPL-3.0-or-later;

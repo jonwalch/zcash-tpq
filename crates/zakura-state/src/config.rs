@@ -558,7 +558,8 @@ mod tests {
                 fs::create_dir_all(&path).unwrap();
                 fs::write(path.join("marker"), b"SLH state").unwrap();
             }
-            let restart = network.clone();
+            // A restart rebuilds the network from the same configuration.
+            let restart = slh_dsa_b128s_network(height, transaction, block);
             for path in [
                 config.db_path("state", 1, &restart),
                 config.non_finalized_state_backup_dir(&restart).unwrap(),

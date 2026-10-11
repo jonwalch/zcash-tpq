@@ -153,7 +153,20 @@ fn manifest_accepts_all_shapes_but_never_alternate_suites_or_origins() {
 fn canonical_reader_preserves_exact_encoding_and_independent_caps() {
     let manifest = Manifest::empty(profile(), 0, Hex([1; 16]), Hex([2; 16]));
     let encoded = manifest.to_json().unwrap();
+    let text = String::from_utf8(encoded.clone()).unwrap();
+    let first = format!("\"allocator_id\":\"{}\",", "02".repeat(16));
+    assert!(text.starts_with(&format!("{{{first}\"birthday_height\":0,")));
     for changed in [
+        // Printable whitespace and key order pass the byte filter and serde, so
+        // only the exact re-serialization comparison rejects them.
+        text.replacen("\"network\":2", "\"network\": 2", 1)
+            .into_bytes(),
+        text.replacen(
+            &format!("{first}\"birthday_height\":0,"),
+            &format!("\"birthday_height\":0,{first}"),
+            1,
+        )
+        .into_bytes(),
         [encoded.as_slice(), b"\n"].concat(),
         String::from_utf8(encoded.clone())
             .unwrap()
@@ -168,7 +181,11 @@ fn canonical_reader_preserves_exact_encoding_and_independent_caps() {
             .replacen("\"network\":2", "\"network\":2,\"unknown\":0", 1)
             .into_bytes(),
     ] {
-        assert!(Manifest::from_json(&changed).is_err());
+        assert_ne!(changed, encoded);
+        assert!(matches!(
+            Manifest::from_json(&changed),
+            Err(Error::Encoding)
+        ));
     }
     assert!(matches!(
         canonical::encode(&manifest, encoded.len() - 1),
@@ -264,6 +281,37 @@ fn operational_signing_requires_matching_enrolled_origin_profile_and_context() {
     };
     assert!(matches!(
         wallet.sign_input(&signer, wrong_path),
+        Err(Error::Policy)
+    ));
+    // A schema-valid enrolled slot that does not hold this root's key is
+    // refused before signing, not after an unverifiable signature.
+    let foreign = SuitePolicy::new(
+        wallet.suite(),
+        1,
+        (0..15u8)
+            .map(|n| {
+                let mut c = [0; 32];
+                c[31] = n;
+                c
+            })
+            .collect(),
+    )
+    .unwrap();
+    let mut entry = wallet.manifest.entries[0].clone();
+    entry.policy_hex = hex::encode(foreign.encode());
+    entry.origins[14].index = 1;
+    wallet.manifest.entries.push(entry);
+    wallet.manifest.receive_end = 2;
+    wallet.manifest.validate().unwrap();
+    let (foreign_tx, foreign_previous) = transaction(&foreign);
+    let foreign_signer = InputSigner::new(&foreign_tx, foreign_previous, 0, &foreign).unwrap();
+    let foreign_path = KeyPath {
+        role: Role::Receive,
+        index: 1,
+    };
+    assert_eq!(wallet.signer_index(foreign_path, &foreign).unwrap(), 14);
+    assert!(matches!(
+        wallet.sign_input(&foreign_signer, foreign_path),
         Err(Error::Policy)
     ));
     let non_regtest = InputSigningContext::new(

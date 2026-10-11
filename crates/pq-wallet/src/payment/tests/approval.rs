@@ -51,7 +51,9 @@ fn proposal_id_preserves_complete_canonical_bytes() {
         "../../../../../tests/slh-dsa-b128s/wallet/formats/vectors.json"
     ))
     .unwrap();
-    for row in corpus["proposals"].as_array().unwrap() {
+    let rows = corpus["proposals"].as_array().unwrap();
+    assert_eq!(rows.len(), 2);
+    for row in rows {
         let original = row["proposal_json"].as_str().unwrap();
         // Load the independent fixture directly so an omitted Serialize field
         // reaches the exact assertion rather than failing a decoder control.

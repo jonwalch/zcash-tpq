@@ -382,6 +382,8 @@ fn cosigners_approve_their_own_index_and_cursor_differences() {
             .unwrap();
         assert_eq!(review.local_change.as_ref().unwrap().local_index, 2);
         let before = state(&stores[2], &paths[2]);
+        // Cross-proposal reuse only: the proposal binding alone rejects this
+        // token. approved_jump_survives_... isolates the wallet binding.
         assert!(matches!(
             stores[2].approve_payment_change(
                 &owners[2],

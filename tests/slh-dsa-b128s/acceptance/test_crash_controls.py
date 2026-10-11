@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import signal
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -36,6 +37,7 @@ class World(Ledger):
         self.no_replay = self.no_reorg = self.partial = self.wrong_auth = self.changed_raw = False
         self.wrong_source = self.wrong_config = self.wrong_saved = self.unrelated = False
         self.drop_backup_ancestor = False
+        self.versions = []  # (operation, transaction version) for every built transaction.
         self.blocks[identity("genesis")] = {"block_hash": identity("genesis"), "height": 0,
                                            "block_hex": b"genesis".hex(), "raws": []}
 
@@ -48,8 +50,9 @@ class World(Ledger):
         self.signatures += 1
         return {"public_key": self.public, "secret_key": "public mock key"}
 
-    def slh(self, _args, keys, _producer, txid, index, _expiry, _case):
+    def slh(self, args, keys, _producer, txid, index, _expiry, _case):
         assert keys == {self.public: "public mock key"} and index == 1
+        self.versions.append(("single-artifact", args.version))
         self.signatures += 1
         _, script = crash.policy([self.public], 1)
         return self.tx("slh-positive", [{"value_zat": 2_000_000, "script_hex": script}], [(txid, index)])
@@ -58,6 +61,8 @@ class World(Ledger):
         if operation == "classical-info":
             return {"ecdsa_checks": 2, "address": "public fixture", "script_hex": self.classical_script}
         recipe = fields["recipe"]
+        if "transaction_version" in recipe:
+            self.versions.append((operation, recipe["transaction_version"]))
         if operation == "classical-spend":
             parent = self.transactions[recipe["parent_hex"]]
             index = recipe["output_index"]
@@ -125,7 +130,8 @@ class Process:
         world = self.node.world
         world.kills.append((self.pid, value))
         self.node.kill_count += 1
-        self.status = 0 if world.no_kill or world.wrong_exit else -signal.SIGKILL
+        # A missed SIGKILL leaves the process running.
+        self.status = None if world.no_kill else 0 if world.wrong_exit else -signal.SIGKILL
         if self.node.kill_count % 3 == 2 and world.persist_mined:
             self.node.durable = dict(self.node.state.chain)
         if world.wrong_config:
@@ -135,6 +141,8 @@ class Process:
 
     def wait(self, timeout):
         assert timeout == 10
+        if self.status is None:
+            raise subprocess.TimeoutExpired("zakurad", timeout)
         return self.status
 
 
@@ -283,6 +291,9 @@ class CrashTests(unittest.TestCase):
                 with self.subTest(version=version, persisted=persisted):
                     world = World(persist_mined=persisted)
                     receipt, rows = self.flow(world, version=version)
+                    self.assertEqual([operation for operation, _ in world.versions],
+                                     ["classical-spend", "classical-spend", "single-artifact"])
+                    self.assertEqual({value for _, value in world.versions}, {version})
                     self.assertEqual([(r["kind"], r["stage"]) for r in rows], crash.CHECKPOINTS)
                     self.assertEqual(len(world.kills), 12)
                     self.assertEqual(world.signatures, 2)
@@ -293,13 +304,29 @@ class CrashTests(unittest.TestCase):
                     self.assertEqual(receipt["final_tip"]["height"], 117)
 
     def test_missing_kill_wrong_exit_stale_pid_and_noop_restart_fail(self):
-        for flag, reason in (("no_kill", "crash_wrong_exit"), ("wrong_exit", "crash_wrong_exit"),
+        for flag, reason in (("wrong_exit", "crash_wrong_exit"),
                              ("stale_pid", "crash_restart_not_fresh"), ("no_restart", "crash_restart_not_fresh")):
             with self.subTest(flag=flag):
                 world = World()
                 setattr(world, flag, True)
                 with self.assertRaisesRegex(AcceptanceError, reason):
                     self.flow(world)
+        world, journals = World(), []
+        world.no_kill = True
+        def capture(stack, _root):
+            original = crash.CrashJournal.flush
+            def call(journal):
+                original(journal)
+                journals.append(deepcopy(journal.rows))
+            stack.enter_context(patch.object(crash.CrashJournal, "flush", call))
+        with self.assertRaises(subprocess.TimeoutExpired):
+            self.flow(world, capture)
+        # The signal was sent and persisted; no exit, reopen or completion follows.
+        row = journals[-1][-1]
+        self.assertEqual(len(world.kills), 1)
+        self.assertEqual(row["processes"][0], {"pid": world.kills[0][0], "signal": "SIGKILL", "sent": True})
+        self.assertIs(row["complete"], False)
+        self.assertEqual(row["after"], [])
 
     def test_noop_replay_noop_reorg_and_partial_recovery_fail(self):
         for flag, reason in (("no_replay", "crash_replay_no_progress"),

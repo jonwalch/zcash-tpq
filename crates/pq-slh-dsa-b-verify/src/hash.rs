@@ -70,4 +70,19 @@ mod tests {
             .collect();
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn official_unkeyed_vector_streams_across_parts() {
+        // First 32 bytes of the official length-1025 test vector, whose input
+        // repeats 0..=250. Parts split it across an empty part and a chunk boundary.
+        let input: Vec<u8> = (0..1025).map(|i| u8::try_from(i % 251).unwrap()).collect();
+        let actual = xof::<32>(&[&input[..7], &[], &input[7..1024], &input[1024..]]);
+        assert_eq!(
+            actual
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>(),
+            "d00278ae47eb27b34faecf67b4fe263f82d5412916c1ffd97c8cb7fb814b8444"
+        );
+    }
 }

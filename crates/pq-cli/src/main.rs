@@ -252,5 +252,86 @@ mod tests {
                 "unknown command; use --help"
             );
         }
+        // Count-valid arguments are still checked before the profile is read;
+        // reading "not-a-file" first would report a missing file instead.
+        let fingerprint = "ab".repeat(32);
+        let enroll = |role: &str, threshold: &str, pairs: &[&str]| {
+            let mut args: Vec<String> = [
+                "enroll-prepare",
+                "not-a-file",
+                "not-a-file",
+                role,
+                threshold,
+                "not-a-file",
+            ]
+            .map(String::from)
+            .to_vec();
+            args.extend(pairs.iter().map(|arg| arg.to_string()));
+            args
+        };
+        let pair = ["not-a-file", fingerprint.as_str()];
+        let two = [pair, pair].concat();
+        let uppercase = fingerprint.to_uppercase();
+        let short = &fingerprint[..63];
+        for (args, message) in [
+            (
+                enroll("receive", "1", &[pair.as_slice(), &["not-a-file"]].concat()),
+                "provide one key file and authenticated fingerprint per participant",
+            ),
+            (enroll("sideways", "1", &pair), "expected receive or change"),
+            (
+                enroll("receive", "0", &two),
+                "expected 1 <= threshold <= participants <= 15",
+            ),
+            (
+                enroll("receive", "3", &two),
+                "expected 1 <= threshold <= participants <= 15",
+            ),
+            (
+                enroll("change", "1", &["not-a-file", uppercase.as_str()]),
+                "expected a lowercase 64-character approval or proposal ID",
+            ),
+            (
+                [
+                    "key-export",
+                    "not-a-file",
+                    "not-a-file",
+                    "sideways",
+                    "0",
+                    "not-a-file",
+                ]
+                .map(String::from)
+                .to_vec(),
+                "expected receive or change",
+            ),
+            (
+                ["restore", "not-a-file", "not-a-file", short, "not-a-file"]
+                    .map(String::from)
+                    .to_vec(),
+                "expected a lowercase 64-character approval or proposal ID",
+            ),
+        ] {
+            assert_eq!(run(&args).unwrap_err().to_string(), message, "{args:?}");
+        }
+        // Control: the same shapes with valid fields reach the missing profile.
+        for args in [
+            enroll("receive", "2", &two),
+            [
+                "restore",
+                "not-a-file",
+                "not-a-file",
+                fingerprint.as_str(),
+                "not-a-file",
+            ]
+            .map(String::from)
+            .to_vec(),
+        ] {
+            let error = run(&args).unwrap_err();
+            assert_eq!(
+                error.downcast_ref::<io::Error>().map(io::Error::kind),
+                Some(io::ErrorKind::NotFound),
+                "{args:?}"
+            );
+        }
     }
 }

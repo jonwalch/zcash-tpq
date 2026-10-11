@@ -74,6 +74,9 @@ committed source checkpoint when reproducing the original gate.
 
 The focused oracle tests use explicitly synthetic zero signatures to exercise
 schemas, all 120 policy shapes, bounds, correspondence and failure precedence.
+They also compare the oracle's digests, messages and authorization codecs with
+the committed corpus that the native host produced. They pin the 60 mutation
+requests and the oracle's exact stage and reason to the retained review receipt.
 Their callbacks do not establish primitive validity. Only the separate full
 checker runs real independent verification. Replay tests also reject stale build
 identities, modified retained inputs, mixed command modes, and changes during a run.

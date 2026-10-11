@@ -655,7 +655,7 @@ fn intent_json_amounts_and_fees_have_exact_encoding_and_value_boundaries() {
 }
 
 #[test]
-fn input_and_final_size_limits_are_not_hidden_by_fund_selection() {
+fn input_and_final_size_limits_are_structural_and_independent() {
     let owners = wallets(1, 2, 3);
     let (_, mut proposal, _) = fixture(&owners[0], 6, &[0; MAX_INPUTS], 2, 2_000_000);
     let mut tx = proposal.transaction().unwrap();
@@ -674,7 +674,7 @@ fn input_and_final_size_limits_are_not_hidden_by_fund_selection() {
     let (_, proposal, _) = fixture(&owners[0], 6, &[0; 8], 2, 2_000_000);
     let mut tx = proposal.transaction().unwrap();
     let entry = &proposal.inputs[0].entry;
-    assert!(review::estimate(&tx, &[entry; 8]).unwrap().0 <= MAX_TRANSACTION);
+    assert_eq!(review::estimate(&tx, &[entry; 8]).unwrap().0, 127_562);
     let input = tx.inputs()[0].clone();
     review::inputs_mut(&mut tx).unwrap().push(input);
     assert_eq!(review::estimate(&tx, &[entry; 9]).unwrap().0, 143_493);

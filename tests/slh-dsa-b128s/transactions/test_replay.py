@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 """Corpus replay provenance controls with mocked crypto/builds; no signing or compilation."""
-from contextlib import ExitStack
+from contextlib import ExitStack, redirect_stdout
 import copy
+import io
 import json
 from pathlib import Path
 import shutil
@@ -37,9 +38,10 @@ class ReplayTests(unittest.TestCase):
                        "identity": None, "rustc": "mock compiler", "cargo": "mock Cargo",
                        "environment": {}}
         self.write_build()
-        self.args = check.parser().parse_args([
+        self.argv = [
             str(self.directory / "reference"), "--comparison-host", str(self.host),
-            "--comparison-build", str(self.build_path), "--output", str(self.directory / "result.json")])
+            "--comparison-build", str(self.build_path), "--output", str(self.directory / "result.json")]
+        self.args = check.parser().parse_args(self.argv)
         self.original, self.hashes = check.replay_inputs(self.args.corpus)
         self.checked = {"cases": [{}] * 18, "mutations": [{}] * 60,
                         "corpus_files": self.hashes, "primitive_message_controls": {}}
@@ -54,6 +56,11 @@ class ReplayTests(unittest.TestCase):
 
     def write_build(self):
         self.build_path.write_text(json.dumps(self.record))
+
+    def run_main(self):
+        """The CLI path that writes a receipt only after replay_corpus returns."""
+        with patch.object(sys, "argv", ["check.py", *self.argv]), redirect_stdout(io.StringIO()):
+            check.main()
 
     def test_current_comparison_identity_does_not_replace_original_producer(self):
         self.assertTrue(check.validate_mode(self.args))
@@ -129,6 +136,10 @@ class ReplayTests(unittest.TestCase):
                     self.build_path.write_text(json.dumps(self.record) + "\n")
                 return self.checked
             return compare
+        # Control: the same CLI flow without drift writes a receipt.
+        self.run_main()
+        self.assertTrue(self.args.output.exists())
+        self.args.output.unlink()
         for kind in ("binary", "build", "reference", "checker"):
             self.host.write_bytes(b"mock comparison binary")
             self.write_build()
@@ -137,7 +148,7 @@ class ReplayTests(unittest.TestCase):
             with patch.object(check, "replay_checker_files", side_effect=[{"hash": "first"},
                     {"hash": "changed" if kind == "checker" else "first"}]), self.subTest(kind=kind), \
                     self.assertRaises((ValueError, common.AcceptanceError)):
-                check.replay_corpus(self.args)
+                self.run_main()
             self.assertFalse(self.args.output.exists())
 
     def test_missing_hash_controls_or_incomplete_comparison_cannot_pass(self):
@@ -151,10 +162,20 @@ class ReplayTests(unittest.TestCase):
             check.replay_corpus(self.args)
 
     def test_source_drift_during_comparison_is_rejected(self):
+        changed = {"source_commit": "c" * 40}
+        # source_state calls: before, first validate_build, second validate_build, final comparison.
         with patch.object(common, "source_state", side_effect=[self.source, self.source,
-                {"source_commit": "c" * 40}]), self.assertRaisesRegex(common.AcceptanceError, "stale_build_source"):
-            check.replay_corpus(self.args)
+                changed]), self.assertRaisesRegex(common.AcceptanceError, "stale_build_source"):
+            self.run_main()
         self.compare.assert_called_once()
+        self.assertFalse(self.args.output.exists())
+        with patch.object(common, "source_state", side_effect=[self.source] * 3 + [changed]), \
+                self.assertRaisesRegex(ValueError, "comparison source changed"):
+            self.run_main()
+        with patch.object(check, "inventory", side_effect=[[{"path": "mock source"}], [{"path": "changed"}]]), \
+                self.assertRaisesRegex(ValueError, "comparison source changed"):
+            self.run_main()
+        self.assertEqual(self.compare.call_count, 3)
         self.assertFalse(self.args.output.exists())
 
     def test_original_producer_mismatch_still_rejects_before_native_comparison(self):

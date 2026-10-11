@@ -28,6 +28,11 @@ AUTHORIZATION_RELAY = {
 }
 
 
+def relay_match(message, pattern):
+    # Native rejection names are snake_case: ": signature" is not ": signature_count".
+    return all(re.search(re.escape(part) + r"(?![_a-z])", message) for part in pattern)
+
+
 def reject_relay(node, raw, patterns):
     reply = node.response("sendrawtransaction", raw)
     error = reply.get("error")
@@ -37,10 +42,10 @@ def reject_relay(node, raw, patterns):
     # The pin maps verifier results to Verify=-25; immediate queue failures use
     # Misc=-1. A code alone or an unrelated RPC failure never proves rejection.
     message = error["message"].lower()
-    require(any(all(part in message for part in pattern) for pattern in patterns),
+    require(any(relay_match(message, pattern) for pattern in patterns),
             "transparent_wrong_relay_rejection")
     return {"code": error["code"], "error_sha256": hashlib.sha256(canonical(error)).hexdigest(),
-            "matched_reason": next(list(p) for p in patterns if all(s in message for s in p))}
+            "matched_reason": next(list(p) for p in patterns if relay_match(message, p))}
 
 
 def proposal_rejection(value, reason):
@@ -51,7 +56,9 @@ def proposal_rejection(value, reason):
         matched = re.search(r"(?:^|-)script(?:-|$)", value) is not None
     else:
         require(reason in ("encoding", "signature"), "transparent_unknown_rejection")
-        matched = "experimentalslhdsab128s" in value and "reason-" + reason in value
+        # Proposal names are kebab-cased: SignatureCount is "signature-count".
+        matched = ("experimentalslhdsab128s" in value and re.search(
+            r"(?:^|-)reason-" + reason + r"(?!-count)(?:-|$)", value) is not None)
     require(matched, "transparent_wrong_proposal_rejection")
 
 
@@ -286,6 +293,10 @@ def execute(args, artifacts, receipt):
             receipt["separate_transactions_same_block"] = together
             require(utxos(network.nodes, funding["txid"], [0, 1]) == [None, None],
                     "transparent_positive_parents_not_spent")
+            # Variant consistency cannot catch a uniformly wrong host identity; bind it to both nodes.
+            require(all(node.rpc("getrawtransaction", tx["txid"], 1).get("authdigest") == tx["auth_digest"]
+                        for node in network.nodes for tx in (classical, slh)),
+                    "transparent_positive_auth_digest")
 
             receipt["reorg_restart"] = rollback(network, together["block_hash"], together["height"] - 1)
             authenticated_outputs(network.nodes, funding["txid"], funding["outputs"])

@@ -55,8 +55,12 @@ class ParserTests(unittest.TestCase):
                              BEFORE, AFTER, [SUBJECT])
 
     def test_missing_duplicate_zero_and_overflow_sequence_fail(self):
-        for raw in (line(2), line(1) + line(3), line(1) + line(1), line(0), line(2**64)):
-            with self.subTest(raw=raw[:90]), self.assertRaises(common.AcceptanceError):
+        for raw, reason in ((line(2), "observation_sequence_incomplete"),
+                            (line(1) + line(3), "observation_sequence_incomplete"),
+                            (line(1) + line(1), "observation_sequence_incomplete"),
+                            (line(0), "observation_entry_schema"),
+                            (line(2**64), "observation_entry_identity")):
+            with self.subTest(raw=raw[:90]), self.assertRaisesRegex(common.AcceptanceError, reason):
                 self.parse(raw)
 
     def test_exact_backend_contract_coordinates_and_identity(self):

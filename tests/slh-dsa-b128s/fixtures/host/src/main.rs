@@ -1026,33 +1026,34 @@ mod tests {
             response["result"]["inputs"][0]["outpoint"]["wire_hex"],
             hex::encode(expected_wire)
         );
-        for (field, value) in [
-            ("lock_time", json!(500000000)),
-            ("network", json!("regtest")),
-            ("transaction_version", json!(4)),
-            ("secret_key", json!("forbidden")),
+        let rejected = |reason: &str| json!({"stage":"schema","reason":reason});
+        for (field, value, reason) in [
+            ("lock_time", json!(500000000), "lock_time"),
+            ("network", json!("regtest"), "network"),
+            ("transaction_version", json!(4), "transaction_shape"),
+            ("secret_key", json!("forbidden"), "fields"),
         ] {
             let mut invalid = valid.clone();
             invalid["recipe"][field] = value;
-            assert_eq!(run(invalid)["ok"], false, "{field}");
+            assert_eq!(run(invalid)["error"], rejected(reason), "{field}");
         }
         let mut invalid = valid.clone();
         invalid["recipe"]["outputs"][0]["script_hex"] = json!("51");
-        assert_eq!(run(invalid)["ok"], false);
+        assert_eq!(run(invalid)["error"], rejected("fields"));
         let mut invalid = valid.clone();
         let duplicate = invalid["recipe"]["inputs"][0].clone();
         invalid["recipe"]["inputs"]
             .as_array_mut()
             .unwrap()
             .push(duplicate);
-        assert_eq!(run(invalid)["ok"], false);
+        assert_eq!(run(invalid)["error"], rejected("duplicate_outpoint"));
         let mut invalid = valid.clone();
         invalid["recipe"]["inputs"][0]["public_keys_hex"] =
             json!(["11".repeat(32), "11".repeat(32)]);
-        assert_eq!(run(invalid)["ok"], false);
+        assert_eq!(run(invalid)["error"], rejected("policy"));
         let mut invalid = valid;
         invalid["recipe"]["inputs"][0]["signer_indices"] = json!([14]);
-        assert_eq!(run(invalid)["ok"], false);
+        assert_eq!(run(invalid)["error"], rejected("signer_indices"));
     }
     #[test]
     fn prepare_rejects_null_hashes_before_deriving_messages() {
@@ -1075,7 +1076,11 @@ mod tests {
         value["producer"] = json!({"zakura_revision":"9b175e9d3d46a6aa4cfb5552517c3d828852ecbc","algorithm_revision":"b392fe82d2d9770142477a576a758a233888bc0a","blake3_version":"1.8.5","host_source_inventory_sha256":"00".repeat(32),"host_lock_sha256":"00".repeat(32),"host_binary_sha256":"00".repeat(32),"signer_source_inventory_sha256":"00".repeat(32),"signer_lock_sha256":"00".repeat(32),"signer_binary_sha256":"00".repeat(32)});
         let response = run(value);
         assert_eq!(response["ok"], false);
-        assert_eq!(response["error"]["stage"], "generation");
+        // The signing context rejects the zero signature before the native recheck.
+        assert_eq!(
+            response["error"],
+            json!({"stage":"generation","reason":"authorization"})
+        );
         let prepared = run(request());
         let bytes = hex::decode(
             prepared["result"]["unsigned_transaction_hex"]

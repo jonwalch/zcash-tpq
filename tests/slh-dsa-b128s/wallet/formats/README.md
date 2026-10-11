@@ -30,11 +30,14 @@ the unchanged 64 MiB, three-pass, four-lane Argon2id backup key and complete
 ChaCha20Poly1305 ciphertext/tag. The tests are bounded Python/reference checks,
 with no live payment, recovery, terminal backup or performance driver.
 
-The 20 test methods cover:
+The 21 test methods cover:
 
 - All 120 descriptors, receiver/checksum/script answers and approved origin
   mappings; all 120 shapes in v5/v6 byte accounting; alternate suite, ordering,
   duplication, unknown fields, type, role, index and participant mutations.
+- BIP 350 Bech32m and BIP 173 Bech32 known answers for the checksum code.
+  Literal policy, proposal, inventory and profile domains recompute the
+  retained commitments and fingerprints from exact bytes.
 - Canonical ASCII JSON, depth 16, sorted fields, no escapes or normalization;
   pre-decode byte/depth rejection and exact retained-file identity.
 - Maximum 16,001-byte partials at indices 14/14, the independent 16,384-byte

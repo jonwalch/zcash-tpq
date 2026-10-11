@@ -279,8 +279,13 @@ fn corrupt_missing_oversize_and_unsafe_objects_poison_the_handle() {
             "oversize" => fs::write(&path, vec![b' '; PAGE_BYTES + 1]).unwrap(),
             "permissions" => fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).unwrap(),
             "symlink" => {
+                // The target holds the exact valid private object, so only the
+                // no-follow open can reject it.
+                let copy = temp.path().join("copy");
+                fs::copy(&path, &copy).unwrap();
+                fs::set_permissions(&copy, fs::Permissions::from_mode(0o600)).unwrap();
                 fs::remove_file(&path).unwrap();
-                symlink(temp.path().join("watch/state.json"), &path).unwrap();
+                symlink(&copy, &path).unwrap();
             }
             "directory" => {
                 fs::remove_file(&path).unwrap();
@@ -288,11 +293,13 @@ fn corrupt_missing_oversize_and_unsafe_objects_poison_the_handle() {
             }
             _ => unreachable!(),
         }
+        let result = journal.get(&snapshot, &Key::id(id(2)), &mut budget());
         assert!(
-            matches!(
-                journal.get(&snapshot, &Key::id(id(2)), &mut budget()),
-                Err(Error::Corrupt | Error::Storage(_))
-            ),
+            if case == "symlink" {
+                matches!(result, Err(Error::Storage(_)))
+            } else {
+                matches!(result, Err(Error::Corrupt | Error::Storage(_)))
+            },
             "{case}"
         );
         assert!(
@@ -346,6 +353,30 @@ fn malformed_pages_and_false_reference_metadata_reject() {
     ));
     assert!(matches!(
         Page::decode(&bytes.bytes, Hex([8; 16]), Kind::Aliases),
+        Err(Error::Corrupt)
+    ));
+    // Lineage and alias keys have the same length: a self-consistent page of
+    // another kind fails only the expected-kind check.
+    let lineages = Page::leaf(
+        ID,
+        Kind::Lineages,
+        vec![Entry {
+            key: Key::id(id(2)),
+            value: Value::Lineage {
+                capability: id(1),
+                location: Location::Active,
+                proposal_id: id(2),
+                revision: 0,
+            },
+        }],
+    );
+    let encoded = lineages.encode().unwrap();
+    assert_eq!(
+        Page::decode(&encoded.bytes, ID, Kind::Lineages).unwrap(),
+        lineages
+    );
+    assert!(matches!(
+        Page::decode(&encoded.bytes, ID, Kind::Aliases),
         Err(Error::Corrupt)
     ));
     for case in ["count", "min", "max", "level", "nonroot"] {
@@ -694,14 +725,26 @@ fn opening_missing_or_unsafe_journal_directories_never_recreates_them() {
             Journal::create(&mut watch, ID, Limits::default(), |_| Ok(())).unwrap();
             let path = temp.path().join("watch/journal/objects");
             if case == "symlink" {
+                // An empty private target would pass every other check.
+                let elsewhere = temp.path().join("elsewhere");
+                fs::create_dir(&elsewhere).unwrap();
+                fs::set_permissions(&elsewhere, fs::Permissions::from_mode(0o700)).unwrap();
                 fs::remove_dir(&path).unwrap();
-                symlink(temp.path(), &path).unwrap();
+                symlink(&elsewhere, &path).unwrap();
             } else {
                 fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
             }
         }
+        let result = Journal::open(&mut watch, ID, Limits::default());
         assert!(
-            Journal::open(&mut watch, ID, Limits::default()).is_err(),
+            match case {
+                "missing" => matches!(
+                    &result,
+                    Err(Error::Storage(error)) if error.kind() == std::io::ErrorKind::NotFound
+                ),
+                "symlink" => matches!(result, Err(Error::Storage(_))),
+                _ => matches!(result, Err(Error::Corrupt)),
+            },
             "{case}"
         );
         if case == "missing" {
@@ -1079,8 +1122,8 @@ fn capabilities_preserve_public_fixture_proposals_partials_and_signed_bytes() {
                 "journal" => changed.journal_id = Hex([8; 16]),
                 "change" => change_next = 0,
                 "partial" => {
-                    let mut p: Partial =
-                        serde_json::from_str(corpus["partial_json"].as_str().unwrap()).unwrap();
+                    // Keep the saved partial's valid input index; change only its proposal.
+                    let mut p = capability.partials[0].clone();
                     p.proposal_id = id(0);
                     changed.partials = vec![p];
                 }

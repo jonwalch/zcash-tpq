@@ -1,4 +1,5 @@
 """Offline trusted-history and causal-state models; no proofs, signing or nodes."""
+from contextlib import ExitStack
 from copy import deepcopy
 from decimal import Decimal
 import hashlib
@@ -10,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 from common import AcceptanceError
+import nodes
 import shielded_spend_controls as controls
 from test_shielded_controls import SCRIPT, identity, row
 
@@ -105,9 +107,9 @@ class Model:
         self.calls = []
         self.nonce = 0
         self.no_rollback = self.no_reconsider = self.no_reentry = self.no_relay = self.no_mining = False
-        self.wrong_reason = self.no_tree = self.bad_parent = self.expired = False
+        self.wrong_reason = self.wrong_proposal = self.no_tree = self.bad_parent = False
         self.skip_replacement = False
-        self.no_regossip = self.refuse_reentry = self.duplicate_reentry = False
+        self.refuse_reentry = self.duplicate_reentry = False
         self.wrong_reentry_block = self.wrong_reentry_transaction = self.unconfirmed_reentry = False
         self.wrong_reentry_membership = self.wrong_reentry_transaction_block = False
         self.anchor = dict(block_hash=identity("anchor-block"), block_hex="aabb", height=113)
@@ -174,10 +176,12 @@ class StateNode:
     def tip(self): return self.height, self.hash
 
     def failure(self, tx):
-        if self.model.wrong_reason: return "missing transparent input", "missinginput"
         if self.stage == 0: return f"unknown {self.model.pools[0]} anchor", "unknown"+self.model.pools[0]+"anchor"
         if tx is self.model.duplicate and self.stage == 2:
-            return f"{self.model.pools[0]} double-spend: duplicate nullifier", "duplicate"+self.model.pools[0]+"nullifier"
+            # Unrelated refusals replace only the targeted duplicate-nullifier reason.
+            if self.model.wrong_reason: return "missing transparent input", "missinginput"
+            return (f"{self.model.pools[0]} double-spend: duplicate nullifier",
+                    "missinginput" if self.model.wrong_proposal else "duplicate"+self.model.pools[0]+"nullifier")
         if "pool" in tx:
             return (("sapling proof or signature verification failed", "saplingverificationfailed") if tx["pool"] == "sapling" else
                     ("orchard or ironwood halo2 proof verification failed", "halo2verificationfailed"))
@@ -204,21 +208,20 @@ class StateNode:
             return {"error": {"code": -25, "message": fail[0]}}
         assert self.valid_after and self.negative == self.negative_submitted, "skipped final positive or negative submissions"
         if not self.model.no_relay and not (self.model.no_reentry and self.model.spent_hash):
-            targets = [self] if self.model.no_regossip and self.model.spent_hash else self.model.nodes
-            for node in targets: node.pool = [params[0]]
+            for node in self.model.nodes: node.pool = [params[0]]
         self.model.calls.append((self.index, "relay", params[0]))
         return {"result": tx["txid"]}
 
     def rpc(self, method, *params):
         model = self.model
         if method == "getblockchaininfo":
-            return dict(blocks=211 if model.expired else self.height, bestblockhash=self.hash,
+            return dict(blocks=self.height, bestblockhash=self.hash,
                 valuePools=[dict(id=p, chainValueZat=(50000 + (50000 if self.stage>0 and p!="orchard" else 0) - (50000 if self.stage==2 else 0)) if p in model.pools else 0) for p in controls.POOLS])
         if method == "z_gettreestate":
             return dict(height=self.height, hash=self.hash, **{p: {"commitments": {"finalRoot": identity(p+str(0 if model.no_tree else self.stage if p in model.pools else 0))}} for p in controls.POOLS})
         if method == "gettxout":
             if params[0] == model.parents[0]["txid"]:
-                if (self.stage == 2 and params[1] == 0) or model.bad_parent: return None
+                if self.stage == 2 and (params[1] == 0 or model.bad_parent): return None
                 return dict(value=Decimal("0.03"), scriptPubKey={"hex": SCRIPT}, confirmations=10, coinbase=False)
             if self.stage == 2 and params[0] == model.positive["txid"]:
                 return dict(value=Decimal(model.positive["outputs"][0]["value_zat"])/100_000_000,
@@ -266,7 +269,8 @@ class StateNode:
                     self.negative.clear(); self.negative_submitted.clear()
             return None
         if method == "reconsiderblock":
-            assert params[0] in self.invalidated, "restart lost the memory-only invalidated block"
+            # Inherited invalidated-block records are memory-only; the RPC rejects unknown records.
+            if params[0] not in self.invalidated: raise AcceptanceError("rpc_rejected_reconsiderblock")
             assert self.anchor_rejected, "unknown-anchor subject skipped"
             if not model.no_reconsider: self.height,self.hash,self.stage = 113,identity("anchor-block"),1
             return None
@@ -357,6 +361,110 @@ class PendingRelayNode:
 
     def tip(self):
         return (102, self.network.block_hash) if self.network.mined else (101, identity("funding-parent-block"))
+
+
+class ExecuteNetwork:
+    """Funding-order recorder around the actual execute driver; lifecycle is tested separately."""
+    def __init__(self, directory, pools):
+        self.pools, self.height, self.events, self.lifecycle = list(pools), 0, [], None
+        self.proofs, self.finalized, self.signed = {}, [], []
+        self.duplicate_note = self.change_history = self.change_signed = self.change_state = False
+        self.directory, self.script = directory, controls.policy(["33"*32], 1)[1]
+        self.nodes = [SimpleNamespace(tip=lambda: (self.height, identity(str(self.height))),
+                                      config=directory / f"node-{index}.toml") for index in range(2)]
+        for node in self.nodes: node.config.write_text("public config")
+
+    def __call__(self, binary, artifacts, miner, *, activation_heights):
+        self.events.append(("network", activation_heights))
+        return self
+
+    def __enter__(self): return self
+
+    def __exit__(self, *_): self.events.append("closed")
+
+    def metadata(self): return [{"mock": True}]
+
+    def mine_to(self, network, height):
+        assert network is self and self.height <= height
+        self.events.append(("mine_to", height)); self.height = height
+
+    def coinbase(self, nodes, height, script):
+        assert nodes is self.nodes and script == SCRIPT
+        self.events.append(("coinbase", height))
+        return dict(txid=identity(f"coinbase{height}"), parent_hex=f"{height:02x}", output_index=0, value_zat=625_000_000, script_hex=SCRIPT)
+
+    def orchard_deposit(self, args, network, artifacts, parent):
+        self.events.append(("orchard-funding", self.height, parent["txid"])); self.height += 1
+        return {"txid": identity("orchard-note")}
+
+    def output_deposit(self, args, network, artifacts, parent, pools, label):
+        self.events.append((label, self.height, parent["txid"], list(pools))); self.height += 1
+        return {"txid": identity(label)}, {"block_hash": identity(label + "-block"), "height": self.height}
+
+    def publish(self, network, tx, artifacts, label):
+        self.events.append((label, tx["txid"], tx["fee_zat"])); self.height += 1
+
+    def observe(self, nodes, parents, spent=()):
+        assert nodes is self.nodes and spent == ()
+        return {"tip": {"height": self.height}, "parents": [p["output_index"] for p in parents]}
+
+    def collect_history(self, nodes, parents, funding):
+        self.events.append(("history", [p["output_index"] for p in parents], [tx["txid"] for tx in funding]))
+        return fixture(self.pools)[0]["history"]
+
+    def host(self, _, op, **fields):
+        if op == "classical-info":
+            return dict(address="public", script_hex=SCRIPT)
+        if op == "classical-spend":
+            recipe = fields["recipe"]
+            self.events.append(("bank-recipe", recipe["parent_hex"], recipe["outputs"]))
+            raw = b"bank".hex()
+            return dict(transaction_hex=raw, transaction_sha256=hashlib.sha256(b"bank").hexdigest(), txid=identity("bank"),
+                        outputs=[dict(row, output_index=index) for index, row in enumerate(recipe["outputs"])])
+        assert op == "shielded-spend-finalize"
+        original = self.proofs[fields["transaction_hex"]]
+        self.finalized.append((original["label"], fields["record"]))
+        result = {k: original[k] for k in controls.outputs.WIRE}
+        result["transaction_hex"] += "ff"
+        result.update(transaction_sha256=hashlib.sha256(bytes.fromhex(result["transaction_hex"])).hexdigest(),
+                      auth_digest=identity(result["transaction_hex"]), slh_checks=1, ecdsa_checks=0, fee_zat=100000,
+                      withdrawal_zat=50000*len(self.pools), deposit_zat=0)
+        return result
+
+    def signer(self, _, op, **fields):
+        if op == "keygen":
+            return dict(public_key="33"*32, secret_key="PUBLIC")
+        assert op == "sign" and fields["secret_key"] == "PUBLIC"
+        self.signed.append(fields["message"])
+        return dict(public_key="33"*32, signature=fields["message"][:2] * 7856)
+
+    def proof(self, host, op, recipe):
+        assert op == "shielded-spend-prepare"
+        label = "primary" if recipe["output_index"] == 0 else "duplicate"
+        self.events.append(("proof", label, [(row["pool"], row["txid"]) for row in recipe["funding_txids"]]))
+        _, _, result = fixture(recipe["pools"], recipe["transaction_version"])
+        effects = dict(txid=identity(label), message_hex=("01" if label == "primary" else "02") * 101,
+                       outputs=[dict(output_index=0, script_hex=self.script, value_zat=3_000_000 + 50000*len(self.pools) - 100000)])
+        for item in [result["positive"], *result["variants"]]:
+            raw = (label + ":").encode().hex() + item["transaction_hex"]
+            item.update(effects, transaction_hex=raw, transaction_sha256=hashlib.sha256(bytes.fromhex(raw)).hexdigest(),
+                        auth_digest=identity(raw))
+            self.proofs[raw] = dict(item, label=label)
+        result.update(parent_txid=identity("bank"), parent_index=recipe["output_index"], parent_script_hex=self.script,
+                      parent_transaction_sha256=hashlib.sha256(b"bank").hexdigest(), parameters=recipe["sapling_parameters"])
+        for note, source in zip(result["notes"], recipe["funding_txids"]):
+            note["funding_txid"] = source["txid"]
+        if label == "duplicate":
+            if self.duplicate_note: result["notes"][0]["nullifier"] = identity("other-note")
+            if self.change_history: (self.directory / "artifacts" / "history.json").write_text("{}")
+            if self.change_signed == "preparation": (self.directory / "artifacts" / "primary-signed.json").write_text("{}")
+            if self.change_state: self.height += 1
+        return result
+
+    def record_lifecycle(self, control, *args):
+        self.lifecycle = (control, *args)
+        if self.change_signed == "lifecycle":
+            (self.directory / "artifacts" / "primary-signed.json").write_text("{}")
 
 
 class SpendTests(unittest.TestCase):
@@ -518,16 +626,12 @@ class SpendTests(unittest.TestCase):
             self.assertEqual(receipt["saved_reentry"]["initial_peer_states"], ["absent", "absent"])
             self.assertEqual(receipt["saved_reentry"]["positive_proposals"], 2)
             self.assertEqual(receipt["saved_reentry"]["transaction_sha256"], model.positive["transaction_sha256"])
+            # Reentry submits the saved block; it never needs a fresh transaction relay.
+            self.assertEqual(receipt["saved_reentry"]["submitblock_results"], [None, None])
+            self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[1] == "relay"]), 1)
             for index in (0,1):
                 self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[:2]==(index,"reject-relay")]),2+6*len(pools))
                 self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[:2]==(index,"accept-block")]),1)
-
-    def test_saved_block_reentry_does_not_require_fresh_transaction_propagation(self):
-        model = Model()
-        model.no_regossip = True
-        receipt = self.run_lifecycle(model)
-        self.assertEqual(receipt["saved_reentry"]["submitblock_results"], [None, None])
-        self.assertEqual(len([c for c in model.calls if isinstance(c,tuple) and c[1] == "relay"]), 1)
 
     def test_saved_block_reentry_requires_both_nodes_exact_confirmed_best_chain(self):
         for field, reason in (("refuse_reentry", "spend_reentry_block_rejected"),
@@ -552,14 +656,34 @@ class SpendTests(unittest.TestCase):
             self.run_lifecycle(model)
 
     def test_noop_wrong_failure_and_parent_confounders_cannot_pass(self):
-        for field in ("no_rollback","no_reconsider","no_reentry","no_relay","no_mining","wrong_reason",
-                      "no_tree","bad_parent","expired","skip_replacement"):
+        for field,reason in (("no_rollback","spend_rollback_tip"),("no_reconsider","spend_anchor_reconsider_tip"),
+                             ("no_reentry","spend_reentry_tip"),("no_relay","spend_positive_mempool"),
+                             ("no_mining","spend_mined_membership"),("no_tree","spend_anchor_not_new"),
+                             ("skip_replacement","spend_replacement_branch")):
             model=Model();setattr(model,field,True)
-            with self.subTest(field=field),self.assertRaises((AcceptanceError,AssertionError)):
+            with self.subTest(field=field),self.assertRaisesRegex(AcceptanceError,reason):
                 self.run_lifecycle(model)
-        for function in ("authorization_round","preflight","reject","reenter_saved_block"):
+        # Missing parents, expiry and unrelated errors cannot substitute for the duplicate-nullifier refusal.
+        duplicate_relays=lambda model:[c for c in model.calls if isinstance(c,tuple) and c[2]==model.duplicate["transaction_hex"]]
+        for field,reason,relays in (("bad_parent","spend_parent_unavailable",0),("expired","spend_expired",0),
+                                    ("wrong_reason","transparent_wrong_relay_rejection",1),
+                                    ("wrong_proposal","spend_wrong_proposal_rejection",2)):
             model=Model()
-            with self.subTest(function=function),self.assertRaises((AcceptanceError,AssertionError)):
+            with self.subTest(field=field),self.assertRaisesRegex(AcceptanceError,reason):
+                if field=="expired":
+                    # The duplicate is first submitted at tip 114, after the published spend.
+                    with patch.object(controls,"EXPIRY",114):self.run_lifecycle(model)
+                else:
+                    setattr(model,field,True);self.run_lifecycle(model)
+            self.assertEqual(len(duplicate_relays(model)),relays)
+            self.assertEqual(model.a.stage,2)
+        # Self-checks of the fake oracle: the flow test fails if lifecycle skips these steps.
+        for function,error,message in (("authorization_round",AssertionError,"skipped final positive or negative submissions"),
+                                       ("preflight",AssertionError,"missing positive preflight"),
+                                       ("reject",AssertionError,"unknown-anchor subject skipped"),
+                                       ("reenter_saved_block",AcceptanceError,"spend_reentry_mining")):
+            model=Model()
+            with self.subTest(function=function),self.assertRaisesRegex(error,message):
                 self.run_lifecycle(model,patch.object(controls,function,return_value=[]))
 
     def test_slh_signs_final_message_once_per_effects_and_reuses_for_mutants(self):
@@ -583,14 +707,15 @@ class SpendTests(unittest.TestCase):
         self.assertTrue(all(record==records[0] for record in records))
 
     def test_restart_loses_inherited_invalidated_anchor_record(self):
+        # Lifecycle must not reopen between anchor invalidation and reconsideration.
+        original = controls.rollback
+        def restarted(network, block, expected, *, restart=True):
+            return original(network, block, expected, restart=True)
         model = Model()
-        for node in model.nodes:
-            node.rpc("invalidateblock", model.anchor["block_hash"])
-            node.anchor_rejected = True
-        model.restart()
-        for node in model.nodes:
-            with self.assertRaisesRegex(AssertionError, "memory-only"):
-                node.rpc("reconsiderblock", model.anchor["block_hash"])
+        with self.assertRaisesRegex(AcceptanceError, "rpc_rejected_reconsiderblock"):
+            self.run_lifecycle(model, patch.object(controls, "rollback", side_effect=restarted))
+        self.assertEqual(model.calls.count("restart"), 1)
+        self.assertTrue(all(node.anchor_rejected for node in model.nodes))
 
     def test_backup_restart_gate_requires_removed_orphan_absence(self):
         model = Model()
@@ -620,6 +745,76 @@ class SpendTests(unittest.TestCase):
             changed_tip = dict(tip, height=height)
             with self.assertRaises(AcceptanceError):
                 controls.root_fields(dict(tree, height=height), changed_tip, inactive_ironwood=True)
+
+    def run_execute(self, network):
+        args = SimpleNamespace(host="host", signer="signer", node=Path("node"), classical="single",
+                               authorization="slh", version=6, pools=network.pools, parameters=None)
+        artifacts = network.directory / "artifacts"
+        artifacts.mkdir()
+        receipt = {}
+        replacements = {"Network": network, "mine_to": network.mine_to, "coinbase": network.coinbase,
+            "orchard_deposit": network.orchard_deposit, "output_deposit": network.output_deposit,
+            "publish": network.publish, "observe": network.observe, "collect_history": network.collect_history,
+            "host_call": network.host, "signer_call": network.signer, "proof_call": network.proof,
+            "lifecycle": network.record_lifecycle}
+        with ExitStack() as stack:
+            for name, replacement in replacements.items():
+                stack.enter_context(patch.object(controls, name, side_effect=replacement))
+            controls.execute(args, artifacts, receipt)
+        return receipt
+
+    def test_execute_funds_in_order_and_signs_each_effect_once(self):
+        for pools in (("orchard",), ("sapling", "ironwood"), ("sapling", "orchard", "ironwood")):
+            with self.subTest(pools=pools), tempfile.TemporaryDirectory() as temp:
+                network = ExecuteNetwork(Path(temp), pools)
+                receipt = self.run_execute(network)
+                new_pools = [p for p in pools if p != "orchard"]
+                script = network.script
+                bank_outputs = [{"value_zat": 3_000_000, "script_hex": script}] * 2
+                funding = (["orchard-note"] if "orchard" in pools else []) + (["note-funding"] if new_pools else [])
+                notes = [(p, identity("orchard-note" if p == "orchard" else "note-funding")) for p in pools]
+                expected = [("network", nodes.SPEND_ACTIVATION_HEIGHTS), ("mine_to", 101)]
+                if "orchard" in pools:
+                    expected += [("coinbase", 1), ("orchard-funding", 101, identity("coinbase1"))]
+                expected += [("mine_to", 110)]
+                if new_pools:
+                    expected += [("coinbase", 3), ("note-funding", 110, identity("coinbase3"), new_pools)]
+                expected += [("coinbase", 2), ("bank-recipe", "02", bank_outputs), ("transparent-funding", identity("bank"), 20000),
+                             ("coinbase", 4), ("anchor-funding", 111 + bool(new_pools), identity("coinbase4"), list(pools)),
+                             ("history", [0, 1], [identity(name) for name in funding]),
+                             ("proof", "primary", notes), ("proof", "duplicate", notes), "closed"]
+                self.assertEqual(network.events, expected)
+                # Distinct effects: one signature per message, reused for that effect's mutants only.
+                self.assertEqual(network.signed, ["01"*101, "02"*101])
+                records = {label: {r["signature_hex"] for l, r in network.finalized if l == label} for label in ("primary", "duplicate")}
+                self.assertEqual([len(records["primary"]), len(records["duplicate"])], [1, 1])
+                self.assertNotEqual(records["primary"], records["duplicate"])
+                self.assertEqual(len(network.finalized), 2 * (1 + 3 * len(pools)))
+                _, positive, duplicate, variants, parents, baseline, anchor_block, anchored, actual = network.lifecycle
+                self.assertIs(actual, receipt)
+                self.assertEqual((positive["txid"], duplicate["txid"]), (identity("primary"), identity("duplicate")))
+                self.assertEqual({tx["txid"] for tx in variants}, {identity("primary")})
+                self.assertEqual(len(variants), 3 * len(pools))
+                self.assertEqual([(p["txid"], p["output_index"], p["script_hex"]) for p in parents],
+                                 [(identity("bank"), 0, script), (identity("bank"), 1, script)])
+                self.assertEqual(anchor_block["block_hash"], identity("anchor-funding-block"))
+                self.assertEqual(anchored["tip"]["height"], baseline["tip"]["height"] + 1)
+                self.assertEqual([row["pool"] for row in receipt["notes"]], list(pools))
+                self.assertEqual(set(receipt["saved_authorization_sha256"]), {"primary", "duplicate"})
+
+    def test_execute_refuses_changed_notes_history_signed_bytes_or_state(self):
+        for field, value, reason in (("duplicate_note", True, "spend_duplicate_note_identity"),
+                                     ("change_history", True, "spend_saved_history_changed"),
+                                     ("change_signed", "preparation", "spend_saved_authorization_changed"),
+                                     ("change_state", True, "spend_preparation_changed_state"),
+                                     ("change_signed", "lifecycle", "spend_saved_authorization_changed")):
+            with self.subTest(field=field, value=value), tempfile.TemporaryDirectory() as temp:
+                network = ExecuteNetwork(Path(temp), ("sapling", "orchard"))
+                setattr(network, field, value)
+                with self.assertRaisesRegex(AcceptanceError, reason):
+                    self.run_execute(network)
+                # Only the final saved-authorization recheck runs after lifecycle.
+                self.assertEqual(network.lifecycle is not None, value == "lifecycle")
 
     def test_orchard_funding_uses_legal_height_and_actual_parent(self):
         _, parent, _ = fixture(("orchard",))

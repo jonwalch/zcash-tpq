@@ -35,9 +35,9 @@ NU7 activates at 105. SLH activates at 110.
 | Missing classical quorum | Keep the dummy and 2-of-3 redeem script, but remove one ECDSA signature. Relay and blocks reject without state changes. |
 | SLH signature in a classical input | Replace one of two ECDSA signatures with a genuine SLH signature. Relay rejects scriptSig size. Blocks reject the classical script. |
 | Classical signature in an SLH input | Insert a genuine DER ECDSA signature with its SIGHASH byte. The TXID stays fixed. Canonical encoding and relay checks reject it. |
-| Changed SLH authorization | Flip one signature byte through the native codec. Effects and encoding stay fixed. Direct validation reports signature failure. |
+| Changed SLH authorization | Flip one signature byte through the native codec. Effects and encoding stay fixed. Direct validation reports signature failure, not a signature-count or signer-index failure. |
 | Mixed input families | Test a genuine SLH input with classical 2-of-3, exact `0x51`, or exact `0x52`, in both orders. Active relay and blocks report mixed inputs. |
-| Separate classical and SLH transactions | Propose and accept both valid transactions in one block. Check order, exact bytes, spent parents, and resulting UTXOs. |
+| Separate classical and SLH transactions | Propose and accept both valid transactions in one block. Check order, exact bytes, spent parents, resulting UTXOs, and the authorization digests that both nodes report. |
 | Policy versus consensus | Test SLH funding before activation and a 2,402-zatoshi SLH output after activation. Relay rejects the policy violation. Direct blocks accept them. |
 | Reorg and reactivation | Repeat authorization and mixed-input checks after invalidation and restart. Preserve funding below activation. Remine the exact valid bytes. |
 

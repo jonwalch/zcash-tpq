@@ -1,5 +1,6 @@
 //! Bounded wallet sequences, not a consensus simulator or a randomized CI load.
-//! Public test entropy makes operations, proposals and hedged signatures repeatable.
+//! Public test entropy makes wallets, proposals and operation order repeatable.
+//! Signature bytes still use OS entropy, so a seed does not repeat them.
 use super::*;
 use serde_json::Value;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -199,7 +200,8 @@ impl Trace {
             .cloned()
             .collect()
     }
-    fn reject(&mut self, payment: usize, partials: &[Partial], crypto: bool) {
+    // None expects the wallet's ProposalMismatch; Some names the exact rejection.
+    fn reject(&mut self, payment: usize, partials: &[Partial], expected: Option<Rejection>) {
         let p = &self.approved[payment];
         let before = serde_json::to_value(&self.stores[0].state.payments).unwrap();
         let error = self.stores[0]
@@ -211,10 +213,12 @@ impl Trace {
                 partials,
             )
             .unwrap_err();
-        if crypto {
-            assert!(matches!(error, Error::Authorization(_)), "{error:?}");
-        } else {
-            assert!(matches!(error, Error::ProposalMismatch), "{error:?}");
+        match expected {
+            Some(rejection) => assert!(
+                matches!(error, Error::Authorization(r) if r == rejection),
+                "{error:?}"
+            ),
+            None => assert!(matches!(error, Error::ProposalMismatch), "{error:?}"),
         }
         assert_eq!(
             serde_json::to_value(&self.stores[0].state.payments).unwrap(),
@@ -322,15 +326,15 @@ impl Trace {
 #[test]
 fn seeded_competing_proposals_keep_approvals_and_authorization_separate() {
     // Fixed before CI: eight samples, twelve operations, two coins/proposals.
-    // Seeds choose early signing order and one isolated routing/crypto attack.
+    // Samples run each routing/crypto attack with one and three participants,
+    // and each attack once per version. Seeds choose early signing order.
     for sample in 0..8 {
         let seed = 0x5041_5953_4551_0001 + sample;
-        let version = 5 + (sample % 2) as u8;
-        let participants = if sample % 4 < 2 { 1 } else { 3 };
+        let version = 5 + ((sample + sample / 4) % 2) as u8;
+        let participants = if sample < 4 { 1 } else { 3 };
+        let attack = sample % 4;
         let mut t = Trace::new(seed, version, participants);
-        let mut choices = TraceRng(seed);
-        let first = (choices.next_u64() % 2) as usize;
-        let attack = choices.next_u64() % 4;
+        let first = (TraceRng(seed).next_u64() % 2) as usize;
         t.step("prepare A", |t| t.prepare(&[0], 500_000));
         t.step("prepare B", |t| t.prepare(&[1], 500_000));
         t.step(format!("randomness fails for {first}"), |t| {
@@ -360,13 +364,22 @@ fn seeded_competing_proposals_keep_approvals_and_authorization_separate() {
                     }
                 }
                 2 => partials[0].input_index = 1,
-                3 => partials[0].signer_index = (partials[0].signer_index + 1) % participants as u8,
+                // A valid key at another slot: the absent third slot for 2-of-3,
+                // so the wallet duplicate-slot check does not fire first.
+                3 if participants == 1 => partials[0].signer_index = 1,
+                3 => {
+                    partials[0].signer_index =
+                        3 - partials[0].signer_index - partials[1].signer_index;
+                }
                 _ => unreachable!(),
             }
-            if attack == 3 && participants == 1 {
-                partials[0].signer_index = 1;
-            }
-            t.reject(0, &partials, attack == 1 || attack == 3);
+            let expected = match attack {
+                1 => Some(Rejection::Signature),
+                3 if participants == 1 => Some(Rejection::SignerIndex),
+                3 => Some(Rejection::KeyCommitment),
+                _ => None,
+            };
+            t.reject(0, &partials, expected);
         });
         t.step("assemble B from reversed delivery", |t| t.assemble(1));
         t.step("assemble A from reversed delivery", |t| t.assemble(0));
@@ -385,12 +398,16 @@ fn two_input_multisig_rejects_reassigned_and_duplicate_signers_after_reopen() {
     t.step("first cosigner", |t| t.sign(0, 0));
     t.step("reopen", Trace::reopen);
     t.step("one signer cannot satisfy quorum", |t| {
-        t.reject(0, &t.partials(0), false)
+        t.reject(0, &t.partials(0), None)
     });
     t.step("second cosigner", |t| t.sign(0, 1));
     t.step("duplicate first signer cannot satisfy quorum", |t| {
         let first = &t.approved[0].exported[0];
-        t.reject(0, &[first.clone(), first.clone()].concat(), true);
+        t.reject(
+            0,
+            &[first.clone(), first.clone()].concat(),
+            Some(Rejection::SignerIndex),
+        );
     });
     t.step("swap valid input indexes of one cosigner", |t| {
         let mut partials = t.partials(0);
@@ -399,7 +416,7 @@ fn two_input_multisig_rejects_reassigned_and_duplicate_signers_after_reopen() {
         }
         // Each input still has two distinct signer positions and well-formed
         // signatures. Only the signed input binding has changed.
-        t.reject(0, &partials, true);
+        t.reject(0, &partials, Some(Rejection::Signature));
     });
     t.step("complete honest quorum", |t| t.assemble(0));
     t.step("submit", |t| t.submit(0));

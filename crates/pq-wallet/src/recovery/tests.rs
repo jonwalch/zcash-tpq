@@ -74,14 +74,16 @@ fn encrypted_inventory_restore_retires_ranges_and_stays_monitor_only() {
             .mode(),
         WatchMode::Monitor
     );
-    assert!(restore_inventory(
-        &backup,
-        PASSWORD,
-        &profile(),
-        Hex([9; 32]),
-        &directory.path().join("wrong")
-    )
-    .is_err());
+    assert!(matches!(
+        restore_inventory(
+            &backup,
+            PASSWORD,
+            &profile(),
+            Hex([9; 32]),
+            &directory.path().join("wrong")
+        ),
+        Err(Error::Pairing)
+    ));
     assert!(!directory.path().join("wrong").exists());
 }
 
@@ -221,16 +223,34 @@ fn snapshot_rejects_changed_backup_state_unsafe_files_and_wrong_profile() {
     let mut value: serde_json::Value = serde_json::from_slice(&saved).unwrap();
     value["mode"] = "monitor".into();
     fs::write(&state, serde_json::to_vec(&value).unwrap()).unwrap();
-    assert!(restore_operational_snapshot(
-        &snapshot,
-        PASSWORD,
-        &profile(),
-        trust,
-        &directory.path().join("changed")
-    )
-    .is_err());
+    assert!(matches!(
+        restore_operational_snapshot(
+            &snapshot,
+            PASSWORD,
+            &profile(),
+            trust,
+            &directory.path().join("changed")
+        ),
+        Err(Error::RecoveryIncomplete)
+    ));
     fs::write(&state, saved).unwrap();
     let saved = fs::read(snapshot.join("backup.tpq")).unwrap();
+    // A valid re-encryption of the same wallet authenticates and decrypts, so
+    // only the receipt's backup hash binding can reject it.
+    let rebound = wallet.encrypt(PASSWORD).unwrap();
+    assert_ne!(rebound, saved);
+    fs::write(snapshot.join("backup.tpq"), rebound).unwrap();
+    assert!(matches!(
+        restore_operational_snapshot(
+            &snapshot,
+            PASSWORD,
+            &profile(),
+            trust,
+            &directory.path().join("rebound")
+        ),
+        Err(Error::RecoveryIncomplete)
+    ));
+    assert!(!directory.path().join("rebound").exists());
     let mut damaged = saved.clone();
     *damaged.last_mut().unwrap() ^= 1;
     fs::write(snapshot.join("backup.tpq"), damaged).unwrap();
@@ -355,12 +375,9 @@ fn every_local_root_is_checked_and_retirement_is_monotonic() {
             Err(Error::Policy)
         ));
     }
-    let original = wallet.manifest().clone();
+    // backup_tests::restored_allocator_entropy_and_revision_failures_preserve_the_inventory
+    // checks the retirement result; this keeps only the rollback control.
     wallet.retire_for_restore().unwrap();
-    original.check_update(wallet.manifest()).unwrap();
-    assert_eq!(wallet.manifest().entries, original.entries);
-    assert_eq!(wallet.manifest().retired_receive_end, original.receive_end);
-    assert_eq!(wallet.manifest().retired_change_end, original.change_end);
     let mut rollback = wallet.manifest().clone();
     rollback.revision += 1;
     rollback.retired_receive_end = 0;

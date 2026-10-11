@@ -496,7 +496,12 @@ mod tests {
         );
         request.blocks[109] = original;
         request.blocks[0] = request.blocks[1].clone();
-        assert!(parse(&request).is_err());
+        assert_eq!(parse(&request).err().unwrap().reason, "block_height");
+        // A canonical height-0 block with another header is not Regtest genesis.
+        let mut genesis = valid.blocks[0].clone();
+        Arc::make_mut(&mut genesis.header).time += std::time::Duration::from_secs(1);
+        request.blocks[0] = hex::encode(genesis.zcash_serialize_to_vec().unwrap());
+        assert_eq!(parse(&request).err().unwrap().reason, "regtest_genesis");
     }
     #[test]
     fn history_parent_resolution_uses_actual_ordered_outputs_and_unspent_state() {

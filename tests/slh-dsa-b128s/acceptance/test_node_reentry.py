@@ -234,6 +234,13 @@ class ReentryTests(unittest.TestCase):
         self.assertEqual(receipt["initial_states"][transaction["txid"]], "absent")
         self.assertEqual(network.submissions, [transaction["raw"]] * 2)
         self.assertIn(transaction["txid"], network.confirmed)
+        # Control: a refused submission whose bytes stay out of the mempool is not excused.
+        network = QueuedNetwork()
+        with self.assertRaisesRegex(common.AcceptanceError, "saved_transaction_submission"):
+            node_live.reconcile_saved(network, [transaction], 1)
+        self.assertEqual(network.submissions, [transaction["raw"]])
+        self.assertIn(transaction["txid"], network.known)
+        self.assertFalse(network.mempool)
 
     def test_unexpected_rpc_error_and_mismatched_saved_bytes_fail(self):
         network = QueuedNetwork()

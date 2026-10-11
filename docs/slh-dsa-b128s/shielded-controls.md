@@ -154,7 +154,8 @@ python3 -m unittest discover -s tests/slh-dsa-b128s/acceptance -p 'test_shielded
 
 Four added Rust tests stop before proof creation.
 They check feature gates, pool bounds, parent context, and parameter integrity.
-Python models cover all ten subsets and reject mismatches, omitted calls, no-op publication, and wrong diagnostics.
+Python models cover all ten subsets with SLH, single-signature, and multisig funding.
+They reject mismatches, omitted calls, no-op publication, and wrong diagnostics.
 Mock proofs have no cryptographic validity claim.
 
 [Source attribution](../../tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md)

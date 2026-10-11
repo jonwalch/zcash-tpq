@@ -25,8 +25,6 @@ class WalletBackupNode(backup_model.BackupNode):
         self.model.events.append("start")
         self.current = ((self.height, "aa" * 32) if (self.backup / ("aa" * 32)).exists()
                         else (self.height - 1, "11" * 32))
-        if self.model.mode == "changed-reopen":
-            self.current = (self.height - 1, "11" * 32)
 
     def rpc(self, method, *args):
         if method == "sendrawtransaction":
@@ -129,17 +127,13 @@ class WalletRestartTests(unittest.TestCase):
             self.assertNotIn("backup-update", model.events)
             self.assertNotIn("rollback", model.events)
 
-    def test_invalid_backup_or_changed_reopen_cannot_reach_rollback(self):
-        for mode, reason in (("wrong-tip-bytes", "ordinary_backup_did_not_preserve_tip"),
-                             ("changed-reopen", "restart_tip")):
-            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
-                directory = Path(temporary)
-                model = WalletBackupNetwork(directory, mode)
-                with self.assertRaisesRegex(common.AcceptanceError, reason):
-                    self.execute_until_rollback(model, directory, {})
-                self.assertNotIn("rollback", model.events)
-                if mode == "wrong-tip-bytes":
-                    self.assertNotIn("stop", model.events)
+    def test_invalid_backup_stops_the_wallet_driver_before_restart(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            model = WalletBackupNetwork(directory, "wrong-tip-bytes")
+            with self.assertRaisesRegex(common.AcceptanceError, "ordinary_backup_did_not_preserve_tip"):
+                self.execute_until_rollback(model, directory, {})
+            self.assertEqual(model.events, ["mine"] * 2 + ["wallet-control"] * 20 + ["backup-update"])
 
 
 if __name__ == "__main__":

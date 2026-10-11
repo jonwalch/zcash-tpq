@@ -272,94 +272,80 @@ fn coin_capacity_preserves_authorization_and_recovers_only_after_history_fits() 
 }
 
 #[test]
-fn last_change_receipts_exhaust_normal_and_restored_wallets_after_reorg() {
+fn last_change_receipts_exhaust_wallets_before_and_after_reorg() {
+    // Restored wallets retire change before any receipt; that case is covered
+    // by change.rs and counterexamples.rs, so this test uses fresh inventory.
     for version in [5, 6] {
         for n in [1, 3] {
-            for restored in [false, true] {
-                let mut owners = wallets(n, 1, 2);
-                owners.truncate(2); // A 2-of-3 payment has only the surviving pair.
-                if restored {
-                    owners = owners
-                        .into_iter()
-                        .map(|wallet| {
-                            let mut recovered =
-                                Wallet::from_plaintext(&wallet.plaintext().unwrap(), &profile())
-                                    .unwrap();
-                            recovered.retire_for_restore().unwrap();
-                            recovered
-                        })
-                        .collect();
-                }
-                let wallet = &owners[0];
-                let inventory = wallet.plaintext().unwrap();
-                let temp = tempfile::tempdir().unwrap();
-                let path = temp.path().join("watch");
-                let mut store = create(&path, wallet.manifest(), WatchMode::Allocator);
-                let mut source = Source::funded(wallet, &[USABLE]);
-                let approved = intent(version);
-                source.chain.push(
-                    vec![transaction(
-                        version,
-                        9,
-                        vec![],
-                        vec![output(&wallet.manifest.entries[2], DUST)],
-                    )],
-                    None,
-                );
-                assert!(store.sync(&mut source, 10).unwrap().complete_at_checkpoint);
-                assert_eq!(store.state.payments.change_next, 2);
-                assert_eq!(store.coins().len(), 2);
-                exhausted(&mut store, wallet, &mut source, &approved, &path);
-                let before = state(&store, &path);
-                store = reopen(store, &path, &before);
+            let mut owners = wallets(n, 1, 2);
+            owners.truncate(2); // A 2-of-3 payment has only the surviving pair.
+            let wallet = &owners[0];
+            let temp = tempfile::tempdir().unwrap();
+            let path = temp.path().join("watch");
+            let mut store = create(&path, wallet.manifest(), WatchMode::Allocator);
+            assert_eq!(store.state.payments.change_next, 0);
+            let mut source = Source::funded(wallet, &[USABLE]);
+            let approved = intent(version);
+            source.chain.push(
+                vec![transaction(
+                    version,
+                    9,
+                    vec![],
+                    vec![output(&wallet.manifest.entries[2], DUST)],
+                )],
+                None,
+            );
+            assert!(store.sync(&mut source, 10).unwrap().complete_at_checkpoint);
+            assert_eq!(store.state.payments.change_next, 2);
+            assert_eq!(store.coins().len(), 2);
+            exhausted(&mut store, wallet, &mut source, &approved, &path);
+            let before = state(&store, &path);
+            store = reopen(store, &path, &before);
 
-                source.chain.blocks.pop();
-                assert!(store.sync(&mut source, 10).unwrap().complete_at_checkpoint);
-                assert_eq!(store.coins().len(), 1);
-                assert_eq!(store.state.payments.change_next, 2);
-                exhausted(&mut store, wallet, &mut source, &approved, &path);
-                let before = state(&store, &path);
-                store = reopen(store, &path, &before);
-                assert_eq!(wallet.plaintext().unwrap(), inventory);
+            source.chain.blocks.pop();
+            assert!(store.sync(&mut source, 10).unwrap().complete_at_checkpoint);
+            assert_eq!(store.coins().len(), 1);
+            assert_eq!(store.state.payments.change_next, 2);
+            exhausted(&mut store, wallet, &mut source, &approved, &path);
+            let before = state(&store, &path);
+            store = reopen(store, &path, &before);
 
-                let fee = if n == 1 { 21_600 } else { 42_800 };
-                let mut exact = approved;
-                exact.amount = USABLE - fee; // Independently approve an exact payment.
-                let (proposal, summary) =
-                    store.prepare_payment(wallet, &mut source, &exact).unwrap();
-                assert_eq!(proposal.outputs.len(), 1);
-                assert_eq!((summary.change_value, summary.fee), (0, fee));
-                assert_eq!(summary.checks, if n == 1 { 1 } else { 2 });
-                let mut stores = vec![store];
-                for (i, owner) in owners.iter().enumerate().skip(1) {
-                    stores.push(create(
-                        &temp.path().join(i.to_string()),
-                        owner.manifest(),
-                        WatchMode::Allocator,
-                    ));
-                }
-                let signed = authorize(
-                    &owners,
-                    &mut stores,
-                    &mut source,
-                    &proposal,
-                    &exact,
-                    &summary,
-                );
-                stores[0]
-                    .submit_payment(wallet, &mut source, summary.proposal_id)
-                    .unwrap();
-                assert_eq!(source.sent, [signed]);
-                source.mine();
-                assert_eq!(
-                    stores[0].reconcile_payments(&mut source).unwrap(),
-                    [PaymentState::Confirmed]
-                );
-                let status = stores[0].sync(&mut source, 10).unwrap();
-                assert_eq!(status.confirmed_zatoshis, Some(0));
-                assert!(stores[0].coins().is_empty());
-                assert_eq!(stores[0].state.payments.change_next, 2);
+            let fee = if n == 1 { 21_600 } else { 42_800 };
+            let mut exact = approved;
+            exact.amount = USABLE - fee; // Independently approve an exact payment.
+            let (proposal, summary) = store.prepare_payment(wallet, &mut source, &exact).unwrap();
+            assert_eq!(proposal.outputs.len(), 1);
+            assert_eq!((summary.change_value, summary.fee), (0, fee));
+            assert_eq!(summary.checks, if n == 1 { 1 } else { 2 });
+            let mut stores = vec![store];
+            for (i, owner) in owners.iter().enumerate().skip(1) {
+                stores.push(create(
+                    &temp.path().join(i.to_string()),
+                    owner.manifest(),
+                    WatchMode::Allocator,
+                ));
             }
+            let signed = authorize(
+                &owners,
+                &mut stores,
+                &mut source,
+                &proposal,
+                &exact,
+                &summary,
+            );
+            stores[0]
+                .submit_payment(wallet, &mut source, summary.proposal_id)
+                .unwrap();
+            assert_eq!(source.sent, [signed]);
+            source.mine();
+            assert_eq!(
+                stores[0].reconcile_payments(&mut source).unwrap(),
+                [PaymentState::Confirmed]
+            );
+            let status = stores[0].sync(&mut source, 10).unwrap();
+            assert_eq!(status.confirmed_zatoshis, Some(0));
+            assert!(stores[0].coins().is_empty());
+            assert_eq!(stores[0].state.payments.change_next, 2);
         }
     }
 }

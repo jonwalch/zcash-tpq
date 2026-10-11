@@ -72,15 +72,25 @@ async fn slh_relay_funding_uses_candidate_height_and_requires_classical_authoriz
             mempool_result(&net, SLH_HEIGHT, dust, false).await,
             Err(TransactionError::NonStandardSlhDsaB128sDust { output_index: 0 }),
         );
-        let mut unauthorized = funding(version);
-        install(
-            &mut unauthorized.transaction,
-            0,
-            transparent::Script::new(&[]),
+        // A standard classical input whose script fails still needs Script verification.
+        let unauthorized = classical_funding(version, false);
+        assert_eq!(
+            mempool_result(&net, SLH_HEIGHT, unauthorized.clone(), false).await,
+            Err(TransactionError::Script(
+                zakura_script::Error::ScriptInvalid
+            )),
         );
-        assert!(mempool_result(&net, SLH_HEIGHT, unauthorized, false)
-            .await
-            .is_err());
+        let budget = SlhDsaB128sBlockBudget::new(net.experimental_slh_dsa_b128s_limits().unwrap());
+        let state = service_fn(|_| async { unreachable!("known UTXOs cover every input") });
+        assert_eq!(
+            Verifier::new_for_tests(&net, state)
+                .oneshot(unauthorized.block_request(Some(budget.clone())))
+                .await,
+            Err(TransactionError::Script(
+                zakura_script::Error::ScriptInvalid
+            )),
+        );
+        assert_eq!(budget.remaining(), 64);
 
         // Funding remains consensus-valid before activation: output policy is
         // intentionally absent from the block verifier path.
@@ -112,6 +122,7 @@ fn slh_funding_policy_errors_are_not_consensus_invalid_or_peer_penalties() {
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 #[test]
 fn slh_structural_counts_include_large_authorizations_and_bind_keys_and_ordered_outputs() {
     for version in [5, 6] {
@@ -132,6 +143,17 @@ fn slh_structural_counts_include_large_authorizations_and_bind_keys_and_ordered_
                 Ok(expected)
             );
         }
+        // Each input must use the spent output at its own index.
+        let mut swapped = fixture(version, "16checks");
+        Arc::make_mut(&mut swapped.previous).swap(0, 1);
+        assert_eq!(
+            check::mempool_standard_input_scripts_with_slh_dsa_b128s(
+                &swapped.transaction,
+                &swapped.previous,
+                true,
+            ),
+            Err(TransactionError::NonStandardInputs)
+        );
         let mut fixture = fixture(version, "1of1");
         let transparent::Input::PrevOut { unlock_script, .. } = &fixture.transaction.inputs()[0]
         else {

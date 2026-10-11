@@ -18,6 +18,11 @@ def identity(value):
     return hashlib.sha256(value.encode()).hexdigest()
 
 
+def host_shape(result, *absent):
+    """Drop identity fields that the actual fixture host output does not contain."""
+    return {key: value for key, value in result.items() if key not in absent}
+
+
 class Ledger:
     """Small independent chain/UTXO model; fixture operations are mocked only."""
     public = "33" * 32
@@ -35,7 +40,8 @@ class Ledger:
         self.closed = False
         self.wrong_proposal = self.change_on_reject = self.missing_parent = False
         self.wrong_raw = self.wrong_block_order = self.corrupt_positive_auth = False
-        self.wrong_signer = False
+        self.wrong_signer = self.wrong_positive_auth = False
+        self.relays = []
 
     def __enter__(self):
         return self
@@ -122,7 +128,9 @@ class Ledger:
     def slh(self, _args, keys, _producer, txid, index, _expiry, _case):
         assert keys == {self.public: "public mock key"} and index == 1
         _, script = controls.policy([self.public], 1)
-        return self.tx("slh-positive", [{"value_zat": 2_000_000, "script_hex": script}], [(txid, index)])
+        # The host assemble artifact carries neither txid nor auth digest.
+        return host_shape(self.tx("slh-positive", [{"value_zat": 2_000_000, "script_hex": script}],
+                                  [(txid, index)]), "txid", "auth_digest")
 
     def host(self, _binary, operation, **fields):
         self.calls.append((operation, deepcopy(fields)))
@@ -139,7 +147,7 @@ class Ledger:
             outputs.append({"value_zat": change, "script_hex": self.classical_script})
             name = "funding" if operation == "control-funding" else (
                 "dust" if outputs[0]["value_zat"] == 2402 else "classical-positive")
-            return self.tx(name, outputs, [(parent["txid"], index)])
+            return host_shape(self.tx(name, outputs, [(parent["txid"], index)]), "auth_digest")
         if operation == "control-authorization":
             original = self.transactions[recipe["transaction_hex"]]
             name = recipe["variant"]
@@ -148,8 +156,10 @@ class Ledger:
             reason = "script" if "classical" in name and name != "classical-on-slh" else (
                 "encoding" if name == "classical-on-slh" else "signature")
             result = self.tx(name, original["outputs"], original["spends"], txid=original["txid"], reason=reason)
+            # The second variant of each original reuses the identity seeded by the first.
+            wrong = self.wrong_positive_auth or (self.corrupt_positive_auth and name in ("slh-on-classical", "corrupt-slh"))
             result.update(variant=name, positive_transaction_sha256=original["transaction_sha256"],
-                positive_auth_digest=identity("wrong") if self.corrupt_positive_auth else original["auth_digest"],
+                positive_auth_digest=identity("wrong") if wrong else original["auth_digest"],
                 expected_consensus_reason=reason)
             return result
         if operation in ("mixed-prepare", "mixed-assemble"):
@@ -169,7 +179,7 @@ class Ledger:
                 [{"value_zat": 5_900_000, "script_hex": self.classical_script}],
                 [(parent["txid"], expected), (parent["txid"], 3)], reason="mixed")
             result.update(prepared, slh_checks=1, ecdsa_checks=2 if expected == 2 else 0)
-            return result
+            return host_shape(result, "auth_digest")
         assert operation == "control-block"
         assert recipe["template"]["height"] == self.height + 1
         raws = [tx["transaction_hex"] for tx in recipe["transactions"]]
@@ -196,10 +206,13 @@ class FakeNode:
             raw = state.known.get(args[0])
             if raw is None:
                 return {"error": {"code": -5, "message": "No such transaction found; not found"}}
-            return {"result": {"hex": raw, "confirmations": state.height - state.mined()[raw] + 1
+            tx = state.transactions[raw]
+            return {"result": {"hex": raw, "txid": tx["txid"], "authdigest": tx["auth_digest"],
+                               "confirmations": state.height - state.mined()[raw] + 1
                                if raw in state.mined() else 0}}
         assert method == "sendrawtransaction"
         tx = state.transactions[args[0]]
+        state.relays.append(tx["name"])
         name, active = tx["name"], state.height + 1 >= 110
         if name.startswith("mixed"):
             message = ("active SLH transparent inputs cannot be mixed with other transparent input types"
@@ -272,7 +285,7 @@ class FakeNode:
 
 
 class TransparentDriverTests(unittest.TestCase):
-    def run_flow(self, state):
+    def run_flow(self, state, inject=None):
         args = SimpleNamespace(host=Path("public-host"), signer=Path("public-signer"),
                                node=Path("public-node"), root=Path("product"), version=5)
         receipt = {}
@@ -282,6 +295,8 @@ class TransparentDriverTests(unittest.TestCase):
                     "single_artifact": state.slh, "producer_identity": lambda *_: ({}, {}),
                     "restart_with_backups": state.restart_backed}.items():
                 stack.enter_context(patch.object(controls, name, side_effect=replacement))
+            if inject:
+                inject(stack)
             controls.execute(args, Path(directory), receipt)
         return receipt
 
@@ -314,12 +329,16 @@ class TransparentDriverTests(unittest.TestCase):
             mined = receipt[key]["mined_blocks"]
             self.assertEqual(len(mined), 1)
             self.assertEqual(set(state.blocks[mined[0]]["raws"][1:]), positive_raws)
+        self.assertEqual(receipt["positive_identities"],
+            [{"txid": tx["txid"], "auth_digest": tx["auth_digest"]} for name in ("classical-positive", "slh-positive")
+             for tx in state.transactions.values() if tx["name"] == name])
 
     def test_wrong_reason_changed_state_wrong_bytes_and_wrong_identity_fail_closed(self):
         for field, diagnostic in (("wrong_proposal", "transparent_wrong_proposal_rejection"),
                 ("change_on_reject", "rejected_control_changed_tip"),
                 ("wrong_raw", "transparent_positive_transaction_bytes"),
                 ("corrupt_positive_auth", "transparent_positive_identity_changed"),
+                ("wrong_positive_auth", "transparent_positive_auth_digest"),
                 ("wrong_signer", "transparent_mixed_signer")):
             with self.subTest(field=field):
                 state = Ledger()
@@ -328,24 +347,60 @@ class TransparentDriverTests(unittest.TestCase):
                     self.run_flow(state)
 
     def test_direct_block_checks_order_and_missing_funding_is_not_a_valid_negative(self):
-        for field, diagnostic in (("wrong_block_order", "transparent_positive_block_bytes"),
-                                  ("missing_parent", "authenticated_funding_output")):
-            with self.subTest(field=field):
-                state = Ledger()
-                setattr(state, field, True)
-                with self.assertRaisesRegex(AcceptanceError, diagnostic):
-                    self.run_flow(state)
+        state = Ledger()
+        state.wrong_block_order = True
+        with self.assertRaisesRegex(AcceptanceError, "transparent_positive_block_bytes"):
+            self.run_flow(state)
+        # The positive controls succeed; the funding disappears before the first negative.
+        state = Ledger()
+        original = controls.Controls.reject
+        def parent_removed(control, *args):
+            state.missing_parent = True
+            return original(control, *args)
+        with self.assertRaisesRegex(AcceptanceError, "transparent_control_parent_missing"):
+            self.run_flow(state, lambda stack: stack.enter_context(
+                patch.object(controls.Controls, "reject", parent_removed)))
+        self.assertEqual(len([call for call in state.calls if call[0] == "control-block"]), 2)
+        self.assertEqual(state.relays, ["funding", "funding"])
 
     def test_unrelated_rpc_errors_and_proposal_failures_cannot_count_as_controls(self):
-        for error in ({"code": -25, "message": "missing inputs"}, {"code": -25, "message": "expired"},
-                      {"code": -32603, "message": "could not verify a transparent script"},
-                      {"code": True, "message": "could not verify a transparent script"}):
+        for error, diagnostic in (({"code": -25, "message": "missing inputs"}, "transparent_wrong_relay_rejection"),
+                                  ({"code": -25, "message": "expired"}, "transparent_wrong_relay_rejection"),
+                                  ({"code": -32603, "message": "could not verify a transparent script"},
+                                   "transparent_relay_error_schema"),
+                                  ({"code": True, "message": "could not verify a transparent script"},
+                                   "transparent_relay_error_schema")):
             node = SimpleNamespace(response=lambda *_: {"error": error})
-            with self.assertRaises(AcceptanceError):
+            with self.subTest(error=error), self.assertRaisesRegex(AcceptanceError, diagnostic):
                 controls.reject_relay(node, "public", controls.CLASSICAL_SCRIPT)
-        for result in (None, {}, "wrong-parent", "transaction-expired", "transaction-script-invalid"):
-            with self.assertRaises(AcceptanceError):
+        for result, diagnostic in ((None, "transparent_missing_proposal_rejection"),
+                                   ({}, "transparent_missing_proposal_rejection"),
+                                   ("wrong-parent", "transparent_wrong_proposal_rejection"),
+                                   ("transaction-expired", "transparent_wrong_proposal_rejection"),
+                                   ("transaction-script-invalid", "transparent_wrong_proposal_rejection")):
+            with self.subTest(result=result), self.assertRaisesRegex(AcceptanceError, diagnostic):
                 controls.proposal_rejection(result, "mixed")
+
+    def test_other_native_rejections_cannot_count_as_the_targeted_authorization_failure(self):
+        prefix = "transaction-experimentalslhdsab128s-input-index-0-reason-"
+        for value, reason in ((prefix + "signature", "signature"), (prefix + "encoding", "encoding"),
+                              ("transaction-script-invalid", "script")):
+            controls.proposal_rejection(value, reason)
+        for value, reason in ((prefix + "signature-count", "signature"), (prefix + "signer-index", "signature"),
+                              (prefix + "encoding", "signature"), (prefix + "signature", "encoding"),
+                              (prefix + "signature", "script"),
+                              ("transaction-experimentalslhdsab128smixedinputs", "script")):
+            with self.subTest(value=value, reason=reason), \
+                    self.assertRaisesRegex(AcceptanceError, "transparent_wrong_proposal_rejection"):
+                controls.proposal_rejection(value, reason)
+        message = "experimental SLH-DSA-B-128s authorization failed for transparent input 0: "
+        node = SimpleNamespace(response=lambda *_: {"error": {"code": -25, "message": message + "signature"}})
+        self.assertEqual(controls.reject_relay(node, "public", controls.AUTHORIZATION_RELAY["corrupt-slh"])
+                         ["matched_reason"], list(controls.AUTHORIZATION_RELAY["corrupt-slh"][0]))
+        for reason in ("signature_count", "signer_index", "encoding"):
+            node = SimpleNamespace(response=lambda *_: {"error": {"code": -25, "message": message + reason}})
+            with self.subTest(relay=reason), self.assertRaisesRegex(AcceptanceError, "transparent_wrong_relay_rejection"):
+                controls.reject_relay(node, "public", controls.AUTHORIZATION_RELAY["corrupt-slh"])
 
 
 class RollbackBackupModel:

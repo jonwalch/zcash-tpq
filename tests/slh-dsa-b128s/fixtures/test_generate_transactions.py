@@ -4,7 +4,10 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+import shlex
+import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest import mock
@@ -31,13 +34,47 @@ class PublicCorpusTests(unittest.TestCase):
         self.assertNotEqual(gen.randomizer("v5-1of1", 0, 0), gen.randomizer("v6-1of1", 0, 0))
         self.assertNotEqual(gen.randomizer("v5-16checks", 0, 0), gen.randomizer("v5-16checks", 1, 0))
 
+    def test_recipes_match_committed_corpus_without_keys(self):
+        # Key-independent recipe fields must reproduce the committed native corpus.
+        keys = [bytes([i]).hex() * 32 for i in range(15)]
+        recipes = {case["case_id"]: case for case in gen.recipes(keys)}
+        paths = sorted((gen.HERE / "data").glob("v*.json"))
+        self.assertEqual(sorted(path.stem for path in paths), sorted(recipes))
+        for path in paths:
+            artifact, recipe = json.loads(path.read_bytes()), recipes[path.stem]
+            raw = bytes.fromhex(artifact["transaction_hex"])
+            with self.subTest(case=path.stem):
+                self.assertEqual((artifact["network"], artifact["transaction_version"]),
+                                 (recipe["network"], recipe["transaction_version"]))
+                # v5/v6 header: version, group, branch, then lock time and expiry.
+                self.assertEqual((int.from_bytes(raw[12:16], "little"), int.from_bytes(raw[16:20], "little")),
+                                 (recipe["lock_time"], recipe["expiry_height"]))
+                self.assertEqual([o["value_zat"] for o in artifact["outputs"]],
+                                 [o["value_zat"] for o in recipe["outputs"]])
+                self.assertEqual({o["script_hex"] for o in artifact["outputs"]},
+                                 {artifact["inputs"][0]["spent_output"]["script_hex"]})
+                self.assertEqual(len(artifact["inputs"]), len(recipe["inputs"]))
+                for item, expected in zip(artifact["inputs"], recipe["inputs"]):
+                    descriptor = bytes.fromhex(item["descriptor_hex"])
+                    self.assertEqual((item["outpoint"]["txid_display_hex"], item["outpoint"]["index"]),
+                                     (expected["outpoint"]["txid_display_hex"], expected["outpoint"]["index"]))
+                    self.assertEqual((item["sequence"], item["spent_output"]["value_zat"]),
+                                     (expected["sequence"], expected["value_zat"]))
+                    self.assertEqual((descriptor[2], descriptor[3]),
+                                     (expected["threshold"], len(expected["public_keys_hex"])))
+                    self.assertEqual([r["signer_index"] for r in item["records"]], expected["signer_indices"])
+
     def test_strict_json_and_canonical_del(self):
-        for data in [b'{"x":1,"x":2}', b'[-0]', b'[1.0]', b'[1e0]', b'[18446744073709551616]',
-                     b'["\\u00e9"]', b'[NaN]', b'[' * 17 + b'0' + b']' * 17]:
-            with self.assertRaises(gen.FixtureError):
+        for data, reason in [(b'{"x":1,"x":2}', "duplicate_key"), (b'[-0]', "numeric_token"),
+                             (b'[1.0]', "numeric_token"), (b'[1e0]', "numeric_token"),
+                             (b'[18446744073709551616]', "numeric_token"), (b'["\\u00e9"]', "non_ascii"),
+                             (b'[NaN]', "numeric_token"), (b'[' * 17 + b'0' + b']' * 17, "nesting")]:
+            with self.subTest(data=data), self.assertRaisesRegex(gen.FixtureError, f"^{reason}$"):
                 gen.strict_json(data, gen.MAX_HOST)
-        with self.assertRaises(gen.FixtureError):
-            gen.strict_json(b' ' * 101, 100)
+        # Pad a valid document so only the size bound can reject it.
+        with self.assertRaisesRegex(gen.FixtureError, "^response_size$"):
+            gen.strict_json(b"[0]" + b" " * 98, 100)
+        self.assertEqual(gen.strict_json(b"[0]" + b" " * 97, 100), [0])
         self.assertEqual(gen.canonical({"\x7f": "\x7f"}), b'{"\\u007f":"\\u007f"}')
 
     def test_signer_identity_and_no_secret_response_on_sign(self):
@@ -133,13 +170,15 @@ class PublicCorpusTests(unittest.TestCase):
                     gen.source_inventory(root, ["proto", "source.proto"])
 
     def test_inventory_link_opt_in_rejects_escapes_mutations_and_unbound_targets(self):
-        for case in ("changed-link", "escape", "untracked", "excluded", "chained-file", "chained-directory", "hidden-chain", "missing-directory", "missing-link"):
+        for case in ("changed-link", "escape", "untracked", "excluded", "chained-file", "chained-directory", "hidden-chain", "missing-directory", "missing-link", "allowed-chain"):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 (root / "source.proto").write_bytes(b"source")
                 text = "source.proto"
                 expected = text
                 names = ["link.proto", "source.proto"]
+                paths = ["."]
+                extra_links = {}
                 if case == "changed-link":
                     text = "./source.proto"
                 elif case == "escape":
@@ -169,6 +208,15 @@ class PublicCorpusTests(unittest.TestCase):
                     text = expected = "alias/../source.proto"
                 elif case == "missing-directory":
                     text = expected = "missing/../source.proto"
+                elif case == "allowed-chain":
+                    # Each link is allowed and valid alone; only the chain check rejects
+                    # a link whose target is itself a link.
+                    (root / "source.proto").unlink()
+                    (root / "real.proto").write_bytes(b"source")
+                    (root / "source.proto").symlink_to("real.proto")
+                    names.append("real.proto")
+                    paths = sorted(names)
+                    extra_links = {"source.proto": "real.proto"}
                 if case == "missing-link":
                     (root / "link.proto").write_bytes(b"source")
                 else:
@@ -176,67 +224,42 @@ class PublicCorpusTests(unittest.TestCase):
                 listed = types.SimpleNamespace(stdout=("\0".join(names) + "\0").encode())
                 with mock.patch.object(gen.subprocess, "run", return_value=listed):
                     with self.assertRaisesRegex(gen.FixtureError, "source_file"):
-                        gen.source_inventory(root, ["."], allowed_symlinks={"link.proto": expected})
-
-
-class Stream:
-    def __init__(self, fd):
-        self.fd, self.closed = fd, False
-
-    def fileno(self):
-        return self.fd
-
-    def close(self):
-        self.closed = True
-
-
-class Selector:
-    def __init__(self):
-        self.entries = {}
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_args):
-        pass
-
-    def register(self, stream, _events):
-        self.entries[stream] = types.SimpleNamespace(fileobj=stream)
-
-    def unregister(self, stream):
-        del self.entries[stream]
-
-    def get_map(self):
-        return self.entries
-
-    def select(self, _timeout):
-        return [(key, None) for key in list(self.entries.values())]
+                        gen.source_inventory(root, paths, allowed_symlinks={"link.proto": expected, **extra_links})
 
 
 class TransportTests(unittest.TestCase):
-    def run_transport(self, chunks, bound, clock=None):
-        process = mock.Mock(stdin=Stream(1), stdout=Stream(2), stderr=Stream(3))
-        process.poll.return_value = None
-        process.wait.return_value = 0
-        streams = {2: iter(chunks), 3: iter([b""])}
-        with mock.patch.object(gen.subprocess, "Popen", return_value=process), \
-                mock.patch.object(gen.selectors, "DefaultSelector", Selector), \
-                mock.patch.object(gen.os, "set_blocking"), \
-                mock.patch.object(gen.os, "write", side_effect=lambda _fd, b: len(b)), \
-                mock.patch.object(gen.os, "read", side_effect=lambda fd, _size: next(streams[fd], b"")), \
-                mock.patch.object(gen.time, "monotonic", side_effect=clock or [0] * 20):
-            try:
-                return gen.invoke(Path("fake"), {}, bound, timeout=1)
-            finally:
-                process.kill.assert_called_once()
-                self.assertTrue(all(s.closed for s in (process.stdin, process.stdout, process.stderr)))
+    """Real child processes through real pipes; offline, no builds or signing."""
+
+    def child(self, code):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        script = Path(directory.name) / "child.py"
+        script.write_text("import sys, time\n" + code + "\n")
+        binary = Path(directory.name) / "child"
+        binary.write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} {shlex.quote(str(script))}\n")
+        binary.chmod(0o700)
+        return binary
 
     def test_bounded_stream_and_kill_on_overflow(self):
-        self.assertEqual(self.run_transport([b'{"ok":true}', b''], 32), {"ok": True})
-        with self.assertRaisesRegex(gen.FixtureError, "response_size"):
-            self.run_transport([b'X' * 33], 32)
-        with self.assertRaisesRegex(gen.FixtureError, "subprocess_timeout"):
-            self.run_transport([b''], 32, [0, 2])
+        echo = self.child("sys.stdout.buffer.write(sys.stdin.buffer.read())")
+        self.assertEqual(gen.invoke(echo, {"a": [1, "x"]}, 64), {"a": [1, "x"]})
+        pad = {"pad": "x" * 150_000}  # Larger than a pipe buffer.
+        self.assertEqual(gen.invoke(echo, pad, 200_000), pad)
+        # Children that would outlive the test unless invoke kills them.
+        stalled = "sys.stdin.buffer.read(); sys.stdout.flush(); time.sleep(60)"
+        for name, code, request, bound, timeout, reason in (
+            ("stdout", "sys.stdout.buffer.write(b'X' * 4096); sys.stdout.flush(); time.sleep(60)", {}, 32, 30, "response_size"),
+            ("stderr", "sys.stderr.buffer.write(b'E' * (32768 + 1)); sys.stderr.flush(); time.sleep(60)", {}, 32, 30, "stderr_size"),
+            ("timeout", stalled, {}, 32, 0.2, "subprocess_timeout"),
+            ("status", "sys.stdout.write('{}'); sys.exit(1)", {}, 32, 30, "subprocess_failed"),
+            ("broken-pipe", "sys.exit(0)", pad, 200_000, 30, "subprocess_failed"),
+            ("request", "pass", pad, 32, 30, "request_size"),
+        ):
+            with self.subTest(name=name):
+                started = time.monotonic()
+                with self.assertRaisesRegex(gen.FixtureError, f"^{reason}$"):
+                    gen.invoke(self.child(code), request, bound, timeout=timeout)
+                self.assertLess(time.monotonic() - started, 20)
 
 
 if __name__ == "__main__":

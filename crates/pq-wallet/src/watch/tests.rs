@@ -117,7 +117,7 @@ fn prev(tx: &Transaction, index: u32) -> OutPoint {
         index,
     }
 }
-fn external() -> Vec<OutPoint> {
+pub(crate) fn external() -> Vec<OutPoint> {
     vec![OutPoint {
         hash: transaction::Hash([0x33; 32]),
         index: 0,
@@ -215,13 +215,36 @@ fn receiver_runtime_matches_all_public_answers_and_rejects_unsupported_senders()
         assert!(text.parse::<zakura_chain::transparent::Address>().is_err());
     }
     let good = corpus["policies"][0]["receiver"].as_str().unwrap();
+    let mut payload = vec![1, 2, 0xf7];
+    payload.extend(Receiver::parse(good).unwrap().commitment().0);
+    let last = good.chars().last().unwrap();
+    // Each canonical-length case isolates the HRP or checksum check.
+    let other_hrp =
+        bech32::encode::<bech32::Bech32m>(bech32::Hrp::parse("tpqrex").unwrap(), &payload).unwrap();
+    let bech32_variant =
+        bech32::encode::<bech32::Bech32>(bech32::Hrp::parse("tpqreg").unwrap(), &payload).unwrap();
+    let changed_checksum = format!(
+        "{}{}",
+        &good[..good.len() - 1],
+        if last == 'q' { 'p' } else { 'q' }
+    );
+    for bad in [&other_hrp, &bech32_variant, &changed_checksum] {
+        assert_eq!(bad.len(), 69);
+        assert!(!bad.bytes().any(|b| b.is_ascii_uppercase()));
+    }
     for bad in [
         good.to_uppercase(),
         format!("{good}q"),
         good.replacen("tpqreg", "tpqtest", 1),
         good[..good.len() - 1].to_owned(),
+        other_hrp,
+        bech32_variant,
+        changed_checksum,
     ] {
-        assert!(Receiver::parse(&bad).is_err());
+        assert!(
+            matches!(Receiver::parse(&bad), Err(Error::Encoding)),
+            "{bad}"
+        );
     }
     for suite in [0, 1, 0xf3, 0xf6, 0xf8] {
         let mut payload = [0; 35];
@@ -337,9 +360,12 @@ fn extension_and_multisig_enrollment_publish_a_verified_backup_before_installati
         .find(|origin| origin.wallet_id == wrong.wallet_id)
         .unwrap()
         .index = 1;
-    assert!(wallet
-        .enroll_backup(wrong, candidate.fingerprint().unwrap(), &quorum, password)
-        .is_err());
+    // The schema rejects the coordinate before any fingerprint comparison.
+    assert!(matches!(wrong.validate(), Err(Error::Policy)));
+    assert!(matches!(
+        wallet.enroll_backup(wrong, candidate.fingerprint().unwrap(), &quorum, password),
+        Err(Error::Policy)
+    ));
     // Complete schema and local derivation ownership must both hold. Replacing a
     // whole new policy with a self-consistent but foreign key still fails.
     let mut wrong = candidate.clone();
@@ -847,6 +873,8 @@ fn deep_forks_rescan_birthday_and_keep_retired_receiver_history() {
 #[test]
 fn mismatched_node_context_and_block_data_do_not_advance_a_scan() {
     struct Bad(Chain, u8);
+    // Invalid synthetic blocks must panic, not simulate unavailable trusted history.
+    #[allow(clippy::unwrap_in_result)]
     impl ChainSource for Bad {
         fn context(&mut self) -> Result<NodeContext, Error> {
             let mut context = self.0.context()?;
@@ -862,9 +890,6 @@ fn mismatched_node_context_and_block_data_do_not_advance_a_scan() {
             Ok(context)
         }
         fn block_hash(&mut self, height: u32) -> Result<Hex<32>, Error> {
-            if self.1 == 3 && height == 0 {
-                return Ok(Hex([0; 32]));
-            }
             self.0.block_hash(height)
         }
         fn block_bytes(&mut self, hash: Hex<32>) -> Result<Vec<u8>, Error> {
@@ -875,17 +900,64 @@ fn mismatched_node_context_and_block_data_do_not_advance_a_scan() {
             if self.1 == 5 {
                 bytes[100] ^= 1;
             }
+            if self.1 == 6 {
+                // One more transaction under the unchanged, hash-matching header.
+                let mut block = self
+                    .0
+                    .blocks
+                    .iter()
+                    .find(|b| Hex(b.hash().bytes_in_display_order()) == hash)
+                    .expect("the honest chain served this hash")
+                    .clone();
+                block
+                    .transactions
+                    .push(transaction(5, 9, external(), vec![]));
+                assert_eq!(Hex(block.hash().bytes_in_display_order()), hash);
+                bytes = block
+                    .zcash_serialize_to_vec()
+                    .expect("synthetic blocks have serializable fields");
+            }
             Ok(bytes)
         }
     }
     let manifest = inventory(1, 0);
     let mut chain = Chain::new();
     chain.push(vec![], None);
-    for mode in 0..6 {
+    let tip = chain.context().unwrap().tip;
+    // Mode 3 approves a genesis that the otherwise honest node does not serve.
+    let mut foreign = manifest.clone();
+    foreign.profile.genesis_hash = Hex([1; 32]);
+    for (mode, expected) in [
+        (0, Some(Error::UnsupportedContext)),
+        (1, Some(Error::UnsupportedContext)),
+        (2, Some(Error::UnsupportedContext)),
+        (3, Some(Error::UnsupportedContext)),
+        (4, Some(Error::ChainChanged)),
+        (5, Some(Error::ChainChanged)),
+        (6, Some(Error::ChainChanged)),
+        (7, None),
+    ] {
         let temp = tempfile::tempdir().unwrap();
-        let mut store = create(&temp.path().join("watch"), &manifest, WatchMode::Monitor);
-        assert!(store.sync(&mut Bad(chain.clone(), mode), 10).is_err());
-        assert!(!store.status().unwrap().complete_at_checkpoint);
-        assert_eq!(store.status().unwrap().checkpoint, None);
+        let approved = if mode == 3 { &foreign } else { &manifest };
+        let mut store = create(&temp.path().join("watch"), approved, WatchMode::Monitor);
+        let result = store.sync(&mut Bad(chain.clone(), mode), 10);
+        let status = store.status().unwrap();
+        match expected {
+            Some(expected) => {
+                assert_eq!(
+                    std::mem::discriminant(&result.unwrap_err()),
+                    std::mem::discriminant(&expected),
+                    "{mode}"
+                );
+                assert!(!status.complete_at_checkpoint, "{mode}");
+                assert_eq!(status.checkpoint, None, "{mode}");
+            }
+            // Positive control: the honest chain completes at its tip.
+            None => {
+                assert!(result.unwrap().complete_at_checkpoint);
+                assert!(status.complete_at_checkpoint);
+                assert_eq!(status.checkpoint, Some(tip));
+            }
+        }
     }
 }

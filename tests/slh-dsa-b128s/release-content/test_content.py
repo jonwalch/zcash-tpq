@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -41,15 +42,26 @@ class PathTests(unittest.TestCase):
         names = {"crates/pq-cli/Cargo.toml"}
         self.assertEqual(audit.manifest_paths("crates/pq-wallet/Cargo.toml", manifest, names, added=True),
                          "zakura-pq-wallet")
-        for bad in ("../../../outside", "/private/outside"):
-            with self.assertRaises(ValueError):
+        for bad, reason in (("../../../outside", "dependency escapes checkout"),
+                            ("/private/outside", "absolute or invalid dependency path")):
+            with self.subTest(path=bad), self.assertRaisesRegex(ValueError, reason):
                 audit.manifest_paths("crates/pq-wallet/Cargo.toml", manifest.replace(b"../pq-cli", bad.encode()), names, added=True)
 
     def test_dev_build_target_and_patch_sources_are_checked(self):
-        for section in ("dev-dependencies", "build-dependencies", "target.'cfg(unix)'.dependencies", "patch.crates-io"):
-            data = ('[' + section + ']\nx={path="../../outside"}\n').encode()
-            with self.subTest(section=section), self.assertRaises(ValueError):
-                audit.manifest_paths("crates/wallet/Cargo.toml", data, {}, added=False)
+        dependency = "untracked/outside dependency: outside/Cargo.toml"
+        for section, untracked in (("dev-dependencies", dependency), ("build-dependencies", dependency),
+                                   ("target.'cfg(unix)'.dependencies", dependency),
+                                   ("patch.crates-io", "manifest path missing: outside")):
+            def data(value):
+                return ('[' + section + ']\nx={path="' + value + '"}\n').encode()
+            with self.subTest(section=section):
+                audit.manifest_paths("crates/wallet/Cargo.toml", data("../pq-cli"), {"crates/pq-cli/Cargo.toml"}, added=False)
+                # From crates/wallet, ../../outside stays in the checkout but is untracked.
+                with self.assertRaisesRegex(ValueError, re.escape(untracked) + "$"):
+                    audit.manifest_paths("crates/wallet/Cargo.toml", data("../../outside"), {}, added=False)
+                with self.assertRaisesRegex(ValueError, "dependency escapes checkout"):
+                    audit.manifest_paths("crates/wallet/Cargo.toml", data("../../../outside"), {}, added=False,
+                                         require_tracked_paths=False)
         with self.assertRaisesRegex(ValueError, "research Git"):
             audit.manifest_paths("Cargo.toml", b'[patch.crates-io]\nx={git="https://github.com/jonwalch/zcash-transparent-pq"}', {}, added=False)
 
@@ -168,7 +180,8 @@ class GitTests(unittest.TestCase):
             fixture.run("checkout", "-q", main)
             fixture.run("merge", "-q", "--no-ff", "private-import", "-m", "merge clean-looking side branch")
             fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
-            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), self.assertRaises(ValueError):
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), \
+                    self.assertRaisesRegex(ValueError, "private/generated path: experiments/notes.txt"):
                 audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt", "experiments/notes.txt"})
 
     def test_second_parent_is_not_upstream_just_because_it_has_same_foundation(self):
@@ -181,9 +194,16 @@ class GitTests(unittest.TestCase):
             fixture.run("checkout", "-q", main)
             fixture.run("merge", "-q", "--no-ff", "unreviewed", "-m", "merge side branch")
             fixture.run("merge", "-q", "--no-ff", upstream, "-m", "refresh upstream")
-            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), \
-                    self.assertRaisesRegex(ValueError, "unreviewed historical path"):
-                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base):
+                with self.assertRaisesRegex(ValueError, "unreviewed historical path: unreviewed.txt"):
+                    audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+                # The side commit itself needs review, so only the merge's own
+                # exemption count shows whether its second parent was trusted.
+                result = audit.history(fixture.root, audit.tree(fixture.root, fixture.base),
+                                       {"product.txt", "unreviewed.txt"})
+            self.assertEqual(result["commits"], 4)
+            self.assertEqual(result["changed_paths"], 2)
+            self.assertEqual(result["inherited_merge_entries"], 1)
 
     def test_refresh_preserves_unselected_older_worker_and_rejects_its_deleted_notes(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -202,7 +222,8 @@ class GitTests(unittest.TestCase):
             (fixture.root / "experiments/notes.txt").unlink()
             fixture.commit("worker removes notes")
             fixture.run("checkout", "-q", main)
-            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), self.assertRaises(ValueError):
+            with patch.multiple(audit, UPSTREAM=upstream, FOUNDATION=fixture.base), \
+                    self.assertRaisesRegex(ValueError, "private/generated path: experiments/notes.txt"):
                 audit.other_ref_history(fixture.root)
             self.assertTrue(audit.ancestor(fixture.root, fixture.base, worker))
 
@@ -231,7 +252,8 @@ class GitTests(unittest.TestCase):
             fixture.commit("accidental private import")
             (fixture.root / "experiments/notes.txt").unlink()
             fixture.commit("delete notes")
-            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), self.assertRaises(ValueError):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), \
+                    self.assertRaisesRegex(ValueError, "private/generated path: experiments/notes.txt"):
                 audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"README.md", "experiments/notes.txt"})
 
     def test_foreign_root_merge_is_rejected_even_with_clean_current_tree(self):
@@ -269,13 +291,14 @@ class GitTests(unittest.TestCase):
                 self.assertEqual(audit.other_ref_history(fixture.root)["extra_product_commits"], 1)
             base = audit.tree(fixture.root, fixture.base)
             state = audit.tree(fixture.root, registration)
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "manifest path missing: tests/later.rs"):
                 audit.verify_paths(fixture.root, base, state, {"Cargo.toml"})
             fixture.run("checkout", "-q", "registration")
             fixture.write("Cargo.toml", '[[test]]\nname="public"\npath="../outside.rs"\n')
             fixture.commit("outside path remains forbidden historically")
             fixture.run("checkout", "-q", main)
-            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), self.assertRaises(ValueError):
+            with patch.multiple(audit, UPSTREAM=fixture.base, FOUNDATION=fixture.base), \
+                    self.assertRaisesRegex(ValueError, "dependency escapes checkout"):
                 audit.other_ref_history(fixture.root)
 
     def test_actual_archive_matches_tracked_bytes_and_preserves_upstream_symlink(self):
@@ -285,11 +308,29 @@ class GitTests(unittest.TestCase):
             fixture.commit("legitimate upstream alias")
             current = audit.tree(fixture.root, "HEAD")
             self.assertEqual(audit.archive(fixture.root, current)["files"], 2)
+            readme, alias = current["README.md"], current["alias.md"]
+            for reason, inventory in (
+                    ("archive omits tracked files", dict(current, **{"ghost.txt": readme})),
+                    ("archive path inventory", {"README.md": readme}),
+                    ("archive bytes differ", dict(current, **{"README.md": ("100644", "blob", alias[2])})),
+                    ("archive symlink", dict(current, **{"alias.md": ("120000", "blob", readme[2])})),
+                    ("archive member type", dict(current, **{"README.md": ("120000", "blob", readme[2])}))):
+                with self.subTest(reason=reason), self.assertRaisesRegex(ValueError, reason):
+                    audit.archive(fixture.root, inventory)
             audit.verify_paths(fixture.root, current, current, set())
+            with self.assertRaisesRegex(ValueError, "product symlink/submodule: alias.md"):
+                audit.verify_paths(fixture.root, current, current, {"alias.md"})
+            # An unchanged inherited symlink to an in-repo untracked path is
+            # caught only by the tracked-target check.
+            (fixture.root / "dangling.md").symlink_to("untracked.md")
+            fixture.commit("symlink to untracked path")
+            with self.assertRaisesRegex(ValueError, "symlink target outside tracked tree: dangling.md"):
+                audit.verify_paths(fixture.root, current, audit.tree(fixture.root, "HEAD"), set())
+            (fixture.root / "dangling.md").unlink()
             (fixture.root / "escaped").symlink_to("../outside")
             fixture.commit("external symlink")
-            with self.assertRaises(ValueError):
-                audit.verify_paths(fixture.root, current, audit.tree(fixture.root, "HEAD"), {"escaped"})
+            with self.assertRaisesRegex(ValueError, "dependency escapes checkout"):
+                audit.verify_paths(fixture.root, current, audit.tree(fixture.root, "HEAD"), set())
 
     def test_exact_ledger_rejects_missing_stale_and_unmapped_files(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -316,13 +357,18 @@ class GitTests(unittest.TestCase):
 
     def test_publication_gate_cannot_cover_only_one_step(self):
         current = {".github/workflows/release-binaries.yml": ("100644", "blob", "fake")}
-        condition = "        if: ${{ !inputs.stage_release_assets && (github.repository == 'zakura-core/zakura' || " + audit.PUBLICATION_GATE + ") }}\n"
-        text = "".join("      - name: " + step + "\n" + condition for step in ("Ensure release exists", "Upload assets to release"))
-        with patch.object(audit, "blob", return_value=text.encode()):
+        steps = ("Ensure release exists", "Upload assets to release")
+        def workflow(gated):
+            return "".join("      - name: " + step + "\n        if: ${{ !inputs.stage_release_assets && "
+                           "(github.repository == 'zakura-core/zakura' || "
+                           + (audit.PUBLICATION_GATE if step in gated else "true") + ") }}\n"
+                           for step in steps).encode()
+        with patch.object(audit, "blob", return_value=workflow(steps)):
             audit.publication_guard(Path("."), current)
-        changed = text.replace(audit.PUBLICATION_GATE, "true", 1)
-        with patch.object(audit, "blob", return_value=changed.encode()), self.assertRaises(ValueError):
-            audit.publication_guard(Path("."), current)
+        for step in steps:
+            with self.subTest(step=step), patch.object(audit, "blob", return_value=workflow(set(steps) - {step})), \
+                    self.assertRaisesRegex(ValueError, "publication condition changed: " + step + "$"):
+                audit.publication_guard(Path("."), current)
 
 
 if __name__ == "__main__":

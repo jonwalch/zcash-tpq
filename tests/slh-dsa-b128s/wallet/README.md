@@ -19,6 +19,9 @@ Each run checks 105 official BLAKE3 controls and recalculates all six keys and b
 It rejects eight signature mutations and two double-framing cases.
 `test_reference.py` separately checks RFC 5869's first test case, literal layout
 and bounds, seed ordering, entropy request count and Pure framing using mocks.
+It also checks the retained file against the receipt hash and recalculates its
+HKDF fields and exact signed messages offline. Signature checks still need the
+prepared reference.
 
 ```sh
 python3 -m unittest discover -s tests/slh-dsa-b128s/wallet -p 'test_*.py'
