@@ -86,8 +86,8 @@ impl SnapshotReceipt {
 }
 
 /// An unlocked restored root, its locked watcher, and explicit authority status.
-/// Observations remain cached until trusted-node synchronization; fresh issuance
-/// starts only after new enrollment and its covering durable backup.
+/// Unknown authority discards cached observations for a trusted-history rescan.
+/// Fresh issuance starts only after new enrollment and its covering durable backup.
 pub struct RestoredWallet {
     /// Root reconstructed from the authenticated encrypted backup.
     pub wallet: Wallet,
@@ -203,9 +203,10 @@ pub fn restore_inventory(
 
 /// Restore ONLY from the documented snapshot directory: exact `backup.tpq`,
 /// `receipt.json` and coherent `watch/` copy. Validation never authenticates a
-/// replacement snapshot's completeness. Unknown authority stays monitor-only,
-/// including after empty-mempool observations and restarts. Existing state is
-/// never overwritten. Known authority still requires trusted-node reconciliation.
+/// replacement snapshot's completeness. Unknown authority discards cached scan
+/// state and stays monitor-only, including after trusted-history synchronization
+/// and restarts. Existing state is never overwritten. Known authority retains
+/// cached observations but still requires trusted-node reconciliation.
 pub fn restore_operational_snapshot(
     source: &Path,
     password: &[u8],

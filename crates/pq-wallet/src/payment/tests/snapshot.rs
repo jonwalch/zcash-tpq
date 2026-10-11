@@ -247,6 +247,9 @@ fn operational_restore_preserves_signed_authority_and_unknown_mode_refuses_spend
     let signed = store
         .assemble_payment(wallet, &mut source, &proposal, &approved, &partials)
         .unwrap();
+    store.receive().unwrap();
+    let checkpoint = store.status().unwrap().checkpoint;
+    let coins = store.coins().to_vec();
     let backup = temp.path().join("keys.tpq");
     let password = b"public test password for signed recovery";
     wallet.save_backup(&backup, password).unwrap();
@@ -270,7 +273,28 @@ fn operational_restore_preserves_signed_authority_and_unknown_mode_refuses_spend
         unknown.watch.payments().unwrap()[0].signed_transaction_hex,
         Some(hex::encode(&signed))
     );
+    assert_eq!(unknown.watch.mode(), WatchMode::Monitor);
+    assert_ne!(
+        unknown.wallet.manifest().allocator_id,
+        wallet.manifest().allocator_id
+    );
+    assert_eq!(unknown.watch.receive_next(), wallet.manifest().receive_end);
+    assert_eq!(
+        unknown.watch.state.payments.change_next,
+        wallet.manifest().change_end
+    );
+    assert_eq!(unknown.watch.status().unwrap().checkpoint, None);
+    assert!(unknown.watch.coins().is_empty());
     assert!(!unknown.watch.status().unwrap().complete_at_checkpoint);
+    assert!(unknown
+        .watch
+        .journal_reserved(
+            proposal.points().unwrap()[0],
+            4,
+            None,
+            &mut crate::journal::ReadBudget::new(4096).unwrap()
+        )
+        .unwrap());
     assert!(
         unknown
             .watch
@@ -291,6 +315,29 @@ fn operational_restore_preserves_signed_authority_and_unknown_mode_refuses_spend
         Err(Error::MonitorOnly)
     ));
     assert!(source.sent.is_empty());
+    drop(unknown.watch);
+    let mut reopened = WatchStore::open(&temp.path().join("unknown/watch"), &profile()).unwrap();
+    assert_eq!(reopened.mode(), WatchMode::Monitor);
+    assert_eq!(reopened.receive_next(), wallet.manifest().receive_end);
+    assert_eq!(
+        reopened.state.payments.change_next,
+        wallet.manifest().change_end
+    );
+    assert_eq!(reopened.coins(), coins);
+    assert_eq!(reopened.payments().unwrap()[0].partials, partials);
+    assert_eq!(
+        reopened.payments().unwrap()[0].signed_transaction_hex,
+        Some(hex::encode(&signed))
+    );
+    assert!(reopened
+        .journal_reserved(
+            proposal.points().unwrap()[0],
+            4,
+            None,
+            &mut crate::journal::ReadBudget::new(4096).unwrap()
+        )
+        .unwrap());
+    assert!(matches!(reopened.receive(), Err(Error::MonitorOnly)));
     let restored_path = temp.path().join("known");
     let mut known = restore_operational_snapshot(
         &snapshot,
@@ -303,6 +350,19 @@ fn operational_restore_preserves_signed_authority_and_unknown_mode_refuses_spend
     )
     .unwrap();
     assert!(!known.watch.status().unwrap().complete_at_checkpoint);
+    assert_eq!(known.watch.status().unwrap().checkpoint, checkpoint);
+    assert_eq!(known.watch.coins(), coins);
+    assert_eq!(known.watch.mode(), WatchMode::Allocator);
+    assert_ne!(
+        known.wallet.manifest().allocator_id,
+        wallet.manifest().allocator_id
+    );
+    assert_eq!(known.watch.receive_next(), wallet.manifest().receive_end);
+    assert_eq!(
+        known.watch.state.payments.change_next,
+        wallet.manifest().change_end
+    );
+    assert!(matches!(known.watch.receive(), Err(Error::Exhausted)));
     assert_eq!(known.watch.payments().unwrap()[0].partials, partials);
     assert_eq!(
         known.watch.payments().unwrap()[0].signed_transaction_hex,
