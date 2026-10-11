@@ -45,6 +45,7 @@ The acceptance guide gives the build commands.
 | Interrupted wallet writes and node processes | [Wallet faults](fault-controls.md), [node crashes](crash-controls.md) |
 | Public test data and independent comparisons | [Fixtures](fixtures.md), [transaction schema](transaction-fixtures.md), [wallet interfaces](../../tests/slh-dsa-b128s/wallet/interfaces/README.md) |
 | Source, dependencies, and release contents | [Packaging](packaging.md), [dependency checks](../../tests/slh-dsa-b128s/dependencies/README.md) |
+| Changes included in the initial product import | [Initial import notes](initial-import/README.md) |
 
 ## Current limits
 

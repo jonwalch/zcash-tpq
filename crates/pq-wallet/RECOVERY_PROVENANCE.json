@@ -34,10 +34,10 @@
     },
     {
       "target": "src/watch.rs",
-      "target_sha256": "2deafda197bdef62cefa649936d65151fc813d29f5328df075ae9f5d370325d9",
+      "target_sha256": "0c20afaa5cc9b495f59ee5abb3c4e112c4e166fc9ed4f3e4700f02eba2e1799c",
       "source": "crates/pq-wallet/src/watch.rs",
       "source_sha256": "65ce0f0065a4bf0b6069b47678626d9a071a234e969cae116a40929e08f6457f",
-      "adaptation": "Preserved locked allocator/monitor, monotonic issuance and cached discovery; added explicit recovery inventory rotation hook that retains reservations and invalidates cached completeness; module registration and API documentation."
+      "adaptation": "Preserved locked allocator/monitor, monotonic issuance and cached discovery; added explicit recovery inventory rotation hook that retains reservations and invalidates cached completeness; module registration and API documentation. Added a crate-private fault_receive_with_hook wrapper under cfg(all(test, unix)) for receive-publication fault tests; operational receive behavior is unchanged."
     },
     {
       "target": "src/watch/tests.rs",
