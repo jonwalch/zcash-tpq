@@ -1,13 +1,14 @@
 # Validation evidence
 
 The repository records focused crypto, format, library, and mocked driver checks.
-Live node, wallet, terminal, proof-generation, crash, and performance tests still need human execution.
+Live node, wallet, terminal, proof-generation, crash, and performance tests remain pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).
 An implementation or a prepared command does not establish a test result.
 
 The [node matrix](../../tests/slh-dsa-b128s/evidence/node-matrix.json) tracks
 12 areas and 63 subcontrols.
 It links source locations and historical receipts.
-It separates missing test preparation from scenarios ready for human execution.
+It separates missing test preparation from scenarios ready to run after approval.
 A **receipt** records the inputs and outcome of one run.
 It applies only to the recorded source, binary, and configuration.
 
@@ -33,13 +34,13 @@ Retain every required subcontrol.
 | Mixed inputs | Both input orders, unsupported templates, activation/reorg cases | Prepared drivers are not live rejection evidence |
 | Accounting | 16/17 and 64/65 boundaries, atomic budgets, cancellation, no refunds | Live transaction/block limits are unexecuted |
 | Publication and mining | Verified identity, parent order, resource selection, shielded failures | Synthetic checks do not establish live proof rejection |
-| Builds and gates | Dependency isolation, configuration, default/enabled scenarios | Dedicated daemon builds and startup need human execution |
+| Builds and gates | Dependency isolation, configuration, default/enabled scenarios | Dedicated daemon builds and startup remain pending and require user approval for agent execution |
 | Lifecycle and history | Reset/cache behavior, restarts, rollback, replay, crash scenarios | No deterministic live queue-state or general database durability claim |
 | Compatibility | Default/enabled replay for classical and shielded-output transactions. Separate spend/anchor tests. | Spend lifecycle runs use enabled nodes. They are not a default/enabled comparison |
 
 The [acceptance guide](acceptance.md) supplies build commands and scenarios.
 Each version and funding profile needs a separate artifact directory.
-[AGENTS.md](../../AGENTS.md) reserves heavy tests for humans.
+[AGENTS.md](../../AGENTS.md) requires agents to obtain user approval before heavy tests.
 No performance workload is registered here.
 Resource measurements require functional acceptance first.
 

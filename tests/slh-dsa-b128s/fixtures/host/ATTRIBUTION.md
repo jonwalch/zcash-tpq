@@ -67,5 +67,6 @@ It adds output-only real proof/binding controls, with zero-valued Orchard output
 under inherited NU7 rules; no workload or benchmark machinery is imported.
 `controls.rs` exposes a separate shielded block operation while retaining the
 ordinary transparent-only operation. The independent synthetic shielded digest
-reference and original corpus remain unchanged. Proof generation and live node
-validation require human execution; source preparation is not acceptance.
+reference and original corpus remain unchanged. Agents must obtain user approval
+before proof generation and live node validation under [AGENTS.md](../../../../AGENTS.md).
+Source preparation is not acceptance.

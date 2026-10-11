@@ -5,7 +5,7 @@ prepares functional controls for [primitive observations](observations.md).
 Live execution and primitive-count results remain open.
 Offline tests use mocks and the real parser without a daemon, host, or signer.
 The [acceptance guide](acceptance.md) supplies matching builds.
-[AGENTS.md](../../AGENTS.md) reserves live execution for humans.
+[AGENTS.md](../../AGENTS.md) requires agents to obtain user approval before live execution.
 
 ## Human command
 

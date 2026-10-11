@@ -1,7 +1,7 @@
 # Compatibility and lifecycle tests
 
 `tests/slh-dsa-b128s/acceptance/lifecycle_controls.py` uses disposable nodes and public fixture keys.
-Execution is human-only under [AGENTS.md](../../AGENTS.md).
+Agents must obtain user approval before execution under [AGENTS.md](../../AGENTS.md).
 Prepared drivers and offline tests do not establish live acceptance.
 Receipts identify source, builds, binaries, configurations, and saved public artifacts.
 

@@ -35,14 +35,19 @@ Preserve assigned branches. The coordinator owns shared manifests, lockfiles,
 feature wiring and cross-lane integration; obtain ownership before editing a
 shared file. Use a separate working tree per worker.
 
-Heavy validation is human-only. Agents must not launch dedicated node/container
-builds, live node/Regtest drivers, wallet live payment/recovery/discovery or
-terminal backup suites, Docker restart/reorg suites, real shielded-proof fixture
-generation, profiling, large-context workloads or full performance matrices.
-This includes wrappers, background/delegated runs and manual CI dispatch/reruns.
-Record required human runs as pending. Existing automatic CI is exempt; do not
-change CI triggers to bypass this rule. Review inherited release/deployment
-automation before publishing to a new remote.
+Heavy validation requires explicit user approval before agent execution. When a
+task needs heavy validation, prepare the exact commands and scope, explain why
+the run is needed, and ask the user for approval. Wait for the answer before
+running it; do not silently skip the check. Approval already given in the
+conversation remains valid for the approved scope. Record runs that await
+approval or that the user declines as pending, with the reason.
+This applies to dedicated node/container builds, live node/Regtest drivers,
+wallet live payment/recovery/discovery or terminal backup suites, Docker
+restart/reorg suites, real shielded-proof fixture generation, profiling,
+large-context workloads and full performance matrices. It includes wrappers,
+background/delegated runs and manual CI dispatch/reruns.
+Existing automatic CI is exempt; do not change CI triggers to bypass this rule.
+Review inherited release/deployment automation before publishing to a new remote.
 
 Agents may run proportional focused Rust/library/crypto/corpus tests, mocked
 Python unit tests, dependency/provenance guards and bounded comparisons. For

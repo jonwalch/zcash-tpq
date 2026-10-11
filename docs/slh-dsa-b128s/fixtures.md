@@ -55,4 +55,5 @@ Independent checks recalculate digests, commitments, and hashes.
 Claimed fields cannot replace those calculations.
 The corpus covers v5/v6, selected policies, budget boundaries, canonical encoding,
 old-contract rejection, and mutations with identified failure stages.
-Live and performance acceptance remain separate human tests.
+Live and performance acceptance remain separate tests.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).

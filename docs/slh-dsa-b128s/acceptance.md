@@ -2,7 +2,10 @@
 
 These drivers prepare Regtest tests for the node, wallet, CLI, and recovery.
 **Live acceptance remains open.**
-[AGENTS.md](../../AGENTS.md) reserves the builds and live commands below for human execution.
+[AGENTS.md](../../AGENTS.md) requires agents to obtain user approval before the builds and live commands below.
+Agents must prepare the commands and scope, ask for approval, and wait for the answer.
+The existing `--human-run` flags and `human_run: true` fields remain required.
+Setting them does not replace user approval.
 Offline mocks check the drivers. They do not establish daemon execution or cryptographic independence.
 
 The drivers reuse pinned command flows, public classical signing, block construction,
@@ -22,7 +25,7 @@ The toolchain file selects the changing `stable` channel.
 The minimum Rust version is 1.97.
 Receipts record the actual compiler version.
 
-Run these builds as a human:
+Agents must obtain user approval before these builds:
 
 ```sh
 export SLH_ACCEPTANCE_ROOT=/absolute/private/slh-acceptance

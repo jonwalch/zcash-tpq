@@ -43,7 +43,7 @@ Use matching builds from clean, committed source under the [acceptance workflow]
 The optional host feature stays outside node and wallet runtime dependencies.
 It uses pinned workspace dependencies.
 Build `node-default`, `node-slh`, and `signer` as specified in that guide.
-Build the additional host as a human:
+Agents must obtain user approval before building the additional host under [AGENTS.md](../../AGENTS.md):
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/build.py --human-run --kind host-shielded \
@@ -141,7 +141,8 @@ Local receipts provide traceability, not hostile-host attestation.
 The tests observe functional rejection and absence.
 They do not expose internal success payloads, isolate workers, count primitive calls,
 prove queue completion, or measure performance.
-Proof generation, live cases, and binary compatibility still need human execution.
+Proof generation, live cases, and binary compatibility remain pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).
 
 ## Offline tests and attribution
 

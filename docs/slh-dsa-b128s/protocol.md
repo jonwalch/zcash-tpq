@@ -181,4 +181,5 @@ The wallet includes signing, the CLI, finite public inventories, encrypted backu
 The [wallet contract](wallet.md) specifies formats and limits.
 The [CLI guide](cli.md) lists commands.
 A key backup cannot reconstruct unknown signatures or payment history.
-Live node and wallet acceptance still require human execution.
+Live node and wallet acceptance remain pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).

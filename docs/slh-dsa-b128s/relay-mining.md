@@ -103,7 +103,8 @@ cargo test --locked -p zakura-rpc --lib --features experimental-slh-dsa-b128s sl
 cargo test --locked -p zakura-rpc --lib methods::types::get_block_template::zip317::tests
 ```
 
-Daemon storage tests are prepared but still need human compilation and execution.
+Daemon storage tests are prepared but compilation and execution remain pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).
 Live relay, mining, reset, and reorg tests also remain open under [AGENTS.md](../../AGENTS.md).
 
 ## Source attribution
