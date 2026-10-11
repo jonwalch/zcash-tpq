@@ -83,7 +83,7 @@ cargo test --locked -p zakura-consensus --lib --features slh-test-observer mempo
 ```
 
 These tests do not establish live acceptance.
-[AGENTS.md](../../AGENTS.md) reserves heavy tests for human execution.
+[AGENTS.md](../../AGENTS.md) requires agents to obtain user approval before heavy tests.
 The [source attribution](../../crates/zakura-consensus/SLH_ATTRIBUTION.md) records reused code.
 The [library receipt](receipts/consensus-library-2026-10-09.json) records source,
 lockfile, configuration, and test-binary hashes.

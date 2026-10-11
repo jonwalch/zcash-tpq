@@ -68,4 +68,5 @@ reference. This suite does not repeat their full matrices.
 A receipt identity binds bytes.
 It does not establish completeness, freshness, wallet ownership, chain validity, or retirement of another allocator. Funded independent
 quorums, actual trusted RPC/node acceptance and real terminal flows remain
-[human validation](../../../../docs/slh-dsa-b128s/acceptance.md) requirements.
+[live validation](../../../../docs/slh-dsa-b128s/acceptance.md) requirements.
+Agents must obtain user approval before these runs under [AGENTS.md](../../../../AGENTS.md).

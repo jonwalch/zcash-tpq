@@ -12,7 +12,7 @@ Write operations, formats, approval code, and operational signer entropy remain 
 ## Human commands
 
 Use clean, committed source and a new directory under a trusted, stable, private parent.
-Run these commands as a human under [AGENTS.md](../../AGENTS.md):
+Agents must obtain user approval before running these commands under [AGENTS.md](../../AGENTS.md):
 
 ```sh
 export SLH_FAULT_ROOT=/absolute/private/slh-wallet-faults

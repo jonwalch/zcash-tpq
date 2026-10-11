@@ -49,7 +49,7 @@ The preceding log bytes must stay unchanged.
 Replaced logs, partial lines, changed inputs, or failed shutdown prevent a complete capture.
 A complete capture alone does not prove event coverage or functional acceptance.
 
-Live capture still requires human execution under [AGENTS.md](../../AGENTS.md).
+Agents must obtain user approval before live capture under [AGENTS.md](../../AGENTS.md).
 It adds diagnostics to functional tests. It does not measure resources or change retries.
 
 ## Check a saved capture

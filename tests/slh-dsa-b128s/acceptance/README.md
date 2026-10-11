@@ -1,7 +1,9 @@
 # Human acceptance drivers
 
 The [acceptance guide](../../../docs/slh-dsa-b128s/acceptance.md) gives build commands and live scenarios.
-Builds and actual node, wallet, signing, recovery, and terminal runs are **human-only**.
+Agents must obtain **user approval** before builds and actual node, wallet, signing,
+recovery, and terminal runs under [AGENTS.md](../../../AGENTS.md).
+Prepare the commands and scope, ask for approval, and wait for the answer.
 Importing these modules starts no workload.
 Execution receipts start incomplete and retain failed attempts.
 Historical results keep their original identities.
