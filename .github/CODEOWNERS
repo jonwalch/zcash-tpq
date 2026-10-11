@@ -42,3 +42,6 @@
 
 # Unsafe Code
 # /crates/zakura-script/                          @ZcashFoundation/unsafe-rust-reviewers
+
+# Zcash-TPQ review ownership.
+* @jonwalch

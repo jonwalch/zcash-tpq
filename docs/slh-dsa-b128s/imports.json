@@ -2,6 +2,15 @@
   "files": [
     {
       "disposition": "upstream-modification",
+      "path": ".github/CODEOWNERS",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Designate @jonwalch as the code owner for all product files and review configuration while preserving inherited comments.",
+      "sha256": "48fbb6fe11382707c67d15d566580ea366f9939b53e3a9020b91b2cc4b8dc35b"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": ".github/workflows/release-binaries.yml",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
