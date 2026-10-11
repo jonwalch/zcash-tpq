@@ -926,7 +926,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "8daaa495418575ee542f8cf606346a66339b0af99435b811cab079245879948e"
+      "sha256": "fd6d09cc063aa83fd6990a4af6d8d805f8155e24e8dd82873bed639625d90a1e"
     },
     {
       "disposition": "adapted",
@@ -2000,147 +2000,12 @@
     },
     {
       "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-acceptance.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-identity-lint.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Move only the SLH identity stdout lint allowance onto the enclosing conditional; runtime tokens and inherited startup behavior are unchanged. Compiler regression checks cover the ignored macro attribute and narrow allowance.",
-      "sha256": "3cb2f3230f58820405721fe99dde325a0cb383c3c1b31ee4de539496d7aa6c10"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-orchard-output-padding.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Correct the fixture adaptation to reuse pinned Orchard v3 paired zero-value dummy padding under disabled cross-address transfers; preserve flags, anchors, two actions and Ironwood behavior, with causal actual-builder regression coverage. No upstream rule change.",
-      "sha256": "e3b6af43cd0e6d9517203ac7bd570dd87d33f47e07403f0f1bc7c1e646f455ac"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-primitive-observation.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim.",
-      "sha256": "c9905e6e01e627f96c2a5824cb52644de98ba2ed685d2d1eebbc1af3bf52c8bb"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-relay-mining.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "6aa18803bb39120f64743eaf8045411056491671ae2359c56e993c5bf5a0dfc8"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-runtime-identity.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "d1e1f92d4f7bac7ec0781a07ea25d66aaad3ad8a8e440a2631a649fedc6e08e0"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-sapling-rpc-root.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Reuse pinned Zakura Sapling RPC display-order conversion at the fixture history and finalization metadata boundary; preserve canonical witness/tree/path equality and action-pool encodings. Causal regressions reject internal-order RPC roots and changed transaction anchors; no inherited RPC or consensus change.",
-      "sha256": "fb7e4e7f7d79e6f80f9f0d7654127c0c86520cac4b33c8b88edfe704ff410a4d"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-shielded-controls.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
-      "sha256": "a8a3b8ef63059eab6a7acdee2958f0c4ad3ccd780fcbabe80cdc5a675ee1087e"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-transparent-controls.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
-      "sha256": "7fc28f13f5333c54845250f82a0e5bc98406c87d3ef33faabd464bfda1366d16"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-wallet-cli.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "25faf41719c48078f222d29469e4a9130e4980342002926d3c99e3c7b8a5f4de"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-wallet-fault-controls.md",
-      "provenance": [
-        "tests/slh-dsa-b128s/acceptance/sources.json"
-      ],
-      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
-      "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-wallet-foundation.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "5aec5e0d8ab840956a989a252861b7cb64fd1d689eb816b9fa2e5f700a4091de"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-wallet-interface-comparisons.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "46e6bd37004fec65ce81dbd766eea51c4c7ad5b22527063f258c326e3336a477"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/slh-wallet-recovery.md",
-      "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
-      ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "bf80820597b1ee0a899e9ba28818c3dea235aa5d5d1f4f67d910b0ba92f6262a"
-    },
-    {
-      "disposition": "new",
       "path": "docs/slh-dsa-b128s/README.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "8b0ed6094359e9d6e77615bc58fb5c731df0289dcfa5b6e1961f0120e614c826"
+      "sha256": "bfa018d5cbfa633b211985acd6f25cebe8a4bab8161d958367a89d6c3978131d"
     },
     {
       "disposition": "new",
@@ -2204,6 +2069,150 @@
       ],
       "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
       "sha256": "60141cf252bc905450189d8b96e90ae8ee670fec5251c0f81786f72db2e5efaa"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/README.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Index the preserved initial product change notes separately from numbered future pull-request changelog fragments.",
+      "sha256": "999e102a7ee27acb0f6a2bf14fa00be8ca478cb67f3b36c0db93884c47ca2d46"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-acceptance.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-identity-lint.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Move only the SLH identity stdout lint allowance onto the enclosing conditional; runtime tokens and inherited startup behavior are unchanged. Compiler regression checks cover the ignored macro attribute and narrow allowance. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "3cb2f3230f58820405721fe99dde325a0cb383c3c1b31ee4de539496d7aa6c10"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-orchard-output-padding.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Correct the fixture adaptation to reuse pinned Orchard v3 paired zero-value dummy padding under disabled cross-address transfers; preserve flags, anchors, two actions and Ironwood behavior, with causal actual-builder regression coverage. No upstream rule change. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "e3b6af43cd0e6d9517203ac7bd570dd87d33f47e07403f0f1bc7c1e646f455ac"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-primitive-observation.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "c9905e6e01e627f96c2a5824cb52644de98ba2ed685d2d1eebbc1af3bf52c8bb"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-relay-mining.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "6aa18803bb39120f64743eaf8045411056491671ae2359c56e993c5bf5a0dfc8"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-runtime-identity.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "d1e1f92d4f7bac7ec0781a07ea25d66aaad3ad8a8e440a2631a649fedc6e08e0"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-sapling-rpc-root.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse pinned Zakura Sapling RPC display-order conversion at the fixture history and finalization metadata boundary; preserve canonical witness/tree/path equality and action-pool encodings. Causal regressions reject internal-order RPC roots and changed transaction anchors; no inherited RPC or consensus change. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "fb7e4e7f7d79e6f80f9f0d7654127c0c86520cac4b33c8b88edfe704ff410a4d"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-shielded-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "a8a3b8ef63059eab6a7acdee2958f0c4ad3ccd780fcbabe80cdc5a675ee1087e"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-shielded-spends.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-transparent-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "7fc28f13f5333c54845250f82a0e5bc98406c87d3ef33faabd464bfda1366d16"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-wallet-cli.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "25faf41719c48078f222d29469e4a9130e4980342002926d3c99e3c7b8a5f4de"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-wallet-fault-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-wallet-foundation.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "5aec5e0d8ab840956a989a252861b7cb64fd1d689eb816b9fa2e5f700a4091de"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-wallet-interface-comparisons.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "46e6bd37004fec65ce81dbd766eea51c4c7ad5b22527063f258c326e3336a477"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-wallet-recovery.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Preserve the initial-import note byte-for-byte outside the numbered PR fragment directory.",
+      "sha256": "bf80820597b1ee0a899e9ba28818c3dea235aa5d5d1f4f67d910b0ba92f6262a"
     },
     {
       "disposition": "new",
@@ -2540,7 +2549,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "0c76898696f760ff6c675b77417e5dfd6126046819c60fa3ce05c9054faaec27"
+      "sha256": "deccc14c54700d47f118c99b0fb1448a796080532851fab423ad6c92802a8a1e"
     },
     {
       "disposition": "new",
@@ -3874,7 +3883,68 @@
   ],
   "foundation": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
   "foundation_tree": "ac1ad49b6262001d4c07b7458f9638859cc75c36",
-  "history_only": [],
+  "history_only": [
+    {
+      "path": "docs/changelog/unreleased/slh-acceptance.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-acceptance.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-identity-lint.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-identity-lint.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-orchard-output-padding.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-orchard-output-padding.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-primitive-observation.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-primitive-observation.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-relay-mining.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-relay-mining.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-runtime-identity.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-runtime-identity.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-sapling-rpc-root.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-sapling-rpc-root.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-shielded-controls.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-shielded-controls.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-shielded-spends.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-transparent-controls.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-transparent-controls.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-wallet-cli.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-wallet-cli.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-wallet-fault-controls.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-wallet-fault-controls.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-wallet-foundation.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-wallet-foundation.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-wallet-interface-comparisons.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-wallet-interface-comparisons.md; the old path remains in the initial product commit."
+    },
+    {
+      "path": "docs/changelog/unreleased/slh-wallet-recovery.md",
+      "reason": "Initial product change note moved byte-for-byte to docs/slh-dsa-b128s/initial-import/slh-wallet-recovery.md; the old path remains in the initial product commit."
+    }
+  ],
   "note": "Every current post-upstream changed file is listed. Per-module provenance supplies exact source mappings. This inventory omits its own hash, which the selected Git tree binds. Refresh only after reviewing intended changes.",
   "schema_version": 2,
   "upstream": "a29a968575e37223cbeb8ac7a5d57aba135fb93a",

@@ -418,42 +418,42 @@
     {
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
       "classification": "new or amended product documentation",
-      "path": "docs/changelog/unreleased/slh-acceptance.md",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-acceptance.md",
       "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f",
       "sources": []
     },
     {
       "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
-      "path": "docs/changelog/unreleased/slh-primitive-observation.md",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-primitive-observation.md",
       "sha256": "c9905e6e01e627f96c2a5824cb52644de98ba2ed685d2d1eebbc1af3bf52c8bb",
       "sources": []
     },
     {
       "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
       "classification": "narrow attributed shielded fixture and acceptance preparation",
-      "path": "docs/changelog/unreleased/slh-shielded-controls.md",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-shielded-controls.md",
       "sha256": "a8a3b8ef63059eab6a7acdee2958f0c4ad3ccd780fcbabe80cdc5a675ee1087e",
       "sources": []
     },
     {
       "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
       "classification": "narrow attributed shielded spend fixture preparation",
-      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-shielded-spends.md",
       "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80",
       "sources": []
     },
     {
       "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
       "classification": "narrow attributed transparent control adapter or focused regression",
-      "path": "docs/changelog/unreleased/slh-transparent-controls.md",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-transparent-controls.md",
       "sha256": "7fc28f13f5333c54845250f82a0e5bc98406c87d3ef33faabd464bfda1366d16",
       "sources": []
     },
     {
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
       "classification": "new bounded orchestration, mock validation or public guide",
-      "path": "docs/changelog/unreleased/slh-wallet-fault-controls.md",
+      "path": "docs/slh-dsa-b128s/initial-import/slh-wallet-fault-controls.md",
       "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b",
       "sources": []
     },
