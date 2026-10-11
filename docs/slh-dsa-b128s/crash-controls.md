@@ -67,7 +67,7 @@ This driver adds no node failpoints.
 ## Human command
 
 Create matching builds from clean, committed source with the [acceptance workflow](acceptance.md).
-Run the driver as a human under [AGENTS.md](../../AGENTS.md):
+Agents must obtain user approval before running the driver under [AGENTS.md](../../AGENTS.md):
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/crash_controls.py --human-run \
@@ -83,7 +83,7 @@ python3 tests/slh-dsa-b128s/acceptance/crash_controls.py --human-run \
 Repeat with version `6` and a new directory.
 Use the `node-slh`, `host`, and `signer` recipes.
 No shielded proving parameters are needed.
-`--human-run` is required. It does not authorize agent execution.
+`--human-run` is required. It does not replace user approval for agent execution.
 The driver starts no Cargo or Docker command.
 Existing helpers bound startup, backup, and RPC waits.
 Kill waits have a ten-second limit.

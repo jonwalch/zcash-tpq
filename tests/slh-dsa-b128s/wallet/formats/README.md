@@ -67,7 +67,8 @@ Rust tests compare receivers, inventories, proposals, partials, sizes, and encry
 Recovery tests reconstruct local keys, check stored objects, and preserve exact authorization bytes.
 Separate [interface tests](../interfaces/README.md) cover CLI enrollment and snapshot receipt identities.
 Fake-loopback tests cover RPC transport and trusted block resolution.
-Live CLI/RPC acceptance still needs human execution.
+Live CLI/RPC acceptance remains pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../../../AGENTS.md).
 The [recovery contract](../../../../docs/slh-dsa-b128s/recovery.md), not this oracle, defines operational snapshots.
 
 The existing file/journal design has these acceptance requirements:
@@ -81,6 +82,6 @@ The existing file/journal design has these acceptance requirements:
 | Self-consistent replacement or unknown newer authority | Keep authority restricted. An empty mempool does not establish completeness. |
 | Cached observations or unavailable/pruned history | Synchronize with a trusted node. Uncertainty cannot become a current zero balance. |
 
-Focused product library tests cover these cases; separately evidenced human
+Focused product library tests cover these cases; separately evidenced
 live/terminal acceptance remains required. This format corpus alone proves
 neither durable recovery nor funded spending.

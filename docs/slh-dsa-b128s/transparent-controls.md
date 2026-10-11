@@ -2,7 +2,7 @@
 
 The [driver](../../tests/slh-dsa-b128s/acceptance/transparent_controls.py) prepares
 additional Regtest cases for SLH authorization.
-Live execution and signing are human-only under [AGENTS.md](../../AGENTS.md).
+Agents must obtain user approval before live execution and signing under [AGENTS.md](../../AGENTS.md).
 Offline mocks and host tests do not establish live acceptance.
 
 ## Human command

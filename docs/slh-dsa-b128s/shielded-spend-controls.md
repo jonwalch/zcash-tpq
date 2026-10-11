@@ -121,7 +121,7 @@ Each regular file has a 64 MiB limit and a recorded hash.
 The tool does not search for or download parameters.
 Fixture dependencies remain outside the node graph.
 
-Run as a human under [AGENTS.md](../../AGENTS.md):
+Agents must obtain user approval before this run under [AGENTS.md](../../AGENTS.md):
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py --human-run \

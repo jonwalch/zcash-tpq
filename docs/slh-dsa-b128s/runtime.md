@@ -97,7 +97,8 @@ cargo clippy --locked -p zakura-consensus --all-targets --features slh-test-obse
 The library test harness includes the standalone identity argument tests, including non-UTF-8 arguments.
 Normal Cargo and nextest discovery includes these tests even though the daemon binary disables its test harness.
 The complete daemon entry point, feature forwarding, startup refusal, and reset consumers have source review only at this checkpoint.
-A human must build the daemon and run live acceptance under [AGENTS.md](../../AGENTS.md).
+Daemon builds and live acceptance remain pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).
 
 ## Source attribution
 

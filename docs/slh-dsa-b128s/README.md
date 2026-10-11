@@ -27,7 +27,7 @@ Each reference suite lists its Python dependencies.
 `rust-toolchain.toml` selects the `stable` channel, which changes over time.
 Build receipts record the exact compiler version.
 The acceptance guide gives the build commands.
-[AGENTS.md](../../AGENTS.md) permits only humans to run dedicated node builds and live tests.
+[AGENTS.md](../../AGENTS.md) requires agents to obtain user approval before dedicated node builds and live tests.
 
 ## Reference and validation
 
@@ -50,7 +50,7 @@ The acceptance guide gives the build commands.
 ## Current limits
 
 The implementation includes focused tests and drivers for live scenarios.
-The live tests still need successful human runs with recorded source and binary hashes.
+The live tests still need successful runs with recorded source and binary hashes.
 This includes payment, recovery, terminal, proof-generation, and crash tests.
 No performance result establishes readiness for production.
 The limits of 16 checks per transaction and 64 checks per block are test settings.

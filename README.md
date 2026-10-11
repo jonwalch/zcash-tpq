@@ -7,7 +7,8 @@ encrypted backups, recovery, and watch-only monitoring.
 
 **SLH support is off by default and works only on Regtest**, a local test network.
 The node and wallet include the implementation. Live tests and performance tests
-still require human execution. The BLAKE3 construction is experimental.
+remain pending. Agents must obtain user approval before running them under
+[AGENTS.md](AGENTS.md). The BLAKE3 construction is experimental.
 It is not a FIPS 205 profile or a production release.
 
 ## Start here

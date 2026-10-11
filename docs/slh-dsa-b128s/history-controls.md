@@ -66,7 +66,7 @@ tip and raw blocks; the RPC chain-name string alone does not establish Regtest.
 ## Human command
 
 Create matching builds from clean, committed source.
-Run this command as a human:
+Agents must obtain user approval before running this command:
 
 ```sh
 python3 tests/slh-dsa-b128s/acceptance/history_controls.py --human-run \
@@ -83,7 +83,7 @@ python3 tests/slh-dsa-b128s/acceptance/history_controls.py --human-run \
 Repeat with version `6` and a new artifact directory.
 Use `--classical multisig` for the existing multisig funding profile when required.
 The command does not launch builds implicitly.
-[AGENTS.md](../../AGENTS.md) reserves builds and live tests for humans.
+[AGENTS.md](../../AGENTS.md) requires agents to obtain user approval before builds and live tests.
 
 Private roots, passwords, backups, snapshots, and transcripts stay in a temporary directory, which the driver deletes.
 The public receipt records failures, source/build hashes, funding, fault events, state hashes, and successful recovery.

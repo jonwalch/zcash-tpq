@@ -200,4 +200,5 @@ The snapshot does not introduce a new encrypted journal container.
 
 Focused tests cover derivation, signatures, formats, policy shapes, approvals, backups,
 corruption, stale snapshots, unknown authority, and dependency graphs.
-Live payments, funded recovery, and terminal tests still require human execution.
+Live payments, funded recovery, and terminal tests remain pending.
+Agents must obtain user approval before these runs under [AGENTS.md](../../AGENTS.md).
