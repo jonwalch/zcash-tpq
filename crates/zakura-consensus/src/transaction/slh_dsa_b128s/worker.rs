@@ -111,20 +111,36 @@ fn verify_inputs(
         return Ok(0);
     }
     let rejected = |input_index, error: zakura_pq_slh_dsa_b_exp::Rejection| {
+        if error == zakura_pq_slh_dsa_b_exp::Rejection::InputContext
+            && input_index >= transaction.inputs().len()
+        {
+            return TransactionError::ExperimentalSlhDsaB128sInputContext;
+        }
         TransactionError::ExperimentalSlhDsaB128s {
             input_index,
             reason: error.to_string(),
         }
     };
 
+    let missing_previous_outputs = transaction.inputs().len() != spent_outputs.len();
     let context = zakura_pq_slh_dsa_b_exp::TransactionContext::new(
         transaction,
         network,
         upgrade,
         spent_outputs,
     )
-    .map_err(|error| TransactionError::ExperimentalSlhDsaB128sContext {
-        reason: error.to_string(),
+    .map_err(|error| match error {
+        zakura_pq_slh_dsa_b_exp::Rejection::BackendUnavailable => {
+            TransactionError::ExperimentalSlhDsaB128sBackendUnavailable
+        }
+        zakura_pq_slh_dsa_b_exp::Rejection::InputContext if missing_previous_outputs => {
+            TransactionError::ExperimentalSlhDsaB128sInputContext
+        }
+        // Invalid versions, branches, and input shapes in the transaction itself
+        // still establish invalidity; only local context/capability failures retry.
+        _ => TransactionError::ExperimentalSlhDsaB128sContext {
+            reason: error.to_string(),
+        },
     })?;
     let identity = observation.map(|_| {
         let (txid, auth_digest) = transaction.txid_and_auth_digest();

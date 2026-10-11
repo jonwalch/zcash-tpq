@@ -132,6 +132,100 @@ fn worker(
 }
 
 #[test]
+fn slh_worker_local_context_failures_preserve_budgets_and_retry() {
+    use zakura_header_chain::{BodyVerificationClass, TransientBodyFailureKind};
+
+    let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    for version in [5, 6] {
+        let fixture = fixture(version, "1of1");
+        for (previous, indexes) in [
+            (Arc::new(vec![]), vec![0]),
+            (Arc::new(vec![fixture.previous[0].clone(); 2]), vec![0]),
+            (fixture.previous.clone(), vec![1]),
+        ] {
+            let budget = SlhDsaB128sBlockBudget::new(limits);
+            let error = verify_experimental_slh_dsa_b128s_inputs(
+                &fixture.transaction,
+                NetworkDomain::Regtest,
+                NetworkUpgrade::Nu7,
+                previous,
+                &indexes,
+                SlhDsaB128sTransactionBudget::new(limits, Some(budget.clone())),
+            )
+            .unwrap_err();
+            assert_eq!(error, TransactionError::ExperimentalSlhDsaB128sInputContext);
+            assert_eq!(
+                error.body_verification_class(),
+                BodyVerificationClass::Retryable(TransientBodyFailureKind::MissingContext)
+            );
+            assert_eq!(error.mempool_misbehavior_score(), 0);
+            assert_eq!(budget.remaining(), 64);
+        }
+    }
+}
+
+#[test]
+fn slh_worker_invalid_transaction_context_and_encoding_remain_consensus_invalid() {
+    use zakura_header_chain::BodyVerificationClass;
+
+    let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    let genesis =
+        Block::zcash_deserialize(&zakura_test::vectors::BLOCK_MAINNET_GENESIS_BYTES[..]).unwrap();
+    for version in [5, 6] {
+        for (case, reason) in [
+            ("version", "transaction_version"),
+            ("branch", "consensus_branch"),
+            ("coinbase", "input_context"),
+            ("empty", "input_context"),
+            ("encoding", "encoding"),
+        ] {
+            let mut fixture = fixture(version, "1of1");
+            let mut upgrade = NetworkUpgrade::Nu7;
+            match case {
+                "version" => upgrade = NetworkUpgrade::Genesis,
+                "branch" => upgrade = NetworkUpgrade::Nu6_3,
+                "coinbase" => {
+                    fixture.transaction.inputs_mut()[0] =
+                        genesis.transactions[0].inputs()[0].clone();
+                }
+                "empty" => {
+                    fixture.transaction.inputs_mut().clear();
+                    fixture.previous = Arc::new(vec![]);
+                }
+                "encoding" => {
+                    install(&mut fixture.transaction, 0, transparent::Script::new(&[]));
+                }
+                _ => unreachable!(),
+            }
+            let budget = SlhDsaB128sBlockBudget::new(limits);
+            let error = verify_experimental_slh_dsa_b128s_inputs(
+                &fixture.transaction,
+                NetworkDomain::Regtest,
+                upgrade,
+                fixture.previous,
+                &[0],
+                SlhDsaB128sTransactionBudget::new(limits, Some(budget.clone())),
+            )
+            .unwrap_err();
+            let expected = if case == "encoding" {
+                rejected(0, Rejection::Encoding)
+            } else {
+                TransactionError::ExperimentalSlhDsaB128sContext {
+                    reason: reason.to_owned(),
+                }
+            };
+            assert_eq!(error, expected, "v{version}/{case}");
+            assert!(matches!(
+                error.body_verification_class(),
+                BodyVerificationClass::ConsensusInvalid(_)
+            ));
+            assert_eq!(error.mempool_misbehavior_score(), 100);
+            assert_eq!(budget.remaining(), 64);
+        }
+    }
+}
+
+#[test]
 fn slh_worker_real_signatures_and_exact_transaction_block_boundaries() {
     let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
     for version in [5, 6] {

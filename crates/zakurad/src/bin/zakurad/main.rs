@@ -2,6 +2,8 @@
 
 use zakurad::application::{boot, APPLICATION};
 
+mod slh_identity_args;
+
 #[cfg(all(target_os = "linux", target_env = "gnu"))]
 const GLIBC_MALLOC_ARENA_MAX: i32 = 16;
 
@@ -30,10 +32,7 @@ fn main() {
         clippy::print_stdout,
         reason = "the standalone identity command returns its JSON response on stdout"
     )]
-    if std::env::args()
-        .skip(1)
-        .eq(["--slh-dsa-b128s-verifier-identity"])
-    {
+    if slh_identity_args::is_identity_command(std::env::args_os().skip(1)) {
         println!(
             "{}",
             serde_json::to_string(
