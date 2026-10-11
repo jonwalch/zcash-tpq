@@ -1,0 +1,5 @@
+This crate reuses Transparent PQ prototype wallet CLI source by Jon Walch and
+contributors at revision da638d4045074f7957aec3fb3fb018bd66b96d05,
+https://github.com/jonwalch/zcash-transparent-pq, under MIT OR Apache-2.0.
+See ../pq-wallet/CLI_RPC_PROVENANCE.json for exact source and target mappings.
+The clean product includes no runtime dependency on that research repository.

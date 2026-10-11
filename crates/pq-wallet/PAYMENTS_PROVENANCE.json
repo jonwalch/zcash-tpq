@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
+  "source_revision": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+  "license": "MIT OR Apache-2.0",
+  "files": [
+    {
+      "target": "src/journal/mod.rs",
+      "target_sha256": "7a010ede9240fe28d0043c8007eb57c2dc7c61ea0ff59f4f2ead9de72f24b5c1",
+      "source": "crates/pq-wallet/src/journal/mod.rs",
+      "source_sha256": "7a010ede9240fe28d0043c8007eb57c2dc7c61ea0ff59f4f2ead9de72f24b5c1",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/journal/object.rs",
+      "target_sha256": "5adf7dd539c3826f2f71493ca6f72a26fec74ce78d6208d36dfab53ede600c98",
+      "source": "crates/pq-wallet/src/journal/object.rs",
+      "source_sha256": "5adf7dd539c3826f2f71493ca6f72a26fec74ce78d6208d36dfab53ede600c98",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/journal/store.rs",
+      "target_sha256": "16a5382049d1b7be777cd94f1d3b9f8e0329ad15f9a0bc14f8267df34d1f162c",
+      "source": "crates/pq-wallet/src/journal/store.rs",
+      "source_sha256": "2d7cf8ff355316b47b10dd3c965a7d7493c755b51d322954bb6f92c11e46520d",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/journal/tests.rs",
+      "target_sha256": "c69757d33e19bf8a2be1280f90272c0c10ccd062f96056488d5c702bb772dd24",
+      "source": "crates/pq-wallet/src/journal/tests.rs",
+      "source_sha256": "191f940ddecc013e2856f8ad1fb513e71abfb6e5ddaa5f2e39882e2e3c8400ef",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation. Public format capability fixture is explicitly structural, not a claim of valid signatures for its synthetic transaction; independent real crypto fixture coverage remains separate."
+    },
+    {
+      "target": "src/journal/tree.rs",
+      "target_sha256": "3eeb59d8da9672e5bea142bc7e97be976f69eb8e3156be557eaa98c4e511026b",
+      "source": "crates/pq-wallet/src/journal/tree.rs",
+      "source_sha256": "9f44f19b435647c46216a2fe821812de1fda7eb825a5559c405d90f4c563904b",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/approval.rs",
+      "target_sha256": "f7d5c60f49e1aaf2c83b7bd78094d0f96f4f94b718c39f647e83f306c13a65a0",
+      "source": "crates/pq-wallet/src/payment/approval.rs",
+      "source_sha256": "f7d5c60f49e1aaf2c83b7bd78094d0f96f4f94b718c39f647e83f306c13a65a0",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/payment/change.rs",
+      "target_sha256": "c47a1b8759edae26fe21e375025c6afcb6573c701905f4357fd3f6226ef1931a",
+      "source": "crates/pq-wallet/src/payment/change.rs",
+      "source_sha256": "00eb8beb3ad582d1413cd9b85bb2a097fe58c20cb5494d86002f614d6aeac3f8",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/mod.rs",
+      "target_sha256": "7ef514ccc80eba9610771f9fa0ca4ba1de1a2170cbc0d453c2e842a461b3a642",
+      "source": "crates/pq-wallet/src/payment/mod.rs",
+      "source_sha256": "898ce4453e58719cfbb48ca783f66f255e34d07ef065f33d80bf6fc060d2d002",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/proposal.rs",
+      "target_sha256": "0b8287b5aff2fd9782617b97aa760a35fa71aa3be145829a4628961f1427c448",
+      "source": "crates/pq-wallet/src/payment/proposal.rs",
+      "source_sha256": "e6467ca58f676ae5445f3f8bbd5bbd00ac5373f7803ead3c98695ea5129ef26e",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/review.rs",
+      "target_sha256": "e18ae2bc64efb1f399ff261da884e8446c18efb4abbfe8c77cc041f01a405f61",
+      "source": "crates/pq-wallet/src/payment/review.rs",
+      "source_sha256": "4bb1bb23dc129c61290560b53cbfd8a0354abee78675acc1a799f2afcc83c9bd",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/store.rs",
+      "target_sha256": "a56ab6905cfc3f76a3aae450634ffb2d6ae0da3c5a35c8477f03680cba3714ef",
+      "source": "crates/pq-wallet/src/payment/store.rs",
+      "source_sha256": "ffb9dff2fc6a5b48ee21e392238cad5c6aca2be80071c64f9afef9fc0a58a9af",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation. Production signing obtains entropy only through Wallet::sign_input; private cfg(test) fault checkpoint discards supplied bytes and never replaces signer randomness. Duplicate input/signer slots reject before primitive verification."
+    },
+    {
+      "target": "src/payment/tests/approval.rs",
+      "target_sha256": "87b04f7006750bc9197ae297f20e216bc80c5f55d03a980ece7e5958f91bb55b",
+      "source": "crates/pq-wallet/src/payment/tests/approval.rs",
+      "source_sha256": "0b4b4ea1ac2490883c955f4e1b441ca5374193f899306609b0378f1e305417a5",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/archive.rs",
+      "target_sha256": "349f620099f54b6ffc8e202926df4426fe8c5476cb0a2a7d14f5224a1fa748bd",
+      "source": "crates/pq-wallet/src/payment/tests/archive.rs",
+      "source_sha256": "349f620099f54b6ffc8e202926df4426fe8c5476cb0a2a7d14f5224a1fa748bd",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/payment/tests/capacity.rs",
+      "target_sha256": "ccc060204f9c0ce5a868357e7be95a79b1181689a31c76a3ce3c45c287e64662",
+      "source": "crates/pq-wallet/src/payment/tests/capacity.rs",
+      "source_sha256": "9ff38a0de1f97e6fae429bc6b14f37c3b972c2b118a92ed2bafe3cb27ac35bcc",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/change.rs",
+      "target_sha256": "8f5daa8f08c8d3a64000173747e9b4cbf710c8ffb7cd0790f1dba0741330d079",
+      "source": "crates/pq-wallet/src/payment/tests/change.rs",
+      "source_sha256": "7478d5d0792d4efca86e680f3115a8d9b01409641cbed5f513acbedb1080ef5d",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/counterexamples.rs",
+      "target_sha256": "0c85ed8f8f5c014db224910fd7da155737b3d1145320425ec998ce061ace1d23",
+      "source": "crates/pq-wallet/src/payment/tests/counterexamples.rs",
+      "source_sha256": "c2759ca1c3bb83b2050b81d8378ec4f3a525d8c50362c5f02b500ba0ac13bc7e",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/expiry.rs",
+      "target_sha256": "b4b2edd5d83bdc053b9afe553618c06343f02c2a1b65cbc0af43ad70fe095300",
+      "source": "crates/pq-wallet/src/payment/tests/expiry.rs",
+      "source_sha256": "b4b2edd5d83bdc053b9afe553618c06343f02c2a1b65cbc0af43ad70fe095300",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/payment/tests/fee_upgrade.rs",
+      "target_sha256": "f47273eade198aee664b56e4592e63996a9840a98c7f5bd0298f92da0adc723f",
+      "source": "crates/pq-wallet/src/payment/tests/fee_upgrade.rs",
+      "source_sha256": "a5432cec0a96c63260ee3c0a213f2ef626dee9d668b31ed2499a185a4dc6565a",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/formats.rs",
+      "target_sha256": "20d4f8c8d8831aeba752ac637e2d51ce68d334ba60a1d602ec6dfe0346764f2f",
+      "source": "crates/pq-wallet/src/payment/tests/formats.rs",
+      "source_sha256": "20d4f8c8d8831aeba752ac637e2d51ce68d334ba60a1d602ec6dfe0346764f2f",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/payment/tests/history.rs",
+      "target_sha256": "af5e3b1a9f7b3f7399bb250ddef60d35f612bbad5ad1207193a502251b32ef97",
+      "source": "crates/pq-wallet/src/payment/tests/history.rs",
+      "source_sha256": "af5e3b1a9f7b3f7399bb250ddef60d35f612bbad5ad1207193a502251b32ef97",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/payment/tests/hostile.rs",
+      "target_sha256": "89b747162c2110c852434d544b6ca0a4b5efd5f18ea295e2b6bb29480f969aa4",
+      "source": "crates/pq-wallet/src/payment/tests/hostile.rs",
+      "source_sha256": "1eaaf31a392ba357c346b7b7faaae7bb688d7b99ecf26800bc1ed50557acbd43",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/incoming.rs",
+      "target_sha256": "7621e534e138ac625258d5abe1d72f94695399e340f36aa76b7b902262eeec02",
+      "source": "crates/pq-wallet/src/payment/tests/incoming.rs",
+      "source_sha256": "b1f5423daf7f7ef5f8c30cc66845676274b34e382ff90da3d62b71519e58e137",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/profile_limits.rs",
+      "target_sha256": "aa07fb2c8780651d1a2543974d533d9d22675f61350d2b4a81d798d6fce54ddd",
+      "source": "crates/pq-wallet/src/payment/tests/profile_limits.rs",
+      "source_sha256": "80c680e8fa005b65083741afb3fd5a57531cea4133e20eb084b5137298e25092",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/sequences.rs",
+      "target_sha256": "c3d5efffe470411f98bfa95c28baa21301d86d48d40b6420c1ceb41a6144de6b",
+      "source": "crates/pq-wallet/src/payment/tests/sequences.rs",
+      "source_sha256": "6e4a81e1c7e69b10caeddf131af4acd0d815fc2d46bd86f3e0d441db0823457a",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/payment/tests/slh_capacity.rs",
+      "target_sha256": "9203a2043d6a65ab20b3ec09c5878f9c947660d5a262ec092c42ae54ee834423",
+      "classification": "new recovery boundary or conformance test",
+      "adaptation": "New bounded product comparisons against independent L1 size corpus, all policy-shape trusted approval and one real maximal authorization persistence control."
+    },
+    {
+      "target": "src/payment/tests/snapshot.rs",
+      "target_sha256": "53f329e7cc89b9cbb557f5bf3b8b6d57b672298249b47c8fd0eae31848445658",
+      "classification": "new recovery boundary or conformance test",
+      "adaptation": "New bounded coherent snapshot validation of existing readers, index references, alias/history/reservation cross-links, immutable predecessor chain and orphan quotas; no storage or cryptographic container change. Verify retained signatures, journal reservations, allocator rotation and retired issuance ranges across unknown-authority rescan/restart and known-authority cache reuse."
+    },
+    {
+      "target": "src/payment/tests.rs",
+      "target_sha256": "1d4acf95a8a0528459a48be530e4e94bebff6faf72b4ba0159f2261b88752bc7",
+      "source": "crates/pq-wallet/src/payment/tests.rs",
+      "source_sha256": "be4c20c034314be53009ed47a873fe4cb8281f64280a45e6d232b98cc2ba6f2b",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation. Donation selection fixtures retain the research boundary cases with independent SLH input sizes: one-input fee 21,600, two-input fee 42,800 and donated fee 43,199; runtime fee policy is unchanged."
+    },
+    {
+      "target": "src/watch/archive/commit.rs",
+      "target_sha256": "9c1f169bff075bf368aee8c4b9f64379fb8e63c04a1929bca65ffd37f80357af",
+      "source": "crates/pq-wallet/src/watch/archive/commit.rs",
+      "source_sha256": "9c1f169bff075bf368aee8c4b9f64379fb8e63c04a1929bca65ffd37f80357af",
+      "classification": "byte-identical reuse",
+      "adaptation": "Byte-identical reuse."
+    },
+    {
+      "target": "src/watch/archive/history.rs",
+      "target_sha256": "50e38ea537712dfa9f9f3ee014f2eb95dda8e0db45817b0931a78f3db82d9ef8",
+      "source": "crates/pq-wallet/src/watch/archive/history.rs",
+      "source_sha256": "f7638cbe9e8107074547dfc034b39caff17e336622d83a5b1cd103f0927d0c56",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    },
+    {
+      "target": "src/watch/archive/snapshot.rs",
+      "target_sha256": "f77eaff3a1453abcbf4dfa4767ca1dbc75e1b91a7682ccada7048f6cec24a6ca",
+      "classification": "new recovery boundary or conformance test",
+      "adaptation": "New bounded coherent snapshot validation of existing readers, index references, alias/history/reservation cross-links, immutable predecessor chain and orphan quotas; no storage or cryptographic container change."
+    },
+    {
+      "target": "src/watch/archive.rs",
+      "target_sha256": "69ecf5e45f7ff44a4245c266045bee4016e1fcbe8bf669d3f1a35df8de89a420",
+      "source": "crates/pq-wallet/src/watch/archive.rs",
+      "source_sha256": "fc000d682711bd5ba3d53bfce1fa4a0c56d12927f9490ca7b40ad37382ac8e49",
+      "classification": "necessary SLH adaptation",
+      "adaptation": "Retained source control flow/storage contracts; native SLH suite/types, frozen W0 byte/dust/fee fixture allowances, independent SLH public fixtures and target public API documentation."
+    }
+  ],
+  "proof_scope": "payment/approval.rs is byte-identical to the pinned source. Only its recorded existing pure approval/proposal-byte gate proof scope is retained. No new crypto, signing, persistence, recovery or target execution proof is claimed.",
+  "validation_scope": "Focused package tests and lints are recorded separately. Live node payments/recovery/terminal backup/profiling remain pending human execution. Historical matrices and independent primitive corpora are not silently regenerated."
+}

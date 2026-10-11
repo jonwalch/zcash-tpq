@@ -2,6 +2,8 @@
 
 use zakurad::application::{boot, APPLICATION};
 
+mod slh_identity_args;
+
 #[cfg(all(target_os = "linux", target_env = "gnu"))]
 const GLIBC_MALLOC_ARENA_MAX: i32 = 16;
 
@@ -26,6 +28,20 @@ fn limit_glibc_malloc_arenas() {
 
 /// Process entry point for `zakurad`
 fn main() {
+    #[allow(
+        clippy::print_stdout,
+        reason = "the standalone identity command returns its JSON response on stdout"
+    )]
+    if slh_identity_args::is_identity_command(std::env::args_os().skip(1)) {
+        println!(
+            "{}",
+            serde_json::to_string(
+                &zakura_consensus::experimental_slh_dsa_b128s_verifier_identity()
+            )
+            .expect("the verifier identity contains only JSON scalars")
+        );
+        return;
+    }
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     limit_glibc_malloc_arenas();
 

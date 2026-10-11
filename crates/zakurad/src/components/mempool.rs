@@ -424,7 +424,7 @@ impl Mempool {
             self.config.max_transaction_bytes,
         ));
         self.active_state = ActiveState::Enabled {
-            storage: storage::Storage::new(&self.config),
+            storage: storage::Storage::with_network(&self.config, self.chain_tip_change.network()),
             tx_downloads,
             pending_gossip_tx_ids: HashSet::new(),
             last_seen_tip_hash,

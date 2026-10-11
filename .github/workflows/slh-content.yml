@@ -1,0 +1,22 @@
+name: SLH source content
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  source-content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Bounded guard regressions
+        run: python3 -m unittest discover -s tests/slh-dsa-b128s/release-content -p 'test_*.py' -v
+      - name: Audit source, history, archive and publication boundaries
+        run: python3 tests/slh-dsa-b128s/release-content/check.py

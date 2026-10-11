@@ -1,0 +1,81 @@
+{
+  "adaptations": [
+    "f7-only receiver, descriptor and manifest identity; SLH key/policy domains",
+    "all 120 policies and 15 origin slots; 32-byte public key / 7856-byte signature partial",
+    "schema-bounded u64 canonical numbers and pre-decode ASCII/depth checks; password validation before injected KDF",
+    "W0 capacity and CompactSize ledger; separate unsigned v5/v6 proposal fixture encoding",
+    "no production calls, wallet file I/O or external research-checkout runtime dependency"
+  ],
+  "contract_inputs": [
+    {
+      "path": "docs/slh-dsa-b128s/wallet.md",
+      "sha256": "ddaef884e2767bed8838e062105fca41ec5fbf36c7e69def0c3fb453bc72bbaa"
+    },
+    {
+      "path": "docs/slh-dsa-b128s/protocol.md",
+      "sha256": "59705e55cfcc55bc39eca28de93bca0bae3b90573f250b3c5d9c79c9187c8968"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/vectors.json",
+      "sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd"
+    },
+    {
+      "path": "crates/zakura-chain/src/parameters/transaction.rs",
+      "sha256": "f0b3473484b99c45fd2b4d9dc66d47df07d8924f28bed95d429bd9ea2f0de59c"
+    }
+  ],
+  "format": "slh-wallet-format-reference-sources-v1",
+  "product_base": "9b461218dc9002681c296897a8f62095e7b4c8a7",
+  "reference_libraries": {
+    "canonical_json": "Python standard library json with independent strict byte checks",
+    "cryptography": "48.0.1",
+    "hashes": "Python standard library hashlib"
+  },
+  "scope": "Independent format/reference answers. H1 signing answers reused by hash, not rerun. Product comparison and operational/live recovery pending.",
+  "source": {
+    "files": [
+      {
+        "path": "tests/wallet-spec/reference.py",
+        "sha256": "fa36f3a30f3dc1591d6879391a76e4f168deb49b066e78aca5cb0fd026542a13",
+        "use": "adapted independent reference routines"
+      },
+      {
+        "path": "crates/pq-wallet/src/manifest.rs",
+        "sha256": "c434fe4fd72eea2aa8537c9af4569cfbf18fcf049fac2a3ea515f1e2771d6b32",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      },
+      {
+        "path": "crates/pq-wallet/src/canonical.rs",
+        "sha256": "049e5109d893275b1c10f23dde5ed0c65f2fbbd8db45a2e570777b5256322ce9",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      },
+      {
+        "path": "crates/pq-wallet/src/backup.rs",
+        "sha256": "46c7a84a8b3294d443618bda7d1d944af76c880aa2b74ee0104af66421e395dc",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      },
+      {
+        "path": "crates/pq-wallet/src/lib.rs",
+        "sha256": "e9ae41cd1373c212e84df85d5f8aa74f984f9060dee75a9e8042ded46f44d7a3",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      },
+      {
+        "path": "crates/pq-wallet/src/payment/proposal.rs",
+        "sha256": "e6467ca58f676ae5445f3f8bbd5bbd00ac5373f7803ead3c98695ea5129ef26e",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      },
+      {
+        "path": "LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      },
+      {
+        "path": "LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2",
+        "use": "schema/algorithm/license specification only; no production routines imported"
+      }
+    ],
+    "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+    "revision": "da638d4045074f7957aec3fb3fb018bd66b96d05"
+  }
+}

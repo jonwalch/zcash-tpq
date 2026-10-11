@@ -26,7 +26,7 @@ use zakura_chain::{
     },
     work::equihash::Solution,
 };
-use zakura_consensus::{error::TransactionError, MAX_BLOCK_SIGOPS};
+use zakura_consensus::{error::TransactionError, transaction::check, MAX_BLOCK_SIGOPS};
 use zakura_node_services::mempool::TransactionDependencies;
 
 use crate::methods::types::transaction::{CoinbaseResourceUsage, TransactionTemplate};
@@ -298,11 +298,15 @@ fn checked_add_transaction_weighted_random(
 /// Tracks the remaining capacity of a block template against every limit a
 /// candidate mempool transaction can exhaust: the ZIP-317 byte, sigop, and
 /// unpaid-action limits, and, once ZIP 218 is active, the per-pool shielded
-/// action limits and the global shielded budget.
+/// action limits and the global shielded budget, plus the active SLH allowance.
 ///
 /// The shielded fields start at [`u32::MAX`] while ZIP 218 is inactive, so the
 /// new limits have no effect on those templates.
+#[cfg_attr(test, derive(Clone, Debug, PartialEq))]
 struct BlockTemplateLimits {
+    network: Network,
+    height: Height,
+    remaining_slh_dsa_b128s_checks: u32,
     remaining_bytes: usize,
     remaining_sigops: u32,
     remaining_unpaid_actions: u32,
@@ -327,6 +331,13 @@ impl BlockTemplateLimits {
             .expect("block template byte reservation fits in memory");
 
         Self {
+            network: network.clone(),
+            height,
+            // Coinbase has no spent transparent outputs, so it consumes no SLH checks.
+            remaining_slh_dsa_b128s_checks: network
+                .experimental_slh_dsa_b128s_limits()
+                .filter(|_| network.is_experimental_slh_dsa_b128s_active(height))
+                .map_or(0, |limits| limits.block()),
             remaining_bytes: max_block_bytes
                 .checked_sub(reserved_block_bytes)
                 .expect("the coinbase and block overhead fit in a block"),
@@ -395,11 +406,29 @@ impl BlockTemplateLimits {
     /// the block verifier sums, so a template cannot exceed the ZIP 218 limits
     /// either.
     fn try_add(&mut self, tx: &VerifiedUnminedTx) -> bool {
+        let Ok(slh_checks) = tx.verified_slh_dsa_b128s_checks(&self.network, self.height) else {
+            return false;
+        };
+        // At active heights, neither missing metadata nor a parsed threshold
+        // alone is evidence of successful verification. Preserve the upstream
+        // path for inactive classical entries, whose native cost is zero.
+        if self
+            .network
+            .is_experimental_slh_dsa_b128s_active(self.height)
+            && check::mempool_standard_input_scripts_with_slh_dsa_b128s(
+                tx.transaction.transaction(),
+                &tx.spent_outputs,
+                true,
+            ) != Ok(slh_checks)
+        {
+            return false;
+        }
         let counts = tx.transaction.transaction().shielded_action_counts();
         let cost = counts.cost();
         let tx_block_sigops = tx.block_sigop_count();
 
-        if tx.transaction.size() > self.remaining_bytes
+        if slh_checks > self.remaining_slh_dsa_b128s_checks
+            || tx.transaction.size() > self.remaining_bytes
             || tx_block_sigops > self.remaining_sigops
             || tx.unpaid_actions > self.remaining_unpaid_actions
             || counts.orchard_actions > self.remaining_orchard_actions
@@ -411,6 +440,7 @@ impl BlockTemplateLimits {
             return false;
         }
 
+        self.remaining_slh_dsa_b128s_checks -= slh_checks;
         self.remaining_bytes -= tx.transaction.size();
         self.remaining_sigops -= tx_block_sigops;
         self.remaining_unpaid_actions -= tx.unpaid_actions;

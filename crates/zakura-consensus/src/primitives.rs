@@ -206,11 +206,12 @@ pub fn clear_shielded_verification_caches() {
 /// Fires off a task into the Rayon threadpool, awaits the result through a oneshot channel,
 /// then converts the error to a [`BoxError`].
 pub async fn spawn_fifo_and_convert<
+    T: 'static + Send,
     E: 'static + std::error::Error + Into<BoxError> + Sync + Send,
-    F: 'static + FnOnce() -> Result<(), E> + Send,
+    F: 'static + FnOnce() -> Result<T, E> + Send,
 >(
     f: F,
-) -> Result<(), BoxError> {
+) -> Result<T, BoxError> {
     spawn_fifo(f)
         .await
         .map_err(|_| {

@@ -1211,6 +1211,8 @@ impl ParametersBuilder {
             network_magic,
             genesis_hash,
             activation_heights,
+            experimental_slh_dsa_b128s_activation_height: None,
+            experimental_slh_dsa_b128s_limits: None,
             slow_start_interval,
             slow_start_shift: Height(slow_start_interval.0 / 2),
             funding_streams,
@@ -1331,6 +1333,36 @@ impl ParametersBuilder {
     }
 }
 
+/// Explicit experimental consensus limits, measured in SLH-DSA-B-128s signature checks.
+///
+/// There are no default limits. These do not account for legacy sigops, parsing,
+/// hashing, or shielded work, and are not production budget recommendations.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ExperimentalSlhDsaB128sLimits {
+    transaction: u32,
+    block: u32,
+}
+
+impl ExperimentalSlhDsaB128sLimits {
+    /// Require positive finite limits with a transaction fitting in a block.
+    pub fn new(transaction: u32, block: u32) -> Result<Self, ParametersBuilderError> {
+        if transaction == 0 || transaction > block {
+            return Err(ParametersBuilderError::InvalidExperimentalSlhDsaB128sLimits);
+        }
+        Ok(Self { transaction, block })
+    }
+
+    /// Maximum reserved SLH-DSA-B-128s checks in one transaction.
+    pub fn transaction(self) -> u32 {
+        self.transaction
+    }
+
+    /// Maximum reserved SLH-DSA-B-128s checks in one block.
+    pub fn block(self) -> u32 {
+        self.block
+    }
+}
+
 /// Checks that the trusted checkpoint list starts at genesis and covers blocks that
 /// cannot be verified semantically.
 fn check_checkpoint_coverage(network: &Network) -> Result<(), ParametersBuilderError> {
@@ -1349,6 +1381,15 @@ fn check_checkpoint_coverage(network: &Network) -> Result<(), ParametersBuilderE
 pub struct RegtestParameters {
     /// The configured network upgrade activation heights to use on Regtest
     pub activation_heights: ConfiguredActivationHeights,
+    /// Optional local SLH-DSA-B-128s activation height, independent of network upgrades.
+    ///
+    /// Disabled by default. Must be above genesis and every checkpoint, and strictly
+    /// after NU7. From this height, spends of exact `slh-dsa-b-128s-exp-v1` outputs go
+    /// to the experimental SLH-DSA-B-128s verifier; nodes built without that verifier
+    /// refuse to start. Changing it requires separate chain state.
+    pub experimental_slh_dsa_b128s_activation_height: Option<Height>,
+    /// Required exactly when SLH-DSA-B-128s activation is configured; never unlimited.
+    pub experimental_slh_dsa_b128s_limits: Option<ExperimentalSlhDsaB128sLimits>,
     /// Configured funding streams
     pub funding_streams: Option<Vec<ConfiguredFundingStreams>>,
     /// Expected one-time lockbox disbursement outputs in NU6.1 activation block coinbase for Regtest
@@ -1389,6 +1430,10 @@ pub struct Parameters {
     genesis_hash: block::Hash,
     /// The network upgrade activation heights for this network.
     activation_heights: BTreeMap<Height, NetworkUpgrade>,
+    /// Optional SLH-DSA-B-128s activation height, set only by the Regtest constructor.
+    experimental_slh_dsa_b128s_activation_height: Option<Height>,
+    /// SLH-DSA-B-128s budgets, present exactly when the SLH-DSA-B-128s activation height is.
+    experimental_slh_dsa_b128s_limits: Option<ExperimentalSlhDsaB128sLimits>,
     /// Slow start interval for this network
     slow_start_interval: Height,
     /// Slow start shift for this network, always half the slow start interval
@@ -1473,6 +1518,8 @@ impl Parameters {
     pub fn new_regtest(
         RegtestParameters {
             activation_heights,
+            experimental_slh_dsa_b128s_activation_height,
+            experimental_slh_dsa_b128s_limits,
             funding_streams,
             lockbox_disbursements,
             checkpoints,
@@ -1483,6 +1530,18 @@ impl Parameters {
             initial_nsm_value_balance,
         }: RegtestParameters,
     ) -> Result<Self, ParametersBuilderError> {
+        if experimental_slh_dsa_b128s_activation_height
+            .is_some_and(|height| height == Height::MIN || height > Height::MAX)
+        {
+            return Err(ParametersBuilderError::InvalidExperimentalSlhDsaB128sActivationHeight);
+        }
+
+        if experimental_slh_dsa_b128s_activation_height.is_some()
+            != experimental_slh_dsa_b128s_limits.is_some()
+        {
+            return Err(ParametersBuilderError::MissingExperimentalSlhDsaB128sLimits);
+        }
+
         let mut parameters = Self::build()
             .with_genesis_hash(REGTEST_GENESIS_HASH)?
             // This value is chosen to match zcashd, see: <https://github.com/zcash/zcash/blob/master/src/chainparams.cpp#L654>
@@ -1529,10 +1588,35 @@ impl Parameters {
         let parameters = Self {
             network_name: "Regtest".to_string(),
             network_magic: magics::REGTEST,
+            experimental_slh_dsa_b128s_activation_height,
+            experimental_slh_dsa_b128s_limits,
             ..parameters.finish()
         };
-        check_derived_nsm_seed_schedule(&Network::new_configured_testnet(parameters.clone()))?;
-        check_checkpoint_coverage(&Network::new_configured_testnet(parameters.clone()))?;
+        let network = Network::new_configured_testnet(parameters.clone());
+        let checkpoint_height = parameters
+            .checkpoints
+            .max_height()
+            .max(network.mandatory_checkpoint_height());
+        if let Some(activation_height) = experimental_slh_dsa_b128s_activation_height {
+            if checkpoint_height >= activation_height {
+                return Err(
+                    ParametersBuilderError::ExperimentalSlhDsaB128sCheckpointConflict {
+                        activation_height,
+                        checkpoint_height,
+                    },
+                );
+            }
+            let nu7_height = NetworkUpgrade::Nu7.activation_height(&network);
+            if !nu7_height.is_some_and(|nu7_height| nu7_height < activation_height) {
+                return Err(ParametersBuilderError::ExperimentalSlhDsaB128sBeforeNu7 {
+                    activation_height,
+                    nu7_height,
+                });
+            }
+        }
+        check_derived_nsm_seed_schedule(&network)?;
+        check_checkpoint_coverage(&network)?;
+
         Ok(parameters)
     }
 
@@ -1554,6 +1638,8 @@ impl Parameters {
             genesis_hash,
             // Activation heights are configurable on Regtest
             activation_heights: _,
+            experimental_slh_dsa_b128s_activation_height: _,
+            experimental_slh_dsa_b128s_limits: _,
             slow_start_interval,
             slow_start_shift,
             funding_streams: _,
@@ -1608,6 +1694,16 @@ impl Parameters {
     /// Returns the network upgrade activation heights
     pub fn activation_heights(&self) -> &BTreeMap<Height, NetworkUpgrade> {
         &self.activation_heights
+    }
+
+    /// Returns the optional Regtest-only experimental SLH-DSA-B-128s activation height.
+    pub fn experimental_slh_dsa_b128s_activation_height(&self) -> Option<Height> {
+        self.experimental_slh_dsa_b128s_activation_height
+    }
+
+    /// Explicit experimental SLH-DSA-B-128s limits, if SLH-DSA-B-128s activation is configured.
+    pub fn experimental_slh_dsa_b128s_limits(&self) -> Option<ExperimentalSlhDsaB128sLimits> {
+        self.experimental_slh_dsa_b128s_limits
     }
 
     /// Returns slow start interval for this network

@@ -1,4 +1,5 @@
 # Cargo files
+/.context/
 /coverage-target/
 /out/
 # Nix configs

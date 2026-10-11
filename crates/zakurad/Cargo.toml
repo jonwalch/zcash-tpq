@@ -70,6 +70,13 @@ features = [
 ]
 
 [features]
+# Experimental Regtest verifier and matching relay/mining resource accounting.
+# Configured startup is additionally gated by the complete runtime support signal.
+experimental-slh-dsa-b128s = [
+    "zakura-consensus/experimental-slh-dsa-b128s",
+    "zakura-rpc/experimental-slh-dsa-b128s",
+]
+
 # In release builds, don't compile debug logging code, to improve performance.
 default-release-binaries = ["release_max_level_info", "prometheus", "opentelemetry"]
 

@@ -1,0 +1,7 @@
+{
+  "material": "public-test-only",
+  "source_sha256": "1057dcc398933e29d9a3b3bd7c5735a98800331ad90455bba37d1cfd2e54ab82",
+  "seed": "e8ae0255e7e01b45be6ae7d269073dca51e6fa7d5268f18f6d0cc21219d7425ed22ddaa496f2cc25642f9d67c47843a9",
+  "secret_key": "e8ae0255e7e01b45be6ae7d269073dca51e6fa7d5268f18f6d0cc21219d7425ed22ddaa496f2cc25642f9d67c47843a9d14ab96a1ff2cdec664a5f39fa88b221",
+  "public_key": "d22ddaa496f2cc25642f9d67c47843a9d14ab96a1ff2cdec664a5f39fa88b221"
+}

@@ -1,0 +1,32 @@
+[package]
+name = "zakura-pq-slh-dsa-b-exp"
+version = "0.1.0"
+publish = false
+edition = "2021"
+rust-version = "1.97"
+description = "Experimental SLH-DSA-B-128s transparent authorization; Regtest only"
+license = "MIT OR Apache-2.0"
+
+[features]
+test-observer = []
+
+[dependencies]
+sha2 = "0.10"
+zakura-chain = { path = "../zakura-chain" }
+zakura-pq-tx-context = { path = "../pq-tx-context" }
+zakura-pq-slh-dsa-b-verify = { path = "../pq-slh-dsa-b-verify" }
+
+[dev-dependencies]
+zakura-pq-test-support = { path = "../pq-test-support" }
+hex = "0.4.3"
+serde_json = "1.0"
+zcash_primitives = { workspace = true, features = ["transparent-inputs"] }
+zcash_protocol = { workspace = true }
+zcash_transparent = { workspace = true }
+
+[[test]]
+name = "shielded_digest_controls"
+path = "../../tests/slh-dsa-b128s/shielded/controls.rs"
+
+[lints.rust]
+unsafe_code = "forbid"

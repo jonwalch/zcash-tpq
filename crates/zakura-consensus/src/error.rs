@@ -132,6 +132,35 @@ pub enum TransactionError {
     #[cfg_attr(any(test, feature = "proptest-impl"), proptest(skip))]
     Script(#[from] zakura_script::Error),
 
+    #[error("experimental SLH-DSA-B-128s authorization failed for transparent input {input_index}: {reason}")]
+    ExperimentalSlhDsaB128s { input_index: usize, reason: String },
+
+    #[error("experimental SLH-DSA-B-128s transaction context is invalid: {reason}")]
+    ExperimentalSlhDsaB128sContext { reason: String },
+
+    // These failures describe local verifier inputs/capabilities, not transaction validity.
+    #[error("experimental SLH-DSA-B-128s verification requires matching previous outputs and in-range input indices")]
+    ExperimentalSlhDsaB128sInputContext,
+
+    #[error("experimental SLH-DSA-B-128s verifier backend is unavailable")]
+    ExperimentalSlhDsaB128sBackendUnavailable,
+
+    #[error("experimental SLH-DSA-B-128s transaction exceeds its limit of {limit} SLH checks")]
+    ExperimentalSlhDsaB128sTransactionBudget { limit: u32 },
+
+    // A block-scoped failure, lifted to BlockError by the block verifier. This
+    // does not establish that the individual transaction is invalid.
+    #[error("experimental SLH-DSA-B-128s block exceeds its limit of {limit} SLH checks")]
+    ExperimentalSlhDsaB128sBlockBudget { limit: u32 },
+
+    #[error(
+        "experimental SLH-DSA-B-128s verification requires the configured block budget context"
+    )]
+    ExperimentalSlhDsaB128sBudgetContext,
+
+    #[error("active SLH transparent inputs cannot be mixed with other transparent input types")]
+    ExperimentalSlhDsaB128sMixedInputs,
+
     #[error("Sapling proof or signature verification failed")]
     SaplingVerificationFailed,
 
@@ -260,6 +289,12 @@ pub enum TransactionError {
 
     #[error("mempool transaction has non-standard transparent inputs")]
     NonStandardInputs,
+
+    #[error("mempool transaction output {output_index} uses SLH before activation")]
+    NonStandardSlhDsaB128sOutput { output_index: usize },
+
+    #[error("mempool transaction output {output_index} is below the SLH dust threshold")]
+    NonStandardSlhDsaB128sDust { output_index: usize },
 
     #[error("transaction uses an incorrect consensus branch id")]
     WrongConsensusBranchId,
@@ -456,6 +491,12 @@ impl TransactionError {
             Self::NoOutputs => consensus("transaction.no_outputs"),
             Self::BadBalance => consensus("transaction.bad_balance"),
             Self::Script(_) => consensus("transaction.script"),
+            Self::ExperimentalSlhDsaB128s { .. }
+            | Self::ExperimentalSlhDsaB128sContext { .. }
+            | Self::ExperimentalSlhDsaB128sMixedInputs
+            | Self::ExperimentalSlhDsaB128sTransactionBudget { .. } => {
+                consensus("transaction.experimental_slh_dsa_b128s")
+            }
             Self::SaplingVerificationFailed => consensus("transaction.sapling_verification"),
             Self::Halo2VerificationFailed => consensus("transaction.halo2_verification"),
             Self::SmallOrder => consensus("transaction.small_order"),
@@ -464,7 +505,10 @@ impl TransactionError {
             Self::Ed25519(_) => consensus("transaction.ed25519"),
             Self::RedJubjub(_) => consensus("transaction.redjubjub"),
             Self::RedPallas(_) => consensus("transaction.redpallas"),
-            Self::InternalDowncastError(_) => {
+            Self::InternalDowncastError(_)
+            | Self::ExperimentalSlhDsaB128sBackendUnavailable
+            | Self::ExperimentalSlhDsaB128sBudgetContext
+            | Self::ExperimentalSlhDsaB128sBlockBudget { .. } => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::VerifierUnavailable)
             }
             Self::BothVPubsNonZero => consensus("transaction.both_vpubs_nonzero"),
@@ -491,7 +535,7 @@ impl TransactionError {
             Self::OrchardHasEnableCrossAddress => {
                 consensus("transaction.orchard_enable_cross_address")
             }
-            Self::TransparentInputNotFound => {
+            Self::TransparentInputNotFound | Self::ExperimentalSlhDsaB128sInputContext => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::MissingContext)
             }
             Self::ValidateContextError(error) => error.body_verification_class(),
@@ -500,6 +544,8 @@ impl TransactionError {
             | Self::NonStandardScriptSigSize { .. }
             | Self::NonStandardScriptSigNotPushOnly { .. }
             | Self::NonStandardInputs
+            | Self::NonStandardSlhDsaB128sOutput { .. }
+            | Self::NonStandardSlhDsaB128sDust { .. }
             | Self::WrongConsensusBranchIdNu6_3GracePeriod => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::VerifierUnavailable)
             }
@@ -564,6 +610,10 @@ impl TransactionError {
             | NoOutputs
             | BadBalance
             | Script(_)
+            | ExperimentalSlhDsaB128s { .. }
+            | ExperimentalSlhDsaB128sContext { .. }
+            | ExperimentalSlhDsaB128sMixedInputs
+            | ExperimentalSlhDsaB128sTransactionBudget { .. }
             | SaplingVerificationFailed
             | Halo2VerificationFailed
             | SmallOrder
@@ -616,6 +666,62 @@ impl TransactionError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn slh_local_failures_retry_without_peer_penalties_through_wrappers() {
+        use zakura_header_chain::{BodyVerificationClass, TransientBodyFailureKind};
+
+        for (error, kind) in [
+            (
+                TransactionError::ExperimentalSlhDsaB128sInputContext,
+                TransientBodyFailureKind::MissingContext,
+            ),
+            (
+                TransactionError::ExperimentalSlhDsaB128sBackendUnavailable,
+                TransientBodyFailureKind::VerifierUnavailable,
+            ),
+        ] {
+            let expected = BodyVerificationClass::Retryable(kind);
+            assert_eq!(error.body_verification_class(), expected);
+            assert_eq!(error.mempool_misbehavior_score(), 0);
+            assert_eq!(TransactionError::from(BoxError::from(error.clone())), error);
+            assert_eq!(
+                BlockError::Transaction(error.clone()).misbehavior_score(),
+                0
+            );
+            let wrapper = crate::block::VerifyBlockError::Transaction(error);
+            assert_eq!(wrapper.body_verification_class(), expected);
+            let router = crate::RouterError::from(wrapper);
+            assert_eq!(router.body_verification_class(), expected);
+            assert_eq!(router.misbehavior_score(), 0);
+        }
+    }
+
+    #[test]
+    fn slh_invalid_transaction_context_and_authorization_keep_peer_penalties() {
+        use zakura_header_chain::{BodyRuleId, BodyVerificationClass};
+
+        for error in [
+            TransactionError::ExperimentalSlhDsaB128sContext {
+                reason: "input_context".to_owned(),
+            },
+            TransactionError::ExperimentalSlhDsaB128sContext {
+                reason: "consensus_branch".to_owned(),
+            },
+            TransactionError::ExperimentalSlhDsaB128s {
+                input_index: 0,
+                reason: "encoding".to_owned(),
+            },
+        ] {
+            assert_eq!(
+                error.body_verification_class(),
+                BodyVerificationClass::ConsensusInvalid(BodyRuleId::new(
+                    "transaction.experimental_slh_dsa_b128s"
+                ))
+            );
+            assert_eq!(error.mempool_misbehavior_score(), 100);
+        }
+    }
 
     #[test]
     fn boxed_signature_errors_are_preserved() {
@@ -754,6 +860,13 @@ pub enum BlockError {
         sigops: u32,
     },
 
+    #[error("experimental SLH-DSA-B-128s block {height:?} {hash:?} exceeds {limit} SLH checks")]
+    TooManyExperimentalSlhDsaB128sChecks {
+        height: zakura_chain::block::Height,
+        hash: zakura_chain::block::Hash,
+        limit: u32,
+    },
+
     #[error("summing miner fees for block {height:?} {hash:?} failed: {source:?}")]
     SummingMinerFees {
         height: zakura_chain::block::Height,
@@ -798,7 +911,8 @@ impl BlockError {
             | NoTransactions
             | BadMerkleRoot { .. }
             | WrongTransactionConsensusBranchId
-            | TooManyTransparentSignatureOperations { .. } => 100,
+            | TooManyTransparentSignatureOperations { .. }
+            | TooManyExperimentalSlhDsaB128sChecks { .. } => 100,
             Transaction(err) => err.mempool_misbehavior_score(),
             _other => 0,
         }

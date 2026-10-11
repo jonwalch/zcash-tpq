@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "construction": "SLH-DSA-BLAKE3-128s",
+  "algorithm_repository": "https://github.com/PQC-Suite-B/signatures",
+  "algorithm_revision": "b392fe82d2d9770142477a576a758a233888bc0a",
+  "algorithm_license": "MIT OR Apache-2.0",
+  "hash_dependency": {
+    "package": "blake3",
+    "version": "=1.8.5",
+    "default_features": false,
+    "features": [
+      "std"
+    ],
+    "rayon_requested": false
+  },
+  "files": [
+    {
+      "target": "src/address.rs",
+      "target_sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368",
+      "classification": "necessary SLH adaptation",
+      "sources": [
+        {
+          "path": "slh-dsa/src/address.rs",
+          "sha256": "b620899768627e910d98f787ffe5363da558c3b8e7e8fc3f1bddc7ed69356079"
+        }
+      ],
+      "adaptation": "Replace zerocopy and generic types with explicit full 32-byte big-endian encoding; retain typed address transitions and zero-clearing semantics; omit signing addresses."
+    },
+    {
+      "target": "src/hash.rs",
+      "target_sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356",
+      "classification": "necessary SLH adaptation",
+      "sources": [
+        {
+          "path": "slh-dsa/src/hashes/blake3.rs",
+          "sha256": "a3ad96163b2d01347ad7691a1cd7665daca6b2c98982e0848f17cdf740a52b54"
+        }
+      ],
+      "adaptation": "Specialize output lengths; replace unsafe coalescing and Rayon glue with safe streaming unkeyed concatenation; omit PRF signing roles; pin BLAKE3=1.8.5."
+    },
+    {
+      "target": "src/hypertree.rs",
+      "target_sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768",
+      "classification": "necessary SLH adaptation",
+      "sources": [
+        {
+          "path": "slh-dsa/src/fors.rs",
+          "sha256": "71940febfc87e14b90df75db34fc725f2f37d191f2e9262e970e7eb044a6c03f"
+        },
+        {
+          "path": "slh-dsa/src/wots.rs",
+          "sha256": "5048fed9ee1a3f5ae6e10fdcb4b548cec97443a85bb88b94d7ceabf252ac8e6e"
+        },
+        {
+          "path": "slh-dsa/src/xmss.rs",
+          "sha256": "c20501770a08fa75288f9fb9ba70f4b27bdc3bde0f8c4111274c8c4ccfb313d9"
+        },
+        {
+          "path": "slh-dsa/src/hypertree.rs",
+          "sha256": "3b8b9eb00f7b6a21b389395b46543ac14eae03375b42ac40d889c8fa4d6854b3"
+        }
+      ],
+      "adaptation": "Retain FORS/WOTS/XMSS/hypertree recovery loops with fixed 128s constants and borrowed signature sections; omit keygen/signing and generic RustCrypto APIs."
+    },
+    {
+      "target": "src/util.rs",
+      "target_sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa",
+      "classification": "necessary SLH adaptation",
+      "sources": [
+        {
+          "path": "slh-dsa/src/util.rs",
+          "sha256": "7551961599f509ba7052835b9c6b23aa9e26e1c983bdad81b52542058f08a1d2"
+        }
+      ],
+      "adaptation": "Specialize upstream base_2b and split_digest to reviewed profile; retain accumulator masking, 54-bit tree mask and 9-bit leaf mask."
+    },
+    {
+      "target": "src/lib.rs",
+      "target_sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954",
+      "classification": "necessary SLH adaptation",
+      "sources": [
+        {
+          "path": "slh-dsa/src/verifying_key.rs",
+          "sha256": "26f9ae71b3625a8cd46e3ed8e4b9284585109843130549c5c8024dbe4db4e249"
+        },
+        {
+          "path": "slh-dsa/src/signature_encoding.rs",
+          "sha256": "0e7c1d0c6d70c8da900e744c7faee8abd4e0b1afe852f9828c5ff1af1eec784e"
+        },
+        {
+          "path": "slh-dsa/src/hashes/blake3.rs",
+          "sha256": "a3ad96163b2d01347ad7691a1cd7665daca6b2c98982e0848f17cdf740a52b54"
+        }
+      ],
+      "adaptation": "Retain external Pure framing and verifier orchestration; add agreed input bounds/error types; borrow encoded signature rather than deserialize/copy; omit internal bypass/OID/PKCS8/RNG/profile APIs."
+    }
+  ],
+  "licenses": [
+    {
+      "path": "LICENSE-MIT",
+      "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    }
+  ],
+  "public_vectors": {
+    "path": "tests/data/pure-kats.json",
+    "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21",
+    "original_sha256": "1057dcc398933e29d9a3b3bd7c5735a98800331ad90455bba37d1cfd2e54ab82",
+    "projection": "Preserve id, public_key, signature, message and context byte-for-byte; omit public seed and signing-key fields.",
+    "expected_bytes_regenerated": false,
+    "independent_reference": {
+      "repository": "https://github.com/colinxu2020/slhdsa",
+      "revision": "588ea1028003bf5608a92bae1d8d76abaa7274a2",
+      "license": "LGPL-3.0-or-later",
+      "implementation_included": false
+    },
+    "independent_hash": {
+      "repository": "https://github.com/BLAKE3-team/BLAKE3",
+      "revision": "f55849f89cd85083c1c9daa2c5de20766f309c00",
+      "license": "Apache-2.0 OR CC0-1.0"
+    }
+  },
+  "hash_vector": {
+    "path": "test_vectors/test_vectors.json",
+    "sha256": "dcb91ea8accc77e6d6e632af7cdc1a99a9f3ae78cf648da595c7d064db32f624",
+    "projection": "First 64 bytes of length-zero unkeyed hash output; no expected-value regeneration."
+  },
+  "new_interface_behavior": [
+    "Bounded external Pure API and ordered typed input errors before hashing.",
+    "Dev-only bounded JSON adapter with strict fields, request and decoded-size bounds.",
+    "Regression controls reuse retained expected tuples and mutate public inputs; independent fresh cross-implementation execution is a separate gate."
+  ]
+}

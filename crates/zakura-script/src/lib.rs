@@ -132,6 +132,11 @@ impl CachedFfiTransaction {
         &self.all_previous_outputs
     }
 
+    /// Share the exact ordered previous-output allocation used by this context.
+    pub fn shared_previous_outputs(&self) -> Arc<Vec<transparent::Output>> {
+        self.all_previous_outputs.clone()
+    }
+
     /// Return the sighasher being used for this transaction.
     pub fn sighasher(&self) -> &SigHasher {
         &self.sighasher

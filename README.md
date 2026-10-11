@@ -1,177 +1,57 @@
-<p align="center">
-  <img width="500" height="133" src="https://zakura.com/assets/github/readme_banner.png" alt="Zakura banner">
-</p>
+# Zakura with experimental SLH-DSA-B-128s
 
-[![Unit Tests](https://github.com/zakura-core/zakura/actions/workflows/tests-unit.yml/badge.svg)](https://github.com/zakura-core/zakura/actions/workflows/tests-unit.yml)
-[![Lint](https://github.com/zakura-core/zakura/actions/workflows/lint.yml/badge.svg)](https://github.com/zakura-core/zakura/actions/workflows/lint.yml)
-[![codecov](https://codecov.io/gh/zakura-core/zakura/branch/main/graph/badge.svg)](https://codecov.io/gh/zakura-core/zakura)
-![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)
+This repository adds SLH-DSA-B-128s signatures for transparent funds to
+[Zakura](https://github.com/zakura-core/zakura), a Zcash node in Rust.
+It includes a command-line wallet, multisig policies through 15-of-15,
+encrypted backups, recovery, and watch-only monitoring.
 
-- [Getting Started](#getting-started)
-  - [Installer](#installer)
-  - [Docker](#docker)
-  - [Manual Install](#manual-install)
-- [Documentation](#documentation)
-- [User support](#user-support)
-- [Security](#security)
-- [License](#license)
+**SLH support is off by default and works only on Regtest**, a local test network.
+The node and wallet include the implementation. Live tests and performance tests
+remain pending. Agents must obtain user approval before running them under
+[AGENTS.md](AGENTS.md). The BLAKE3 construction is experimental.
+It is not a FIPS 205 profile or a production release.
 
----
+## Start here
 
-[**Zakura**](https://github.com/zakura-core/zakura/) is a consensus-compatible Zcash full node written in Rust, built for scale. Supporting payments at global scale requires on the order of 50k TPS, which translates to consensus processing at least 100 MB/s of block data. Today's chain peaks at 28 KB/s. With cryptographic optimizations to the Zcash protocol underway in [Project Tachyon](https://tachyon.z.cash/) and at [Valargroup](https://valargroup.dev), Zakura is the node implementation built to close that gap.
+The [SLH guide](docs/slh-dsa-b128s/README.md) contains these instructions:
 
-Zakura is forked from [Zebra](https://github.com/ZcashFoundation/zebra). This first release brings major improvements over existing Zcash node software:
+- [Configure a node](docs/slh-dsa-b128s/runtime.md).
+- [Use the wallet](docs/slh-dsa-b128s/cli.md).
+- [Save and restore backups](docs/slh-dsa-b128s/recovery.md).
+- [Build the software and run acceptance tests](docs/slh-dsa-b128s/acceptance.md).
+- [Check test coverage and open work](docs/slh-dsa-b128s/validation.md).
 
-- Performance: Blockchain sync is nearly 5× faster than Zebra. Block execution is notably faster than Zebra, especially on worst-case sandblast attacks.
-- Pruning and snapshots: Native block pruning with configurable retention lets you operate a full node with substantially less disk space. We also publish snapshots (~11 GB pruned) that let you bootstrap a node 680× faster than syncing over the standard P2P network. See the [snapshots page](https://zakura.com/snapshots/).
-- [zcashd compatibility](docs/zcashd-compat.md): A compatibility mode
-  reproduces the legacy zcashd RPC interface, so existing wallets and
-  integrations keep working.
-- Experimental P2P v2: We are building a new P2P transport layer for Zakura nodes, currently off by default on Mainnet. The goals are sub-500ms worst-case block propagation, mempool aggregation (used in Tachyon), sync at the speed of your bandwidth, and a future-proofed gossip protocol. The v2 stack has known DoS risks and is not yet production-hardened.
+Build from this checkout with the specified features.
+Upstream installers, packages, and releases do not contain this extension.
+The source repository is [jonwalch/zcash-tpq](https://github.com/jonwalch/zcash-tpq).
+Binary and package releases are not configured.
 
-## Getting Started
+## Technical documents
 
-There are several ways to install the node software: an interactive installer that downloads the binary, Docker, or building from source or crates.io.
+The [protocol](docs/slh-dsa-b128s/protocol.md) specifies signatures, transaction
+formats, and activation rules. The [wallet contract](docs/slh-dsa-b128s/wallet.md)
+specifies key derivation, payment approval, and storage limits.
+The [packaging guide](docs/slh-dsa-b128s/packaging.md) describes source attribution
+and checks before publication.
+The [writing guide](docs/slh-dsa-b128s/writing.md) describes the plain-English style and technical terms.
 
-### Installer
+The upstream base is Zakura commit `24a17b3f0e7d88513688d607054f018ab6f15af2`.
+Zakura derives from [Zebra](https://github.com/ZcashFoundation/zebra).
+The inherited documents remain in this repository.
+Their installation instructions and performance results apply to upstream releases.
+The [pinned upstream README](https://github.com/zakura-core/zakura/blob/24a17b3f0e7d88513688d607054f018ab6f15af2/README.md)
+contains the upstream project information.
 
-The simplest way to install Zakura on a new machine is using the interactive installer:
+## Security and licenses
 
-```console
-curl -fsSL https://zakura.com/install.sh | bash
-```
+Use disposable test funds and keys. The fixture keys are public.
+Independent security review and public-network activation remain open work.
+The [validation guide](docs/slh-dsa-b128s/validation.md) states the limits of the existing tests.
+The inherited [security policy](docs/security.md) applies to upstream Zakura.
+The SLH extension has no designated contact for security disclosures.
 
-The installer can set up either standard Zakura or its
-[zcashd-compatible variant](docs/zcashd-compat.md).
-
-### Docker
-
-You can run Zakura using our [Docker
-image](https://hub.docker.com/r/zakuracore/zakura/tags) or install it manually.
-The zcashd-compatible split-container mode uses the
-[zakuracore/zcashd:v1.2.0 image](https://hub.docker.com/r/zakuracore/zcashd/tags).
-
-This command will run our latest release and sync it to the tip:
-
-```sh
-docker run -d \
-  --name zakura \
-  -p 8233:8233 \
-  -v zakurad-cache:/home/zakura/.cache/zakura \
-  zakuracore/zakura:latest
-```
-
-The `-p 8233:8233` flag exposes the P2P port so other Zcash nodes can connect to
-yours, and `-v` persists the chain state across restarts (use port `18233` for
-Testnet). For more information, see the image's
-[Docker Hub page](https://hub.docker.com/r/zakuracore/zakura).
-
-### Manual Install
-
-Building Zakura requires [Rust](https://www.rust-lang.org/tools/install),
-[libclang](https://clang.llvm.org/doxygen/group__CINDEX.html), and a C++
-compiler. Below are quick summaries for installing these dependencies.
-
-[//]: # "The empty lines in the `summary` tag below are required for correct Markdown rendering."
-
-<details><summary>
-
-#### General Instructions for Installing Dependencies
-
-</summary>
-
-1. Install [`cargo` and `rustc`](https://www.rust-lang.org/tools/install).
-2. Install Zakura's build dependencies:
-   - **libclang**, which is a library that comes under various names, typically
-     `libclang`, `libclang-dev`, `llvm`, or `llvm-dev`;
-   - **clang** or another C++ compiler (`g++`, which is for all platforms, or
-     `Xcode`, which is for macOS);
-   - **[`protoc`](https://grpc.io/docs/protoc-installation/)** (optional).
-
-</details>
-
-[//]: # "The empty lines in the `summary` tag below are required for correct Markdown rendering."
-
-<details><summary>
-
-#### Dependencies on Arch Linux
-
-</summary>
-
-```sh
-sudo pacman -S rust clang protobuf
-```
-
-Note that the package `clang` includes `libclang` as well.
-
-</details>
-
-Once you have the dependencies in place, you can install Zakura with:
-
-```sh
-cargo install --locked zakura
-```
-
-Alternatively, you can install it from GitHub:
-
-```sh
-cargo install --git https://github.com/zakura-core/zakura --tag v1.6.1 zakura
-```
-
-Native x86-64 builds automatically use Pasta field assembly when the build
-CPU supports BMI2 and ADX. This selection happens at build time, so a local
-binary may not run on an older CPU. To build a binary for redistribution, use:
-
-```sh
-cargo build --locked --release --package zakura --features portable
-```
-
-Official release binaries and Docker runtime images enable `portable` and do
-not require BMI2 or ADX for Pasta arithmetic. This feature does not override
-custom compiler flags such as `-C target-cpu=native`; avoid CPU-specific flags
-when building for other machines. Default local builds keep automatic assembly
-selection, including with `--release`.
-
-You can start Zakura by running
-
-```sh
-zakurad start
-```
-
-Run `zakurad start --help` for optional features and configuration details.
-
-## Documentation
-
-The Zakura maintainers provide the following resources:
-
-- The [Zakura website](https://zakura.com/) for user guides and announcements.
-
-- The [documentation of the public
-  APIs](https://docs.rs/zakura/latest/zakurad/#zakura-crates) for the latest
-  releases of the individual Zakura crates.
-
-- The [documentation of the internal APIs](https://zakura-core.github.io/zakura/internal)
-  for the `main` branch of the whole Zakura monorepo.
-
-## User support
-
-If Zakura doesn't behave the way you expected, [open an
-issue](https://github.com/zakura-core/zakura/issues/new/choose). We regularly
-triage new issues and we will respond.
-
-If you want to chat with us, use the GitHub issues for now.
-
-## Security
-
-Zakura has a [responsible disclosure
-policy](docs/security.md), which
-we encourage security researchers to follow.
-
-## License
-
-Zakura is distributed under the terms of both the MIT license and the Apache
-License (Version 2.0). Some Zakura crates are distributed under the [MIT license
-only](LICENSE-MIT), because some of their code was originally from MIT-licensed
-projects. See each crate's directory for details.
-
-See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT).
+The repository retains source licenses and notices.
+Most Rust code uses [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE).
+Some components have different terms.
+The Python reference uses LGPL-3.0-or-later and is for tests only.
+Each component includes its license information.
