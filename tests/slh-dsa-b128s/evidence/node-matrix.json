@@ -15,7 +15,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/pq.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+      "sha256": "1000bb621b7552a056d1ab4ae3007d0727b7b7d7236775a2cb096f672dc1a760"
     },
     "binding": {
       "anchor": "v5_v6_message_layout_and_effect_context_binding",
@@ -29,14 +29,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "budgets": {
       "anchor": "slh_dsa_b128s_functional_profile_exact_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/pq.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+      "sha256": "1000bb621b7552a056d1ab4ae3007d0727b7b7d7236775a2cb096f672dc1a760"
     },
     "build-guard": {
       "anchor": "def check(",
@@ -50,7 +50,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "codec-caps": {
       "anchor": "caps_are_checked_before_records_and_sixteenth_record_before_its_body",
@@ -64,7 +64,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/pq.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+      "sha256": "1000bb621b7552a056d1ab4ae3007d0727b7b7d7236775a2cb096f672dc1a760"
     },
     "config": {
       "anchor": "experimental_slh_dsa_b128s_config_roundtrips_without_changing_defaults",
@@ -386,7 +386,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "max-wire": {
       "anchor": "maximum_input_uses_compact_size_five_and_signature_pushdata_two",
@@ -400,7 +400,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "namespace": {
       "anchor": "experimental_slh_dsa_b128s_state_and_backups_are_isolated_by_rules",
@@ -414,7 +414,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Library diagnostic/native observer agreement; no isolated RPC or daemon execution claim.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "observation-native": {
       "anchor": "signed_primitive_observation_counts_attempts_without_replacing_results",
@@ -442,7 +442,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "oracle-binding": {
       "anchor": "test_digest_binds_order_context_and_outputs_but_excludes_scriptsig",
@@ -505,7 +505,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "pure": {
       "anchor": "independent_pure_known_answers",
@@ -526,7 +526,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "regions": {
       "anchor": "every_signature_node_and_both_key_halves_are_bound",
@@ -540,7 +540,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "shapes": {
       "anchor": "all_120_policy_shapes_round_trip_and_match_record_boundaries",
@@ -715,14 +715,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "worker-order": {
       "anchor": "slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_failure",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     "wrong-profiles": {
       "anchor": "source_valid_sha2_and_shake_signatures_reject_at_crypto",

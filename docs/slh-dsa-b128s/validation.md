@@ -47,8 +47,9 @@ Resource measurements require functional acceptance first.
 
 Crypto and wallet tests use real signature verification, public retained vectors,
 and temporary storage. Signature rejection tests must first accept the unchanged
-input. The native and wallet suites corrupt signatures in each input, including
-the final signer of a 15-of-15 policy. Native assembly checks every signer as well.
+input. The native, consensus-worker, and wallet suites corrupt signatures in each
+input, including the final signer of a 15-of-15 policy. Native assembly checks
+every signer as well.
 These tests reuse the saved v5/v6 signatures; they need no new signing or node.
 
 Fixture builder tests use complete valid requests before changing one condition.

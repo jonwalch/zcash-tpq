@@ -93,7 +93,7 @@
       "target_path": "crates/zakurad/src/commands/start.rs"
     },
     {
-      "adaptation": "Retain generic atomic budget implementation; remove other suites; substitute explicit SLH limits/errors and frozen16/64 functional boundary controls.",
+      "adaptation": "Retain generic atomic budget implementation; remove other suites; substitute explicit SLH limits/errors and frozen16/64 functional boundary controls. Synchronize all sixteen reservation contenders before releasing the concurrent allowance test, so thread creation cannot serialize all reservations.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
       "source_path": "node/zakura/crates/zakura-consensus/src/transaction/pq.rs",
@@ -138,7 +138,7 @@
       "target_path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s/tests.rs"
     },
     {
-      "adaptation": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls.",
+      "adaptation": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls. Require real parallel-worker rejection for each separately corrupted signer in every input of the retained v5/v6 15-of-15 and 16-check fixtures, after accepting the unchanged fixtures; preserve complete reservation and no-refund checks.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "48ff42d0196079048f70ba6d74e0ab0463fe900e",
       "source_path": "node/zakura/crates/zakura-consensus/src/transaction/tests/pq/accounting.rs",

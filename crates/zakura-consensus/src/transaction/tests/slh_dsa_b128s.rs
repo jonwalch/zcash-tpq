@@ -257,6 +257,52 @@ fn slh_worker_real_signatures_and_exact_transaction_block_boundaries() {
 }
 
 #[test]
+fn slh_worker_requires_every_signer_of_every_input() {
+    let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    for version in [5, 6] {
+        for (case, expected_counts) in [("15of15", &[15][..]), ("16checks", &[15, 1][..])] {
+            let fixture = fixture(version, case);
+            assert_eq!(fixture.transaction.inputs().len(), expected_counts.len());
+            let total = expected_counts.iter().sum::<u32>();
+            let budget = SlhDsaB128sBlockBudget::new(limits);
+            assert_eq!(worker(&fixture, limits, budget.clone()), Ok(total));
+            assert_eq!(budget.remaining(), 64 - total);
+            for (input_index, count) in expected_counts.iter().enumerate() {
+                let transparent::Input::PrevOut { unlock_script, .. } =
+                    &fixture.transaction.inputs()[input_index]
+                else {
+                    panic!("public fixture spends transparent outputs")
+                };
+                let authorization = Authorization::decode(unlock_script.as_raw_bytes()).unwrap();
+                assert_eq!(
+                    authorization.records.len(),
+                    usize::try_from(*count).unwrap()
+                );
+                for record_index in 0..authorization.records.len() {
+                    let mut changed = fixture.clone();
+                    let mut authorization = authorization.clone();
+                    authorization.records[record_index].signature[100] ^= 1;
+                    install(
+                        &mut changed.transaction,
+                        input_index,
+                        transparent::Script::new(&authorization.encode()),
+                    );
+                    let budget = SlhDsaB128sBlockBudget::new(limits);
+                    assert_eq!(
+                        worker(&changed, limits, budget.clone()),
+                        Err(rejected(input_index, Rejection::Signature)),
+                        "v{version}-{case}, input {input_index}, signer {record_index}"
+                    );
+                    // Canonical inputs reserve all checks before parallel crypto.
+                    // A bad signature does not refund the attempt's allowance.
+                    assert_eq!(budget.remaining(), 64 - total);
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_failure() {
     let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
     for version in [5, 6] {

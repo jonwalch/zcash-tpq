@@ -1745,8 +1745,8 @@
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Retain generic atomic budget implementation; remove other suites; substitute explicit SLH limits/errors and frozen16/64 functional boundary controls.",
-      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+      "reason": "Retain generic atomic budget implementation; remove other suites; substitute explicit SLH limits/errors and frozen16/64 functional boundary controls. Synchronize all sixteen reservation contenders before releasing the concurrent allowance test, so thread creation cannot serialize all reservations.",
+      "sha256": "1000bb621b7552a056d1ab4ae3007d0727b7b7d7236775a2cb096f672dc1a760"
     },
     {
       "disposition": "new",
@@ -1795,8 +1795,8 @@
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls.",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
+      "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls. Require real parallel-worker rejection for each separately corrupted signer in every input of the retained v5/v6 15-of-15 and 16-check fixtures, after accepting the unchanged fixtures; preserve complete reservation and no-refund checks.",
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe"
     },
     {
       "disposition": "new",
@@ -2240,7 +2240,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "4865c8d8f636b1eaffd10517871ca121c5f71ae551c167c0c1040569719d5d4e"
+      "sha256": "cda1949b7c87d9f6f9961c414b47ed6a8115432d4dc855313c0b77b7e6cc4afa"
     },
     {
       "disposition": "new",
@@ -2370,7 +2370,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools. Document positive controls, per-signer and per-input checks, real fixture boundaries and the scope of external-boundary mocks.",
-      "sha256": "f0caa2a67d09d4a8a66cc5abc2238c11efe8f5f8d451315f4a78ae718bb4df51"
+      "sha256": "e5da2d74754370074eaea29729752c0725737a5769a2f7f32d2a703ce43be083"
     },
     {
       "disposition": "new",
@@ -2559,7 +2559,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "6da4ee31e5612571ff647cb8a2941399544b37b9235446c9833aac89e95c3da4"
+      "sha256": "a70d7fcb5bbc76c92abc3de919e79d85d9ff60f2e52bc67b0edb13c1dcee0094"
     },
     {
       "disposition": "new",
@@ -2811,7 +2811,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "a97b59a39780198b71922e37fc82d990276a438396a36c5d601db8abe998104a"
+      "sha256": "0004cdb0e8f09e629bf129ef465756c4571624607971beb4a3b0aa3b87d6f6cf"
     },
     {
       "disposition": "new",

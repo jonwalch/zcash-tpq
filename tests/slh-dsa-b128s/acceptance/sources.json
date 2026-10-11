@@ -409,10 +409,10 @@
       ]
     },
     {
-      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Add typed nonpunitive local context/backend failures and focused boundary controls; primitive observation behavior is unchanged. This source mapping does not renew historical daemon captures.",
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Add typed nonpunitive local context/backend failures and focused boundary controls; primitive observation behavior is unchanged. This source mapping does not renew historical daemon captures. Require real parallel-worker rejection for each separately corrupted signer in every input of the retained v5/v6 15-of-15 and 16-check fixtures, after accepting the unchanged fixtures; preserve complete reservation and no-refund checks.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
-      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1",
+      "sha256": "d69af93ae497ccbd38d80be3056601e457c14b466393f0396e5725ba0cf420fe",
       "sources": []
     },
     {
