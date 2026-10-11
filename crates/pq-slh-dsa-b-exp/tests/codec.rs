@@ -185,6 +185,24 @@ fn every_field_rejects_nonminimal_pushes_and_wrong_fixed_lengths() {
 }
 
 #[test]
+fn decoder_rejects_excess_records_with_valid_signer_indices() {
+    for participants in 2..=15 {
+        let complete = authorization(participants, participants).encode();
+        let records = &complete[..usize::from(participants) * RECORD_BYTES];
+        for threshold in 1..participants {
+            // Keep canonical records with distinct, ordered, in-range indices.
+            // Only their count differs from the descriptor's required threshold.
+            let encoded = with_descriptor(records, &policy(threshold, participants).descriptor());
+            assert_eq!(
+                Authorization::decode(&encoded),
+                Err(Rejection::SignatureCount),
+                "{participants} records for a {threshold}-of-{participants} policy"
+            );
+        }
+    }
+}
+
+#[test]
 fn descriptors_and_signer_order_are_rejected_without_normalizing() {
     let good = authorization(2, 3).encode();
     let mut duplicate = good.clone();

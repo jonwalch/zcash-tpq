@@ -18,6 +18,8 @@ The command prints one JSON object and exits before node initialization.
 It does not load configuration, start services, or execute cryptography.
 Both default and feature-enabled builds accept the command.
 Additional arguments select the ordinary CLI parser instead.
+Identity detection compares operating-system arguments without UTF-8 conversion.
+An unrelated non-UTF-8 argument reaches the ordinary parser without an identity-check panic.
 
 | Field | Meaning |
 | --- | --- |
@@ -90,7 +92,8 @@ cargo clippy --locked -p zakura-chain -p zakura-network -p zakura-state -p zakur
 cargo clippy --locked -p zakura-consensus --all-targets --features slh-test-observer -- -D warnings
 ```
 
-The daemon entry point, feature forwarding, startup refusal, and reset consumers have source review only at this checkpoint.
+The standalone identity argument predicate has isolated unit tests, including non-UTF-8 arguments.
+The complete daemon entry point, feature forwarding, startup refusal, and reset consumers have source review only at this checkpoint.
 A human must build the daemon and run live acceptance under [AGENTS.md](../../AGENTS.md).
 
 ## Source attribution
@@ -102,7 +105,7 @@ It uses the existing Serde dependencies and retains MIT/Apache-2.0 attribution.
 
 | Target | Research source at that revision | Adaptation |
 | --- | --- | --- |
-| `crates/zakurad/src/bin/zakurad/main.rs` | `node/zakura/crates/zakurad/src/bin/zakurad/main.rs` | Same exact-argument early-exit mechanism with the SLH identity facade |
+| `crates/zakurad/src/bin/zakurad/main.rs` and `slh_identity_args.rs` | `node/zakura/crates/zakurad/src/bin/zakurad/main.rs` | Exact-argument early exit with the SLH identity facade; extract the predicate for tests and compare OS arguments to preserve non-UTF-8 handling |
 | `crates/zakura-consensus/src/slh_identity.rs` and `lib.rs` | `node/zakura/crates/zakura-consensus/src/transaction/sqisign.rs` | Typed fixed-profile identity, no alternate backend/CPU switch, independent runtime availability |
 | `crates/zakurad/Cargo.toml` | `node/zakura/crates/zakurad/Cargo.toml` | Forward only the existing SLH consensus and mining features |
 | `crates/zakura-state/src/service/chain_tip/tests/vectors.rs` | `node/zakura/crates/zakura-state/src/service/chain_tip/tests/vectors.rs` | Extend the existing C1 mock-tip test with SLH/NU7 rollback, reactivation, same-height fork and coalescing cases |

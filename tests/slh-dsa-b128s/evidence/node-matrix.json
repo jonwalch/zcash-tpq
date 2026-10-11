@@ -29,7 +29,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "budgets": {
       "anchor": "slh_dsa_b128s_functional_profile_exact_boundaries",
@@ -50,14 +50,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "codec-caps": {
       "anchor": "caps_are_checked_before_records_and_sixteenth_record_before_its_body",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "concurrent": {
       "anchor": "slh_dsa_b128s_concurrent_reservations_never_overspend",
@@ -106,7 +106,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "framing": {
       "anchor": "message_context_and_single_pure_wrapper_are_bound",
@@ -379,28 +379,28 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "late-failure": {
       "anchor": "slh_accounting_waits_for_other_checks_and_never_refunds_cancelled_work",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "max-wire": {
       "anchor": "maximum_input_uses_compact_size_five_and_signature_pushdata_two",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "mixed-worker": {
       "anchor": "slh_dispatch_rejects_mixed_inputs_before_any_budget_or_authorization_work",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "namespace": {
       "anchor": "experimental_slh_dsa_b128s_state_and_backups_are_isolated_by_rules",
@@ -414,7 +414,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Library diagnostic/native observer agreement; no isolated RPC or daemon execution claim.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "observation-native": {
       "anchor": "signed_primitive_observation_counts_attempts_without_replacing_results",
@@ -435,14 +435,14 @@
       "kind": "bounded_tool_source",
       "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs",
       "scope": "Explicit Regtest fixed-primitive entry diagnostic source; no daemon capture result.",
-      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc"
+      "sha256": "2975d6989e1b49967700e249d4db65c380ff9e6a43e1afce820050477eb0290b"
     },
     "observer": {
       "anchor": "slh_real_primitive_entry_and_structural_zero_entry_controls",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "oracle-binding": {
       "anchor": "test_digest_binds_order_context_and_outputs_but_excludes_scriptsig",
@@ -463,7 +463,7 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "payload": {
       "anchor": "slh_accounting_binds_full_authorization_and_exact_payload_allocations",
@@ -505,7 +505,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "pure": {
       "anchor": "independent_pure_known_answers",
@@ -519,14 +519,14 @@
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "recognition": {
       "anchor": "slh_exact_recognition_ignores_created_outputs_and_native_looking_witnesses",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "regions": {
       "anchor": "every_signature_node_and_both_key_halves_are_bound",
@@ -540,14 +540,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "shapes": {
       "anchor": "all_120_policy_shapes_round_trip_and_match_record_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     "shielded-action-fields": {
       "anchor": "every_orchard_and_ironwood_effecting_field_is_committed",
@@ -715,14 +715,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "worker-order": {
       "anchor": "slh_worker_n1_verifies_reserved_prefix_before_later_structural_or_budget_failure",
       "kind": "bounded_test_source",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     "wrong-profiles": {
       "anchor": "source_valid_sha2_and_shake_signatures_reject_at_crypto",

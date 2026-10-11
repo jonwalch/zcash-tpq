@@ -25,6 +25,8 @@ contains only trusted policy binding, message access and verified assembly.
 
 Canonical codec tests adapt the source module’s regression cases. Context
 tests reuse the separately attributed neutral `pq-test-support` recipes.
+The excess-record regression is an added boundary check: canonical ordered
+records within the participant limit must still match the threshold exactly.
 SHA-256 commitment answers were computed independently with Python `hashlib`
 and literal protocol bytes. Independent signed-transaction corpus validation
 is an additional required check, not supplied by these structural tests.

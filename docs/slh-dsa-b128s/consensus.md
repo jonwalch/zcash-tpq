@@ -48,6 +48,11 @@ Forward tips within the same rules era retain the existing mempool freshness rul
 Block allowance exhaustion is a retryable transaction-attempt error with peer score zero.
 The block verifier converts it to a block rejection.
 It does not make the individual transaction permanently invalid.
+Missing local previous-output context or an unavailable verifier backend also
+returns a retryable error with peer score zero.
+Invalid transaction versions, branches, input shapes, and authorizations still
+receive the existing consensus-invalid classification.
+Inactive SLH dispatch leaves input-context checking to the classical path.
 Active SLH blocks bypass prepared-candidate cache lookup and insertion.
 Mempool resets discard stored, pending, and completed work before verification under the new tip.
 
@@ -61,6 +66,7 @@ They cover these cases:
 - Real primitive entry and structural rejection before cryptography.
 - Counts after full success, zero counts for funding, and metadata freshness.
 - Both paths that bypass the cache.
+- Local context and backend failures through transaction, block, and router errors.
 
 Generic late-failure tests use the same result merge as shielded checks.
 They do not establish acceptance of new shielded proofs.

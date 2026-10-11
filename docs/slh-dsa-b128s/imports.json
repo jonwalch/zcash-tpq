@@ -268,7 +268,7 @@
         "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
       ],
       "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
-      "sha256": "68d48bd8a5df3c309b2a970cbea7e952565e7242f420acd9cb5a717baf0ec701"
+      "sha256": "f760f86af06493da7432ece1a4da110bb2d3790ab65e87805bcc63b16425997f"
     },
     {
       "disposition": "adapted",
@@ -384,8 +384,8 @@
       "provenance": [
         "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
       ],
-      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
-      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation. Add exact-threshold regression with canonical ordered excess records below the participant cap.",
+      "sha256": "46f0828a629bfe4ca17a3174a2c59553906340b86210e92f1d0e17ba13d460ff"
     },
     {
       "disposition": "adapted",
@@ -893,7 +893,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "a83ef17629a1d8beb17d83210807a2acbf9904f55069cb4077cfedf6daef4ed3"
+      "sha256": "487ff80b4249aa65df7e6683c2ee7fd58bede41989901a32351f968dd9c03b6d"
     },
     {
       "disposition": "attribution",
@@ -926,7 +926,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "fd6d09cc063aa83fd6990a4af6d8d805f8155e24e8dd82873bed639625d90a1e"
+      "sha256": "fcc4612ae99e08a199c7f72e538c7ed35e7f3d6ae1ead1e5b0f4f629f90674ac"
     },
     {
       "disposition": "adapted",
@@ -1320,7 +1320,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "b894872f9caf268e7310696f1a4df7514740bec095fa80cfe540365cfe620017"
+      "sha256": "53f329e7cc89b9cbb557f5bf3b8b6d57b672298249b47c8fd0eae31848445658"
     },
     {
       "disposition": "adapted",
@@ -1342,7 +1342,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339"
+      "sha256": "71ecf5cbb35924da67c7b637aa238395db847dcdc72b079972e9bb2b810a36c4"
     },
     {
       "disposition": "adapted",
@@ -1353,7 +1353,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "d8ab13f759bbed882a61eca41e0cae9cea86e6ee06fb009c48d1cf44450f6017"
+      "sha256": "81d412d20303f95255781e2a39c2ee90f267ebe4fc509f2efda67c4fb1d97a3e"
     },
     {
       "disposition": "adapted",
@@ -1452,7 +1452,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. A cfg(test,unix) delegation exposes the existing private receive-stage hook only to the ignored human fault driver; production issuance is unchanged.",
-      "sha256": "0c20afaa5cc9b495f59ee5abb3c4e112c4e166fc9ed4f3e4700f02eba2e1799c"
+      "sha256": "5ab333db8ce5033df2eeb3bbc072129dd6045ec353a3e256d90a4011af0d62dc"
     },
     {
       "disposition": "adapted",
@@ -1637,7 +1637,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "f552c70645d0a64ae22e4c51ec000ab73bc55bbf994605a3aede4316f04eb9a6"
+      "sha256": "5527412249ade1d66abf4626d2ac387a08272da2818e5467c966fd082f16a658"
     },
     {
       "disposition": "upstream-modification",
@@ -1686,7 +1686,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "4e700d542219d45ce1c66acbc1b21668b2e986d905858fd297f7b800aa18939d"
+      "sha256": "18d149022b2e7017444df65c21cff19a12624805a5b1cfad3d6f69fc6b2e04c0"
     },
     {
       "disposition": "upstream-modification",
@@ -1726,7 +1726,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Selective AsyncChecks success accounting, CPU task integration, trusted dispatch, shared output allocation and success-only publication; retain upstream ordered resolver and original fee ordering.",
-      "sha256": "7922baf1aa8e6da679ad409130f53c0182965f83aa2985e7e40368607ce46f76"
+      "sha256": "3ade6245ac585008b7d6e8ac463e0e888b08f233e396bef4a588f217463f7786"
     },
     {
       "disposition": "upstream-modification",
@@ -1756,7 +1756,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "24a784af3a8a799f2e23d2d6c78c218de8f75f79def5f4ca165d5cc856bb20de"
+      "sha256": "cfe306665eccd14749d1b8f353c127cc45f4e70c1964ec41a626264504c67ab6"
     },
     {
       "disposition": "new",
@@ -1766,7 +1766,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse ordered reservation and Rayon find_map_first N1 prefix verification; SLH native facade and boxed signatures. Add the reviewed optional fixed-primitive observation callback without changing its result or reservation/error order.",
-      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc"
+      "sha256": "2975d6989e1b49967700e249d4db65c380ff9e6a43e1afce820050477eb0290b"
     },
     {
       "disposition": "upstream-modification",
@@ -1796,7 +1796,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls.",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1"
     },
     {
       "disposition": "new",
@@ -1945,8 +1945,18 @@
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior. SLH identity stdout lint allowance is attached to its conditional instead of ignored on the macro invocation; runtime behavior unchanged.",
-      "sha256": "2b7d730bf3ec792b62f0932477f196f26d20654edd926efa42673749d63f0a81"
+      "reason": "Preserve the SLH exact-argument identity command in both builds; compare OS arguments in a separately tested predicate to avoid introduced non-UTF-8 startup panics.",
+      "sha256": "3229872376a9efc979765b285197330ca0844f185fb9493d1f7fba00921cd197"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakurad/src/bin/zakurad/slh_identity_args.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/runtime.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Extract the existing product identity predicate for isolated exact-argument and non-UTF-8 regressions; retain OS argument bytes and default-build identity support.",
+      "sha256": "287d1858fbb87541daec8f3fc11460a502b9b17087e9bf0bd69ff0959c481811"
     },
     {
       "disposition": "upstream-modification",
@@ -2032,7 +2042,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "65100d7c6c898fa5cc67d3ebdb228342471fc9477d0a064f21cb6e394660d584"
+      "sha256": "7facddce35f61aa65b43af2fbbe380f7bb1aad74ab7eec2a050b09ae3354cf7b"
     },
     {
       "disposition": "new",
@@ -2230,7 +2240,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "7f2aa3fbf3dd61a2631091b56baf8c69bbd44c284225baae6d0c1d66d0ce44c6"
+      "sha256": "4865c8d8f636b1eaffd10517871ca121c5f71ae551c167c0c1040569719d5d4e"
     },
     {
       "disposition": "new",
@@ -2296,7 +2306,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "3a8bc53baa905f638975b2cee0cec889163ffca24d4a9b7f8aaef38ab4146aa0"
+      "sha256": "4099ca19b6e2bf8d9bcf77ce1f1efd1a20e40e8e8c943759fe81f331eeff2835"
     },
     {
       "disposition": "new",
@@ -2314,7 +2324,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "fe328755c6da63389d87f457996b1d6aa14842f37640cb9a35fa332465f3de89"
+      "sha256": "0d313913edb9f15778c316d68360368551b52eaf8aa5df30a48f88be6dfb4d64"
     },
     {
       "disposition": "new",
@@ -2549,7 +2559,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "deccc14c54700d47f118c99b0fb1448a796080532851fab423ad6c92802a8a1e"
+      "sha256": "2f04e7f207f3f1a56349e1b1e478bdcb9219337489b9d1525d9394f7a718bfe7"
     },
     {
       "disposition": "new",
@@ -2801,7 +2811,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "4e65043ff257d120105eb67087c97a388e42b30615ea61d987105818a50393b3"
+      "sha256": "4681b97715ee9f7d233dc6ccb7f7ca148ea5e0538cff9ac8e1ed50b706f408c2"
     },
     {
       "disposition": "new",
@@ -3815,7 +3825,7 @@
         "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "cd359b1604ee106d683850e384efae2d79e4df3c3e18057c0c45d16391334775"
+      "sha256": "e7f4d5b77de51d7820339ab4e7efafa976194bfe335cd4037d24532c25eb34ec"
     },
     {
       "disposition": "new",

@@ -384,35 +384,35 @@
       ]
     },
     {
-      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Unknown snapshot restore now resets derived scan observations; the private publication stages and fault hooks are unchanged. This source mapping does not renew historical live evidence.",
       "classification": "test-only human durable fault preparation",
       "path": "crates/pq-wallet/src/watch.rs",
-      "sha256": "0c20afaa5cc9b495f59ee5abb3c4e112c4e166fc9ed4f3e4700f02eba2e1799c",
+      "sha256": "5ab333db8ce5033df2eeb3bbc072129dd6045ec353a3e256d90a4011af0d62dc",
       "sources": [
         "wallet_fault_watch"
       ]
     },
     {
-      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Add typed nonpunitive local context/backend failures and focused boundary controls; primitive observation behavior is unchanged. This source mapping does not renew historical daemon captures.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s.rs",
-      "sha256": "24a784af3a8a799f2e23d2d6c78c218de8f75f79def5f4ca165d5cc856bb20de",
+      "sha256": "cfe306665eccd14749d1b8f353c127cc45f4e70c1964ec41a626264504c67ab6",
       "sources": []
     },
     {
-      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Add typed nonpunitive local context/backend failures and focused boundary controls; primitive observation behavior is unchanged. This source mapping does not renew historical daemon captures.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs",
-      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc",
+      "sha256": "2975d6989e1b49967700e249d4db65c380ff9e6a43e1afce820050477eb0290b",
       "sources": [
         "primitive_observer"
       ]
     },
     {
-      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Add typed nonpunitive local context/backend failures and focused boundary controls; primitive observation behavior is unchanged. This source mapping does not renew historical daemon captures.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
-      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f",
+      "sha256": "7429c329a0bac5e2bac62d945522439994c1c7f21a4cc937c85f6178a2c423c1",
       "sources": []
     },
     {

@@ -19,6 +19,10 @@ reset implementation. Only SLH runtime types and dependencies are included.
 
 Tests use the retained public synthetic SLH transaction corpus and the existing
 mock trusted-state services. They do not introduce a node signing dependency.
+The local-failure correction adds typed retryable errors for missing verifier
+context and backend availability. Regression tests preserve consensus-invalid
+classification for malformed transactions and nonpunitive local failures through
+the existing block and router wrappers. Inactive dispatch retains classical checks.
 Active SLH rules bypass prepared-candidate caches.
 Runtime support follows the explicit feature, which is off by default.
 Live acceptance still requires human execution.

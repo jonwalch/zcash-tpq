@@ -204,9 +204,9 @@
     },
     {
       "target": "src/payment/tests/snapshot.rs",
-      "target_sha256": "b894872f9caf268e7310696f1a4df7514740bec095fa80cfe540365cfe620017",
+      "target_sha256": "53f329e7cc89b9cbb557f5bf3b8b6d57b672298249b47c8fd0eae31848445658",
       "classification": "new recovery boundary or conformance test",
-      "adaptation": "New bounded coherent snapshot validation of existing readers, index references, alias/history/reservation cross-links, immutable predecessor chain and orphan quotas; no storage or cryptographic container change."
+      "adaptation": "New bounded coherent snapshot validation of existing readers, index references, alias/history/reservation cross-links, immutable predecessor chain and orphan quotas; no storage or cryptographic container change. Verify retained signatures, journal reservations, allocator rotation and retired issuance ranges across unknown-authority rescan/restart and known-authority cache reuse."
     },
     {
       "target": "src/payment/tests.rs",

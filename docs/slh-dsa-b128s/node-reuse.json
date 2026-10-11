@@ -1,5 +1,5 @@
 {
-  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes.",
+  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes. Product boundary corrections use OS arguments for the extracted identity predicate and typed nonpunitive local SLH context/backend failures. Invalid transaction contexts retain consensus rejection; new focused tests use the existing fixtures and error wrappers.",
   "schema_version": 1,
   "sources": [
     {
