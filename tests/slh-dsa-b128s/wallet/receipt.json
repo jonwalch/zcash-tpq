@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "checkpoint": "H1 operational signer and wallet root foundation",
+  "date": "2026-10-09",
+  "contract": "slh-dsa-b-128s-exp-v1",
+  "candidate": {
+    "source_commit": "0ae8a393db494fcedf2867cde0cef8dec8691e1e",
+    "source_dirty": false,
+    "source_inventory": [
+      {
+        "path": ".cargo/config.toml",
+        "sha256": "da252b8ca275eb20b900165a9f1d3c7feb5e998d98eeb743717f3c9b7805451c"
+      },
+      {
+        "path": "Cargo.lock",
+        "sha256": "3adf203e96d7811bee6f51e5e67815e3e2df889dfc9327c8261470294752538c"
+      },
+      {
+        "path": "Cargo.toml",
+        "sha256": "d3098120572012cc2bee2d13b005051cb71d44c8a3c4638505ba77a468bec695"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/Cargo.toml",
+        "sha256": "9c55748913f644c52696b774fa3a2e2c307faeedf860bced78f90b2d210f57ad"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/NOTICE.md",
+        "sha256": "fb5d3f5b15d236c96edf10bf38b27527fb17769674fc449de29b5fae4c600f4f"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "sha256": "ce5a3b5188a8ff432c9c19f6cb91ea7e990e1adc820730c0f797fbe96c95de79"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/README.md",
+        "sha256": "082b3e3e815495475d10cd32a4169cce2e9edbc9c35398ee97afee96f7a6da9b"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/address.rs",
+        "sha256": "7dd5ca79dcdcf4f3140a1fdb3c2395e942b24eaf51fb414e7fd349d69512b2e3"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/hash.rs",
+        "sha256": "aef72bb23d3adea932a9323e2173519e54636ab345b13898d4e8f813ed181545"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/lib.rs",
+        "sha256": "67d4261be72a1971e766be59fcb5bc345711291e5a2c56699b155b985ace87aa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/recovery.rs",
+        "sha256": "ea97d2b287cea63f08dc1b61e43ffaec8408d88ff44279d092a9b580108622c6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/signing.rs",
+        "sha256": "477916fe13c6592f5f0b6324c2786b91438aea4f1cf5935f667ab09501ea0414"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/tests.rs",
+        "sha256": "616b1e112e49637284df40db44872a2f220f016e5d08d3e54fb655f27256d62c"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-sign/src/util.rs",
+        "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/Cargo.toml",
+        "sha256": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-APACHE",
+        "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/LICENSE-MIT",
+        "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/NOTICE.md",
+        "sha256": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "sha256": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/README.md",
+        "sha256": "5f66d523b12d88dbcf995dd2b64dad0a9cc9da2085bba296eb2c2810b138b7d8"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/examples/compare.rs",
+        "sha256": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+        "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+        "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+        "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/lib.rs",
+        "sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+        "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+        "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json",
+        "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+      },
+      {
+        "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+        "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+      },
+      {
+        "path": "crates/pq-wallet/Cargo.toml",
+        "sha256": "129b0206c8e5a2e53d8502c8dd88e719122848fd464981c6d3d23fe295cdfe48"
+      },
+      {
+        "path": "crates/pq-wallet/LICENSE-APACHE",
+        "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+      },
+      {
+        "path": "crates/pq-wallet/LICENSE-MIT",
+        "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+      },
+      {
+        "path": "crates/pq-wallet/NOTICE.md",
+        "sha256": "d18286613e665b0b737c988aabca1cfdf9bc626be93714a1b02c80376dc603dc"
+      },
+      {
+        "path": "crates/pq-wallet/PROVENANCE.json",
+        "sha256": "b0c815e571281d8095215147fb51a0da017f5b516e065d47d02a43a049b3dd3a"
+      },
+      {
+        "path": "crates/pq-wallet/README.md",
+        "sha256": "552374a91b03ef1b82f849e58e945aa78343f554d5927ed43847238f59e8e1fd"
+      },
+      {
+        "path": "crates/pq-wallet/src/keys.rs",
+        "sha256": "f34f7972c46ff8e89161049cfe940e44701ed396946db0bf52c3e8f6feaafff3"
+      },
+      {
+        "path": "crates/pq-wallet/src/keys/tests.rs",
+        "sha256": "461e358c5e9f847764a25a1df18ab0847af496a00e91a56e7a553ac174897b36"
+      },
+      {
+        "path": "crates/pq-wallet/src/lib.rs",
+        "sha256": "46c1ed24d4a3f02157e4d15a358c0ae9e0231ef485b20e8e241845011b212792"
+      },
+      {
+        "path": "docs/slh-dsa-b128s/protocol.md",
+        "sha256": "59705e55cfcc55bc39eca28de93bca0bae3b90573f250b3c5d9c79c9187c8968"
+      },
+      {
+        "path": "docs/slh-dsa-b128s/wallet.md",
+        "sha256": "ddaef884e2767bed8838e062105fca41ec5fbf36c7e69def0c3fb453bc72bbaa"
+      },
+      {
+        "path": "rust-toolchain.toml",
+        "sha256": "e5cc0545f232bde807bd9394c2433322d1cd2cf42b060ceab2ac7329bc9cdaa2"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/.gitignore",
+        "sha256": "15bf946d297061208982c5c4d077db020a5ea955518e3dd50f3086f98c91290d"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/NOTICE.md",
+        "sha256": "9e62435bc9095537d59d73c213c3e5bcc1ae79c88a0ba196b5eff6fd34e2ba6c"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/README.md",
+        "sha256": "8602a97efa5f1e91a91803c5bef8bd8a63e10970e50fc7ad49a09ce86defe221"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/check.py",
+        "sha256": "cd6b05e747d839beef0b346894dd09d02e4dbe668068d11080879fff62ab6c4b"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/hash_shim.c",
+        "sha256": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/licenses/BLAKE3-LICENSE_A2",
+        "sha256": "00fcc7a934ddbc9ece2a7cc063ac788e284b703b1d705ccbba72d462aa97921e"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/licenses/BLAKE3-LICENSE_CC0",
+        "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/licenses/COPYING",
+        "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/licenses/COPYING.LESSER",
+        "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/prepare.py",
+        "sha256": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/receipts/g1-initial.json",
+        "sha256": "bb8299364a1f6fcb6615a3303150e817044cc8797f0323b5d242869bdc6903a5"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/reference.py",
+        "sha256": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/sources.json",
+        "sha256": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/reference/test_checker.py",
+        "sha256": "130564ae653811ed7efd2ae4cfc68c1dc51412ab65c97e7e9959eea6a81e835e"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/wallet/README.md",
+        "sha256": "61da2d94ddafbde246486f5ef4ac98e37e9b853acb53f384e35a37fad6ef43cc"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/wallet/reference.py",
+        "sha256": "ac4d406888613a7c1b6e2bcbd5d3ee26ade45c6f97afa641707d78da38db5d7d"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/wallet/test_reference.py",
+        "sha256": "0820e8d30b9d6ad04f6c80ef2fcf9bd6a8d71af309b94de9f63d43f9283a3fd1"
+      },
+      {
+        "path": "tests/slh-dsa-b128s/wallet/vectors.json",
+        "sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd"
+      }
+    ],
+    "test_binaries": [
+      {
+        "name": "zakura_pq_slh_dsa_b_sign-fc417cd639ff4591",
+        "sha256": "e1ba54a03918ffa42c757111f94322b14e96a1d9755a90538a57638153c4f29f",
+        "configuration": "enabled-tests"
+      },
+      {
+        "name": "zakura_pq_wallet-04f1f2b92d777fcd",
+        "sha256": "412d896103b8bb2accda56c71ae0484b21e1f520533908e482b32cca24e9b127",
+        "configuration": "enabled-tests"
+      },
+      {
+        "name": "zakura_pq_wallet-a32178e606770020",
+        "sha256": "a5ce4ee702e2cc0fa99af23b47e5ee62ca4155576f54a0f9e3c8f4bb9d9c3a9e",
+        "configuration": "default-tests"
+      }
+    ],
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+    "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
+    "target": "arm64-apple-darwin",
+    "build_jobs": 1,
+    "test_profile": "ci-tests",
+    "test_threads": 1
+  },
+  "independent_expectations": {
+    "roots": 6,
+    "signatures": 2,
+    "mutations": 10,
+    "hash_controls": 105,
+    "vectors_sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd",
+    "script": "tests/slh-dsa-b128s/wallet/reference.py",
+    "script_sha256": "ac4d406888613a7c1b6e2bcbd5d3ee26ade45c6f97afa641707d78da38db5d7d",
+    "sources_sha256": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed",
+    "reference_revision": "588ea1028003bf5608a92bae1d8d76abaa7274a2",
+    "blake3_c_revision": "f55849f89cd85083c1c9daa2c5de20766f309c00",
+    "hash_library_sha256": "a7be63755e2ff239acc58594cd3afd2cb3eb764d6402933a172a9abe5d012c6c",
+    "python": "3.14.8",
+    "python_binary_sha256": "7ebde552773a4045532637b114d645a313e045ac07b26f5e520bf039f1e34063",
+    "candidate_outputs_used_to_generate_expectations": false,
+    "exact_retained_bytes_checked": true,
+    "mocked_adapter_tests": 5
+  },
+  "validation": {
+    "commands": [
+      {
+        "name": "enabled-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "zakura-pq-slh-dsa-b-sign",
+          "-p",
+          "zakura-pq-wallet",
+          "--features",
+          "zakura-pq-wallet/experimental-slh-dsa-b128s",
+          "--profile",
+          "ci-tests",
+          "--",
+          "--test-threads=1"
+        ],
+        "exit_code": 0,
+        "log_sha256": "d975cba477f7e702adf99f535087c287da3f2cabf8e40a09d3f050dd14c03b7f"
+      },
+      {
+        "name": "default-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "zakura-pq-wallet",
+          "--profile",
+          "ci-tests"
+        ],
+        "exit_code": 0,
+        "log_sha256": "ea0ae7f40dd9a453fc05e976c0b85e045c1a8834f6508b59d9bb69debdc3d42f"
+      },
+      {
+        "name": "default-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--offline",
+          "-p",
+          "zakura-pq-wallet",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "log_sha256": "ce0df631df027a28f9cf805b1c87d47f90c2e57c11355256d29cf37cb0e05e9b"
+      },
+      {
+        "name": "enabled-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--offline",
+          "-p",
+          "zakura-pq-slh-dsa-b-sign",
+          "-p",
+          "zakura-pq-wallet",
+          "--all-targets",
+          "--features",
+          "zakura-pq-wallet/experimental-slh-dsa-b128s",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "log_sha256": "a41051563a4cb5fc1b1bcdd9aa0ba28ca80f7736d629d90cc138218756e8e3a9"
+      },
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "-p",
+          "zakura-pq-slh-dsa-b-sign",
+          "-p",
+          "zakura-pq-wallet",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "signer_tests": 6,
+    "signer_compile_fail_doctests": 2,
+    "wallet_enabled_tests": 4,
+    "wallet_disabled_tests": 1,
+    "source_provenance_checked": true,
+    "default_wallet_normal_dependencies": [],
+    "preserved_existing_package_identities": 768,
+    "new_registry_packages": [
+      "hkdf 0.12.4",
+      "hmac 0.12.1"
+    ],
+    "manual_source_review": "Coordinator and independent G worker; no remaining correctness finding after exact-byte receipt fix."
+  },
+  "limits": [
+    "Source-level owned-state clearing only; compiler/backend temporaries and inherited HKDF/HMAC internals are not comprehensively erased.",
+    "H2 suite/trusted signing plumbing, I payments/history, J backup/recovery/watch, K CLI and final L wallet conformance remain pending.",
+    "No live node, wallet payment/recovery, terminal backup, shielded-proof generation or performance workloads executed."
+  ]
+}

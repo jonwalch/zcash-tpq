@@ -2031,6 +2031,15 @@ fn zip234_test_block(
 /// and let the next preparation overlap it.
 #[tokio::test]
 async fn a_server_template_error_waits_for_the_checks_it_dispatched() {
+    server_template_error_waits_for_checks(false).await;
+}
+
+#[tokio::test]
+async fn a_server_template_slh_budget_error_waits_for_dispatched_checks() {
+    server_template_error_waits_for_checks(true).await;
+}
+
+async fn server_template_error_waits_for_checks(slh_budget: bool) {
     use std::sync::atomic::{AtomicBool, Ordering};
 
     let _init_guard = zakura_test::init();
@@ -2067,7 +2076,12 @@ async fn a_server_template_error_waits_for_the_checks_it_dispatched() {
             async move {
                 if is_coinbase {
                     // The failing check returns straight away.
-                    return Err::<tx::Response, BoxError>("invalid coinbase".into());
+                    let error: BoxError = if slh_budget {
+                        TransactionError::ExperimentalSlhDsaB128sBlockBudget { limit: 64 }.into()
+                    } else {
+                        "invalid coinbase".into()
+                    };
+                    return Err::<tx::Response, BoxError>(error);
                 }
                 // The check still in flight, standing in for dispatched batch work.
                 if let Some(receiver) = released.lock().await.take() {
@@ -2105,7 +2119,16 @@ async fn a_server_template_error_waits_for_the_checks_it_dispatched() {
         held_finished.load(Ordering::SeqCst),
         "every dispatched check finished before the error was reported",
     );
-    assert!(matches!(result, Err(VerifyBlockError::Transaction(_))));
+    if slh_budget {
+        assert!(matches!(
+            result,
+            Err(VerifyBlockError::Block {
+                source: BlockError::TooManyExperimentalSlhDsaB128sChecks { limit: 64, .. }
+            })
+        ));
+    } else {
+        assert!(matches!(result, Err(VerifyBlockError::Transaction(_))));
+    }
 }
 
 /// A retry must observe the queued commit's outcome before reporting a duplicate.

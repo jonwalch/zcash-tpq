@@ -1,0 +1,31 @@
+[package]
+name = "slh-dsa-b128s-fixture-host"
+version = "0.1.0"
+publish = false
+edition = "2021"
+rust-version = "1.97"
+license = "MIT OR Apache-2.0"
+description = "Bounded public SLH transaction conformance adapter"
+
+[features]
+default = []
+# Human-only real proof construction; never enabled by a node dependency.
+shielded-fixtures = ["dep:orchard", "dep:sapling-crypto", "dep:zcash_proofs", "dep:zcash_protocol", "dep:rand_10", "dep:incrementalmerkletree"]
+
+[dependencies]
+hex = "0.4.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+secp256k1 = { workspace = true }
+ripemd = { workspace = true }
+orchard = { workspace = true, optional = true }
+sapling-crypto = { workspace = true, features = ["circuit"], optional = true }
+zcash_proofs = { workspace = true, features = ["local-prover"], optional = true }
+zcash_protocol = { workspace = true, optional = true }
+rand_10 = { workspace = true, optional = true }
+incrementalmerkletree = { workspace = true, optional = true }
+zakura-chain = { path = "../../../../crates/zakura-chain" }
+zakura-pq-tx-context = { path = "../../../../crates/pq-tx-context" }
+zakura-pq-slh-dsa-b-exp = { path = "../../../../crates/pq-slh-dsa-b-exp" }
+zakura-pq-test-support = { path = "../../../../crates/pq-test-support" }

@@ -1,0 +1,78 @@
+{
+  "adaptations": [
+    "New key-exchange envelope and receipt hash/schema expectations correspond to product additions absent from the research format corpus.",
+    "Literal watch state JSON permits its required scan.complete boolean; the inventory-only canonical helper excludes booleans.",
+    "Three cumulative enrollment cases cover receive/change, different threshold and external origin indices; existing 120-shape format tests are not duplicated."
+  ],
+  "format": "slh-wallet-interface-reference-sources-v1",
+  "oracle_inputs": [
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/reference.py",
+      "sha256": "6234c14663abca692d8a34b9160302404bdf26256ba094d80d6917a10fc661a4"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/vectors.json",
+      "sha256": "9927cee383b5203588bb53b4c710f94bd5e84e9cabae49d9593d0bd8ec2bcf0e"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/vectors.json",
+      "sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd"
+    }
+  ],
+  "product_base": "e88653096f989742ae8b36fed35acdb63f76f498",
+  "research_source": {
+    "files": [
+      {
+        "path": "tests/wallet-spec/reference.py",
+        "sha256": "fa36f3a30f3dc1591d6879391a76e4f168deb49b066e78aca5cb0fd026542a13"
+      },
+      {
+        "path": "crates/pq-wallet/src/watch.rs",
+        "sha256": "65ce0f0065a4bf0b6069b47678626d9a071a234e969cae116a40929e08f6457f"
+      },
+      {
+        "path": "crates/pq-wallet/src/scan.rs",
+        "sha256": "ed0a7c41a6581ea93d6f999146446efd9a8158de2e0bd13b31bc3d308243276b"
+      },
+      {
+        "path": "crates/pq-wallet/src/payment/store.rs",
+        "sha256": "ffb9dff2fc6a5b48ee21e392238cad5c6aca2be80071c64f9afef9fc0a58a9af"
+      }
+    ],
+    "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+    "revision": "da638d4045074f7957aec3fb3fb018bd66b96d05"
+  },
+  "reuse": [
+    "Import existing separately implemented format reference: canonical JSON, domains, policy/origin mapping, manifest/profile and update checks.",
+    "Read immutable H1 public keys and L1 inventory/encrypted backup answers by checked hash; no key generation, KDF, signing or production calls.",
+    "Retain research v2 watch/scan/payment schema for a deterministic empty authority companion.",
+    "Mirror the existing Zakura TestChild::wait_with_output_or_timeout polling/kill pattern in the bounded public CLI test helper, without adding the test framework dependency."
+  ],
+  "scope": "Public interface identities and deterministic v2 snapshot companions only. v3 receipt metadata boundary is syntax-only, not a journal authority or live recovery claim.",
+  "specification_inputs": [
+    {
+      "path": "crates/pq-cli/src/enrollment.rs",
+      "sha256": "b2d0445fcf4384eb39e2891c2c29d686ddee4e5d1ee8918e18232ea4aa6d3cdf"
+    },
+    {
+      "path": "crates/pq-wallet/src/recovery.rs",
+      "sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339"
+    },
+    {
+      "path": "crates/pq-wallet/src/watch/archive/snapshot.rs",
+      "sha256": "f77eaff3a1453abcbf4dfa4767ca1dbc75e1b91a7682ccada7048f6cec24a6ca"
+    },
+    {
+      "path": "docs/slh-dsa-b128s/wallet.md",
+      "sha256": "7e2c493a59d972d5296c496b67a7b4c97e1cc1f84ce87f6d2c07253178d3e89a"
+    },
+    {
+      "path": "docs/slh-dsa-b128s/recovery.md",
+      "sha256": "6081b080773da0cff742f50c5e08d138200e359baf201b30112119525fa327f6"
+    },
+    {
+      "path": "crates/zakura-test/src/command.rs",
+      "sha256": "1c5e32a985ddf8cf6fe5d4a321303e102466617db4b9b342681a0d2b9cb431a6"
+    }
+  ]
+}

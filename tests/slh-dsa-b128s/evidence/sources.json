@@ -1,0 +1,65 @@
+{
+  "consulted_research": [
+    {
+      "adaptation": "Consulted source/binary/config-before-after and artifact-manifest receipt approach; no driver code copied and no runtime research dependency.",
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "path": "node/tests/sqisign_acceptance.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "897633701ead8329c906bb3611a3faf4b8c53618f7513e7059e783bce202fa92"
+    }
+  ],
+  "inputs": [
+    {
+      "adaptation": "Reuse the unchanged bounded_file and check_corpus helpers; add standalone replay with retained producer identities and an independently bound current host build.",
+      "path": "tests/slh-dsa-b128s/transactions/check.py",
+      "sha256": "99577595f1b618036476cbaa64236d1d6aa0a644a47109aa0e602353a82c0def",
+      "source_commit": "6be98afe15d3e3594c7a392bbed2d4e793fd9101"
+    },
+    {
+      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "path": "tests/slh-dsa-b128s/transactions/oracle.py",
+      "sha256": "cdf3f2b0991b8f3fed5991192bb57f807449685b452135ba71c89600fe337ac3",
+      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+    },
+    {
+      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "path": "tests/slh-dsa-b128s/transactions/wire.py",
+      "sha256": "94f721ba69acb5cb273373c723724884df7bd716e01f51725b4e67b9931bafbf",
+      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+    },
+    {
+      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "path": "tests/slh-dsa-b128s/reference/reference.py",
+      "sha256": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9",
+      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+    },
+    {
+      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "path": "tests/slh-dsa-b128s/reference/prepare.py",
+      "sha256": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f",
+      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+    },
+    {
+      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "path": "tests/slh-dsa-b128s/reference/sources.json",
+      "sha256": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed",
+      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+    },
+    {
+      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "path": "tests/slh-dsa-b128s/reference/hash_shim.c",
+      "sha256": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438",
+      "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
+    }
+  ],
+  "license": "MIT OR Apache-2.0",
+  "new_files": {
+    "artifacts.py": "Bounded arbitrary-case wrapper around unchanged independent oracle/reference; independent-only verdict.",
+    "matrix.py": "Exact source/preparation index guard; never executes indexed tests.",
+    "node-matrix.json": "Public per-subcontrol source/preparation mapping; no research notes or executed live acceptance claim.",
+    "test_artifacts.py": "Offline negative/identity/work-bound controls using mock callbacks; no cryptographic acceptance claim.",
+    "test_matrix.py": "Index mutation and scope-boundary controls."
+  },
+  "schema_version": 1,
+  "scope": "New bounded evidence glue and source/preparation index; existing oracle/reference implementations remain unchanged."
+}

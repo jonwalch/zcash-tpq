@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-09",
+  "contract": "slh-dsa-b-128s-exp-v1",
+  "checkpoint": "consensus library",
+  "source_checkpoint_commit": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
+  "source_checkpoint_tree": "ccc398c07c3bfc9e2a8a26e248209ed3bdec8f5f",
+  "build_checkout_head": "e82f3a8ccd3a105c04d2e936f73123bffcc09058",
+  "build_checkout_was_dirty": true,
+  "build_source_note": "Tests and Clippy used the final Rust/manifests/lock content then committed as source_checkpoint_commit. Builds preceded that commit; no clean-revision build is asserted. Original public fixture producer metadata is unchanged and separate from these comparison binaries.",
+  "source_inventory_rule": "All tracked Rust source, Cargo.toml/Cargo.lock files and present rust-toolchain.toml/.cargo/config.toml at source_checkpoint_commit; sorted path/SHA256 JSON records, canonical compact JSON with sorted object keys.",
+  "source_inventory_files": 1157,
+  "source_inventory_sha256": "e6ec2ef020ef8c50b4b86c9bd41b6b4896a89e4830d5716527da2c06ff4196bc",
+  "lock_sha256": "0ab4242d2653969243ca3d71533103ce68856d671ab15edeb60e88983edc828c",
+  "test_configuration": {
+    "host": "aarch64-apple-darwin",
+    "cargo_build_jobs": 2,
+    "profile": "test/dev unoptimized with debuginfo",
+    "functional_profile": {
+      "network": "Regtest",
+      "nu6_3_height": 1,
+      "nu7_height": 105,
+      "slh_activation_height": 110,
+      "transaction_checks": 16,
+      "block_checks": 64
+    },
+    "other_test_profiles": "Smaller custom budget and metadata/cache activation profiles are specified in the hashed Rust tests.",
+    "observer_features": [
+      "zakura-consensus/slh-test-observer"
+    ],
+    "default_features": "zakura-consensus defaults only",
+    "toolchain": {
+      "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+      "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)"
+    }
+  },
+  "test_configuration_sha256": "0ecc54f5202421db3d6f08e2207d89f1ada4a4346cd32917a25d24851a471574",
+  "test_binaries": [
+    {
+      "role": "consensus_observer",
+      "filename": "zakura_consensus-40e7b7000479c27d",
+      "sha256": "a72384210be610ccccc8315c4783b5f284e46c3f042a4d325d4065e410a3de9b"
+    },
+    {
+      "role": "consensus_default",
+      "filename": "zakura_consensus-345ba902cb8a8669",
+      "sha256": "8d5df4c2134247b58d6145b89939170e210a58ca259a1eec2fa3132469a88869"
+    },
+    {
+      "role": "chain",
+      "filename": "zakura_chain-e2d77e3f2f47e720",
+      "sha256": "c9f5bb32e914231e4afe6aae4ee2ff99fccdd7844377c70a8d392bd1e7a91f7e"
+    },
+    {
+      "role": "script",
+      "filename": "zakura_script-1ea06f61ab43f6aa",
+      "sha256": "7153ba4a6df44ab5d1c69ae56abc3918b68f4104b119027b2a15b896d2ddba89"
+    }
+  ],
+  "public_corpus_inventory_sha256": "c211e090da2f09fcd1ab3acd190cbd89e396da6da0359055594539f8bd8ff51d",
+  "public_corpus_files": 18,
+  "checks": [
+    {
+      "command": "cargo test --locked -p zakura-consensus --lib --features slh-test-observer slh -- --nocapture",
+      "passed": 16
+    },
+    {
+      "command": "cargo test --locked -p zakura-consensus --lib slh",
+      "passed": 4
+    },
+    {
+      "command": "cargo test --locked -p zakura-chain --lib slh",
+      "passed": 3
+    },
+    {
+      "command": "cargo test --locked -p zakura-script --lib shared_previous_outputs",
+      "passed": 1
+    },
+    {
+      "command": "cargo test --locked -p zakura-consensus --lib --features slh-test-observer utxo_lookups",
+      "passed": 3
+    },
+    {
+      "command": "cargo test --locked -p zakura-consensus --lib --features slh-test-observer mempool_standard_input_scripts",
+      "passed": 3
+    },
+    {
+      "command": "cargo clippy --locked -p zakura-consensus -p zakura-chain -p zakura-script --all-targets --features zakura-consensus/slh-test-observer -- -D warnings",
+      "result": "pass"
+    },
+    {
+      "command": "cargo clippy --locked -p zakura-consensus --all-targets -- -D warnings",
+      "result": "pass"
+    },
+    {
+      "command": "cargo fmt -p zakura-consensus -p zakura-chain -p zakura-script -p zakura-rpc -- --check",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "relative documentation links check",
+      "result": "pass"
+    }
+  ],
+  "review": "Independent read-only boundary review: no unresolved correctness finding. This is not a construction security review or operational acceptance.",
+  "reused_unchanged_evidence": [
+    "Original public transaction corpus signatures/digests and producer identities; production native/primitive sources unchanged by E.",
+    "Existing ordered UTXO resolver and mempool reset implementation retained; focused ordering regressions were rerun."
+  ],
+  "limits": [
+    "Runtime availability remains false pending relay/storage/mining integration and final feature/lifecycle gates.",
+    "The all-target Clippy selections compile library test/bench targets but never execute benchmarks.",
+    "The one mechanical RPC test constructor addition was formatted/reviewed; RPC crate tests and Clippy are not claimed.",
+    "Late generic check failures exercise the shielded/state merge boundary; no fresh real shielded-proof fixture or acceptance run.",
+    "Fresh node/container builds, live Regtest lifecycle/reorg, wallet/recovery and performance workloads were not run.",
+    "64/65 uses the real worker with a shared block allowance plus block error-wrapper controls; it is not a live 65-check block acceptance run."
+  ]
+}

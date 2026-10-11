@@ -485,8 +485,9 @@ jobs:
             ./publish/final/zakurad-manifest-*.json
             ./publish/final/SHA256SUMS.txt
 
+      # SLH forks keep builds/staged artifacts; GitHub publication is default-off.
       - name: Ensure release exists
-        if: ${{ !inputs.stage_release_assets }}
+        if: ${{ !inputs.stage_release_assets && (github.repository == 'zakura-core/zakura' || vars.SLH_RELEASE_PUBLICATION == 'enabled') }}
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_TYPE: ${{ github.ref_type }}
@@ -524,7 +525,7 @@ jobs:
             "${release_flags[@]}"
 
       - name: Upload assets to release
-        if: ${{ !inputs.stage_release_assets }}
+        if: ${{ !inputs.stage_release_assets && (github.repository == 'zakura-core/zakura' || vars.SLH_RELEASE_PUBLICATION == 'enabled') }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}

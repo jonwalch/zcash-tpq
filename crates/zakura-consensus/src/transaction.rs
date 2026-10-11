@@ -12,7 +12,7 @@ use std::{
 use chrono::{DateTime, Utc};
 use futures::{
     stream::{FuturesUnordered, StreamExt},
-    FutureExt,
+    FutureExt, TryFutureExt,
 };
 use tokio::sync::oneshot;
 use tower::{
@@ -44,6 +44,10 @@ use zakura_state as zs;
 use crate::{error::TransactionError, primitives, script, BoxError};
 
 pub mod check;
+#[cfg_attr(not(feature = "experimental-slh-dsa-b128s"), allow(dead_code))]
+mod pq;
+mod slh_dsa_b128s;
+pub use pq::SlhDsaB128sBlockBudget;
 #[cfg(test)]
 mod tests;
 
@@ -187,6 +191,8 @@ pub enum Request {
         height: block::Height,
         /// The time that the block was mined.
         time: DateTime<Utc>,
+        /// Shared SLH allowance for this block attempt, required for active spends.
+        slh_dsa_b128s_budget: Option<SlhDsaB128sBlockBudget>,
     },
     /// Verify the supplied transaction as part of the mempool.
     ///
@@ -349,6 +355,12 @@ impl Request {
     /// This is based on the block height from the request, and the supplied `network`.
     pub fn upgrade(&self, network: &Network) -> NetworkUpgrade {
         NetworkUpgrade::current(network, self.height())
+    }
+
+    /// Select the SLH gate from trusted parameters at containing-block height
+    /// (blocks) or candidate next-block height (mempool), never from transaction data.
+    pub fn is_experimental_slh_dsa_b128s_active(&self, network: &Network) -> bool {
+        network.is_experimental_slh_dsa_b128s_active(self.height())
     }
 
     /// Returns true if the request is a mempool request.
@@ -582,7 +594,18 @@ where
                 // scriptSigs, and high-sigop P2SH redeem scripts) *before*
                 // doing expensive script verification, to avoid DoS attacks on
                 // the script interpreter.
-                check::mempool_standard_input_scripts(tx.as_ref(), &spent_outputs)?;
+                let active = req.is_experimental_slh_dsa_b128s_active(&network);
+                check::mempool_slh_dsa_b128s_output_policy(tx.as_ref(), active)?;
+                let structural_checks = check::mempool_standard_input_scripts_with_slh_dsa_b128s(
+                    tx.as_ref(), &spent_outputs, active,
+                )?;
+                if active {
+                    let limit = network.experimental_slh_dsa_b128s_limits()
+                        .ok_or(TransactionError::ExperimentalSlhDsaB128sBudgetContext)?.transaction();
+                    if structural_checks > limit {
+                        return Err(TransactionError::ExperimentalSlhDsaB128sTransactionBudget { limit });
+                    }
+                }
             }
 
             let mempool_transaction = req.mempool_transaction();
@@ -662,7 +685,7 @@ where
 
             tracing::trace!(?tx_id, "awaiting async checks...");
 
-            async_checks.check(block_batch_flush_key).await?;
+            let verified_checks = async_checks.check(block_batch_flush_key).await?;
 
             tracing::trace!(?tx_id, "finished async checks");
 
@@ -686,20 +709,24 @@ where
                     // <https://github.com/ZcashFoundation/zebra/security/advisories/GHSA-jv4h-j224-23cc>.
                     sigops: sigops.saturating_add(cached_ffi_transaction.p2sh_sigops()),
                 },
-                Request::Mempool { transaction: tx, .. } => {
-                    // TODO: `spent_outputs` may not align with `tx.inputs()` when a transaction
-                    // spends both chain and mempool UTXOs (mempool outputs are appended last by
-                    // `spent_utxos()`), causing policy checks to pair the wrong input with
-                    // the wrong spent output.
-                    // https://github.com/ZcashFoundation/zebra/issues/10346
-                    let spent_outputs = cached_ffi_transaction.all_previous_outputs().clone();
+                Request::Mempool { transaction: tx, height } => {
+                    let spent_outputs = cached_ffi_transaction.shared_previous_outputs();
                     let transaction = VerifiedUnminedTx::new(
                         tx,
                         miner_fee.expect("fee should have been checked earlier"),
                         sigops,
                         cached_ffi_transaction.p2sh_sigops(),
-                        spent_outputs.into(),
+                        spent_outputs,
                     )?;
+
+                    // Publish only after every authorization, shielded/state, fee
+                    // and sigop check succeeds, including bound zero-work funding.
+                    let transaction = if network.is_experimental_slh_dsa_b128s_active(height) {
+                        transaction.with_verified_slh_dsa_b128s(&network, height, verified_checks.slh_dsa_b128s)
+                            .map_err(|_| TransactionError::ExperimentalSlhDsaB128sBudgetContext)?
+                    } else {
+                        transaction
+                    };
 
                     if let Some(mut mempool) = mempool {
                         tokio::spawn(async move {
@@ -1005,6 +1032,7 @@ where
 
         Ok(Self::verify_transparent_inputs_and_outputs(
             request,
+            network,
             script_verifier,
             cached_ffi_transaction,
         )?
@@ -1119,6 +1147,7 @@ where
 
         Ok(Self::verify_transparent_inputs_and_outputs(
             request,
+            network,
             script_verifier,
             cached_ffi_transaction,
         )?
@@ -1200,6 +1229,7 @@ where
 
         Ok(Self::verify_transparent_inputs_and_outputs(
             request,
+            network,
             script_verifier,
             cached_ffi_transaction,
         )?
@@ -1243,31 +1273,77 @@ where
     /// Returns script verification responses via the `utxo_sender`.
     fn verify_transparent_inputs_and_outputs(
         request: &Request,
+        network: &Network,
         script_verifier: script::Verifier,
         cached_ffi_transaction: Arc<CachedFfiTransaction>,
     ) -> Result<AsyncChecks, TransactionError> {
         let transaction = request.transaction();
-
         if transaction.is_coinbase() {
-            // The script verifier only verifies PrevOut inputs and their corresponding UTXOs.
-            // Coinbase transactions don't have any PrevOut inputs.
-            Ok(AsyncChecks::new())
-        } else {
-            // feed all of the inputs to the script verifier
-            let inputs = transaction.inputs();
-
-            let script_checks = (0..inputs.len())
+            return Ok(AsyncChecks::new());
+        }
+        let indexes = slh_dsa_b128s::input_indexes(
+            &transaction,
+            cached_ffi_transaction.all_previous_outputs(),
+            request.is_experimental_slh_dsa_b128s_active(network),
+        )?;
+        if indexes.is_empty() {
+            return Ok((0..transaction.inputs().len())
                 .map(move |input_index| {
                     let request = script::Request {
                         cached_ffi_transaction: cached_ffi_transaction.clone(),
                         input_index,
                     };
-
                     script_verifier.oneshot(request)
                 })
-                .collect();
-
-            Ok(script_checks)
+                .collect());
+        }
+        #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
+        {
+            Err(TransactionError::ExperimentalSlhDsaB128sContext {
+                reason: "backend_unavailable".to_owned(),
+            })
+        }
+        #[cfg(feature = "experimental-slh-dsa-b128s")]
+        {
+            let limits = network
+                .experimental_slh_dsa_b128s_limits()
+                .ok_or(TransactionError::ExperimentalSlhDsaB128sBudgetContext)?;
+            let block_budget = match request {
+                Request::Block {
+                    slh_dsa_b128s_budget: Some(budget),
+                    ..
+                } if budget.limit() == limits.block() => Some(budget.clone()),
+                Request::Block { .. } => {
+                    return Err(TransactionError::ExperimentalSlhDsaB128sBudgetContext)
+                }
+                Request::Mempool { .. } => None,
+            };
+            let budget = pq::SlhDsaB128sTransactionBudget::new(limits, block_budget);
+            let upgrade = request.upgrade(network);
+            let network = match network.kind() {
+                zakura_chain::parameters::NetworkKind::Mainnet => {
+                    zakura_pq_tx_context::NetworkDomain::Mainnet
+                }
+                zakura_chain::parameters::NetworkKind::Testnet => {
+                    zakura_pq_tx_context::NetworkDomain::Testnet
+                }
+                zakura_chain::parameters::NetworkKind::Regtest => {
+                    zakura_pq_tx_context::NetworkDomain::Regtest
+                }
+            };
+            let spent_outputs = cached_ffi_transaction.shared_previous_outputs();
+            let mut checks = AsyncChecks::new();
+            checks.push_slh_dsa_b128s(primitives::spawn_fifo_and_convert(move || {
+                slh_dsa_b128s::verify_experimental_slh_dsa_b128s_inputs(
+                    &transaction,
+                    network,
+                    upgrade,
+                    spent_outputs,
+                    &indexes,
+                    budget,
+                )
+            }));
+            Ok(checks)
         }
     }
 
@@ -1467,7 +1543,16 @@ where
 /// A set of unordered asynchronous checks that should succeed.
 ///
 /// A wrapper around [`FuturesUnordered`] with some auxiliary methods.
-struct AsyncChecks(FuturesUnordered<Pin<Box<dyn Future<Output = Result<(), BoxError>> + Send>>>);
+struct AsyncChecks(
+    FuturesUnordered<Pin<Box<dyn Future<Output = Result<VerifiedChecks, BoxError>> + Send>>>,
+);
+
+/// Successful SLH reservations, published only after all checks succeed.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+struct VerifiedChecks {
+    /// Experimental SLH checks.
+    slh_dsa_b128s: u32,
+}
 
 impl AsyncChecks {
     /// Create an empty set of unordered asynchronous checks.
@@ -1477,7 +1562,21 @@ impl AsyncChecks {
 
     /// Push a check into the set.
     pub fn push(&mut self, check: impl Future<Output = Result<(), BoxError>> + Send + 'static) {
-        self.0.push(check.boxed());
+        self.0
+            .push(check.map_ok(|()| VerifiedChecks::default()).boxed());
+    }
+
+    /// Add the single SLH CPU worker and retain its successful reservation count.
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
+    fn push_slh_dsa_b128s(
+        &mut self,
+        check: impl Future<Output = Result<u32, BoxError>> + Send + 'static,
+    ) {
+        self.0.push(
+            check
+                .map_ok(|slh_dsa_b128s| VerifiedChecks { slh_dsa_b128s })
+                .boxed(),
+        );
     }
 
     /// Push a set of checks into the set.
@@ -1488,17 +1587,19 @@ impl AsyncChecks {
         self
     }
 
-    /// Wait until all checks in the set finish.
+    /// Return the native check count only after every check in the set succeeds.
     ///
     /// Returns the first error, once every check has finished. Dropping a check does not stop the
     /// batch work its request already dispatched, so returning early would report completion
     /// while that work is still running. A caller that bounds its compute on this response reads
     /// completion literally, and the wait costs nothing extra: the batches are already queued, and
     /// the batch verifiers flush them on their own latency bound at the latest.
+    /// Failed checks discard the native count without refunding reservations.
     async fn check(
         mut self,
         block_batch_flush_key: Option<primitives::BlockVerifierBatchFlushKey>,
-    ) -> Result<(), BoxError> {
+    ) -> Result<VerifiedChecks, BoxError> {
+        let mut verified = VerifiedChecks::default();
         let mut needs_block_batch_flush = block_batch_flush_key.is_some();
         let mut block_batch_flush = match block_batch_flush_key {
             Some(key) => async move {
@@ -1524,13 +1625,23 @@ impl AsyncChecks {
 
                         return match first_error {
                             Some(error) => Err(error),
-                            None => Ok(()),
+                            None => Ok(verified),
                         };
                     };
 
                     tracing::trace!(?check, remaining = self.0.len());
-                    if let Err(error) = check {
-                        first_error.get_or_insert(error);
+                    match check {
+                        Ok(check) => match verified.slh_dsa_b128s.checked_add(check.slh_dsa_b128s) {
+                            Some(count) => verified.slh_dsa_b128s = count,
+                            None => {
+                                first_error.get_or_insert_with(|| {
+                                    TransactionError::ExperimentalSlhDsaB128sBudgetContext.into()
+                                });
+                            }
+                        },
+                        Err(error) => {
+                            first_error.get_or_insert(error);
+                        }
                     }
                 }
 
@@ -1550,6 +1661,10 @@ where
     where
         I: IntoIterator<Item = F>,
     {
-        AsyncChecks(iterator.into_iter().map(FutureExt::boxed).collect())
+        let mut checks = AsyncChecks::new();
+        for check in iterator {
+            checks.push(check);
+        }
+        checks
     }
 }

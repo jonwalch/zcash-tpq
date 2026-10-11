@@ -126,3 +126,66 @@ fn late_broadcast_completion_does_not_rewind_the_tip_cursor() {
         (block::Hash([3; 32]), block::Height(3))
     );
 }
+
+#[test]
+fn experimental_slh_dsa_b128s_resets_at_its_own_next_block_activation() {
+    use super::super::TipAction;
+    use zakura_chain::parameters::{
+        testnet::{ConfiguredActivationHeights, ExperimentalSlhDsaB128sLimits, RegtestParameters},
+        Network,
+    };
+    // SLH activation resets at candidate height 12, including after rollback.
+    let network = Network::new_regtest(RegtestParameters {
+        activation_heights: ConfiguredActivationHeights {
+            nu6_3: Some(1),
+            nu7: Some(5),
+            ..Default::default()
+        },
+        experimental_slh_dsa_b128s_activation_height: Some(block::Height(12)),
+        experimental_slh_dsa_b128s_limits: Some(ExperimentalSlhDsaB128sLimits::new(2, 4).unwrap()),
+        ..Default::default()
+    });
+    let (mut sender, _, mut changes) = ChainTipSender::new(None, &network);
+    for (height, hash, parent, reset) in [
+        (8, 8, 7, true),  // initial observation
+        (9, 9, 8, false), // no configured activation at candidate height 10
+        (10, 10, 9, false),
+        (11, 11, 10, true), // candidate height 12 activates SLH-DSA-B-128s
+        (12, 12, 11, false),
+        (10, 20, 9, true),  // rollback below SLH-DSA-B-128s activation
+        (11, 21, 20, true), // reactivate candidate height 12
+        (12, 22, 21, false),
+        (12, 23, 21, true), // same-height fork invalidates bound verification results
+        (13, 24, 23, false),
+        (3, 30, 2, true),  // rollback below both SLH and NU7
+        (4, 31, 30, true), // candidate height 5 reactivates NU7
+        (5, 32, 31, false),
+        (6, 33, 32, false),
+        (7, 34, 33, false),
+        (8, 35, 34, false),
+        (9, 36, 35, false),
+        (10, 37, 36, false),
+        (11, 38, 37, true), // SLH activation remains independent of the branch upgrade
+    ] {
+        sender.set_best_non_finalized_tip(Some(tip(height, hash, parent)));
+        assert_eq!(
+            matches!(changes.last_tip_change().unwrap(), TipAction::Reset { .. }),
+            reset,
+            "height {height}, hash {hash}"
+        );
+    }
+
+    // Multiple notifications can be coalesced by the watch channel. Missing
+    // the exact activation block still resets before any result is consumed.
+    sender.set_best_non_finalized_tip(Some(tip(10, 40, 9)));
+    assert!(matches!(
+        changes.last_tip_change(),
+        Some(TipAction::Reset { .. })
+    ));
+    sender.set_best_non_finalized_tip(Some(tip(11, 41, 40)));
+    sender.set_best_non_finalized_tip(Some(tip(12, 42, 41)));
+    assert!(matches!(
+        changes.last_tip_change(),
+        Some(TipAction::Reset { .. })
+    ));
+}

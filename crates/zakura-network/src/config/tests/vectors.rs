@@ -1230,6 +1230,152 @@ fn regtest_accepts_checkpoints_covering_delayed_canopy() {
     );
 }
 
+#[test]
+fn experimental_slh_dsa_b128s_config_roundtrips_without_changing_defaults() {
+    let fields = "experimental_slh_dsa_b128s_activation_height = 110\nexperimental_slh_dsa_b128s_max_checks_per_transaction = 16\nexperimental_slh_dsa_b128s_max_checks_per_block = 64";
+    for text in [
+        format!("network = 'Regtest'\n[testnet_parameters]\nactivation_heights = {{ \"NU6.3\" = 1, NU7 = 105 }}\n{fields}"),
+        format!("network = {{ params = {{ activation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}, {} }} }}", fields.replace('\n', ", ")),
+    ] {
+        let config: Config = toml::from_str(&text).unwrap();
+        assert!(config.network.is_regtest());
+        assert_eq!(config.network.experimental_slh_dsa_b128s_activation_height(), Some(Height(110)));
+        let limits = config.network.experimental_slh_dsa_b128s_limits().unwrap();
+        assert_eq!((limits.transaction(), limits.block()), (16, 64));
+        assert!(!config.network.is_experimental_slh_dsa_b128s_active(Height(109)));
+        assert!(config.network.is_experimental_slh_dsa_b128s_active(Height(110)));
+        let encoded = toml::to_string(&config).unwrap();
+        assert!(encoded.contains("experimental_slh_dsa_b128s_activation_height"));
+        assert_eq!(toml::from_str::<Config>(&encoded).unwrap(), config);
+    }
+    for network in ["Mainnet", "Testnet", "Regtest"] {
+        let config: Config = toml::from_str(&format!("network = '{network}'")).unwrap();
+        assert_eq!(
+            config
+                .network
+                .experimental_slh_dsa_b128s_activation_height(),
+            None
+        );
+        assert!(!toml::to_string(&config)
+            .unwrap()
+            .contains("experimental_slh_dsa_b128s"));
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest() {
+    let fields = [
+        "experimental_slh_dsa_b128s_activation_height = 110",
+        "experimental_slh_dsa_b128s_max_checks_per_transaction = 16",
+        "experimental_slh_dsa_b128s_max_checks_per_block = 64",
+    ];
+    for mask in 1..7 {
+        let selected: Vec<_> = fields
+            .iter()
+            .enumerate()
+            .filter_map(|(index, field)| (mask & (1 << index) != 0).then_some(*field))
+            .collect();
+        for text in [
+            format!("network = 'Regtest'\n[testnet_parameters]\nactivation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}\n{}", selected.join("\n")),
+            format!("network = {{ params = {{ activation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}, {} }} }}", selected.join(", ")),
+        ] {
+            let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+            assert!(error.contains("together"), "mask {mask}: {error}");
+        }
+    }
+    for field in fields {
+        for text in [
+            format!("network = 'Mainnet'\n[testnet_parameters]\n{field}"),
+            format!("network = 'Testnet'\n[testnet_parameters]\n{field}"),
+            format!("initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, {field} }}"),
+            format!("network = {{ params = {{}} }}\n[testnet_parameters]\n{field}"),
+        ] {
+            let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+            assert!(error.contains("Regtest"), "{error}");
+        }
+        // The untagged inline Regtest form must not swallow misplaced fields.
+        let text = format!("network = {{ params = {{}}, {field} }}");
+        assert!(toml::from_str::<Config>(&text).is_err());
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_config_cannot_use_testnet_activation_overlay() {
+    let fields = "experimental_slh_dsa_b128s_activation_height = 110\nexperimental_slh_dsa_b128s_max_checks_per_transaction = 16\nexperimental_slh_dsa_b128s_max_checks_per_block = 64";
+    for inherit in [false, true] {
+        let text = format!(
+            "network = 'Regtest'\n[testnet_parameters]\nactivation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}\ninherit_activation_heights = {inherit}\n{fields}"
+        );
+        let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+        assert!(
+            error.contains("only applies to configured Testnets"),
+            "{error}"
+        );
+    }
+    let text = format!(
+        "initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, inherit_activation_heights = true, activation_heights = {{ NU7 = 4420652 }}, {} }}",
+        fields.replace('\n', ", ")
+    );
+    let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+    assert!(error.contains("only supported on Regtest"), "{error}");
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_config_rejects_invalid_boundaries() {
+    let config = |nu7: &str, height: &str, transaction: &str, block: &str| {
+        format!(
+        "network = 'Regtest'\n[testnet_parameters]\n{nu7}\nexperimental_slh_dsa_b128s_activation_height = {height}\nexperimental_slh_dsa_b128s_max_checks_per_transaction = {transaction}\nexperimental_slh_dsa_b128s_max_checks_per_block = {block}"
+    )
+    };
+    let nu7 = "activation_heights = { 'NU6.3' = 1, NU7 = 105 }";
+    for (upgrade, height, transaction, block, expected) in [
+        ("", "110", "16", "64", "NU7"),
+        (nu7, "104", "16", "64", "strictly after NU7"),
+        (nu7, "105", "16", "64", "strictly after NU7"),
+        (nu7, "0", "16", "64", "Height::MAX"),
+        (nu7, "2147483648", "16", "64", "Height::MAX"),
+        (nu7, "110", "0", "64", "0 < transaction <= block"),
+        (nu7, "110", "65", "64", "0 < transaction <= block"),
+        (nu7, "110", "16", "0", "0 < transaction <= block"),
+    ] {
+        let error = toml::from_str::<Config>(&config(upgrade, height, transaction, block))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains(expected), "{expected}: {error}");
+    }
+    for (height, transaction, block) in [
+        ("4294967296", "16", "64"),
+        ("110", "4294967296", "4294967296"),
+        ("110", "16", "4294967296"),
+        ("-1", "16", "64"),
+        ("110", "-1", "64"),
+        ("110", "16", "-1"),
+    ] {
+        assert!(toml::from_str::<Config>(&config(nu7, height, transaction, block)).is_err());
+    }
+    let maximum =
+        toml::from_str::<Config>(&config(nu7, "110", "4294967295", "4294967295")).unwrap();
+    assert_eq!(
+        maximum
+            .network
+            .experimental_slh_dsa_b128s_limits()
+            .unwrap()
+            .block(),
+        u32::MAX
+    );
+    let genesis = Network::new_regtest(Default::default()).genesis_hash();
+    for checkpoint_height in [109, 110, 111] {
+        let text = format!(
+            "{}\ncheckpoints = [[0, {:?}], [{checkpoint_height}, {:?}]]",
+            config(nu7, "110", "16", "64"),
+            genesis.0,
+            [7u8; 32]
+        );
+        let result = toml::from_str::<Config>(&text);
+        assert_eq!(result.is_ok(), checkpoint_height < 110, "{result:?}");
+    }
+}
+
 /// The deployer's rendered NU7 fork node config, kept in sync with the renderer by
 /// `deploy/nu7-fork/test_fork.py`. Loading it here proves zakurad accepts the shape
 /// the deployer writes, which a TOML parser alone cannot.

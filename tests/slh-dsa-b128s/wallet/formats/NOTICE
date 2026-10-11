@@ -1,0 +1,18 @@
+The canonical JSON, Bech32m, inventory-transition and backup reference routines
+are adapted from tests/wallet-spec/reference.py in jonwalch/zcash-transparent-pq
+at da638d4045074f7957aec3fb3fb018bd66b96d05. Original licensing is MIT OR Apache-2.0;
+the repository LICENSE-MIT and LICENSE-APACHE apply. Source hashes and adaptation
+scope are retained in sources.json.
+
+Copyright (c) 2026 Zakura Contributors
+Copyright (c) 2019-2025 Zcash Foundation
+
+The separately implemented Bech32m arithmetic follows BIP 173/350 by Pieter
+Wuille and Greg Maxwell. The specifications are available at:
+https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki
+No BIP reference source file is copied here.
+
+New SLH-only format fixtures, bounded checks and tests are distributed under the
+same MIT OR Apache-2.0 terms. Every root, password, salt, nonce and key in these
+fixtures is intentionally public test material.

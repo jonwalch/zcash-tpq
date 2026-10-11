@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "previous_receipt": "receipt.json",
+  "source_commit": "5e623462df268f86777f6625d9c7ae4da8c56b46",
+  "source_dirty": false,
+  "change": "Document lossless role conversion and replace test-only explicit slice casts with coercions; no derivation or signing behavior changed.",
+  "updated_files": [
+    {
+      "path": "crates/pq-wallet/src/keys.rs",
+      "sha256": "02753e66c8842f5279d024e57cd319240a637dfd0a7a52db4ad200b1ba42e173"
+    },
+    {
+      "path": "crates/pq-wallet/src/keys/tests.rs",
+      "sha256": "e984f7642a8d357595d730202d8cc98516222363fd71af2bf32f9075ab22d844"
+    },
+    {
+      "path": "crates/pq-wallet/PROVENANCE.json",
+      "sha256": "eed02b4e1173ee16c5bde166f40095c237c877aba761ca99816a96305a281244"
+    }
+  ],
+  "wallet_test_binary": {
+    "name": "zakura_pq_wallet-04f1f2b92d777fcd",
+    "sha256": "a1670bf4a123c08ad34099d28cadda88ed907435de86701a87a85ab88363a55c"
+  },
+  "checks": {
+    "wallet_enabled_tests": 4,
+    "selected_format": "passed",
+    "enabled_wallet_all_targets_locked_clippy": "passed"
+  },
+  "reused_evidence": "Signer, default-disabled wallet code/graph, independent Python/C and vectors are unchanged from receipt.json. The changed enabled-wallet source/tests were rebuilt and checked.",
+  "Cargo.lock_sha256": "3adf203e96d7811bee6f51e5e67815e3e2df889dfc9327c8261470294752538c"
+}

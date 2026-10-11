@@ -1,0 +1,19 @@
+Independent SLH wallet interface comparison tools
+
+These tools reuse the separate Transparent PQ Python wallet format reference
+through ../formats/reference.py, whose upstream source, MIT/Apache-2.0 license
+and adaptations are retained in ../formats/NOTICE and ../formats/sources.json.
+Research source: https://github.com/jonwalch/zcash-transparent-pq
+Pinned revision: da638d4045074f7957aec3fb3fb018bd66b96d05
+
+The deterministic watch companion retains the public schema of the research
+watch, scan and payment modules; schema/hash mappings are in sources.json.
+Key-exchange and operational-receipt envelopes are specified by the product
+modules recorded there. Production functions never compute oracle answers.
+The product wallet's existing MIT and Apache-2.0 licenses are available at
+crates/pq-wallet/LICENSE-MIT and crates/pq-wallet/LICENSE-APACHE.
+
+Existing H1 public keys and L1 inventory/encrypted backup are reused unchanged,
+with their original attribution and hash checks. All material is public test
+data. The synthetic participant identities and metadata confer no ownership,
+authority or security assurance.

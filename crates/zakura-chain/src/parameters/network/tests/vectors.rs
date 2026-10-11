@@ -1466,3 +1466,111 @@ fn regtest_rejects_checkpoints_from_another_genesis() {
         Err(ParametersBuilderError::CheckpointGenesisMismatch)
     ));
 }
+
+/// Regtest with a configurable NU7 height and optional SLH gate.
+fn slh_dsa_b128s_regtest(
+    nu7: Option<u32>,
+    activation: Option<Height>,
+    limits: Option<testnet::ExperimentalSlhDsaB128sLimits>,
+    checkpoints: Option<testnet::ConfiguredCheckpoints>,
+) -> Result<testnet::Parameters, ParametersBuilderError> {
+    testnet::Parameters::new_regtest(RegtestParameters {
+        activation_heights: ConfiguredActivationHeights {
+            nu6_3: nu7.map(|_| 1),
+            nu7,
+            ..Default::default()
+        },
+        experimental_slh_dsa_b128s_activation_height: activation,
+        experimental_slh_dsa_b128s_limits: limits,
+        checkpoints,
+        ..Default::default()
+    })
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_gate_is_regtest_only_and_strictly_after_nu7() {
+    let limits = Some(testnet::ExperimentalSlhDsaB128sLimits::new(10, 40).unwrap());
+    // Disabled by default everywhere.
+    for network in [
+        Network::Mainnet,
+        Network::new_default_testnet(),
+        Network::new_regtest(Default::default()),
+    ] {
+        assert_eq!(network.experimental_slh_dsa_b128s_activation_height(), None);
+        assert!(!network.is_experimental_slh_dsa_b128s_active(Height::MAX));
+    }
+    let network = Network::new_configured_testnet(
+        slh_dsa_b128s_regtest(Some(5), Some(Height(10)), limits, None).unwrap(),
+    );
+    assert_eq!(network.kind(), NetworkKind::Regtest);
+    assert!(!network.is_experimental_slh_dsa_b128s_active(Height(9)));
+    assert!(network.is_experimental_slh_dsa_b128s_active(Height(10)));
+    assert_eq!(network.experimental_slh_dsa_b128s_limits(), limits);
+    assert!(
+        format!("{network:?}").contains("experimental_slh_dsa_b128s_activation_height: Height(10)")
+    );
+
+    // NU7 must activate strictly before SLH; equality must fail.
+    for (nu7, valid) in [
+        (None, false),
+        (Some(11), false),
+        (Some(10), false),
+        (Some(5), true),
+    ] {
+        let result = slh_dsa_b128s_regtest(nu7, Some(Height(10)), limits, None);
+        assert_eq!(result.is_ok(), valid, "NU7 {nu7:?}");
+        if !valid {
+            assert!(matches!(
+                result,
+                Err(ParametersBuilderError::ExperimentalSlhDsaB128sBeforeNu7 { .. })
+            ));
+        }
+    }
+
+    // Heights, paired limits and checkpoints must all satisfy the local rules.
+    for height in [Height(0), Height(Height::MAX.0 + 1)] {
+        assert_eq!(
+            slh_dsa_b128s_regtest(Some(5), Some(height), limits, None).unwrap_err(),
+            ParametersBuilderError::InvalidExperimentalSlhDsaB128sActivationHeight
+        );
+    }
+    for (activation, limits) in [(Some(Height(10)), None), (None, limits)] {
+        assert_eq!(
+            slh_dsa_b128s_regtest(Some(5), activation, limits, None).unwrap_err(),
+            ParametersBuilderError::MissingExperimentalSlhDsaB128sLimits
+        );
+    }
+    let genesis = Network::new_regtest(Default::default()).genesis_hash();
+    for checkpoint_height in [Height(9), Height(10), Height(11)] {
+        let result = slh_dsa_b128s_regtest(
+            Some(5),
+            Some(Height(10)),
+            limits,
+            Some(testnet::ConfiguredCheckpoints::HeightsAndHashes(vec![
+                (Height(0), genesis),
+                (checkpoint_height, crate::block::Hash([7; 32])),
+            ])),
+        );
+        assert_eq!(result.is_ok(), checkpoint_height < Height(10));
+        if checkpoint_height >= Height(10) {
+            assert!(matches!(
+                result,
+                Err(ParametersBuilderError::ExperimentalSlhDsaB128sCheckpointConflict { .. })
+            ));
+        }
+    }
+    for (transaction, block, valid) in [
+        (0, 0, false),
+        (0, 1, false),
+        (1, 0, false),
+        (4, 3, false),
+        (1, 1, true),
+        (16, 64, true),
+        (u32::MAX, u32::MAX, true),
+    ] {
+        assert_eq!(
+            testnet::ExperimentalSlhDsaB128sLimits::new(transaction, block).is_ok(),
+            valid
+        );
+    }
+}

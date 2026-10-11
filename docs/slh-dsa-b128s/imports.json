@@ -1,0 +1,3882 @@
+{
+  "files": [
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/CODEOWNERS",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Designate @jonwalch as the code owner for all product files and review configuration while preserving inherited comments.",
+      "sha256": "48fbb6fe11382707c67d15d566580ea366f9939b53e3a9020b91b2cc4b8dc35b"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/coverage.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "b043ca3a8b9155ef2d460b30d827ac8bd9fbce182bdd67b1498a59e0af1ef902"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/lint.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "0647b03df33d5626cb9200cfd6f47150087b0651e869cdefe0baaeb38535987a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/prepare-release-pr.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "5cf8f02463d4fda3b6120977bf24961128a734660b1e85d97e502a9453b04920"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/release-binaries.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Default-off fork GitHub release create/upload safeguard; retain upstream behavior, triggers and staged build artifacts.",
+      "sha256": "dbcf8203ad3b621e6fd03f30bbd6c60ad15c72c8c00f7f1aa56fe447c2a7d019"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/release-drafter.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "816fab337077f1a3a03af8e73ff3f9248713e48b1f2e69dd3d7ecebef78cc074"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/semver-checks.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "28f4d6a8dffb872fe3b79e63535587b4e6dc35d500422e1463a0ca8b98514b09"
+    },
+    {
+      "disposition": "new",
+      "path": ".github/workflows/slh-content.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Read-only bounded source/content/archive regression CI without live or build workloads.",
+      "sha256": "6bd26ce4631af62849748d65777e9a50f4f5d0b5b5ef934e35200b59d63ba07e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/test-crates.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "a8d17148bfa23a34e8a8c015241d83aa715a6d08e7b9861977b7692c8a71e774"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/tests-unit.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "bd7b378722151ad65b95de93f87d8d4e994d0c7b6dc1968e6341d4e0f627f432"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/zakura-cluster.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "c0f0e07eab7973fce9f19ba6a6f2132e72cc62c8896f4297ef0788e3c073e8dd"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/zakura-e2e.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "f56fa3ff646ad9769681e01cd8cf70addc9fab65b6d1863c7e076743231f7687"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/zcashd-compat-regtest.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
+      "sha256": "a27927e49e18944d50bb52841df64d7dc920a95d2167fb9e6881ffa56f8f007a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".gitignore",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Exclude private local context; committed-content safety is independently guarded.",
+      "sha256": "caa46a71020dfaaae653e3b8fc1c3b593d6c23d25666d31db4f7312fcf71298e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "AGENTS.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style.",
+      "sha256": "a8d6b4e11b127fee4978080fda3d111c86e07394c6307ff94993f6ee8328f26f"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "Cargo.lock",
+      "provenance": [
+        "tests/slh-dsa-b128s/dependencies/README.md"
+      ],
+      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum.",
+      "sha256": "fe0c19213bc77d3b76cd24a9d571ad594d921e2be491e9a02eb6a6e72bd539bf"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "Cargo.toml",
+      "provenance": [
+        "tests/slh-dsa-b128s/dependencies/README.md"
+      ],
+      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities.",
+      "sha256": "ed6deb2479e80bded93fee9efbfc706fc9c4cdf139b6605d9038c3de43c84f26"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "README.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases.",
+      "sha256": "cebbeb31597ca1b2770fbde36d864d65e2c5fd0ab4c7700709035ffccbf903c9"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/Cargo.toml",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "fe8e02424a3f782d58eb6df3ab6a2815eefd579b7092733bd919d73378191378"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-cli/NOTICE",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "532f7e6ef12da7983e8c75b0d1fb380e5e269952139cd67e0853dedb1c85af12"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/README.md",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "a7757b887f25bd2c1e1b346d2b74facd6fe04a84057ac945d5cf215d98bfe19f"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/discovery.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "ae163fe45eb458b021264893cc95c8da4779851a3d549d694953b5c5a222afaa"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/enrollment.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "b2d0445fcf4384eb39e2891c2c29d686ddee4e5d1ee8918e18232ea4aa6d3cdf"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/history.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "10b03e0b690b3fdd157c0ce64024dd14c9b36756208d418a9ddd5a98274e4d23"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/main.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "f0f756f1b6f638577f37e26bd016064ddb1b170752dc57e7ffe9fdffd05cdde6"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/password.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "31cb0821cfa7a79017d4ee36d98bc5d486fabc4adf507d0637d3c3e7bbda1071"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/payments.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "18236fb33b466bddb697ac90f0fa1e6295a9e69bec48537bc5635a0320161aaa"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-cli/src/recovery.rs",
+      "provenance": [
+        "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
+      ],
+      "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
+      "sha256": "ee50c8ff9cd5f3ee9601c93bb32bf2ebb5da422237c3d63f056aeafb13739b60"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/pq-cli/tests/public_enrollment.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Independent immutable public interface comparisons with identity, companion and rejection mutations.",
+      "sha256": "6b3fea00b292d272121843b1afb74cef8b5ab24897015bb8cb97747058cb97e5"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "68d48bd8a5df3c309b2a970cbea7e952565e7242f420acd9cb5a717baf0ec701"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/Cargo.toml",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "6a3ef6325201434953dbb802be69509c419028dfdce58bf9cbb26ad9053af8ed"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-exp/LICENSE-APACHE",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-exp/LICENSE-MIT",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/README.md",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "be831ee1be451d329ec224dc2b490776be1db1d5f1de4a37dec13c6a681afed4"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/codec.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "e89a9ad2cdf0f9e97cd59d13fe70bae451b587fc373b4e651fc8f4e640ccf273"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/contract.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "ad97af46b1d46d71cd5ea9175b4197ed88010934322cee3c29cd0816fe81ac22"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/lib.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "26a440f732cb22a3f548eecc97cd778420609aba53536bda97cc4b1fd68a0f55"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/profile.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "0ece11d2a0e85c53c727876277df814ac2f4950e8bf26281558ea0a5278b396c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/rejection.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "7c340c720a7e45949b5dcc39ba862155a5cebfbd69f0c7ef36c0755cbc792b67"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/signing_context.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "da4d38a2cabb6baabc3b5788b1551acfada3ee7dccf6b7d3ba4e793a579b4359"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/test_observer.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "eb1d691b6a67fa6679e1c8fb2e877f9c54e58eb6619e6653c494e48610c9afe0"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/src/verifier.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation. Add the reviewed optional fixed-primitive observation callback without changing its result or reservation/error order.",
+      "sha256": "29afc243055c3b9bd108a8022a15d20a2c026c9864a68bea5ab07fc84e1712bb"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/tests/codec.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "f8c4a51656d9bc71e305f9303c235e5d5a791139b2bd5492adde4f4d1d2d3313"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/tests/context.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "312b5f28a05eeb077b9fc31e7172d94eb00fdd75fd4438434d51a41c72675e9f"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-exp/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/Cargo.toml",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "9c55748913f644c52696b774fa3a2e2c307faeedf860bced78f90b2d210f57ad"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-sign/LICENSE-APACHE",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-sign/LICENSE-MIT",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-sign/NOTICE.md",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "fb5d3f5b15d236c96edf10bf38b27527fb17769674fc449de29b5fae4c600f4f"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "ce5a3b5188a8ff432c9c19f6cb91ea7e990e1adc820730c0f797fbe96c95de79"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/README.md",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "0db224452440dda53f1ff75ed2d2b23fd972ea7e623e0b0b7903c66344f8144d"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/address.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "7dd5ca79dcdcf4f3140a1fdb3c2395e942b24eaf51fb414e7fd349d69512b2e3"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/hash.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "aef72bb23d3adea932a9323e2173519e54636ab345b13898d4e8f813ed181545"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/lib.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "67d4261be72a1971e766be59fcb5bc345711291e5a2c56699b155b985ace87aa"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/recovery.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "ea97d2b287cea63f08dc1b61e43ffaec8408d88ff44279d092a9b580108622c6"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/signing.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "477916fe13c6592f5f0b6324c2786b91438aea4f1cf5935f667ab09501ea0414"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/tests.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "616b1e112e49637284df40db44872a2f220f016e5d08d3e54fb655f27256d62c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-sign/src/util.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-sign/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-sign/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/Cargo.toml",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "e201bf67663d6c7434f39956b3f3f01b639a1f9460a077605a0bf7885016a9bf"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-verify/LICENSE-APACHE",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-verify/LICENSE-MIT",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-verify/NOTICE.md",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "bfac743705a1aaefdfde84fe7d83c926083bb1893dda38e5b8109c23a138ee38"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "1766ff67218cd74878c85ec93670f3fff967c7faba8f9b6e200ff5942ee61f43"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/README.md",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "eeed0afb861ee3a1d4ea6edfea64315724e7448b5b7c0f86e2067c50b8baf603"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/examples/compare.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "8fdda84104d26e317be4d495c14f438a24d54f442d159ad4331593422ecdc623"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/src/address.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "f57dd7dab7fabea0360bf2b1266469ac82f402f33f5404b4ff8c94d7cb78d368"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/src/hash.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "dd1c691cc2aca9374bf6a190c93b21f9da9b5651ee96d32bba182d0b2fd5c356"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/src/hypertree.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "5571b3a34d13eaab83d6951f6cce9e88af00a5f19e90d49a4feea0debcd3f768"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/src/lib.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "b4c54facaa7e0360dced189da9d1491e5785dadfdfdbb47fa10714f6b88d7954"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/src/util.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "5614c2f32ffba61a8181c1a029ad4d81a13ae2a1255dee118d28c6ad8c484ffa"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/tests/conformance.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "baacb0301785c537c5bbf9702890bc934174af88d506574a040f0c33ddde6c4e"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/tests/data/pure-kats.json",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "a20ba835aa50f927f69263f259a3176db61048f41c3048bb5fcf14fc0c4b3a21"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-slh-dsa-b-verify/tests/wrong_profile.rs",
+      "provenance": [
+        "crates/pq-slh-dsa-b-verify/PROVENANCE.json",
+        "crates/pq-slh-dsa-b-verify/NOTICE.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "a4881d5c49cf4edef333dc3c65bd52a4bbd0d778d3a7b209db86af2ac066c7c5"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-test-support/ATTRIBUTION.md",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "72752bed082fb69a88edb5cf3fa23a0dee55cdc70ec841e1a34fced7d456e9a5"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-test-support/Cargo.toml",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "b5b87a8a1585a484850e399f1477682bdea607bfc485c5f50ba41c2b220dd166"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-test-support/LICENSE-APACHE",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-test-support/LICENSE-MIT",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-test-support/README.md",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "8367719d1270972ca4f70deb5926dbe4781387c600643d8f884a97a994b0fc9d"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-test-support/src/lib.rs",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "c229e9458e325a76aa265adf147f50adf7dc656882ae0720229decbc8c07d4c1"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-test-support/tests/recipes.rs",
+      "provenance": [
+        "crates/pq-test-support/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "f65167a354556244e5d4443dd2060e71f7fd93346f495cecbf91cec10523faed"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-tx-context/ATTRIBUTION.md",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "eca8fd15b43eed8950711beeb48e611cfc66e8ac0b7b3c32abc5d4b5c55568a9"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-tx-context/Cargo.toml",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "031481de5640fb7cd0ce1121f7c4cbb3951c45cf9c67bd58ec04e41950043ad5"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-tx-context/LICENSE-APACHE",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-tx-context/LICENSE-MIT",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-tx-context/README.md",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "253fec07f553e4a60352ad610a8ab20ec96431e03c07efc4642ddbf70f3fd42c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-tx-context/src/accounting.rs",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "778bbd80853ff008284d4d60e8386b44ce88fc3052b9fe4a725f1d9c15710177"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-tx-context/src/compatibility.rs",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "b95f58844c4e956f929f07283679573d7a27ed79c2e5601068c74b829151a49f"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-tx-context/src/error.rs",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "0e55ff682109dbd5e7997a8cdb8b6585ad4b78d1f4b8370f13797be0f7634bee"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-tx-context/src/lib.rs",
+      "provenance": [
+        "crates/pq-tx-context/ATTRIBUTION.md"
+      ],
+      "reason": "Reuse attributed fixed-profile algorithm or generic trusted-context support with the documented narrow SLH adaptation.",
+      "sha256": "aa8f26a6c617fa21c19661b28e32af19a3cc3d55294dd9cb49b24ed1cd7279f0"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/CLI_RPC_PROVENANCE.json",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "79638730b2df331ac821b576c1659237628e87f32c1d6b4013ecbcf945f589aa"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/Cargo.toml",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "a0d68ec13e75d40624b62a01e8e6c3ab51c3e170955d1a144379685ee399617e"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/LICENSE-APACHE",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "f8f096ab5ee815515b5db3c5764754cb2efa38f19e9d93dfe509c09850b2ecc2"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/LICENSE-MIT",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "2f5332fab8254065a5796c4d76c2717661f30f6757b0d2325cfdbdfc93a25af6"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/NOTICE.md",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "9923f9232506b0f9fe76b0a4502c47221b4abb968face9199e60b37839514f73"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "a83ef17629a1d8beb17d83210807a2acbf9904f55069cb4077cfedf6daef4ed3"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/PROVENANCE.json",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "c2e0f411d04bf801c15ace022b186631c5ce0d1a079756b2286b62bc7e5e460e"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/README.md",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "412113cba2e27b28795356872c9be96ce7227bea2e5ff2ad1e21eb6eef138a47"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/pq-wallet/RECOVERY_PROVENANCE.json",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "8daaa495418575ee542f8cf606346a66339b0af99435b811cab079245879948e"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/backup.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "46c7a84a8b3294d443618bda7d1d944af76c880aa2b74ee0104af66421e395dc"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/backup_tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "b9e5bed0165ebeb5360c6a47fd67d385ac228d9867a809a6f3fa94f3f1566ef6"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/canonical.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "049e5109d893275b1c10f23dde5ed0c65f2fbbd8db45a2e570777b5256322ce9"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/error.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "4dff31aad5b1a6166a62dbca3568d5c35685d6824b2a3370c9f48bcecd297ef3"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/journal/mod.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "7a010ede9240fe28d0043c8007eb57c2dc7c61ea0ff59f4f2ead9de72f24b5c1"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/journal/object.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "5adf7dd539c3826f2f71493ca6f72a26fec74ce78d6208d36dfab53ede600c98"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/journal/store.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "16a5382049d1b7be777cd94f1d3b9f8e0329ad15f9a0bc14f8267df34d1f162c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/journal/tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "c69757d33e19bf8a2be1280f90272c0c10ccd062f96056488d5c702bb772dd24"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/journal/tree.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "3eeb59d8da9672e5bea142bc7e97be976f69eb8e3156be557eaa98c4e511026b"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/keys.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "64a9b0ec556fbae23bdd955daf80be9b4c9449498377b661f017123e9e5d605d"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/keys/tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "e984f7642a8d357595d730202d8cc98516222363fd71af2bf32f9075ab22d844"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/lib.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "7c7d50aa3bb7456663c68716bc12504402902f65638929ddc4cbd0522feffc45"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/manifest.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "bcf13aae244cebe64b123163b690510bbed53f2f861112f888cb94f204b1a324"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/approval.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "f7d5c60f49e1aaf2c83b7bd78094d0f96f4f94b718c39f647e83f306c13a65a0"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/change.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "c47a1b8759edae26fe21e375025c6afcb6573c701905f4357fd3f6226ef1931a"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/mod.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "7ef514ccc80eba9610771f9fa0ca4ba1de1a2170cbc0d453c2e842a461b3a642"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/proposal.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "0b8287b5aff2fd9782617b97aa760a35fa71aa3be145829a4628961f1427c448"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/review.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "e18ae2bc64efb1f399ff261da884e8446c18efb4abbfe8c77cc041f01a405f61"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/store.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "a56ab6905cfc3f76a3aae450634ffb2d6ae0da3c5a35c8477f03680cba3714ef"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "1d4acf95a8a0528459a48be530e4e94bebff6faf72b4ba0159f2261b88752bc7"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/approval.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "87b04f7006750bc9197ae297f20e216bc80c5f55d03a980ece7e5958f91bb55b"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/archive.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "349f620099f54b6ffc8e202926df4426fe8c5476cb0a2a7d14f5224a1fa748bd"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/capacity.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "ccc060204f9c0ce5a868357e7be95a79b1181689a31c76a3ce3c45c287e64662"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/change.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "8f5daa8f08c8d3a64000173747e9b4cbf710c8ffb7cd0790f1dba0741330d079"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/counterexamples.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "0c85ed8f8f5c014db224910fd7da155737b3d1145320425ec998ce061ace1d23"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/expiry.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "b4b2edd5d83bdc053b9afe553618c06343f02c2a1b65cbc0af43ad70fe095300"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/faults.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
+      "sha256": "fb2d5fb90b04cce07570e10c912cf90e1702555d1e988beedadbdb26dfa1cd15"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/fee_upgrade.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "f47273eade198aee664b56e4592e63996a9840a98c7f5bd0298f92da0adc723f"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/formats.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "20d4f8c8d8831aeba752ac637e2d51ce68d334ba60a1d602ec6dfe0346764f2f"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/history.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "af5e3b1a9f7b3f7399bb250ddef60d35f612bbad5ad1207193a502251b32ef97"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/hostile.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "89b747162c2110c852434d544b6ca0a4b5efd5f18ea295e2b6bb29480f969aa4"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/incoming.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "7621e534e138ac625258d5abe1d72f94695399e340f36aa76b7b902262eeec02"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/profile_limits.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "aa07fb2c8780651d1a2543974d533d9d22675f61350d2b4a81d798d6fce54ddd"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/sequences.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "c3d5efffe470411f98bfa95c28baa21301d86d48d40b6420c1ceb41a6144de6b"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/slh_capacity.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "9203a2043d6a65ab20b3ec09c5878f9c947660d5a262ec092c42ae54ee834423"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/payment/tests/snapshot.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "b894872f9caf268e7310696f1a4df7514740bec095fa80cfe540365cfe620017"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/receiving.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "72c9949de4d6a3f240e9a49ad4c81fc96008beb41b0efab6dfb3228fd4ebd4d3"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/recovery.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/recovery/tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "d8ab13f759bbed882a61eca41e0cae9cea86e6ee06fb009c48d1cf44450f6017"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/rpc.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "5db2d83decae5e378f9dce9cb201a894083a34c9b1942a23096460ee0d9040cf"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/rpc/tests/discovery.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "51c6388121f45037e32db7202adbb2c5e76fb451a66e1fd01586512cdb40af03"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/rpc/tests/payment.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "b8285709cc9d16981caa68a976e1b45490595200eb2f2ac25ea88f94c14e4193"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/scan.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "2ccc5bf6db7e5307b6e835f946d3630545202000191cd74d4bbe8d539dddbbce"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/storage.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "42976e02673bff9320fb659d684be62b41f25e40dce372266ed3cdbf3a073878"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/suite.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "018c588287cb4d108e1ec7b6a0a2339b5180e5c7c74363228a356c6c7e0a470a"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/suite/tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "1884a31511d8933775a1fc337397c25caa75bb524e2abb4e747356488d2d2ac4"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/wallet_tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "e74643c1d0cf0f3634b375aca157d2dc4a6bd70fa6ea3167277da6f5ab4af97d"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. A cfg(test,unix) delegation exposes the existing private receive-stage hook only to the ignored human fault driver; production issuance is unchanged.",
+      "sha256": "0c20afaa5cc9b495f59ee5abb3c4e112c4e166fc9ed4f3e4700f02eba2e1799c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch/archive.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "69ecf5e45f7ff44a4245c266045bee4016e1fcbe8bf669d3f1a35df8de89a420"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch/archive/commit.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "9c1f169bff075bf368aee8c4b9f64379fb8e63c04a1929bca65ffd37f80357af"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch/archive/history.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "50e38ea537712dfa9f9f3ee014f2eb95dda8e0db45817b0931a78f3db82d9ef8"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch/archive/snapshot.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "f77eaff3a1453abcbf4dfa4767ca1dbc75e1b91a7682ccada7048f6cec24a6ca"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch/tests.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "11052be9ac3d37af042d7789c7c7035fdd818640ce37e192a31b963019fb2033"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/watch/tests/enrollment.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+      ],
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
+      "sha256": "920a471768dc98c1409a6aa56fa8f965403d15c119b7b459aef7df289ff47bcf"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/pq-wallet/tests/snapshot_conformance.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Independent immutable public interface comparisons with identity, companion and rejection mutations.",
+      "sha256": "9f64138edc6b2ce20541284a92346854c8945335fe69629c44e333450cd16d34"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/parameters/network.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "f0dd1dc862ab48b14dfa7cf1841671429f521af1cb76d97d08c2499542f7cb37"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/parameters/network/error.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "204e719a92e763b781ca6439e350f8185e3a1116771b34126822670e5d47b978"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/parameters/network/testnet.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "43af0fe9e2c644e0547292c215dea7c3eeb072afc914d2f212f1d0008919251e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "a6c04001533ef713fafd05397c5cd346b29458eb9fd4d82236fbb98f78bbcfdc"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/transaction.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "d4580d6ee71245e30e322850bc4f95b57cc8f8df390d2e87224f9e477766a9ec"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/transaction/arbitrary.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "76711f3f69ea96b9a61ae5a3b250199dd653dc5860ac0f8729e0f1ecd32c9494"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/transaction/unmined.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "a4ae107bd648c88c24b13a17804a14467a8bc0ab17001291bdb00ce3b1bd6128"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse private accounting fields, authorization ID, transaction/output Arc identity and network/upgrade rule binding; only SLH and boxed optional metadata.",
+      "sha256": "7e9042b5109ccbb18a824f5d66c32dfb47c4b560e71c49ef8a0857a84ab575af"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-chain/src/transaction/unmined/slh_dsa_b128s/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse two suite-independent metadata tests. Omit alternate suites and invalid-for-SLH pre-NU7 activation scenario.",
+      "sha256": "34e0ae6355c2a0725c8917e61d36fde8f5cc9bd217600d75db3faa6e9e63dc6c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/Cargo.toml",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "d34f98503f02b509614b9764f6c0d9af35d9e24d247ae436e7380f812f788428"
+    },
+    {
+      "disposition": "attribution",
+      "path": "crates/zakura-consensus/SLH_ATTRIBUTION.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "f552c70645d0a64ae22e4c51ec000ab73bc55bbf994605a3aede4316f04eb9a6"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/benches/worst_case_tx_verification.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "1094b1ff90f10c7d563372eaa964391fa68adb6dffb455ad7e36f25601a965d1"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/block.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "4737b99d9919ba909970e3df2470afcfa5c03640570ce90f57bd4b68f0107002"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/block/prepared.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse cache lookup+insertion gate and focused inactive/active tests; SLH-only activation parameters.",
+      "sha256": "91dca103aa096cbedafec15b530375e9a04cb7afa0f08ab06cca64df2cc7439a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/block/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Extend upstream server-template error drain regression with the typed SLH block budget error after current upstream migration.",
+      "sha256": "86b5b9fc0b0a02eb3c519bf84248e07f122aa362b0c89876ead6b0221b852c3a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/error.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "4e700d542219d45ce1c66acbc1b21668b2e986d905858fd297f7b800aa18939d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/lib.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "5bb13c6618593f83d420fd75ce7326c6ec35b00616d42baa492a750998b5f589"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/primitives.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Exact three-line generic success-result type adaptation to existing spawn_fifo_and_convert; preserves queue, channel and boxed-error behavior; existing callers infer unit.",
+      "sha256": "7cb53aa5c9271fe34128f4fedc5b0508f7c0b52e54ba6161692407089a79fe89"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/slh_identity.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "8bccc4fc05fe7cdab9cf615c5b00e8341b7e62024da4029ab47f538e91422b42"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/transaction.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Selective AsyncChecks success accounting, CPU task integration, trusted dispatch, shared output allocation and success-only publication; retain upstream ordered resolver and original fee ordering.",
+      "sha256": "7922baf1aa8e6da679ad409130f53c0182965f83aa2985e7e40368607ce46f76"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/transaction/check.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Retain single-suite dust formula and output policy; substitute SLH recognition, 7,973-byte minimum input and policy-only errors.",
+      "sha256": "ea8ade1faec49ff5270c0118b28dc114eea118bb72a67c07527ba9e7afce2159"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/transaction/pq.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Retain generic atomic budget implementation; remove other suites; substitute explicit SLH limits/errors and frozen16/64 functional boundary controls.",
+      "sha256": "5573c8614bc3a571d5e663f030f8ba85dedc17da6648a3a827061c5452eaa033"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "24a784af3a8a799f2e23d2d6c78c218de8f75f79def5f4ca165d5cc856bb20de"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse ordered reservation and Rayon find_map_first N1 prefix verification; SLH native facade and boxed signatures. Add the reviewed optional fixed-primitive observation callback without changing its result or reservation/error order.",
+      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/transaction/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "d14c2b4af5617a3022a7560306129f3fc431e56ea651bfae4ac8e8fd4b676ee9"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-consensus/src/transaction/tests/prop.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "ba6cf9f2dc1f4aa989dc807fbc9a37634cdc57e595b26a25f743e2b70c111aa1"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls.",
+      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/policy.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "095edc3ecc308496c5039ffe541cc10d6813da21f9c3a41743fbc3867e82e956"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/config.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "9dde8f666d21976cc6ad8b25b0ab8eef589937a8053fa2469d3ed3dbdf5b43d3"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/config/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "280a512ee44c8bd235c6212f55ed0072f3ee7979b8b560da67bc84c117b0c3dc"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/Cargo.toml",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "a043f6f3379695daae864128e905215cdea94c3ff982cebbbd97e22c7509966e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "2328feb251289e267dc4425e3537d75b524892e5c66fd86dd95e0986baa3268a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Retain separate native allowance, metadata validation and atomic all-resource prechecks; SLH only, plus active structural/verified count agreement.",
+      "sha256": "6c83200d51e8ef719614b4a65f700d112c85edb2724fab126f773538939f317d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "b687794d0af848fc4784b4809de28e9cb0483992e140523dd2107492f439ea76"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-script/src/lib.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Add shared_previous_outputs accessor only to retain exact trusted allocation; no FFI behavior changes.",
+      "sha256": "3bc648ce69686dea29f2ce9afa13284bd2cd429fd40bd7a69249e65afc157f00"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-script/src/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "ec2a9325303180bccb34f89f856e2b694029e5615943a777bd0a225e7472966b"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/config.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "becfb9a319cbc4429776e24e06e7ec8bda620ae1ff19971fb2cf0822052f5bd6"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/chain_tip.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "cb278b1969ab27bde42cfc8a8c1957c1bea85dd918b10b90ae397defdd37f184"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "44fc5e52fdad495cd5b66e4cb2fd1f17f7a7c49f586f8282d55fc499a10f8b9d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/Cargo.toml",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "5598978f12a53280259c9d1ba5a28f87a42986e1aa08fb723e54bf4588ae6731"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/bin/zakurad/main.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior. SLH identity stdout lint allowance is attached to its conditional instead of ignored on the macro invocation; runtime behavior unchanged.",
+      "sha256": "2b7d730bf3ec792b62f0932477f196f26d20654edd926efa42673749d63f0a81"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/commands/start.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "sha256": "7a8d70d961186202c30748aa9816b70caa37e9807213161217591ced94fda4b5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/mempool.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Reuse existing network-aware storage construction pattern through chain_tip_change.network(); no new state or reset path.",
+      "sha256": "f501c6f236329e8fe2b197220eff4fe7babd355d833b0f2a7a7a2fa83c44632e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/mempool/storage.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Retain candidate-height network context, structural/verified equality and exact-output bypass. Preserve upstream inactive storage policy unchanged instead of importing stricter unrelated legacy checks.",
+      "sha256": "46cfbf1e5ee5d51f243ae42879f1d9b1f6b4100390ce6521dfb842a3c58abae9"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/mempool/storage/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "9e0d213b9ce99877218846a235ceaf4bb4aa6afc11b45e979cf805f4a25d38c1"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakurad/src/components/mempool/storage/tests/slh_dsa_b128s.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
+      "sha256": "bc45bc06aac916a125ab0900a234171b56a7a16759b4651e61820c6df6f0cccf"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-acceptance.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-identity-lint.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Move only the SLH identity stdout lint allowance onto the enclosing conditional; runtime tokens and inherited startup behavior are unchanged. Compiler regression checks cover the ignored macro attribute and narrow allowance.",
+      "sha256": "3cb2f3230f58820405721fe99dde325a0cb383c3c1b31ee4de539496d7aa6c10"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-orchard-output-padding.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Correct the fixture adaptation to reuse pinned Orchard v3 paired zero-value dummy padding under disabled cross-address transfers; preserve flags, anchors, two actions and Ironwood behavior, with causal actual-builder regression coverage. No upstream rule change.",
+      "sha256": "e3b6af43cd0e6d9517203ac7bd570dd87d33f47e07403f0f1bc7c1e646f455ac"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-primitive-observation.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim.",
+      "sha256": "c9905e6e01e627f96c2a5824cb52644de98ba2ed685d2d1eebbc1af3bf52c8bb"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-relay-mining.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "6aa18803bb39120f64743eaf8045411056491671ae2359c56e993c5bf5a0dfc8"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-runtime-identity.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "d1e1f92d4f7bac7ec0781a07ea25d66aaad3ad8a8e440a2631a649fedc6e08e0"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-sapling-rpc-root.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse pinned Zakura Sapling RPC display-order conversion at the fixture history and finalization metadata boundary; preserve canonical witness/tree/path equality and action-pool encodings. Causal regressions reject internal-order RPC roots and changed transaction anchors; no inherited RPC or consensus change.",
+      "sha256": "fb7e4e7f7d79e6f80f9f0d7654127c0c86520cac4b33c8b88edfe704ff410a4d"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-shielded-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
+      "sha256": "a8a3b8ef63059eab6a7acdee2958f0c4ad3ccd780fcbabe80cdc5a675ee1087e"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-transparent-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
+      "sha256": "7fc28f13f5333c54845250f82a0e5bc98406c87d3ef33faabd464bfda1366d16"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-wallet-cli.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "25faf41719c48078f222d29469e4a9130e4980342002926d3c99e3c7b8a5f4de"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-wallet-fault-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
+      "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-wallet-foundation.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "5aec5e0d8ab840956a989a252861b7cb64fd1d689eb816b9fa2e5f700a4091de"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-wallet-interface-comparisons.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "46e6bd37004fec65ce81dbd766eea51c4c7ad5b22527063f258c326e3336a477"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/slh-wallet-recovery.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "bf80820597b1ee0a899e9ba28818c3dea235aa5d5d1f4f67d910b0ba92f6262a"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/README.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "8b0ed6094359e9d6e77615bc58fb5c731df0289dcfa5b6e1961f0120e614c826"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/acceptance.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "4a70e56c7009d7f458b58300d26062505d24c60004ae686db935300ca3318846"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/cli.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "ea6884867a362a12ce6487cf5970accc7552e284e130d713283b33641e1ec51c"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/consensus.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "65100d7c6c898fa5cc67d3ebdb228342471fc9477d0a064f21cb6e394660d584"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/crash-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
+      "sha256": "2db4b6d58befbc2990620ebc622ec30e1ed42ff596331fcaaa98bc70db5d857b"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/fault-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
+      "sha256": "96f08737be6e15744a2f38e3a87bb25cdd8eb0cb765cdafa3a17cd1d759be688"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/fixtures.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "0727614b8674df00eaf08455612c777340b94d2b1361b37770ad0582c81a986a"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/history-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
+      "sha256": "60141cf252bc905450189d8b96e90ae8ee670fec5251c0f81786f72db2e5efaa"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/lifecycle-controls.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "1f47d2def79852bdc6c82e5fd0a975c24c4f2033d29cfc6d66261699a118c8e1"
+    },
+    {
+      "disposition": "attribution",
+      "path": "docs/slh-dsa-b128s/node-reuse.json",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "7f2aa3fbf3dd61a2631091b56baf8c69bbd44c284225baae6d0c1d66d0ce44c6"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/observation-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse funded public fixtures, proposal/rejection and clean captures for distinct positive brackets and exact saved-byte lifecycle cases; no RPC/queue/runtime changes or live results.",
+      "sha256": "7d17afd320297c892af39ed0e8474e795d8d08ec2a7d86cf07314e5b1ff2e0aa"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/observations.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim.",
+      "sha256": "8afc10172ce77bb4071117c3e6181c3fa73ef2e34917f4746d05ac47bffee85d"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/open-questions.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/relay-mining.md",
+        "docs/slh-dsa-b128s/wallet.md",
+        "docs/slh-dsa-b128s/writing.md"
+      ],
+      "reason": "Track unresolved ecosystem choices for public SLH adoption. State existing Zcash rules as the baseline and distinguish SLH security, fee, signing, resource, receiver and migration decisions from prototype operation.",
+      "sha256": "480e8e3ab68aba319fccd4304c39a95598cfd359863857af939df83a824dcf6e"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/packaging.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "39a815c51550b98592a854354cc08f38c22d7772f4e1931b23070770613c1b06"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/protocol.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "b24e0cbcd66ff331e49c400a0eb01a538156bc4fbc09d9c0966ab945026dd88b"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/receipts/consensus-library-2026-10-09.json",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "e8ea04aab63a4e98ac852a46b1b5e1790d712de4405f090c72931e82b9e6e3bb"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/recovery.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "3a8bc53baa905f638975b2cee0cec889163ffca24d4a9b7f8aaef38ab4146aa0"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/relay-mining.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "2ecbda3f24d63bc893f2d0025fae532b8235f4b9c47b314fe2eff72877510e58"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/runtime.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "fe328755c6da63389d87f457996b1d6aa14842f37640cb9a35fa332465f3de89"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/shielded-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
+      "sha256": "e4297e5e54af177a70fb76ac2122e0fd67cf58b38ae94628ed8433994ca8d7f5"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change. Require exact per-node initial admission and replay saved bytes through the pinned research direct-block path without assuming renewed transaction gossip; shared lifecycle helpers and upstream behavior remain unchanged.",
+      "sha256": "afd85249cac98ef0f7aa0678140692ca13a8e7b25c4f3f887a972b8222384fb3"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/transaction-fixtures.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "2771c96ac0e2634cb08a6b0c46b6dc36d49f4d548b90e5132954d61f15bf8420"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/transparent-controls.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
+      "sha256": "e71473957378d270dd5733e543f1ae7fed1ab1be702fe7e67cf58d68c5ee0bd9"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/validation.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools.",
+      "sha256": "ded978b70915ed17de55f65b0b0bc56d49ac1c9bbd6fac7fa13cf184d66e9eac"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/wallet.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
+      "sha256": "ef6ec73e83619ef89c8af0a5644477f7f67e10d538479969e6b7a74fbd8abe34"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/writing.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/README.md"
+      ],
+      "reason": "Record the requested plain-English style inspired by ASD-STE100, with common SLH terms. Preserve inherited docs and historical evidence.",
+      "sha256": "608dcec7de1db123bb98cdb400ba7c90936916bda5dc6b5a144aeafad8b58617"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/acceptance/NOTICE",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "b1abc320e4e360422776b4703018df28e90d907b6251312d3125474949fe3fc9"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "bc6a21f5ece3a134605a14c8be14be8e383a9c8ae917cbedfbf607e4c7daa982"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/build.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "5fb366503e3f8b6de6a59d1640e96b297d97bdedf246cc8e93a5c1357499faec"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/common.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Remove obsolete lightwalletd symlink exceptions after upstream deleted the harness; all current broad build-inventory inputs must be regular files, using the existing strict helper.",
+      "sha256": "065a8106c9d6ec40c355ba76b6f8ec0433d565f3bd8bec19971d5acb7c6d2efc"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/crash_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
+      "sha256": "c73ba72b9d817831b2f1b7f12161df3747add1fed72a70b93d925bfdce653389"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/fake_cli.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "58a1672dc0095fd0fb8d6d30afeefe3a1a63cd782abd62438d37465843052686"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/fault_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
+      "sha256": "1eef9c680f8f2edca1bcf09dec5ff166e448636af51b9c7e138f36705a8c027c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/history_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
+      "sha256": "4af84a27cc425cce837755bc90355fee230b8b07b22e0bce7b68e448bfccb521"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/history_service.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
+      "sha256": "aed19f11ef948bc24b2dd857e8e9e1ebf98a7edd355e34672919da02bba2435e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/nodes.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "f2ecb778e7dd36cf603cbdb414f0e3f99c7ccdbf44a7121e643519aab1db32a5"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse funded public fixtures, proposal/rejection and clean captures for distinct positive brackets and exact saved-byte lifecycle cases; no RPC/queue/runtime changes or live results.",
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/observations.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim.",
+      "sha256": "931d9fa0decd854bcbf2284aeb94391f437a9d24a45cd2d5bf220e44b6b32255"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
+      "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change. Require exact per-node initial admission and replay saved bytes through the pinned research direct-block path without assuming renewed transaction gossip; shared lifecycle helpers and upstream behavior remain unchanged.",
+      "sha256": "e089e5e0df8ece698da3c81644d66ccb42ca2179a3b8e3c3f74034b615261f1f"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/acceptance/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "0c76898696f760ff6c675b77417e5dfd6126046819c60fa3ce05c9054faaec27"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/terminal.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "3063b43fd58f0034cb3495c2f3eb82aa7c1894a786d5e7d10f9b87c52c15cca0"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/terminal_smoke.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "973ab79e9bcedde9aef0145b1fe7f063cf829b3d59150f8fefd1a8708fb404c1"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_acceptance.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "42efc35a60fc3194d36185df5c0275486f78c6e20c8ee2cdeff57bb838fe0d45"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_build_tools.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Offline mocks bind exact optional host/test recipes, no-run artifact selection and source/features/binary receipts. Miniature Git checkouts exercise current source inventories, dirty-input refusal and rejection of symlinks; no compilation or runtime process execution.",
+      "sha256": "4057be29aaf524ed5dac10a9faa882b7315676367bd0fb819e560eaff40a6271"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_crash_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
+      "sha256": "12003a9a3f7809b6866d33fc317d2c8834281f2ee4fe779e53f64eba4055c94a"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_fault_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse private test-only wallet write stages and persistence/recovery APIs for named I/O/SIGKILL, quota and pre-sign entropy controls; no operational fault flags, authority-format or signing behavior changes.",
+      "sha256": "1a1f48e5aaa841d985a73afcb5f4b7cba27513bf29c72776e090077e965b20ad"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_history_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
+      "sha256": "21392e541560943ee02f914ec07384c902fe61391420adeb0d302c708f91ae39"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_history_service.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare bounded loopback history faults and funded wallet refusal/reconciliation controls using existing RPC/Demo/restore flows; preserve saved authority and monitor restrictions. Offline mocks only.",
+      "sha256": "0b19eb4e7e657cb299da8f404d20e1cada2c4f3c1d304c5cfad4c8481c9d977a"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_lifecycle_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "af2b28b4ea23bc97b1f1ed8a37fd3329c9a584d669491439ac5571518e64eeb4"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_node_reentry.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "087de1d7fe5eb261bf29354952a305b2fa8123424c2dec862aca2708ab330e03"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_nodes.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE"
+      ],
+      "reason": "Check the narrow startup readiness retry against the pinned empty-state response; preserve healthy RPC, process, timeout and rejection boundaries.",
+      "sha256": "4ff7fb7bf4a2e4bd0f05cfba55c8608e66a7ddb6a2ec3a82078e55a2e3a1c1fd"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_observation_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse funded public fixtures, proposal/rejection and clean captures for distinct positive brackets and exact saved-byte lifecycle cases; no RPC/queue/runtime changes or live results.",
+      "sha256": "ce0d178a9d37e0449307ec59ee6eee5a3eaaef8d9dff64141454b08b7bba043d"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_observations.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Expose opt-in Regtest fixed-primitive attempts and bounded process/window capture receipts; reuse attributed observation/log mechanisms, preserve verifier and retry semantics, make no live or resource claim.",
+      "sha256": "df3e39e6b14a33a71de03eb65263652ac22a73620be9acb3361d49ab2d5e3eb3"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_shielded_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
+      "sha256": "4e02f818839abbf01df59e4744b8e5ed00f5c7281cab815e2455eb9778dba99c"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_shielded_spend_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Reuse actual mature funding, dual-node canonical history and saved authorization across causal anchor rollback, reconsideration, duplicate-note refusal with a distinct transparent parent and replacement branch. Narrow isolated pre-NU6.3 Orchard deposit profile; no consensus rule or state instrumentation change. Require exact per-node initial admission and replay saved bytes through the pinned research direct-block path without assuming renewed transaction gossip; shared lifecycle helpers and upstream behavior remain unchanged.",
+      "sha256": "e0a9016bdc3739ee26d0085c98fe93b23c9dc64b1251b686379497f169bf7b73"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_sources.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "40c01a5603ae0f1e48a2259e1f61eb76300d55277c1ef97386cfd43b84d9df3c"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_transparent_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
+      "sha256": "16c5a662fb93a1c082d3832d3391624cdf5b50256136337091f64f4eb9c1e979"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/test_wallet_restart.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/acceptance.md"
+      ],
+      "reason": "Focused mocked regression for the SLH wallet acceptance driver ordinary-backup observation before restart; no runtime or format change.",
+      "sha256": "4af552745bd7be14f6de0948ca9154c0bbaee24e828c7887657068543ba3a9e2"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/wallet_live.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/acceptance/NOTICE",
+        "tests/slh-dsa-b128s/acceptance/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "71e68d67152a4a06010bbda97f9ec16d26a6686a13702fa3d19fdb30359fabf5"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/dependencies/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/dependencies/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "61bbe827fbbc5ed9acd673c2dbd92d4fd60c501758188e17f2109af3b435914e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/dependencies/check.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/dependencies/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "e87ecffc18eff735088ca41f4f4b1243ea003e0c1287ea1ba94aadb9e23ba842"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/dependencies/test_check.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/dependencies/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "d128db593c42e5dcf51360fd70c7fb03f573293bda895551373788bcb87093cc"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/artifacts.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Bounded independent-only arbitrary-artifact wrapper around unchanged G2 oracle/reference; never authenticate caller prevouts or infer live acceptance.",
+      "sha256": "ee723877682a7bd065b612bbff870b4982947e1f2c7811933414b013776ffd5e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/matrix.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Validate exact source/preparation references and matrix claims without executing indexed human cases.",
+      "sha256": "218a70d1afe78964dbe2a71177af7d36537dcecc252f7ffd4d992097081dd6c9"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/node-matrix.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
+      "sha256": "4e65043ff257d120105eb67087c97a388e42b30615ea61d987105818a50393b3"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Preserve pinned research inspiration and unchanged product oracle/reference source hashes.",
+      "sha256": "1f03f6584513de23d307eeb87e0cd0691a66e93b22cb1e36205fbf14c6c33637"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/test_artifacts.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Exercise receipt identity, mutation rejection, bounded work and independent-only scope with offline callbacks.",
+      "sha256": "02bc273234069c42f29e998a826393abfdcc746d969594a8d7e993d340efb14e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/evidence/test_matrix.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/evidence/sources.json",
+        "docs/slh-dsa-b128s/validation.md"
+      ],
+      "reason": "Exercise source-index integrity, status scope and mutation rejection without running referenced workloads.",
+      "sha256": "461950cdd28bd4a215637f8e3963b2313aacaeb99286d4e94529d5fc131e1308"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixture-signer/Cargo.lock",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "10b25f7cafe7e8ea72cf8f2eaa864bb8322090ef9d538c9526c7966041d4e8d6"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixture-signer/Cargo.toml",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "ee139a708aef5622e65787cc569d1417003ae160bc1e7363b17feb8a0d077324"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixture-signer/LICENSE-APACHE",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "391a7404ef6f0ad2b21e5270dd0b95c69ed09dc03be45252442542c010c9a9f6"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixture-signer/LICENSE-MIT",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a4566345f4bf12e9bf201b6632a6f8f800b38077d19e056e96eedaf3cd995680"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixture-signer/NOTICE.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "2b12f65125e0f2e21486cfaaa4cc93afdca71b8f7b0813b353b8db1f334a8106"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixture-signer/PROVENANCE.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "1c94cec0b5a71f4ae33a1c5eb21cc548a35299b4274169cf3867d9f239706f3a"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixture-signer/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "b29ff1a740de64495dbb541721c2669a2c748bd0419b5ef16873f7d47b490ad6"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixture-signer/src/main.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "bf6be5f1740bbc23388e7537cf1afc38b17e70660a48160fc2f1f331ee7b9565"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixture-signer/tests/public-keygen.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixture-signer/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "1cfb24a2b3f0c44185301a94e63074fba94336412ac16138fdb9d022663ac478"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/data/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "60a2bfc2564957faac1f5a9ff66edb6fa59dbca9e160dc67145fc05aa3ee7cfb"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-10of10.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "6e9f8176b3e51e1a10471bd3afaddd4804e4761a5d4f7f87a0a8f660742ffed5"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-15of15.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "803dad371569a64bc4e58305a1b9877bd0c7e12d14666009bea87b89e7f0a2f2"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-16checks.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "eeb40caa025b489bdc84280fceb13fda7d4770509f64110ccac5a007bb106c80"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-17checks.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "bcdbe68477fd3405be9706b5feb04b1a077fbfe807d100d6784a0d2ec5971ce1"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-1of1.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "923f3ca784629144f1754adebfff6fb7496f19af8f15df3bda53f59843fcb2b0"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-1of15-index14.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "519786d9e01825bf45fb669b765b3659cabd59143d937c4e4e6002943c304450"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-2of3.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "9141b0a2a5d8b086ed22a00288a7c28e8f10e89dae84c5a022ea56041dd15729"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-3of5.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "ffe71851c44f0931c69f21f73cd156de3371c45515ca08098547c053c2bbac94"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v5-8of10.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "36b8b84f75a00fcfb0eb7a3893329d922685a2af80924109563b34b90eddbe12"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-10of10.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "54d3941f2a82f0bfe8faeb7bd679aa9e228b147aa8d245536c591572da72431d"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-15of15.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a0d27cc03405fbf6f1694969bd8e1ddd50edbdab8956cea204d7ec2fba2aa912"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-16checks.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "42e6513d2bc8165e13b4d0874010945abfeffc56bd00839afad0fa95809c1587"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-17checks.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "51fb5bc32f0a00fc9d4d09d37175edbd789e8a689ce16b018bba1d5ab0e159d2"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-1of1.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "6e69104801797232b3b308cb77a95656c2fb1e8d4af81c47ee88e9e9bb736cfb"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-1of15-index14.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "d54c8f4b50e9a3a2c0d6fb6fe4f314f59ecc17179707b408da3094e68a23a633"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-2of3.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "7e2cd9184424782f714ca45ab64eb9048bb5d5321684be0cecdfdb61a4b20818"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-3of5.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "f0d3f92fca1512cd209554ec697bbc4bd9cc919790ea796690b16a16b8ed2945"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/data/v6-8of10.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "3c60da52573f89ea79192d401a9c84918e53b806ba50f728f4558385820767b4"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "b0f5fed82b42e33657ee86136c2b5e20d6846711d2604fe86da9e12a46fec4d5"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum.",
+      "sha256": "052c453dd01e3f4f38f3917fb403402859f902a015c45826bfbfb9d6f8f7ec74"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "adf33ec5b5b99d87e61b587ae16aabcd31a9fbedb3c5a8273f80adfdff155239"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
+      "sha256": "f5a8952ff99dcb70591ea234b6e3b152588415d57e7f575e2e9aee6394b26915"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "8e3bb76173762ba7ebf6e0c9ef03553bf6f8d77faf2da550b5440b403762a140"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_SCHEMA.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "54c6aeec3c0714697a9146523f2be9bf0d76c93e54d22db760f98a5f8144f606"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
+      "sha256": "b8cca5994bec4784bd21539bb6bebac3849bc6d2c240195b7758d501c0d689c6"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/controls.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
+      "sha256": "6d608eafac3f819b1ca290e4f9377b94dbc46f6c0dff92aa752ce7571fec7fab"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
+      "sha256": "1dcd7592f44e99e623e0f13c0f8de0ed52b1c010b6fec0c37ed993d9c28ce727"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
+      "sha256": "01d19608d85322c846294460ee0c1dd343ed99f5748d277fec6e117bdc620b1c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
+      "sha256": "817a779aec7f67c920d88ca47259d8c8e0a15fc1cf4e7ff1293ffe3defc19ec5"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "2e04bcc48346cff0060b8890927f906f54d774695564723c8e43b00231ce7d72"
+    },
+    {
+      "disposition": "adapted",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend/history.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
+      "sha256": "2da258c080d08ce385768f4dc677fada49b2aa2eec48910cb635b1ec54c1c94d"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/strict.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
+      "sha256": "db01aa09a9c9b10b5a554df1c65a8a6d29b211e188fe71775c2f35a589b9f724"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/transparent.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json"
+      ],
+      "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
+      "sha256": "534fc2acf1bca23c080756c723c6672c7ed04312a932bb2a301bbb22c9d7e326"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/test_generate_transactions.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/data/README.md",
+        "docs/slh-dsa-b128s/transaction-fixtures.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "sha256": "650d83c57589222c1f6649835d671eb13deca11a08632de2d139bab67f2997b6"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/primitive-controls/NIST-NOTICE.txt",
+      "provenance": [
+        "tests/slh-dsa-b128s/primitive-controls/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "41f983e98c3b58ee6b94f404c8785deebb8a92288ae7031a61ff13041421ddea"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/primitive-controls/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/primitive-controls/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "055d345d340412f487855fd2f0000b594d5660d7e2e473f5d4a875f46bcb5119"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/primitive-controls/check_controls.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/primitive-controls/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "01aa845cd343ab4369f409ece18b5a5b24c25f9be33e37333f0b53e238392427"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/primitive-controls/extract.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/primitive-controls/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "8018a7b93fffefbc5c37a6eaf8e1427e2eec0a4fe2daf07e331eefccf55d4e72"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/primitive-controls/receipt.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/primitive-controls/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "644cb4f603d753f308074b63659312f38b11117800c9311ab6b81c9d149bebc5"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/primitive-controls/wrong-profiles.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/primitive-controls/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "572c060da2d08da8dc97ddc6d8b8b5b84c95c7feae52b073b2c94d50dd57d4ac"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/.gitignore",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "15bf946d297061208982c5c4d077db020a5ea955518e3dd50f3086f98c91290d"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/reference/NOTICE.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "9e62435bc9095537d59d73c213c3e5bcc1ae79c88a0ba196b5eff6fd34e2ba6c"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "0754ba5bdcc3abc8655fe1198a104e5f239b680a6bc4e647a3aff96b6eb04977"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/check.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "cd6b05e747d839beef0b346894dd09d02e4dbe668068d11080879fff62ab6c4b"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/hash_shim.c",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "8f3bccd2ce1b56a1ca5fd25f5a9d1d9df8061609a08b1a75ef2e7f7113993438"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/reference/licenses/BLAKE3-LICENSE_A2",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "00fcc7a934ddbc9ece2a7cc063ac788e284b703b1d705ccbba72d462aa97921e"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/reference/licenses/BLAKE3-LICENSE_CC0",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/licenses/COPYING",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/licenses/COPYING.LESSER",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a5681bf9b05db14d86776930017c647ad9e6e56ff6bbcfdf21e5848288dfaf1b"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/prepare.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/reference/receipts/g1-initial.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "bb8299364a1f6fcb6615a3303150e817044cc8797f0323b5d242869bdc6903a5"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/reference.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/reference/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "b81c2f610c5056642ef2b824155bc1e47343e38bcbc760105e3e2185b5fe61ed"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/reference/test_checker.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/reference/sources.json",
+        "tests/slh-dsa-b128s/reference/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "130564ae653811ed7efd2ae4cfc68c1dc51412ab65c97e7e9959eea6a81e835e"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/release-content/NOTICE",
+      "provenance": [
+        "tests/slh-dsa-b128s/release-content/NOTICE",
+        "tests/slh-dsa-b128s/release-content/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "ff4464c91a4ff2d78fc03df31c142a4e6a55fa3fb324188e6eb6fa1cef890f78"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/release-content/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/release-content/NOTICE",
+        "tests/slh-dsa-b128s/release-content/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "67bf0e73efd8106c35d1bcfcc25eb56838f2c41d7397dfbadf867b5853f407fd"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/release-content/check.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/release-content/NOTICE",
+        "tests/slh-dsa-b128s/release-content/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a471f75de6a29ac2e06ffe5ee6ebd30603aef333034be1ebb1d4c19edb0cba4e"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/release-content/test_content.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/release-content/NOTICE",
+        "tests/slh-dsa-b128s/release-content/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "f39ea25c98ba57ad6ff8d1c979f3f412c44ff8cd38ed448444893e02491188c0"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/shielded/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "d6f6bc005bcb70bbaac50b3ab1aedce1f047b5faedaec823c49b8e131bf7ef17"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/shielded/controls.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "04386c3564a032cd0f3ba9b130689d1b66f6cda10fadd0d2fb0698442822fe16"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/shielded/data/ironwood-source.hex",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "94a8b31391e2a8cb7be627551dc9bbdddd11f56d071e22925f1c773df545e7a4"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/shielded/data/orchard-source.hex",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "8a7cd629c33af75009e730d109e35c557a334cf31b95ad663caf262ac27a4277"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/shielded/data/sapling-output-source.hex",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "15c5ca26b7e4f469087ee3e82e1d2148c3a30e66b5632bbb2df70d430b191bb4"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/shielded/data/sapling-source.hex",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "67ed76142b315d0383967b025b91e41f91b8eae89a657be33c5f825ba67432c1"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/shielded/fields.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "36af3ab62100f628e4c1949c0442377cf3dc419bdcd3877f4c856bb2a88e1169"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/shielded/reference.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "ea23b6f99b94ad579af275ea5ae9e6b13781808c568a7daf52387c2527fea8b3"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/shielded/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "6369a4d15c94494eef80178aa89da276d2b29b5b4a9a6bed11f266c4ba875343"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/shielded/sources.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/shielded/sources.json",
+        "tests/slh-dsa-b128s/shielded/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "2c7399fcdfde8b51c76b6a7b4f593d006354408212a3377b260702d8d5da0730"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/transactions/NOTICE.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "cdbb19219b753feb6be98656a44623136bff822d71a753c621c1c0d71f0082be"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a68681702f1c063e2e98fe254fb805e529825146ebac5f38f779ab20138cee8f"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/check.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "99577595f1b618036476cbaa64236d1d6aa0a644a47109aa0e602353a82c0def"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/mutations.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "428c6c805ea099a24f056522deba77ee9e5fc154f9244921749c0830a9c07550"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/oracle.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "cdf3f2b0991b8f3fed5991192bb57f807449685b452135ba71c89600fe337ac3"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/transactions/receipts/g2-initial.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "d76806e3b2d353832616abfeb7ff385c83adbc39c7dfd2b1afd469ef1dbee290"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/transactions/receipts/g2-review-2026-10-09.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "2313fb725ed873e59efef6e16fecf2ff742d6fec3584f7e93eeb5498c60470d4"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/transactions/receipts/producer-build.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "091cd183b02d5d06fe58ad35b8569d2e05f109ee764c9261f2df6682e5b9a447"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/transactions/receipts/production.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "b3497d319cd82503b21cef7147c94cac453501c39fa76e8be63667f7684ab819"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "32ce5d9669c67c1e554caa9195c4d216813d02f6fb3898c9d1b75a77c608fdb3"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/test_replay.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Mocked standalone replay provenance controls; reuse existing build and independent reference interfaces.",
+      "sha256": "d7f19401ab0a4ab273bffed2e99c881ce233ff15456966a9d0f63fbefbab6810"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/transactions/wire.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/transactions/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "94f721ba69acb5cb273373c723724884df7bd716e01f51725b4e67b9931bafbf"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "e31c6c7fd1f21eb1c2b608d9bee578e6af8ad083b59d3f3dc846872662333c20"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/wallet/formats/NOTICE",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "feb98c90ce86198cc248e584cf39a657b54f7336ac8d8278005acdea5de6fed6"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/formats/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "af46b11853f6e65dcf6bca15a0b022f62ae42402548506aad2d9f85b91aac2a3"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/formats/reference.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "6234c14663abca692d8a34b9160302404bdf26256ba094d80d6917a10fc661a4"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/formats/requirements.txt",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "7e188fdaedecc43306e23fe1463bfdf302c8bb73c9e8def23c1bb7deb0cd3931"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/wallet/formats/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "1f6aa68ebbba0f72b81b1d672e546f072e5c12cc1775981c7e9897c9cd1f0052"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/formats/test_formats.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "b2eb6c9c42ad86a0548e7640ea181bf344eaae3be736326de04d9fdf9b5b1e19"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/wallet/formats/vectors.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/formats/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "9927cee383b5203588bb53b4c710f94bd5e84e9cabae49d9593d0bd8ec2bcf0e"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/wallet/interfaces/NOTICE",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "361bc28b5d7a84c746a244d0b994ec2fd9590435f2045a6a74892c136f5f5943"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/interfaces/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "40ad28e59c39f49971b991b9ea7ece327d42afa7571cca692c3c32a17f390112"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/interfaces/reference.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "8244443dd2eb0f531fe7777d2c09458069c0c367f737423b02195dd819768755"
+    },
+    {
+      "disposition": "attribution",
+      "path": "tests/slh-dsa-b128s/wallet/interfaces/sources.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "cd359b1604ee106d683850e384efae2d79e4df3c3e18057c0c45d16391334775"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/interfaces/test_interfaces.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "1ea6aedb827c501d534abac215c2175e10109b02d0dcac2528f52d2b8f39ada3"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/wallet/interfaces/vectors.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/interfaces/sources.json"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "bd360d6e4b04cdc4b8ec4754ac18d78ecf630463fd6c65335e190744039832df"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/wallet/receipt-followup.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a5cb0730c75fd5ad333e3c85c323497011ce6c3a06c96db53369f72791862bf8"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/wallet/receipt.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "68d7343eb3cac6aabde46d08cdf4744301b2bba0340f3443817e6b8c33c9b3ef"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/reference.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "ac4d406888613a7c1b6e2bcbd5d3ee26ade45c6f97afa641707d78da38db5d7d"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/wallet/test_reference.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "0820e8d30b9d6ad04f6c80ef2fcf9bd6a8d71af309b94de9f63d43f9283a3fd1"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/wallet/vectors.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/wallet/README.md"
+      ],
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
+      "sha256": "a4791aeef33d859bcb57fc14fc460946bde9ef78462989edcf1687845028eafd"
+    }
+  ],
+  "foundation": "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+  "foundation_tree": "ac1ad49b6262001d4c07b7458f9638859cc75c36",
+  "history_only": [],
+  "note": "Every current post-upstream changed file is listed. Per-module provenance supplies exact source mappings. This inventory omits its own hash, which the selected Git tree binds. Refresh only after reviewing intended changes.",
+  "schema_version": 2,
+  "upstream": "a29a968575e37223cbeb8ac7a5d57aba135fb93a",
+  "upstream_tree": "dbf61abd2440d12929350572894860a58a16a29e"
+}

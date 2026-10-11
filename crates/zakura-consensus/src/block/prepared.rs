@@ -69,6 +69,8 @@ pub(super) enum InsertOutcome {
     AlreadyPresent,
     /// The candidate alone exceeds its partition's byte budget.
     Oversized,
+    /// Active SLH candidates must repeat authorization with a fresh attempt budget.
+    SlhActive,
 }
 
 struct Entry {
@@ -129,6 +131,13 @@ impl PreparedCandidateCache {
 
     /// Returns the prepared verification for `block`'s content, if some source prepared it.
     pub(super) fn lookup(&self, block: &Block, network: &Network) -> Option<CacheHit> {
+        // Active SLH blocks rerun authorization and reserve fresh attempt budgets.
+        if block
+            .coinbase_height()
+            .is_some_and(|height| network.is_experimental_slh_dsa_b128s_active(height))
+        {
+            return None;
+        }
         // Deriving the candidate id costs a full block serialization, so skip it when the cache
         // holds no entry that could match.
         if self.lock().iter().all(|partition| partition.is_empty()) {
@@ -161,7 +170,15 @@ impl PreparedCandidateCache {
         id: CandidateId,
         source: PreparedCandidateSource,
         prepared: SemanticallyVerifiedBlock,
+        network: &Network,
     ) -> InsertOutcome {
+        if prepared
+            .block
+            .coinbase_height()
+            .is_some_and(|height| network.is_experimental_slh_dsa_b128s_active(height))
+        {
+            return InsertOutcome::SlhActive;
+        }
         let size = retained_size(&prepared);
         let mut cache = self.lock();
         let partition = &mut cache[source.index()];
@@ -318,7 +335,67 @@ mod tests {
             CandidateId::of(block, network),
             source,
             SemanticallyVerifiedBlock::from(Arc::new(block.clone())),
+            network,
         )
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_active_candidates_never_reuse_prepared_work() {
+        use zakura_chain::{
+            block::Height,
+            parameters::testnet::{ExperimentalSlhDsaB128sLimits, RegtestParameters},
+        };
+        let mut block = test_block();
+        let height = Height(10);
+        let zakura_chain::transparent::Input::Coinbase {
+            height: coinbase_height,
+            ..
+        } = &mut Arc::make_mut(&mut block.transactions[0]).inputs_mut()[0]
+        else {
+            unreachable!()
+        };
+        *coinbase_height = height;
+        let active = Network::new_regtest(RegtestParameters {
+            activation_heights: zakura_chain::parameters::testnet::ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(5),
+                ..Default::default()
+            },
+            experimental_slh_dsa_b128s_activation_height: Some(height),
+            experimental_slh_dsa_b128s_limits: Some(
+                ExperimentalSlhDsaB128sLimits::new(3, 6).unwrap(),
+            ),
+            ..Default::default()
+        });
+        let inactive = Network::new_regtest(RegtestParameters {
+            activation_heights: zakura_chain::parameters::testnet::ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(5),
+                ..Default::default()
+            },
+            experimental_slh_dsa_b128s_activation_height: Some(height.next().unwrap()),
+            experimental_slh_dsa_b128s_limits: active.experimental_slh_dsa_b128s_limits(),
+            ..Default::default()
+        });
+        for source in [
+            PreparedCandidateSource::ServerTemplate,
+            PreparedCandidateSource::ClientProposal,
+        ] {
+            let cache = PreparedCandidateCache::default();
+            assert_eq!(
+                insert(&cache, &block, source, &active),
+                InsertOutcome::SlhActive
+            );
+            assert!(cache.lock().iter().all(Partition::is_empty));
+            assert!(cache.lookup(&block, &active).is_none());
+            assert_eq!(
+                insert(&cache, &block, source, &inactive),
+                InsertOutcome::Inserted
+            );
+            assert!(!cache.lock()[source.index()].is_empty());
+            assert!(cache.lookup(&block, &inactive).is_some());
+            assert!(cache.lookup(&block, &active).is_none());
+        }
     }
 
     #[test]

@@ -1,0 +1,992 @@
+{
+  "contract": "slh-dsa-b-128s-exp-v1",
+  "immutable_scope": [
+    "tests/slh-dsa-b128s/reference/",
+    "tests/slh-dsa-b128s/transactions/",
+    "tests/slh-dsa-b128s/wallet/formats/"
+  ],
+  "note": "Per-file attribution and local consistency only; no research checkout is a runtime or unit-test dependency. This file omits its own hash to avoid a circular inventory. Source mappings do not claim byte-for-byte imports or live acceptance.",
+  "reused_product": [
+    {
+      "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+      "role": "Existing canonical/strict parser, transport, public fixture seeds, host/sign calls and default producer inventories remain unchanged. The inventory helper retains its explicit pinned-link opt-in, but current broad build receipts use its default rejection of all symlinks after upstream removed the lightwalletd links.",
+      "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/reference.py",
+      "role": "Independent canonical/keys/policy/receiver/capacity oracle, dynamically imported unchanged.",
+      "sha256": "6234c14663abca692d8a34b9160302404bdf26256ba094d80d6917a10fc661a4"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/vectors.json",
+      "role": "Immutable independent wallet format corpus; not regenerated.",
+      "sha256": "9927cee383b5203588bb53b4c710f94bd5e84e9cabae49d9593d0bd8ec2bcf0e"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/wallet/formats/requirements.txt",
+      "role": "Existing pinned Python dependency requirements.",
+      "sha256": "7e188fdaedecc43306e23fe1463bfdf302c8bb73c9e8def23c1bb7deb0cd3931"
+    },
+    {
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/strict.rs",
+      "role": "Unchanged bounded strict JSON and operation envelope parser.",
+      "sha256": "db01aa09a9c9b10b5a554df1c65a8a6d29b211e188fe71775c2f35a589b9f724"
+    },
+    {
+      "path": "crates/pq-test-support/src/lib.rs",
+      "role": "Existing TransactionRecipe/ordered Spend/install construction used by host controls; unchanged.",
+      "sha256": "c229e9458e325a76aa265adf147f50adf7dc656882ae0720229decbc8c07d4c1"
+    }
+  ],
+  "schema_version": 1,
+  "sources": [
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "authorization_mutation",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/src/transaction/pq_test_support.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "a9aa2491f58223960a5eef09e6e25e89105b64a429a30da83c25a564460543b4"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "block",
+      "license": "MIT OR Apache-2.0",
+      "path": "examples/pq_regtest_fixture.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "576940264d72e13e2c352c6e5823369d45d71d3f0bc3d4b1763c2d788ef5e822"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "build",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_relay_build.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "f5b6e401a93c7d6a804a543919353fed4be7233085f4acc5eb9724449523c43b"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "classical_history",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_ecdsa_history_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "6b54d934999ac70111e8b245a1c1f191e1b535b703e818f76aa0ab4355feb224"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "classical_sign",
+      "license": "MIT OR Apache-2.0",
+      "path": "examples/pq_regtest_fixture/relay.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "bd22343dbaaaed7b689e7645f599e134187e3f15eacf4c04b513e95d862dad42"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "compatibility",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_compatibility_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "b028307348470820f173585b0c2bb587deb1ab8ad5c1cddbad89b009826bfa64"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "cosigners",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/sqisign_payments_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "89beb7f5b86dd8becdc8d8215545583951b5e59da10b8d1721a9efd035235f05"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "history",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_history_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "e453353e6a0e642769acd3529753b41df087b3ce3f210187d7dd38e7320e74b5"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "nu7",
+      "license": "MIT OR Apache-2.0",
+      "path": "examples/pq_regtest_fixture/nu7.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "ce69d95c4bebdea1209f80d1096e6117e2b909ce38e15c12a1d3ca0624e18d6f"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "payments",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/payments_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "57a196f69aa466ddb0e11b90fc48eb58826b04abc4f4ef0fa0472457053555d4"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "primitive_log_comparison",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_c_comparison.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "809f1b1bf6b96ade07ed1aa491dbabd7d093cf40247d64b23908f0121b0e9a06"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "primitive_observer",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/src/transaction/sqisign/worker.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "0858e916115264c6aa6b8a28f6271a64fa71738daf25755c8070a43115e49630"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "provenance",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_acceptance.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "897633701ead8329c906bb3611a3faf4b8c53618f7513e7059e783bce202fa92"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "quorum_recovery",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/sqisign_recovery_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "64b8e393cf2b0397244feed91e42f2f9df465d54476c2e4bf8338fca57fc005d"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "recovery",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/recovery_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "e7ec5cc195106ec33e7851ec2702398e89c2c76f4b27a5ed4da1e04d8accb630"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "relay",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_relay_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "b133a7d8d5694e494af81ced36f8ae02b8bc85316c27e78d6fe83e360f8671bc"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "restart",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/sqisign_restart_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "d9ee5499953e15eb7f69b7b122a93bcc7d8c6f5d5b3498e5e182d6786cb55172"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "rpc_node",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "bad0a2332dc2766679845f844deb49818cc4d71c02310e1a7142864cc037c7ff"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_live",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_ironwood_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "90757d0dbd3e1b4a2fc734f8b0369050375fa3cd7b7d13952f9b993ce01fe3d1"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_output_deposit",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/mixed_traffic_fixture/src/main.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "7656ccc6f1a8b709a7bd0e56e043657f07e213dc2a57eec20d64b2b34d6f9475"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_output_fixture",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_fixture.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "648a989db129ffbfff768dc5e9e8796023d237f207745de76cc7a698400b7b21"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_sapling_batch",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/benches/sapling.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "3157b7dec0e7d2cae7914c3d829c6141a4a03041a942807b4ad9a4d9da0eed8b"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_fixture",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_spend_fixture.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "8b1a0e0bb0abd1f0945c270f11a330f601c9675da900091d17c84e37bd3a03db",
+      "use": "selective reuse"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_fixture_python",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_ironwood_spend_fixture.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "ccf74ea84c9b35cc27a8a1882513ef5d53ea20203b714e597308d125d1f817ac"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_fixture_tests",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/test_pq_ironwood_spend_fixture.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "3aeda0b19a677c2ef90020768ce0d853f0daafc682cdfb8769c35ff369af47ea"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_history",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_spend/history.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "ad80f4dd6f3ae1dd0c760d83bb43c5466d46f2f7da1585a7c644e0eed9d5e577",
+      "use": "selective reuse"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_live",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/pq_ironwood_spend_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "00f1b2c2401a63bf8483610a0d3b8e3974978a99e5f0b5b4599c6b821e03b319"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_live_tests",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/tests/test_pq_ironwood_spend_live.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "c246f08c3b94d095ccce6cbf21d4ca34eb953b8e44cd3f8df3a40e6961f5031e"
+    },
+    {
+      "commit": "e759cb86a06510893f8e7d1eb986b7025401c8c9",
+      "id": "shielded_spend_state_reference",
+      "license": "MIT OR Apache-2.0",
+      "path": "node/zakura/crates/zakura-consensus/examples/pq_ironwood_spend_state.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "93581188733137a5a91aa00344d9ba5fb9a496e94370a9d2c9a0bf280507aece",
+      "use": "inspected-only; no import"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "terminal",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/cli_smoke.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "a347e3a461c00a6670c574c15d9f542043e05395f0cfbdad34caa6e512e2b413"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fake_rpc",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/rpc/tests/payment.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "f298b4ffb6f29569cc6174e3586d50f66938cc1f4f9341aa6deaa1137bd32590"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fault_archive",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/payment/tests/archive.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "349f620099f54b6ffc8e202926df4426fe8c5476cb0a2a7d14f5224a1fa748bd"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fault_backup",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/storage.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "42976e02673bff9320fb659d684be62b41f25e40dce372266ed3cdbf3a073878"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fault_journal",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/journal/tests.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "191f940ddecc013e2856f8ad1fb513e71abfb6e5ddaa5f2e39882e2e3c8400ef"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fault_sequences",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/payment/tests/sequences.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "6e4a81e1c7e69b10caeddf131af4acd0d815fc2d46bd86f3e0d441db0823457a"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_fault_watch",
+      "license": "MIT OR Apache-2.0",
+      "path": "crates/pq-wallet/src/watch.rs",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "65ce0f0065a4bf0b6069b47678626d9a071a234e969cae116a40929e08f6457f"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_node_scan",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/node_scan.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "52734c2dd4dae0045ffc6a10efe115bdfb7eb0c3a7294b1a352bbe55f742787c"
+    },
+    {
+      "commit": "da638d4045074f7957aec3fb3fb018bd66b96d05",
+      "id": "wallet_recovery_controls",
+      "license": "MIT OR Apache-2.0",
+      "path": "tests/wallet-spec/recovery_controls.py",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "sha256": "9ec2b420016a488eece5b0036bcfcf76529cd9a5633845cc458dd018a3dca55a"
+    }
+  ],
+  "targets": [
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/pq-slh-dsa-b-exp/src/verifier.rs",
+      "sha256": "29afc243055c3b9bd108a8022a15d20a2c026c9864a68bea5ab07fc84e1712bb",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/pq-slh-dsa-b-exp/tests/signed_controls.rs",
+      "sha256": "2cb2a35c6a8998ecb5d0b1e0aa74eaf4723db9772557cd840b0f22b3dd98c003",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Correct the reused donation-selection test amounts for independent SLH input sizes while preserving all three fee-ceiling outcomes.",
+      "classification": "test-only human durable fault preparation",
+      "path": "crates/pq-wallet/src/payment/tests.rs",
+      "sha256": "1d4acf95a8a0528459a48be530e4e94bebff6faf72b4ba0159f2261b88752bc7",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Preserve the reused public SubmissionUnknown error and durably retained state when the synthetic source reports HistoryUnavailable.",
+      "classification": "test-only human durable fault preparation",
+      "path": "crates/pq-wallet/src/payment/tests/faults.rs",
+      "sha256": "fb2d5fb90b04cce07570e10c912cf90e1702555d1e988beedadbdb26dfa1cd15",
+      "sources": [
+        "wallet_fault_archive",
+        "wallet_fault_backup",
+        "wallet_fault_journal",
+        "wallet_fault_sequences",
+        "wallet_fault_watch"
+      ]
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "classification": "test-only human durable fault preparation",
+      "path": "crates/pq-wallet/src/watch.rs",
+      "sha256": "0c20afaa5cc9b495f59ee5abb3c4e112c4e166fc9ed4f3e4700f02eba2e1799c",
+      "sources": [
+        "wallet_fault_watch"
+      ]
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s.rs",
+      "sha256": "24a784af3a8a799f2e23d2d6c78c218de8f75f79def5f4ca165d5cc856bb20de",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs",
+      "sha256": "adc845994592bcf219b64828e8c3ffc177f184b4496c4f68879959eb7a6441dc",
+      "sources": [
+        "primitive_observer"
+      ]
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
+      "sha256": "894d5e77541fd7333fcf9f0e5ac8c4fc4b78d53af49a3e775995b69ce1966d2f",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "docs/changelog/unreleased/slh-acceptance.md",
+      "sha256": "11ed859859e15858829c2efce0cc3a021614afa07207ae46d2f804418e7f245f",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "docs/changelog/unreleased/slh-primitive-observation.md",
+      "sha256": "c9905e6e01e627f96c2a5824cb52644de98ba2ed685d2d1eebbc1af3bf52c8bb",
+      "sources": []
+    },
+    {
+      "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
+      "classification": "narrow attributed shielded fixture and acceptance preparation",
+      "path": "docs/changelog/unreleased/slh-shielded-controls.md",
+      "sha256": "a8a3b8ef63059eab6a7acdee2958f0c4ad3ccd780fcbabe80cdc5a675ee1087e",
+      "sources": []
+    },
+    {
+      "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "docs/changelog/unreleased/slh-shielded-spends.md",
+      "sha256": "91cde4cde7280983b50a1f7a1181716f8af38cbd00b151511b470b54a5465a80",
+      "sources": []
+    },
+    {
+      "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "docs/changelog/unreleased/slh-transparent-controls.md",
+      "sha256": "7fc28f13f5333c54845250f82a0e5bc98406c87d3ef33faabd464bfda1366d16",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "classification": "new bounded orchestration, mock validation or public guide",
+      "path": "docs/changelog/unreleased/slh-wallet-fault-controls.md",
+      "sha256": "0dba611121bbaac570f954c77acf4165856511c837529d1a27500a557372164b",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
+      "classification": "new or amended product documentation",
+      "path": "docs/slh-dsa-b128s/acceptance.md",
+      "sha256": "4a70e56c7009d7f458b58300d26062505d24c60004ae686db935300ca3318846",
+      "sources": []
+    },
+    {
+      "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
+      "classification": "attributable bounded process-crash acceptance adapter",
+      "path": "docs/slh-dsa-b128s/crash-controls.md",
+      "sha256": "2db4b6d58befbc2990620ebc622ec30e1ed42ff596331fcaaa98bc70db5d857b",
+      "sources": [
+        "history",
+        "relay",
+        "rpc_node"
+      ]
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "classification": "new bounded orchestration, mock validation or public guide",
+      "path": "docs/slh-dsa-b128s/fault-controls.md",
+      "sha256": "96f08737be6e15744a2f38e3a87bb25cdd8eb0cb765cdafa3a17cd1d759be688",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "docs/slh-dsa-b128s/lifecycle-controls.md",
+      "sha256": "1f47d2def79852bdc6c82e5fd0a975c24c4f2033d29cfc6d66261699a118c8e1",
+      "sources": []
+    },
+    {
+      "adaptation": "Causal offline mock coverage or public guide for funded positive-bracket capture, precise lifecycle outcomes and queue visibility limits.",
+      "classification": "focused causal capture test or public guide",
+      "path": "docs/slh-dsa-b128s/observation-controls.md",
+      "sha256": "7d17afd320297c892af39ed0e8474e795d8d08ec2a7d86cf07314e5b1ff2e0aa",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "docs/slh-dsa-b128s/observations.md",
+      "sha256": "8afc10172ce77bb4071117c3e6181c3fa73ef2e34917f4746d05ac47bffee85d",
+      "sources": []
+    },
+    {
+      "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
+      "classification": "narrow attributed shielded fixture and acceptance preparation",
+      "path": "docs/slh-dsa-b128s/shielded-controls.md",
+      "sha256": "e4297e5e54af177a70fb76ac2122e0fd67cf58b38ae94628ed8433994ca8d7f5",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse inert D5 export_chain/backup_observed for complete bounded canonical backups, retain in-memory anchor invalidation until reconsider, and require removed-spend backup absence before later clean restart. Publication uses direct same-byte RPC admission on each absent node, retaining per-node initial states/replies and requiring exact mempool/template presence even after the two pinned queue-race diagnostics. Final reentry reuses pinned research pq_ironwood_spend_live.py lines145-162 and204-211 cached-transaction block replay via current Controls.accept(publish=False), explicit same-block submission to each node, and exact best-chain/raw-block/TXID/confirmed-byte/effect checks. This replaces the introduced fresh-gossip assumption while leaving shared node_live/reconcile_saved and upstream gossip behavior unchanged; no renewed gossip-liveness claim. Causal models reproduce both original r4 failures and reject queued-only/non-arrival, unrelated refusal, changed bytes/template, no-op replay and unauthenticated duplicate block replies.",
+      "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
+      "path": "docs/slh-dsa-b128s/shielded-spend-controls.md",
+      "sha256": "afd85249cac98ef0f7aa0678140692ca13a8e7b25c4f3f887a972b8222384fb3",
+      "sources": [
+        "shielded_spend_fixture_python",
+        "shielded_spend_fixture_tests",
+        "shielded_spend_live",
+        "shielded_spend_live_tests"
+      ]
+    },
+    {
+      "adaptation": "Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Reuse the existing node ordinary-backup observer for both transparent rollback restarts, capturing and excluding the full invalidated canonical range before mutation. Offline causal regression preserves the inherited asynchronous writer, exact reopen checks, fresh P2P behavior and saved-byte flows.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "docs/slh-dsa-b128s/transparent-controls.md",
+      "sha256": "e71473957378d270dd5733e543f1ae7fed1ab1be702fe7e67cf58d68c5ee0bd9",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/acceptance/NOTICE",
+      "sha256": "b1abc320e4e360422776b4703018df28e90d907b6251312d3125474949fe3fc9",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts. Document the narrow no-blocks readiness retry, valid height and unchanged timeout/process boundaries; no execution acceptance claim.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/acceptance/README.md",
+      "sha256": "bc6a21f5ece3a134605a14c8be14be8e383a9c8ae917cbedfbf607e4c7daa982",
+      "sources": []
+    },
+    {
+      "adaptation": "Retain explicit build/log/binary/source receipts; replace research Docker overlay with exact clean-product Cargo recipes and the existing isolated signer manifest. Toolchain probes share Cargo working directory. Add exact optional host-shielded recipe and wallet-faults library-test compilation with --no-run; select one Cargo-reported wallet test executable with exact source/path/type checks and retain native-target refusal evidence.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/build.py",
+      "sha256": "5fb366503e3f8b6de6a59d1640e96b297d97bdedf246cc8e93a5c1357499faec",
+      "sources": [
+        "build",
+        "provenance"
+      ]
+    },
+    {
+      "adaptation": "Retain bounded loopback RPC, exact source/build provenance and public diagnostics; reuse product canonical/parser/inventory functions and current SLH identity. Exact canonical wallet files omit trailing whitespace. After upstream 82ff9228e removed the lightwalletd harness and both protobuf links, use the inventory helper's default rejection of all symlinks; no current inventoried source path needs an exception. Validate host-shielded and wallet-faults receipts through the same exact build recipe and source/binary identity contract.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/common.py",
+      "sha256": "065a8106c9d6ec40c355ba76b6f8ec0433d565f3bd8bec19971d5acb7c6d2efc",
+      "sources": [
+        "build",
+        "provenance",
+        "rpc_node"
+      ]
+    },
+    {
+      "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
+      "classification": "attributable bounded process-crash acceptance adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/crash_controls.py",
+      "sha256": "c73ba72b9d817831b2f1b7f12161df3747add1fed72a70b93d925bfdce653389",
+      "sources": [
+        "history",
+        "relay",
+        "rpc_node"
+      ]
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/fake_cli.py",
+      "sha256": "58a1672dc0095fd0fb8d6d30afeefe3a1a63cd782abd62438d37465843052686",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "classification": "new bounded orchestration, mock validation or public guide",
+      "path": "tests/slh-dsa-b128s/acceptance/fault_controls.py",
+      "sha256": "1eef9c680f8f2edca1bcf09dec5ff166e448636af51b9c7e138f36705a8c027c",
+      "sources": []
+    },
+    {
+      "adaptation": "Adapts late_receipt_and_offline, monitor_rejections, reopen/status parity and recovery flows using existing Demo/Network/authenticate_coinbase/profile/host helpers. Two authenticated mature-funded outputs and successful non-reserving previews prove new proposal eligibility while preserving a separate saved signed payment. Fresh monitors force pruned/raw-block fetches; cached context faults preserve coins, undo, tip and authority. No runtime behavior change.",
+      "path": "tests/slh-dsa-b128s/acceptance/history_controls.py",
+      "sha256": "4af84a27cc425cce837755bc90355fee230b8b07b22e0bce7b68e448bfccb521",
+      "sources": [
+        "wallet_node_scan",
+        "recovery",
+        "wallet_recovery_controls"
+      ]
+    },
+    {
+      "adaptation": "New bounded loopback fault proxy from the pinned scripted RPC server/read-only shapes and existing product fake discovery tests; reuses common.endpoint/canonical/strict_json. Honest responses preserve exact raw bytes. No production RPC or scanner rewrite. Match the pinned upstream Regtest BIP70 chain name test in the unavailable-context guard, as already used by the pinned research RPC fixtures; preserve read-only transport bounds, upstream-error distinction and required fault markers.",
+      "path": "tests/slh-dsa-b128s/acceptance/history_service.py",
+      "sha256": "aed19f11ef948bc24b2dd857e8e9e1ebf98a7edd355e34672919da02bba2435e",
+      "sources": [
+        "wallet_fake_rpc",
+        "wallet_node_scan"
+      ]
+    },
+    {
+      "adaptation": "Reuse exact classical block/UTXO compatibility, unchanged rejection state, stopped cache hashes and ordinary backup replay. Adapt to enabled/default SLH, both mixed input orders, direct64/65 blocks, and current rule namespaces without importing generic Docker infrastructure.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
+      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a",
+      "sources": [
+        "compatibility",
+        "history",
+        "restart"
+      ]
+    },
+    {
+      "adaptation": "Reuse genuine fixture transport, saved-byte relay/budget/history comparisons and actual chain replay. Adapt to SLH16/64 limits, current activation gates and isolated public keys. Distinct mature rollback-control parent and state reconciliation respect inherited rejected-RPC retry semantics. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/node_live.py",
+      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288",
+      "sources": [
+        "relay",
+        "history",
+        "classical_history",
+        "provenance"
+      ]
+    },
+    {
+      "adaptation": "Reuse node RPC, common-tip, mining, invalidation and restart mechanisms; local disposable subprocesses replace Docker-specific launches. Authenticate actual mature classical parents on both nodes. Optional explicit capture token adds bounded source/binary/config/log binding; ordinary nodes remove inherited opt-in and retain prior behavior. Add only the exact isolated NU6.2=1, NU6.3=104, NU7=105 shielded-spend funding profile; preserve the default profile and SLH height/limits. Restore the pinned research startup readiness retry only for the exact inherited no-blocks RPC error; preserve transport/process/timeout checks and hashed RPC evidence. Require a nonnegative integer readiness height and leave ordinary RPC rejection unchanged.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/nodes.py",
+      "sha256": "f2ecb778e7dd36cf603cbdb414f0e3f99c7ccdbf44a7121e643519aab1db32a5",
+      "sources": [
+        "rpc_node",
+        "relay",
+        "history",
+        "primitive_observer"
+      ]
+    },
+    {
+      "adaptation": "Reuse current mature funding, proposal/rejection, exact saved-byte replay and clean process capture APIs; add fixed attempted subject manifests and identity-bound positive brackets without RPC attribution or queue changes. Preserve the shared rollback backup receipt while comparing its exact height/hash with the prior tip. Reuse the existing transparent Ledger backup stub for capture mocks and reject either changed tip field. This adapts an introduced return shape only; publication, identity, observer boundaries and inherited runtime behavior stay unchanged.",
+      "classification": "funded functional observation and lifecycle preparation",
+      "path": "tests/slh-dsa-b128s/acceptance/observation_controls.py",
+      "sha256": "dd7787e432570d2580b87439e3efcb0d77f21c040dc7fbf9ab3451d8a337ebfe",
+      "sources": [
+        "authorization_mutation",
+        "history",
+        "primitive_log_comparison",
+        "relay"
+      ]
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "tests/slh-dsa-b128s/acceptance/observations.py",
+      "sha256": "931d9fa0decd854bcbf2284aeb94391f437a9d24a45cd2d5bf220e44b6b32255",
+      "sources": [
+        "primitive_log_comparison"
+      ]
+    },
+    {
+      "adaptation": "Reuse strict bounded transport/source-build receipts, mature coinbase authentication, classical funding, positive preflight and precise rejection/state-preservation/replay flows. Add all subset/classical-vs-enabled orchestration, exact authorizing/effect identities and pool tree transition checks; no live claim.",
+      "classification": "narrow attributed shielded fixture and acceptance preparation",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_controls.py",
+      "sha256": "8a6ec6921a168c783e826b5afcd55bde3506bc5b16c03119f7e9cfd8a5fe17c5",
+      "sources": [
+        "history",
+        "relay",
+        "rpc_node",
+        "shielded_live"
+      ]
+    },
+    {
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse inert D5 export_chain/backup_observed for complete bounded canonical backups, retain in-memory anchor invalidation until reconsider, and require removed-spend backup absence before later clean restart. Publication uses direct same-byte RPC admission on each absent node, retaining per-node initial states/replies and requiring exact mempool/template presence even after the two pinned queue-race diagnostics. Final reentry reuses pinned research pq_ironwood_spend_live.py lines145-162 and204-211 cached-transaction block replay via current Controls.accept(publish=False), explicit same-block submission to each node, and exact best-chain/raw-block/TXID/confirmed-byte/effect checks. This replaces the introduced fresh-gossip assumption while leaving shared node_live/reconcile_saved and upstream gossip behavior unchanged; no renewed gossip-liveness claim. Causal models reproduce both original r4 failures and reject queued-only/non-arrival, unrelated refusal, changed bytes/template, no-op replay and unauthenticated duplicate block replies.",
+      "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
+      "path": "tests/slh-dsa-b128s/acceptance/shielded_spend_controls.py",
+      "sha256": "e089e5e0df8ece698da3c81644d66ccb42ca2179a3b8e3c3f74034b615261f1f",
+      "sources": [
+        "shielded_spend_fixture_python",
+        "shielded_spend_fixture_tests",
+        "shielded_spend_live",
+        "shielded_spend_live_tests"
+      ]
+    },
+    {
+      "adaptation": "Reuse PTY password exchange and terminal echo/restoration checks; explicit binary replaces global research executable, with bounded transcript and fixed public errors.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/terminal.py",
+      "sha256": "3063b43fd58f0034cb3495c2f3eb82aa7c1894a786d5e7d10f9b87c52c15cca0",
+      "sources": [
+        "terminal"
+      ]
+    },
+    {
+      "adaptation": "Port original terminal backup/enrollment/watch regression flow; use create-slh-exp, explicit source/build receipts, current inventory restore mode and retained backup password. Remove auto-build and research checkout dependency.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/terminal_smoke.py",
+      "sha256": "973ab79e9bcedde9aef0145b1fe7f063cf829b3d59150f8fefd1a8708fb404c1",
+      "sources": [
+        "terminal"
+      ]
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference. Verify the isolated deposit window preserves all other settings, rejects unintended profiles and reaches both node configurations without starting processes.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_acceptance.py",
+      "sha256": "42efc35a60fc3194d36185df5c0275486f78c6e20c8ee2cdeff57bb838fe0d45",
+      "sources": []
+    },
+    {
+      "adaptation": "Offline no-run recipe, artifact-selection and source/feature receipt controls; reject duplicates, foreign targets and symlink executables without invoking Cargo or runtime tests. Real miniature Git checkouts cover removal of the upstream lightwalletd aliases, exact inventory/lock/commit binding, dirty-input refusal and rejection of all tracked symlinks, including former alias paths.",
+      "classification": "coordinated fixture build or public documentation extension",
+      "path": "tests/slh-dsa-b128s/acceptance/test_build_tools.py",
+      "sha256": "4057be29aaf524ed5dac10a9faa882b7315676367bd0fb819e560eaff40a6271",
+      "sources": []
+    },
+    {
+      "adaptation": "Bounded isolated RPC checkpoint adapter over existing product ManagedNode/Network/copy_blocks/backup_tip/Controls/reconcile_saved, exact process kill handshake, SLH/public fixture identities and allowed old-or-complete-new classification; no production lifecycle, database, scheduler or configuration changes.",
+      "classification": "attributable bounded process-crash acceptance adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_crash_controls.py",
+      "sha256": "12003a9a3f7809b6866d33fc317d2c8834281f2ee4fe779e53f64eba4055c94a",
+      "sources": [
+        "history",
+        "relay",
+        "rpc_node"
+      ]
+    },
+    {
+      "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes.",
+      "classification": "new bounded orchestration, mock validation or public guide",
+      "path": "tests/slh-dsa-b128s/acceptance/test_fault_controls.py",
+      "sha256": "1a1f48e5aaa841d985a73afcb5f4b7cba27513bf29c72776e090077e965b20ad",
+      "sources": []
+    },
+    {
+      "adaptation": "New focused mocked orchestration tests for otherwise-eligible controls, exact negative diagnostics, stable saved authorization/scan data, monitor authority and honest reconciliation; mutation cases reject vacuous passes. No terminal or live workload.",
+      "path": "tests/slh-dsa-b128s/acceptance/test_history_controls.py",
+      "sha256": "21392e541560943ee02f914ec07384c902fe61391420adeb0d302c708f91ae39",
+      "sources": [
+        "wallet_recovery_controls",
+        "recovery"
+      ]
+    },
+    {
+      "adaptation": "New offline fake-relay HTTP tests for exact bytes, fault selection, bounds, read-only methods and distinguishing genuine upstream failures; no wallet/node process. Use the pinned test chain label and exact LocalRpc HTTP/1.0 request framing against the fake relay; verify injected-fault markers, byte-exact honest recovery, invalid contexts and genuine upstream errors without a node or wallet process.",
+      "path": "tests/slh-dsa-b128s/acceptance/test_history_service.py",
+      "sha256": "0b19eb4e7e657cb299da8f404d20e1cada2c4f3c1d304c5cfad4c8481c9d977a",
+      "sources": [
+        "wallet_fake_rpc"
+      ]
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_lifecycle_controls.py",
+      "sha256": "af2b28b4ea23bc97b1f1ed8a37fd3329c9a584d669491439ac5571518e64eeb4",
+      "sources": []
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference. Reuse existing ordinary-backup completion/removal observers before exact-tip restarts, following pinned research history ordering; short history bounds and fresh P2P behavior stay unchanged. Causal stale-backup regression and long replay path remain separate.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_node_reentry.py",
+      "sha256": "087de1d7fe5eb261bf29354952a305b2fa8123424c2dec862aca2708ab330e03",
+      "sources": []
+    },
+    {
+      "adaptation": "New focused offline startup regression controls based on pinned research readiness flows and the pinned upstream empty-state RPC contract. Mock process/HTTP/time only; exact failed public response hashes demonstrate error-to-genesis retry, unchanged healthy heights and transport retries, bounded timeout, exited-process refusal, malformed/error rejection, and unchanged non-startup RPC refusal. No node/runtime behavior is replaced.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_nodes.py",
+      "sha256": "4ff7fb7bf4a2e4bd0f05cfba55c8608e66a7ddb6a2ec3a82078e55a2e3a1c1fd",
+      "sources": []
+    },
+    {
+      "adaptation": "Causal offline mock coverage or public guide for funded positive-bracket capture, precise lifecycle outcomes and queue visibility limits. Preserve the shared rollback backup receipt while comparing its exact height/hash with the prior tip. Reuse the existing transparent Ledger backup stub for capture mocks and reject either changed tip field. This adapts an introduced return shape only; publication, identity, observer boundaries and inherited runtime behavior stay unchanged.",
+      "classification": "focused causal capture test or public guide",
+      "path": "tests/slh-dsa-b128s/acceptance/test_observation_controls.py",
+      "sha256": "ce0d178a9d37e0449307ec59ee6eee5a3eaaef8d9dff64141454b08b7bba043d",
+      "sources": []
+    },
+    {
+      "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Keep the existing process-observation mock aligned with readiness now using Node.response, and assert exactly one getblockcount readiness request.",
+      "classification": "narrow fixed-primitive observation integration and focused controls",
+      "path": "tests/slh-dsa-b128s/acceptance/test_observations.py",
+      "sha256": "df3e39e6b14a33a71de03eb65263652ac22a73620be9acb3361d49ab2d5e3eb3",
+      "sources": []
+    },
+    {
+      "adaptation": "New independent causal mock chain and strict artifact/transport tests. Cover all ten pool subsets; reject skipped preflight/negative operations, no-op relay/mining/tree transitions, unrelated diagnostic and mismatched parent/effect/authorization/proof records. SLH signer mock must sign final effect message once.",
+      "classification": "narrow attributed shielded fixture and acceptance preparation",
+      "path": "tests/slh-dsa-b128s/acceptance/test_shielded_controls.py",
+      "sha256": "4e02f818839abbf01df59e4744b8e5ed00f5c7281cab815e2455eb9778dba99c",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse pinned bounded trusted-node history, positive-bracket validation, tree/value observations and exact saved-byte replay; adapt all pools/v5-v6 and native final SLH message, dual-node history/parent authentication, legal pre-NU6.3 Orchard deposit, genuinely removed later anchor and independent transparent parent for duplicate-spend causality. No internal nullifier membership claim or production state instrumentation. Reuse inert D5 export_chain/backup_observed for complete bounded canonical backups, retain in-memory anchor invalidation until reconsider, and require removed-spend backup absence before later clean restart. Publication uses direct same-byte RPC admission on each absent node, retaining per-node initial states/replies and requiring exact mempool/template presence even after the two pinned queue-race diagnostics. Final reentry reuses pinned research pq_ironwood_spend_live.py lines145-162 and204-211 cached-transaction block replay via current Controls.accept(publish=False), explicit same-block submission to each node, and exact best-chain/raw-block/TXID/confirmed-byte/effect checks. This replaces the introduced fresh-gossip assumption while leaving shared node_live/reconcile_saved and upstream gossip behavior unchanged; no renewed gossip-liveness claim. Causal models reproduce both original r4 failures and reject queued-only/non-arrival, unrelated refusal, changed bytes/template, no-op replay and unauthenticated duplicate block replies.",
+      "classification": "narrow attributed real-spend lifecycle adapter, offline causal controls or dedicated guide",
+      "path": "tests/slh-dsa-b128s/acceptance/test_shielded_spend_controls.py",
+      "sha256": "e0a9016bdc3739ee26d0085c98fe93b23c9dc64b1251b686379497f169bf7b73",
+      "sources": [
+        "shielded_spend_fixture_python",
+        "shielded_spend_fixture_tests",
+        "shielded_spend_live",
+        "shielded_spend_live_tests"
+      ]
+    },
+    {
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_sources.py",
+      "sha256": "40c01a5603ae0f1e48a2259e1f61eb76300d55277c1ef97386cfd43b84d9df3c",
+      "sources": []
+    },
+    {
+      "adaptation": "New bounded offline ledger mock runs actual driver through real helper state checks and saved-byte retries; mutations must detect wrong diagnostics, tip changes, missing parents, raw/block order and mismatched authorization identity. Reuse the existing node ordinary-backup observer for both transparent rollback restarts, capturing and excluding the full invalidated canonical range before mutation. Offline causal regression preserves the inherited asynchronous writer, exact reopen checks, fresh P2P behavior and saved-byte flows.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "tests/slh-dsa-b128s/acceptance/test_transparent_controls.py",
+      "sha256": "16c5a662fb93a1c082d3832d3391624cdf5b50256136337091f64f4eb9c1e979",
+      "sources": []
+    },
+    {
+      "adaptation": "Exercise the actual wallet execute boundary with a delayed ordinary-backup model. Reuse existing node backup fixtures to reproduce the old stale-tip restart and require observation before stopping; reject changed backup bytes or a changed reopened tip. No live wallet failure or new runtime behavior is inferred. Reuse the product test_node_reentry backup model for a linear chain, following the pinned research history ordering.",
+      "classification": "new focused offline test adapter",
+      "path": "tests/slh-dsa-b128s/acceptance/test_wallet_restart.py",
+      "sha256": "4af552745bd7be14f6de0948ca9154c0bbaee24e828c7887657068543ba3a9e2",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse product mature funding, block proposals, single-input SLH fixtures, strict RPC receipts, state snapshots and saved-byte reconciliation. Adapt pinned preactivation/dust and same-TXID lifecycle controls; add genuine classical quorum/substitution and unsupported-template matrices without alternate backends. Reuse the existing node ordinary-backup observer for both transparent rollback restarts, capturing and excluding the full invalidated canonical range before mutation. Offline causal regression preserves the inherited asynchronous writer, exact reopen checks, fresh P2P behavior and saved-byte flows.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "tests/slh-dsa-b128s/acceptance/transparent_controls.py",
+      "sha256": "8065656923823a9784643b57a917f1dd5ba07217d4c9a2c68d112058a6e1b568",
+      "sources": [
+        "relay",
+        "history",
+        "rpc_node",
+        "classical_history"
+      ]
+    },
+    {
+      "adaptation": "Reuse separate-root proposal/review/approve/sign/assemble/submit, finite watchers and coherent recovery flows. Adapt to SLH public enrollment APIs, adjacent revisions, 15-participant limits, independent format oracle and legal classical funding. Add current snapshot authority modes, preserved archive/refresh bytes and retired-receipt reorg controls. Reuse the existing ordinary-backup observer before the post-recovery node restart. Local wallet operations do not establish node backup completion; empty exclusions preserve this no-rollback checkpoint.",
+      "classification": "adapted research mechanisms and current product APIs",
+      "path": "tests/slh-dsa-b128s/acceptance/wallet_live.py",
+      "sha256": "71e68d67152a4a06010bbda97f9ec16d26a6686a13702fa3d19fdb30359fabf5",
+      "sources": [
+        "payments",
+        "recovery",
+        "cosigners",
+        "quorum_recovery",
+        "classical_history",
+        "history"
+      ]
+    },
+    {
+      "adaptation": "Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "classification": "narrow source inventory compatibility and focused regression",
+      "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
+      "sha256": "77366970a2c30b97124e2a0f6b4e7635886af6ce9ea9243ebcfe4b8218097e8b",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Identify narrowly extracted real shielded constructors and optional output-only controls, preserving independent synthetic references.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
+      "sha256": "b0f5fed82b42e33657ee86136c2b5e20d6846711d2604fe86da9e12a46fec4d5",
+      "sources": []
+    },
+    {
+      "adaptation": "Add only existing workspace secp256k1/ripemd dependency edges needed by extracted public classical helper. No registry identity/version or production graph change; coordinated root lock is separately bound by build receipts. Add optional shielded-fixtures dependencies on existing pinned workspace Orchard/Sapling/proofs/protocol/rand libraries; local-prover supplies explicit parameter loading. No download-params or bundled-prover feature requested. Cargo.lock adds only these host edges and three directory helper packages; existing package versions/checksums are unchanged. Reuse only the pinned optional incrementalmerkletree package for bounded genuine note recovery and witnesses; Sapling provides its existing decryption API, so no direct note-encryption dependency is added. The lock change is one host dependency edge only.",
+      "classification": "existing workspace dependency reuse",
+      "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
+      "sha256": "052c453dd01e3f4f38f3917fb403402859f902a015c45826bfbfb9d6f8f7ec74",
+      "sources": []
+    },
+    {
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Document separate feature-gated shielded operations, unchanged transparent defaults and no automatic proof-generation tests. Document optional genuine note/spend operations, bounded trusted history and unchanged transparent/output-only restrictions.",
+      "classification": "new or amended product documentation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/README.md",
+      "sha256": "adf33ec5b5b99d87e61b587ae16aabcd31a9fbedb3c5a8273f80adfdff155239",
+      "sources": []
+    },
+    {
+      "adaptation": "New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope.",
+      "classification": "narrow attributed shielded fixture and acceptance preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SHIELDED_ATTRIBUTION.md",
+      "sha256": "f5a8952ff99dcb70591ea234b6e3b152588415d57e7f575e2e9aee6394b26915",
+      "sources": []
+    },
+    {
+      "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
+      "sha256": "8e3bb76173762ba7ebf6e0c9ef03553bf6f8d77faf2da550b5440b403762a140",
+      "sources": []
+    },
+    {
+      "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_SCHEMA.md",
+      "sha256": "54c6aeec3c0714697a9146523f2be9bf0d76c93e54d22db760f98a5f8144f606",
+      "sources": []
+    },
+    {
+      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input. Retain classical-spend default; explicit control-funding allows only two additional exact unsupported templates. Expose feature-gated explicit NU6.2 v5 fixture signing for pre-NU6.3 Orchard deposits while retaining existing NU7 signing behavior.",
+      "classification": "adapted classical helper",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
+      "sha256": "b8cca5994bec4784bd21539bb6bebac3849bc6d2c240195b7758d501c0d689c6",
+      "sources": [
+        "nu7",
+        "classical_sign"
+      ]
+    },
+    {
+      "adaptation": "Retain transparent empty-template block construction, NU7 aggregate miner fee share and existing header/Merkle/history/auth commitments. Combine existing public classical signer and native SLH signing context for both mixed input orders; no shielded proofs or alternate backend. Retain default blocks/mixed builders; allow NU7 heights105-109, exact unsupported51/52 counterpart templates without signer, and bounded positive/negative regressions. Preserve existing source lineage and transparent control-block behavior; add explicit optional output-only shielded-block path bounded to one transparent input and two outputs/actions per pool; reuse exact fee/header/auth-root construction. Separate bounded shielded-spend-block operation reuses existing NU7 block constructor; original transparent/output modes remain restricted.",
+      "classification": "adapted transparent block and mixed control",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/controls.rs",
+      "sha256": "6d608eafac3f819b1ca290e4f9377b94dbc46f6c0dff92aa752ce7571fec7fab",
+      "sources": [
+        "block",
+        "classical_sign",
+        "nu7"
+      ]
+    },
+    {
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Register strict optional spend prepare/finalize/funding/block operations; default build has no proof/spend tooling.",
+      "classification": "narrow existing product host extension",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
+      "sha256": "1dcd7592f44e99e623e0f13c0f8de0ed52b1c010b6fec0c37ed993d9c28ce727",
+      "sources": []
+    },
+    {
+      "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Strict explicit request schemas with required nullable fields; same public envelope; actual history/parent bytes, no caller amounts or secrets.",
+      "classification": "narrow existing product host extension",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/model.rs",
+      "sha256": "01d19608d85322c846294460ee0c1dd343ed99f5748d277fec6e117bdc620b1c",
+      "sources": []
+    },
+    {
+      "adaptation": "Reuse real output-only action conversion/proving, temporary bindings/full-effect signing, valid proof-donor/wrong-digest variants and batch validation. Add Sapling builder API glue, bounded hashed local parameters, all pool subsets with zero Orchard value, exact parent/native finalization; no alternate backend/workload. Expose current helpers; extend canonical Sapling adapter with parser-based spend conversion; share unchanged final native/classical authorization sequence. Preserve output operation restrictions.",
+      "classification": "narrow attributed shielded fixture and acceptance preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded.rs",
+      "sha256": "817a779aec7f67c920d88ca47259d8c8e0a15fc1cf4e7ff1293ffe3defc19ec5",
+      "sources": [
+        "shielded_output_deposit",
+        "shielded_output_fixture",
+        "shielded_sapling_batch"
+      ]
+    },
+    {
+      "adaptation": "Pinned real-spend construction generalized to ten pool/version subsets, independent parents, current host bundle/digest/authorization helpers, pre-NU6.3 Orchard deposit, same-effect isolated spend-auth/binding/proof controls; no crypto rewrite. Sapling finalization compares the shared anchor with preserved RPC-display metadata using the pinned Zakura conversion; Orchard/Ironwood encodings and authorization boundaries are unchanged.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend.rs",
+      "sha256": "2e04bcc48346cff0060b8890927f906f54d774695564723c8e43b00231ce7d72",
+      "sources": [
+        "shielded_spend_fixture"
+      ]
+    },
+    {
+      "adaptation": "Pinned canonical contiguous trusted-node history and ordered prevouts, fixed public note decryption and positions/witnesses; extended to Sapling/Orchard and strict bounded duplicate/UTXO/nullifier/root checks. New ciphertext-only placeholder tests are not consensus fixtures. The Sapling adaptation reuses pinned Zakura bytes_in_display_order at the RPC boundary while preserving canonical witness/tree/path equality; causal tests use actual RPC-format roots and refuse wrong-order roots.",
+      "classification": "narrow attributed shielded spend fixture preparation",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend/history.rs",
+      "sha256": "2da258c080d08ce385768f4dc677fada49b2aa2eec48910cb635b1ec54c1c94d",
+      "sources": [
+        "shielded_spend_history"
+      ]
+    },
+    {
+      "adaptation": "Reuse native codec/TXID-preserving signature mutation and fixed public classical signer; add exact missing2of3 and same-input family substitutions, strict public envelope and complete byte identity checks.",
+      "classification": "narrow attributed transparent control adapter or focused regression",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/transparent.rs",
+      "sha256": "534fc2acf1bca23c080756c723c6672c7ed04312a932bb2a301bbb22c9d7e326",
+      "sources": [
+        "authorization_mutation",
+        "classical_sign"
+      ]
+    },
+    {
+      "adaptation": "Permit only the two exact pinned upstream lightwalletd protobuf links in broad build inventories, binding literal link text and separately inventoried regular targets. Reject escapes, hidden chains and dangling links; fixture producer defaults still reject all symlinks.",
+      "classification": "narrow source inventory compatibility and focused regression",
+      "path": "tests/slh-dsa-b128s/fixtures/test_generate_transactions.py",
+      "sha256": "650d83c57589222c1f6649835d671eb13deca11a08632de2d139bab67f2997b6",
+      "sources": []
+    }
+  ],
+  "upstream_zakura": "a29a968575e37223cbeb8ac7a5d57aba135fb93a",
+  "validation_boundary": "Only offline/mock and bounded fixture-host checks were executed during preparation. All dedicated binary builds, node/wallet/terminal/signing live cases, proof generation and performance runs require human execution. See docs/slh-dsa-b128s/acceptance.md for prepared and missing driver scenarios."
+}

@@ -1,0 +1,2 @@
+# Independent backup oracle; no product Rust crypto dependency.
+cryptography==48.0.1

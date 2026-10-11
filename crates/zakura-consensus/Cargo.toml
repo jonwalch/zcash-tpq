@@ -20,16 +20,20 @@ categories = ["asynchronous", "cryptography::cryptocurrencies"]
 
 [features]
 default = []
+experimental-slh-dsa-b128s = ["dep:zakura-pq-slh-dsa-b-exp", "dep:zakura-pq-tx-context"]
 
 # Legacy flags accepted for build compatibility; the progress display is removed.
 progress-bar = ["howudoin", "zakura-state/progress-bar"]
 howudoin = []
 
 # Test-only features
+slh-test-observer = ["experimental-slh-dsa-b128s", "zakura-pq-slh-dsa-b-exp/test-observer"]
 internal-bench = []
 proptest-impl = ["proptest", "proptest-derive", "zakura-chain/proptest-impl", "zakura-state/proptest-impl"]
 
 [dependencies]
+zakura-pq-slh-dsa-b-exp = { path = "../pq-slh-dsa-b-exp", optional = true }
+zakura-pq-tx-context = { path = "../pq-tx-context", optional = true }
 blake2b_simd = { workspace = true }
 bellman = { workspace = true }
 bls12_381 = { workspace = true }
@@ -77,6 +81,8 @@ proptest = { workspace = true, optional = true }
 proptest-derive = { workspace = true, optional = true }
 
 [dev-dependencies]
+serde_json = { workspace = true }
+zakura-pq-test-support = { path = "../pq-test-support" }
 color-eyre = { workspace = true }
 
 hex = { workspace = true }

@@ -1,0 +1,17 @@
+[package]
+name = "zakura-pq-tx-context"
+version = "0.1.0"
+publish = false
+edition = "2021"
+rust-version = "1.97"
+description = "Prepared transaction digests and neutral spent-output accounting"
+license = "MIT OR Apache-2.0"
+
+[features]
+# Explicit opt-in for saved pre-NU7 conformance vectors; never a deployment feature.
+historical-test-vectors = []
+
+[dependencies]
+zakura-chain = { path = "../zakura-chain" }
+zcash_protocol = { version = "=2.2.0", package = "zakura-protocol" }
+thiserror = "2.0"

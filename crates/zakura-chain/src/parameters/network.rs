@@ -154,13 +154,22 @@ impl std::fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Mainnet => write!(f, "{self}"),
-            Self::Testnet(params) if params.is_regtest() => f
-                .debug_struct("Regtest")
-                .field("activation_heights", params.activation_heights())
-                .field("funding_streams", params.funding_streams())
-                .field("lockbox_disbursements", &params.lockbox_disbursements())
-                .field("checkpoints", &params.checkpoints())
-                .finish(),
+            Self::Testnet(params) if params.is_regtest() => {
+                let mut debug = f.debug_struct("Regtest");
+                debug
+                    .field("activation_heights", params.activation_heights())
+                    .field("funding_streams", params.funding_streams())
+                    .field("lockbox_disbursements", &params.lockbox_disbursements())
+                    .field("checkpoints", &params.checkpoints());
+                if let Some(height) = params.experimental_slh_dsa_b128s_activation_height() {
+                    debug.field("experimental_slh_dsa_b128s_activation_height", &height);
+                    debug.field(
+                        "experimental_slh_dsa_b128s_limits",
+                        &params.experimental_slh_dsa_b128s_limits(),
+                    );
+                }
+                debug.finish()
+            }
             Self::Testnet(params) if params.is_default_testnet() => {
                 write!(f, "{self}")
             }
@@ -209,6 +218,40 @@ impl Network {
         } else {
             false
         }
+    }
+
+    /// Returns the experimental SLH-DSA-B-128s activation height on Regtest, or `None`.
+    ///
+    /// This local gate is independent of network upgrades. Mainnet and Testnet
+    /// cannot enable it.
+    pub fn experimental_slh_dsa_b128s_activation_height(&self) -> Option<Height> {
+        match self {
+            Self::Testnet(params) if params.is_regtest() => {
+                params.experimental_slh_dsa_b128s_activation_height()
+            }
+            _ => None,
+        }
+    }
+
+    /// Explicit SLH-DSA-B-128s transaction/block limits for this experimental Regtest history.
+    pub fn experimental_slh_dsa_b128s_limits(
+        &self,
+    ) -> Option<testnet::ExperimentalSlhDsaB128sLimits> {
+        match self {
+            Self::Testnet(params) if params.is_regtest() => {
+                params.experimental_slh_dsa_b128s_limits()
+            }
+            _ => None,
+        }
+    }
+
+    /// Whether the experimental SLH-DSA-B-128s gate is active at the trusted validation height.
+    ///
+    /// Use the containing block's height for blocks and the candidate next-block
+    /// height for mempool transactions.
+    pub fn is_experimental_slh_dsa_b128s_active(&self, height: Height) -> bool {
+        self.experimental_slh_dsa_b128s_activation_height()
+            .is_some_and(|activation_height| height >= activation_height)
     }
 
     /// Returns the [`NetworkKind`] for this network.

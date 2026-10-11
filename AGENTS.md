@@ -1,3 +1,62 @@
+# SLH extension rules
+
+These rules take precedence over the inherited upstream command examples below.
+This repository adds only experimental SLH-DSA-B-128s to pinned upstream Zakura.
+Use plain English guided by ASD-STE100 for SLH docs and the root README, aiming
+for 80% rather than strict conformity. Follow `docs/slh-dsa-b128s/writing.md`.
+Preserve inherited documentation, historical evidence, and license text.
+
+Read `docs/slh-dsa-b128s/protocol.md`. Preserve canonical encoding, trusted UTXO
+resolution, existing classical/shielded behavior, source pins and attribution.
+Reuse existing code and tests with the smallest necessary adaptations. Record
+the reason and regression coverage for new behavior or rewritten modules.
+Use the coordinator's pinned research source as the first reference for modules,
+APIs, command flows and tests. Preserve coherent working mechanisms where they
+fit; record source mappings and justify necessary SLH adaptations. Attribution
+does not authorize importing research notes, history or alternate backends, or a
+runtime dependency on a research checkout.
+
+Focus implementation and review fixes on failures and regressions introduced by
+this SLH extension. Check suspected inherited issues against pinned upstream
+Zakura. Do not undertake general upstream cleanup or make unrelated existing bugs
+completion gates; record them separately. Make a minimal upstream change only
+when this integration exposes a failure or it directly blocks the requested SLH
+implementation.
+
+Keep experimental support off by default and Regtest-only. Node dependencies
+must not include key generation, signing, alternate PQ backends, fixture tools
+or a dependency on an external research checkout. Never add research notes,
+experiments, raw results, real secrets or research Git history to this repository.
+
+Workers commit locally for coordinator integration; only the coordinator may
+deliver integrated changes to a designated product remote. Do not push upstream
+Zakura or infer that an unrelated repository's origin is the product destination.
+Preserve assigned branches. The coordinator owns shared manifests, lockfiles,
+feature wiring and cross-lane integration; obtain ownership before editing a
+shared file. Use a separate working tree per worker.
+
+Heavy validation is human-only. Agents must not launch dedicated node/container
+builds, live node/Regtest drivers, wallet live payment/recovery/discovery or
+terminal backup suites, Docker restart/reorg suites, real shielded-proof fixture
+generation, profiling, large-context workloads or full performance matrices.
+This includes wrappers, background/delegated runs and manual CI dispatch/reruns.
+Record required human runs as pending. Existing automatic CI is exempt; do not
+change CI triggers to bypass this rule. Review inherited release/deployment
+automation before publishing to a new remote.
+
+Agents may run proportional focused Rust/library/crypto/corpus tests, mocked
+Python unit tests, dependency/provenance guards and bounded comparisons. For
+changed packages run formatting, locked focused tests and clippy with warnings
+denied, selecting packages explicitly; do not use the full-workspace or live
+commands below as blanket authorization. Serialize substantial compilations on
+the shared host. Preserve independent crypto/digest references and mutation
+controls. Identify checks not run and their reasons precisely.
+
+Unchanged proof-covered approval source retains only its recorded existing proof
+scope. A change to covered source requires a checker consuming these actual
+target files; never edit generated proofs or add admissions. Never claim crypto
+or target execution proved by an unrelated source-checkout run.
+
 # Zakura — Agent Guidelines
 
 > This file is read by AI coding agents (Claude Code, GitHub Copilot, Cursor, Devin, etc.).
