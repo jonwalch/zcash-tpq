@@ -229,17 +229,22 @@ mod tests {
     fn slh_dsa_b128s_concurrent_reservations_never_overspend() {
         let limits = ExperimentalSlhDsaB128sLimits::new(3, 17).unwrap();
         let block = SlhDsaB128sBlockBudget::new(limits);
+        let ready = Arc::new(std::sync::Barrier::new(17));
         let successes = std::thread::scope(|scope| {
             let handles: Vec<_> = (0..16)
                 .map(|_| {
                     let budget = block.clone();
+                    let ready = ready.clone();
                     scope.spawn(move || {
+                        ready.wait();
                         SlhDsaB128sTransactionBudget::new(limits, Some(budget))
                             .reserve(3)
                             .is_ok()
                     })
                 })
                 .collect();
+            // Every contender must be ready before any reservation can finish.
+            ready.wait();
             handles
                 .into_iter()
                 .map(|handle| usize::from(handle.join().unwrap()))

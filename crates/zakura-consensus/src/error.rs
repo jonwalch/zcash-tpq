@@ -138,6 +138,13 @@ pub enum TransactionError {
     #[error("experimental SLH-DSA-B-128s transaction context is invalid: {reason}")]
     ExperimentalSlhDsaB128sContext { reason: String },
 
+    // These failures describe local verifier inputs/capabilities, not transaction validity.
+    #[error("experimental SLH-DSA-B-128s verification requires matching previous outputs and in-range input indices")]
+    ExperimentalSlhDsaB128sInputContext,
+
+    #[error("experimental SLH-DSA-B-128s verifier backend is unavailable")]
+    ExperimentalSlhDsaB128sBackendUnavailable,
+
     #[error("experimental SLH-DSA-B-128s transaction exceeds its limit of {limit} SLH checks")]
     ExperimentalSlhDsaB128sTransactionBudget { limit: u32 },
 
@@ -499,6 +506,7 @@ impl TransactionError {
             Self::RedJubjub(_) => consensus("transaction.redjubjub"),
             Self::RedPallas(_) => consensus("transaction.redpallas"),
             Self::InternalDowncastError(_)
+            | Self::ExperimentalSlhDsaB128sBackendUnavailable
             | Self::ExperimentalSlhDsaB128sBudgetContext
             | Self::ExperimentalSlhDsaB128sBlockBudget { .. } => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::VerifierUnavailable)
@@ -527,7 +535,7 @@ impl TransactionError {
             Self::OrchardHasEnableCrossAddress => {
                 consensus("transaction.orchard_enable_cross_address")
             }
-            Self::TransparentInputNotFound => {
+            Self::TransparentInputNotFound | Self::ExperimentalSlhDsaB128sInputContext => {
                 BodyVerificationClass::Retryable(TransientBodyFailureKind::MissingContext)
             }
             Self::ValidateContextError(error) => error.body_verification_class(),
@@ -658,6 +666,62 @@ impl TransactionError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn slh_local_failures_retry_without_peer_penalties_through_wrappers() {
+        use zakura_header_chain::{BodyVerificationClass, TransientBodyFailureKind};
+
+        for (error, kind) in [
+            (
+                TransactionError::ExperimentalSlhDsaB128sInputContext,
+                TransientBodyFailureKind::MissingContext,
+            ),
+            (
+                TransactionError::ExperimentalSlhDsaB128sBackendUnavailable,
+                TransientBodyFailureKind::VerifierUnavailable,
+            ),
+        ] {
+            let expected = BodyVerificationClass::Retryable(kind);
+            assert_eq!(error.body_verification_class(), expected);
+            assert_eq!(error.mempool_misbehavior_score(), 0);
+            assert_eq!(TransactionError::from(BoxError::from(error.clone())), error);
+            assert_eq!(
+                BlockError::Transaction(error.clone()).misbehavior_score(),
+                0
+            );
+            let wrapper = crate::block::VerifyBlockError::Transaction(error);
+            assert_eq!(wrapper.body_verification_class(), expected);
+            let router = crate::RouterError::from(wrapper);
+            assert_eq!(router.body_verification_class(), expected);
+            assert_eq!(router.misbehavior_score(), 0);
+        }
+    }
+
+    #[test]
+    fn slh_invalid_transaction_context_and_authorization_keep_peer_penalties() {
+        use zakura_header_chain::{BodyRuleId, BodyVerificationClass};
+
+        for error in [
+            TransactionError::ExperimentalSlhDsaB128sContext {
+                reason: "input_context".to_owned(),
+            },
+            TransactionError::ExperimentalSlhDsaB128sContext {
+                reason: "consensus_branch".to_owned(),
+            },
+            TransactionError::ExperimentalSlhDsaB128s {
+                input_index: 0,
+                reason: "encoding".to_owned(),
+            },
+        ] {
+            assert_eq!(
+                error.body_verification_class(),
+                BodyVerificationClass::ConsensusInvalid(BodyRuleId::new(
+                    "transaction.experimental_slh_dsa_b128s"
+                ))
+            );
+            assert_eq!(error.mempool_misbehavior_score(), 100);
+        }
+    }
 
     #[test]
     fn boxed_signature_errors_are_preserved() {

@@ -57,7 +57,10 @@ The restored store stays **monitor-only**, including after synchronization.
 `recovery::restore_operational_snapshot` checks the files and their links.
 It preserves saved approvals, signatures, transactions, and reservations.
 It writes a new encrypted backup, replaces the allocator identity, and retires old address ranges.
-Cached coins remain available, but scan completeness is cleared.
+Unknown authority discards cached coins, the scan checkpoint, and reorg undo data.
+Synchronization rebuilds these observations from trusted history, starting at the wallet birthday.
+This rescan is required even when the saved checkpoint matches the trusted tip.
+Known authority retains authenticated cached observations, but scan completeness is cleared.
 Payments require synchronization with a trusted node and the normal approval checks.
 New addresses require generation, enrollment, and a covering backup.
 

@@ -1299,9 +1299,7 @@ where
         }
         #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
         {
-            Err(TransactionError::ExperimentalSlhDsaB128sContext {
-                reason: "backend_unavailable".to_owned(),
-            })
+            Err(TransactionError::ExperimentalSlhDsaB128sBackendUnavailable)
         }
         #[cfg(feature = "experimental-slh-dsa-b128s")]
         {

@@ -192,6 +192,141 @@ fn operational_snapshot_restores_from_only_documented_artifacts_and_requires_tru
 }
 
 #[test]
+fn unknown_snapshot_rebuilds_fabricated_or_missing_coins_at_the_same_tip() {
+    use crate::{
+        watch::tests::{output, transaction, Chain},
+        ChainSource, NodeContext,
+    };
+
+    struct History {
+        chain: Chain,
+        unavailable: bool,
+        reads: Vec<Hex<32>>,
+    }
+    impl ChainSource for History {
+        fn context(&mut self) -> Result<NodeContext, Error> {
+            self.chain.context()
+        }
+        fn block_hash(&mut self, height: u32) -> Result<Hex<32>, Error> {
+            self.chain.block_hash(height)
+        }
+        fn block_bytes(&mut self, hash: Hex<32>) -> Result<Vec<u8>, Error> {
+            self.reads.push(hash);
+            if self.unavailable {
+                return Err(Error::HistoryUnavailable);
+            }
+            self.chain.block_bytes(hash)
+        }
+    }
+
+    let _serial = BACKUPS.lock().unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let backup = directory.path().join("key.tpq");
+    let mut wallet = Wallet::create(profile(), 2).unwrap();
+    wallet
+        .extend_single_backup(1, 1, &backup, PASSWORD)
+        .unwrap();
+    let mut history = History {
+        chain: Chain::new(),
+        unavailable: false,
+        reads: Vec::new(),
+    };
+    history.chain.push(vec![], None);
+    history.chain.push(
+        vec![transaction(
+            6,
+            0,
+            vec![],
+            vec![output(&wallet.manifest().entries[0], 2_000_000)],
+        )],
+        None,
+    );
+    history.chain.push(vec![], None);
+    let expected_reads = [
+        history.block_hash(2).unwrap(),
+        history.block_hash(3).unwrap(),
+    ];
+    let mut watch = store(&directory.path().join("working"), &wallet);
+    let expected_status = watch.sync(&mut history, 10).unwrap();
+    let expected_coins = watch.coins().to_vec();
+    assert_eq!(expected_status.confirmed_zatoshis, Some(2_000_000));
+    for journal in [false, true] {
+        if journal {
+            watch.migrate_payment_journal().unwrap();
+        }
+        let snapshot = directory.path().join(format!("snapshot-{journal}"));
+        let receipt = watch
+            .save_operational_snapshot(&backup, PASSWORD, &snapshot)
+            .unwrap();
+        let state_path = snapshot.join("watch/state.json");
+        let original: serde_json::Value =
+            serde_json::from_slice(&fs::read(&state_path).unwrap()).unwrap();
+        for fabricated in [false, true] {
+            let mut state = original.clone();
+            if fabricated {
+                state["scan"]["coins"][0]["outpoint"]["txid"] = hex::encode([0xff; 32]).into();
+                state["scan"]["coins"][0]["value"] = 9_000_000.into();
+            } else {
+                state["scan"]["coins"] = serde_json::json!([]);
+            }
+            let bytes = serde_json::to_vec(&state).unwrap();
+            fs::write(&state_path, &bytes).unwrap();
+            // The attacker can replace both the state and its public receipt.
+            let mut changed = receipt.clone();
+            changed.state_sha256 = digest(&bytes);
+            let mut copied = WatchStore::open(&snapshot.join("watch"), &profile()).unwrap();
+            changed.journal = copied.journal_snapshot().unwrap().metadata().clone();
+            drop(copied);
+            fs::write(snapshot.join("receipt.json"), changed.to_json().unwrap()).unwrap();
+            let destination = directory
+                .path()
+                .join(format!("restored-{journal}-{fabricated}"));
+            assert!(matches!(
+                restore_operational_snapshot(
+                    &snapshot,
+                    PASSWORD,
+                    &profile(),
+                    SnapshotTrust::KnownAuthority {
+                        trusted_receipt: receipt.fingerprint().unwrap(),
+                    },
+                    &destination,
+                ),
+                Err(Error::Pairing)
+            ));
+            let mut restored = restore_operational_snapshot(
+                &snapshot,
+                PASSWORD,
+                &profile(),
+                SnapshotTrust::Unknown,
+                &destination,
+            )
+            .unwrap();
+            assert_eq!(restored.watch.status().unwrap().checkpoint, None);
+            assert!(restored.watch.coins().is_empty());
+            history.unavailable = true;
+            assert!(matches!(
+                restored.watch.sync(&mut history, 10),
+                Err(Error::HistoryUnavailable)
+            ));
+            assert_eq!(restored.watch.status().unwrap().confirmed_zatoshis, None);
+            history.unavailable = false;
+            history.reads.clear();
+            let partial = restored.watch.sync(&mut history, 1).unwrap();
+            assert_eq!(partial.checkpoint.unwrap().height, 2);
+            assert!(!partial.complete_at_checkpoint);
+            assert_eq!(partial.confirmed_zatoshis, None);
+            drop(restored.watch);
+            let mut reopened = WatchStore::open(&destination.join("watch"), &profile()).unwrap();
+            assert_eq!(reopened.sync(&mut history, 10).unwrap(), expected_status);
+            assert_eq!(reopened.coins(), expected_coins);
+            assert_eq!(history.reads, expected_reads);
+            assert_eq!(reopened.mode(), WatchMode::Monitor);
+            assert!(matches!(reopened.receive(), Err(Error::MonitorOnly)));
+        }
+    }
+}
+
+#[test]
 fn snapshot_rejects_changed_backup_state_unsafe_files_and_wrong_profile() {
     let _serial = BACKUPS.lock().unwrap();
     let directory = tempfile::tempdir().unwrap();

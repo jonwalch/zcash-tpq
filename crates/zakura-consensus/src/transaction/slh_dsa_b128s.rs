@@ -24,13 +24,11 @@ pub(crate) fn input_indexes(
     spent_outputs: &[transparent::Output],
     active: bool,
 ) -> Result<Vec<usize>, TransactionError> {
-    if transaction.inputs().len() != spent_outputs.len() {
-        return Err(TransactionError::ExperimentalSlhDsaB128sContext {
-            reason: "input_context".to_owned(),
-        });
-    }
     if !active {
         return Ok(Vec::new());
+    }
+    if transaction.inputs().len() != spent_outputs.len() {
+        return Err(TransactionError::ExperimentalSlhDsaB128sInputContext);
     }
     let indexes: Vec<_> = spent_outputs
         .iter()
@@ -63,8 +61,90 @@ pub(crate) fn structural_checks(
     #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
     {
         let _ = (transaction, spent_outputs, indexes);
-        Err(TransactionError::ExperimentalSlhDsaB128sContext {
-            reason: "backend_unavailable".to_owned(),
-        })
+        Err(TransactionError::ExperimentalSlhDsaB128sBackendUnavailable)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transaction::check;
+    use zakura_chain::{block::Height, parameters::NetworkUpgrade, transaction::LockTime};
+
+    fn transaction_and_output() -> (Transaction, transparent::Output) {
+        let mut lock_script = vec![0x53, 0x20];
+        lock_script.extend([0x11; 32]);
+        lock_script.push(0xc0);
+        let output = transparent::Output {
+            value: 10_000.try_into().unwrap(),
+            lock_script: transparent::Script::new(&lock_script),
+        };
+        let transaction = Transaction::V5 {
+            network_upgrade: NetworkUpgrade::Nu7,
+            inputs: vec![transparent::Input::PrevOut {
+                outpoint: transparent::OutPoint {
+                    hash: [0x22; 32].into(),
+                    index: 0,
+                },
+                unlock_script: transparent::Script::new(&[]),
+                sequence: u32::MAX,
+            }],
+            outputs: vec![output.clone()],
+            lock_time: LockTime::unlocked(),
+            expiry_height: Height(0),
+            sapling_shielded_data: None,
+            orchard_shielded_data: None,
+        };
+        (transaction, output)
+    }
+
+    #[test]
+    fn slh_inactive_dispatch_preserves_classical_context_errors() {
+        let (transaction, output) = transaction_and_output();
+        for spent_outputs in [vec![], vec![output.clone(), output]] {
+            assert_eq!(
+                input_indexes(&transaction, &spent_outputs, false),
+                Ok(vec![])
+            );
+            let classical = check::mempool_standard_input_scripts(&transaction, &spent_outputs);
+            assert!(matches!(&classical, Err(TransactionError::Other(_))));
+            assert_eq!(
+                check::mempool_standard_input_scripts_with_slh_dsa_b128s(
+                    &transaction,
+                    &spent_outputs,
+                    false,
+                ),
+                classical.map(|()| 0)
+            );
+        }
+    }
+
+    #[test]
+    fn slh_active_dispatch_requires_matching_local_input_context() {
+        let (transaction, output) = transaction_and_output();
+        for spent_outputs in [vec![], vec![output.clone(), output]] {
+            assert_eq!(
+                input_indexes(&transaction, &spent_outputs, true),
+                Err(TransactionError::ExperimentalSlhDsaB128sInputContext)
+            );
+            assert_eq!(
+                check::mempool_standard_input_scripts_with_slh_dsa_b128s(
+                    &transaction,
+                    &spent_outputs,
+                    true,
+                ),
+                Err(TransactionError::ExperimentalSlhDsaB128sInputContext)
+            );
+        }
+    }
+
+    #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
+    #[test]
+    fn slh_disabled_backend_is_a_local_failure() {
+        let (transaction, output) = transaction_and_output();
+        assert_eq!(
+            check::mempool_standard_input_scripts_with_slh_dsa_b128s(&transaction, &[output], true,),
+            Err(TransactionError::ExperimentalSlhDsaB128sBackendUnavailable)
+        );
     }
 }

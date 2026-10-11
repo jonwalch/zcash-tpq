@@ -34,10 +34,10 @@
     },
     {
       "target": "src/watch.rs",
-      "target_sha256": "0c20afaa5cc9b495f59ee5abb3c4e112c4e166fc9ed4f3e4700f02eba2e1799c",
+      "target_sha256": "5ab333db8ce5033df2eeb3bbc072129dd6045ec353a3e256d90a4011af0d62dc",
       "source": "crates/pq-wallet/src/watch.rs",
       "source_sha256": "65ce0f0065a4bf0b6069b47678626d9a071a234e969cae116a40929e08f6457f",
-      "adaptation": "Preserved locked allocator/monitor, monotonic issuance and cached discovery; added explicit recovery inventory rotation hook that retains reservations and invalidates cached completeness; module registration and API documentation. Added a crate-private fault_receive_with_hook wrapper under cfg(all(test, unix)) for receive-publication fault tests; operational receive behavior is unchanged."
+      "adaptation": "Preserved locked allocator/monitor, monotonic issuance and cached discovery; added explicit recovery inventory rotation hook that retains reservations and invalidates cached completeness; module registration and API documentation. Added a crate-private fault_receive_with_hook wrapper under cfg(all(test, unix)) for receive-publication fault tests; operational receive behavior is unchanged. Unknown-authority restore reuses the existing Scan::default rescan flow to discard unauthenticated coins, checkpoint and undo data while preserving payment state and allocation high-water marks. Known-authority cache reuse remains explicit."
     },
     {
       "target": "src/watch/tests.rs",
@@ -67,13 +67,13 @@
     },
     {
       "target": "src/recovery.rs",
-      "target_sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339",
-      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
+      "target_sha256": "71ecf5cbb35924da67c7b637aa238395db847dcdc72b079972e9bb2b810a36c4",
+      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls. Document the different authenticated-cache and unauthenticated-rescan behavior without changing snapshot formats."
     },
     {
       "target": "src/recovery/tests.rs",
-      "target_sha256": "d8ab13f759bbed882a61eca41e0cae9cea86e6ee06fb009c48d1cf44450f6017",
-      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls."
+      "target_sha256": "81d412d20303f95255781e2a39c2ee90f267ebe4fc509f2efda67c4fb1d97a3e",
+      "adaptation": "lib.rs preserves source decrypt/encrypt/retire/plaintext/root-validation methods inside existing feature gate; recovery coordinator composes existing backup/watch/journal APIs with bounded coherent snapshot copying, explicit trust and atomic new-directory publication; new focused orchestration controls. Add same-tip forged/missing-coin regressions for v2/v3 snapshots, trusted-receipt rejection, unavailable history, bounded birthday rescans and restart."
     }
   ],
   "unchanged_contracts": [

@@ -43,6 +43,27 @@ Each version and funding profile needs a separate artifact directory.
 No performance workload is registered here.
 Resource measurements require functional acceptance first.
 
+## Test boundaries
+
+Crypto and wallet tests use real signature verification, public retained vectors,
+and temporary storage. Signature rejection tests must first accept the unchanged
+input. The native, consensus-worker, and wallet suites corrupt signatures in each
+input, including the final signer of a 15-of-15 policy. Native assembly checks
+every signer as well.
+These tests reuse the saved v5/v6 signatures; they need no new signing or node.
+
+Fixture builder tests use complete valid requests before changing one condition.
+The block builder accepts one through five supplied transactions. Its tests check
+both accepted limits, empty and six-transaction lists, and a nonempty template.
+Building a block does not establish valid spends or node acceptance.
+
+Mocks belong at external boundaries: node replies, process control, and injected
+storage failures. Driver unit tests check command flow and failure handling.
+They do not establish live behavior. Use the real parser, verifier, wallet, and
+fixture builder when those components are the subject of the test.
+After a reorg, saved transaction bytes must also have active-chain confirmations.
+A lookup can return unchanged bytes from the old branch.
+
 ## Observations and failures
 
 [Verifier observations](observations.md) count attempted primitive calls within a process and capture window.

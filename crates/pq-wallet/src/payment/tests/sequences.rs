@@ -1,6 +1,6 @@
 //! Bounded wallet sequences, not a consensus simulator or a randomized CI load.
-//! Public test entropy makes wallets, proposals and operation order repeatable.
-//! Signature bytes still use OS entropy, so a seed does not repeat them.
+//! Public test entropy makes keys, proposals and operation choices repeatable.
+//! Signing uses OS entropy; retries must preserve the saved signature bytes.
 use super::*;
 use serde_json::Value;
 use std::panic::{catch_unwind, AssertUnwindSafe};

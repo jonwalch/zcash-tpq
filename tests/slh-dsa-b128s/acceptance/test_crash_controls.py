@@ -437,13 +437,5 @@ class CrashTests(unittest.TestCase):
                 receipt = common.read_json(args.artifacts / "execution.json")
                 self.assertEqual(receipt["complete"], fault is None)
 
-    def test_control_block_mock_preserves_real_nonempty_host_boundary(self):
-        world = World()
-        with self.assertRaisesRegex(AcceptanceError, "control_block_shape"):
-            world.host("host", "control-block", recipe={"transactions": []})
-        source = (common.ROOT / "tests/slh-dsa-b128s/fixtures/host/src/controls.rs").read_text()
-        self.assertIn("(1..=5).contains(&recipe.transactions.len())", source)
-
-
 if __name__ == "__main__":
     unittest.main()

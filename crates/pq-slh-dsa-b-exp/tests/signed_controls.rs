@@ -353,6 +353,72 @@ fn valid_partials_reject_wrong_count_index_key_and_signature() {
 }
 
 #[test]
+fn every_signer_of_every_input_is_required_by_verification_and_assembly() {
+    for version in [5, 6] {
+        for (case, expected_counts) in [("15of15", &[15][..]), ("16checks", &[15, 1][..])] {
+            let fixture = fixture(version, case);
+            assert_eq!(
+                fixture
+                    .authorizations
+                    .iter()
+                    .map(|authorization| authorization.records.len())
+                    .collect::<Vec<_>>(),
+                expected_counts
+            );
+            for (input_index, authorization) in fixture.authorizations.iter().enumerate() {
+                let signing = InputSigningContext::new(
+                    &fixture.transaction,
+                    NetworkDomain::Regtest,
+                    NetworkUpgrade::Nu7,
+                    fixture.previous.clone(),
+                    input_index,
+                    &authorization.policy,
+                )
+                .unwrap();
+                assert_eq!(
+                    context(&fixture.transaction, fixture.previous.clone())
+                        .verify_input(input_index),
+                    Ok(())
+                );
+                assert_eq!(
+                    signing.authorization(authorization.records.clone()),
+                    Ok(authorization.clone())
+                );
+                for record_index in 0..authorization.records.len() {
+                    let mut changed = authorization.clone();
+                    changed.records[record_index].signature[0] ^= 1;
+                    let mut transaction = fixture.transaction.clone();
+                    install(
+                        &mut transaction,
+                        input_index,
+                        Script::new(&changed.encode()),
+                    );
+                    // Only authorization bytes change. Every other input must
+                    // still verify, and the mutated input must reach crypto.
+                    let ctx = context(&transaction, fixture.previous.clone());
+                    for index in 0..fixture.authorizations.len() {
+                        assert_eq!(
+                            ctx.verify_input(index),
+                            if index == input_index {
+                                Err(Rejection::Signature)
+                            } else {
+                                Ok(())
+                            },
+                            "v{version}-{case}, input {input_index}, signer {record_index}, checked input {index}"
+                        );
+                    }
+                    assert_eq!(
+                        signing.authorization(changed.records),
+                        Err(Rejection::Signature),
+                        "v{version}-{case}, input {input_index}, signer {record_index}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn canonicality_failures_on_real_signatures_precede_reservation() {
     for version in [5, 6] {
         let fixture = fixture(version, "2of3");

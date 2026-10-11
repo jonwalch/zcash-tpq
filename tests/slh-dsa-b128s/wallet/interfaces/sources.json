@@ -2,7 +2,8 @@
   "adaptations": [
     "New key-exchange envelope and receipt hash/schema expectations correspond to product additions absent from the research format corpus.",
     "Literal watch state JSON permits its required scan.complete boolean; the inventory-only canonical helper excludes booleans.",
-    "Three cumulative enrollment cases cover receive/change, different threshold and external origin indices; existing 120-shape format tests are not duplicated."
+    "Three cumulative enrollment cases cover receive/change, different threshold and external origin indices; existing 120-shape format tests are not duplicated.",
+    "Recovery documentation now distinguishes authenticated cached observations from unknown-authority rescans; the interface formats and independent reference are unchanged."
   ],
   "format": "slh-wallet-interface-reference-sources-v1",
   "oracle_inputs": [
@@ -56,7 +57,7 @@
     },
     {
       "path": "crates/pq-wallet/src/recovery.rs",
-      "sha256": "5fe76e891edc8c363c2e5c6e3ad95ed4b047eed803e1eebba1b4c960eb59a339"
+      "sha256": "71ecf5cbb35924da67c7b637aa238395db847dcdc72b079972e9bb2b810a36c4"
     },
     {
       "path": "crates/pq-wallet/src/watch/archive/snapshot.rs",
@@ -68,7 +69,7 @@
     },
     {
       "path": "docs/slh-dsa-b128s/recovery.md",
-      "sha256": "6081b080773da0cff742f50c5e08d138200e359baf201b30112119525fa327f6"
+      "sha256": "4099ca19b6e2bf8d9bcf77ce1f1efd1a20e40e8e8c943759fe81f331eeff2835"
     },
     {
       "path": "crates/zakura-test/src/command.rs",

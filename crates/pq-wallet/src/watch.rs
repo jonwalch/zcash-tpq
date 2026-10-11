@@ -350,8 +350,9 @@ impl WatchStore {
         self.status()
     }
 
-    // Recovery preserves exact approved capabilities and their reservations,
-    // but cached observations cannot authorize spending before trusted sync.
+    // Recovery preserves exact approved capabilities and their reservations.
+    // An unauthenticated cache must be rebuilt from trusted history, even when
+    // its checkpoint matches the trusted tip.
     pub(crate) fn restore_reconciled_inventory(
         &mut self,
         manifest: &Manifest,
@@ -371,8 +372,12 @@ impl WatchStore {
         } else {
             WatchMode::Monitor
         };
-        candidate.scan.complete = false;
-        candidate.scan.context = None;
+        if known_authority {
+            candidate.scan.complete = false;
+            candidate.scan.context = None;
+        } else {
+            candidate.scan = Scan::default();
+        }
         self.commit(candidate)
     }
 

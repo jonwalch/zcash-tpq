@@ -505,7 +505,51 @@ mod tests {
         recipe.fee_zat = u64::MAX;
         assert_eq!(mixed_prepare(&recipe).unwrap_err().reason, "mixed_value");
     }
-    fn control_template(version: u8, height: u32) -> Value {
+    #[test]
+    fn control_block_rejects_nonempty_templates_and_unbounded_inputs() {
+        for version in [5, 6] {
+            let mut request = block_recipe(version, 111);
+            block(&request).unwrap();
+
+            request.template["transactions"] = json!([{}]);
+            assert_eq!(block(&request).unwrap_err().reason, "control_block_shape");
+            request.template["transactions"] = json!([]);
+
+            let entry = request.transactions.pop().unwrap();
+            assert_eq!(block(&request).unwrap_err().reason, "control_block_shape");
+            // Block construction does not validate spends. Distinct lock times
+            // give the five public transactions distinct effect identities.
+            let original =
+                decode_transaction(&hex::decode(&entry.transaction_hex).unwrap()).unwrap();
+            for lock in 1..=5 {
+                let mut transaction = original.clone();
+                match &mut transaction {
+                    Transaction::V5 { lock_time, .. } | Transaction::V6 { lock_time, .. } => {
+                        *lock_time = LockTime::Height(Height(lock));
+                    }
+                    _ => unreachable!("fixture v5/v6"),
+                }
+                request.transactions.push(ControlTransaction {
+                    transaction_hex: hex::encode(transaction.zcash_serialize_to_vec().unwrap()),
+                    fee_zat: entry.fee_zat,
+                });
+            }
+            let result = block(&request).unwrap();
+            let bytes = hex::decode(result["block_hex"].as_str().unwrap()).unwrap();
+            let parsed = Block::zcash_deserialize(bytes.as_slice()).unwrap();
+            assert_eq!(parsed.transactions.len(), 6);
+            for (actual, expected) in parsed.transactions[1..].iter().zip(&request.transactions) {
+                assert_eq!(
+                    hex::encode(actual.zcash_serialize_to_vec().unwrap()),
+                    expected.transaction_hex
+                );
+            }
+            request.transactions.push(entry);
+            assert_eq!(block(&request).unwrap_err().reason, "control_block_shape");
+        }
+    }
+
+    fn block_recipe(version: u8, height: u32) -> ControlBlockRecipe {
         let (lock, _, _) = classical::scripts("single").unwrap();
         let (mut coinbase, _) = TransactionRecipe {
             version,
@@ -526,44 +570,18 @@ mod tests {
             }
             _ => unreachable!("fixture v5/v6"),
         }
-        json!({"transactions":[],"coinbasetxn":{"data":hex::encode(coinbase.zcash_serialize_to_vec().unwrap())},
-            "height":height,"version":4,"previousblockhash":"11".repeat(32),"curtime":1_700_000_000,
-            "bits":"200f0f0f","defaultroots":{"chainhistoryroot":"22".repeat(32)}})
-    }
-    /// Distinct valid mixed transactions; each differs only in its fee.
-    fn control_transactions(version: u8, count: u64) -> Vec<ControlTransaction> {
-        (0..count)
-            .map(|i| {
-                let mut request = recipe(true, version);
-                request.fee_zat += i;
-                let (transaction, _, _, _) = mixed(&request).unwrap();
-                ControlTransaction {
-                    transaction_hex: hex::encode(transaction.zcash_serialize_to_vec().unwrap()),
-                    fee_zat: request.fee_zat,
-                }
-            })
-            .collect()
-    }
-    #[test]
-    fn control_block_rejects_nonempty_templates_and_unbounded_inputs() {
-        let request = |template: Value, count| ControlBlockRecipe {
-            template,
+        let (transaction, _, _, _) = mixed(&recipe(true, version)).unwrap();
+        let transaction_bytes = transaction.zcash_serialize_to_vec().unwrap();
+        ControlBlockRecipe {
+            template: json!({"transactions":[],"coinbasetxn":{"data":hex::encode(coinbase.zcash_serialize_to_vec().unwrap())},
+                    "height":height,"version":4,"previousblockhash":"11".repeat(32),"curtime":1_700_000_000,
+                    "bits":"200f0f0f","defaultroots":{"chainhistoryroot":"22".repeat(32)}}),
             kind: "single".into(),
             nonce: 64,
-            transactions: control_transactions(5, count),
-        };
-        let template = control_template(5, 105);
-        // Each rejection changes one dimension of an otherwise valid request.
-        assert!(block(&request(template.clone(), 1)).is_ok());
-        assert!(block(&request(template.clone(), 5)).is_ok());
-        let mut nonempty = template.clone();
-        nonempty["transactions"] = json!([{}]);
-        for invalid in [
-            request(nonempty, 1),
-            request(template.clone(), 6),
-            request(template, 0),
-        ] {
-            assert_eq!(block(&invalid).unwrap_err().reason, "control_block_shape");
+            transactions: vec![ControlTransaction {
+                transaction_hex: hex::encode(&transaction_bytes),
+                fee_zat: 100_000,
+            }],
         }
     }
 
@@ -573,17 +591,9 @@ mod tests {
             .into_iter()
             .flat_map(|v| [104, 105, 106, 107, 108, 109, 111].map(|h| (v, h)))
         {
-            let (transaction, _, _, _) = mixed(&recipe(true, version)).unwrap();
-            let transaction_bytes = transaction.zcash_serialize_to_vec().unwrap();
-            let request = ControlBlockRecipe {
-                template: control_template(version, height),
-                kind: "single".into(),
-                nonce: 64,
-                transactions: vec![ControlTransaction {
-                    transaction_hex: hex::encode(&transaction_bytes),
-                    fee_zat: 100_000,
-                }],
-            };
+            let request = block_recipe(version, height);
+            let transaction_bytes = hex::decode(&request.transactions[0].transaction_hex).unwrap();
+            let transaction = decode_transaction(&transaction_bytes).unwrap();
             if height == 104 {
                 assert_eq!(block(&request).unwrap_err().reason, "block_height");
                 continue;
