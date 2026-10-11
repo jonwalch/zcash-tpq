@@ -2370,7 +2370,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools. Document positive controls, per-signer and per-input checks, real fixture boundaries and the scope of external-boundary mocks.",
-      "sha256": "e5da2d74754370074eaea29729752c0725737a5769a2f7f32d2a703ce43be083"
+      "sha256": "ff9709e1c7304872cf0b99118ee811c1e5b8a0245b1d6a7be90ac84d0c76704e"
     },
     {
       "disposition": "new",
@@ -2500,8 +2500,8 @@
         "tests/slh-dsa-b128s/acceptance/NOTICE",
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "a9754eccbc8acc213aeabf711f10d1087730b309a4dc0b5b10fa3facdf42b288"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Use the existing saved-transaction state checker after replacement mining and the post-replay spend: exact bytes returned from an orphan branch do not establish active-chain confirmation.",
+      "sha256": "fbd4222c0034da40ca8f28bd5b1d47e528818c0d80828ef934781a4a65a09f51"
     },
     {
       "disposition": "new",
@@ -2559,7 +2559,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "a70d7fcb5bbc76c92abc3de919e79d85d9ff60f2e52bc67b0edb13c1dcee0094"
+      "sha256": "95921d68593035ca89edbe8ac915525348590fe36c3ea5c87f5449dc0365ea78"
     },
     {
       "disposition": "new",
@@ -2811,7 +2811,7 @@
         "docs/slh-dsa-b128s/validation.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "0004cdb0e8f09e629bf129ef465756c4571624607971beb4a3b0aa3b87d6f6cf"
+      "sha256": "ed05e2e8d6c26e1b7b533c166c318dbbfe1756202d43fd9d2b9b1e46d877ba0b"
     },
     {
       "disposition": "new",

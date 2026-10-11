@@ -203,7 +203,7 @@ def execute(args, artifacts, receipt):
             require(first_block not in replacement and second_block not in replacement, "replacement_branch")
             for tx in transactions:
                 for node in network.nodes:
-                    require(node.rpc("getrawtransaction", tx["txid"], 1)["hex"] == tx["raw"], "reorg_saved_bytes")
+                    require(transaction_state(node, tx) == "confirmed", "reorg_confirmation")
             receipt["reorg"] = {"fork": before, "old_blocks": [first_block, second_block],
                                 "replacement_blocks": replacement}
             receipt["restart"] = restart_with_backups(network, excluded=(first_block, second_block))
@@ -277,8 +277,9 @@ def execute(args, artifacts, receipt):
                     require(network.a.rpc("submitblock", block_bytes) is None, "post_replay_block")
                     wait_for(lambda: network.a.tip() == network.b.tip() == replay.tip(), "post_replay_peer_tip")
                     for node in [*network.nodes, replay]:
-                        require(node.rpc("getrawtransaction", restored_txid, 1)["hex"] == recovered["transaction_hex"],
-                                "post_replay_spend_bytes")
+                        require(transaction_state(node, {"txid": restored_txid,
+                                    "raw": recovered["transaction_hex"]}) == "confirmed",
+                                "post_replay_spend_confirmation")
                     receipt["history"] = {"tip": original_tip, "reorg_window": 1000,
                         "ordered_block_hashes_sha256": digest.hexdigest(), "exact_block_bytes": True,
                         "utxo_equality": True, "post_replay_spend": restored_txid,

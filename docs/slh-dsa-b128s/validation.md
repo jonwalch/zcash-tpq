@@ -61,6 +61,8 @@ Mocks belong at external boundaries: node replies, process control, and injected
 storage failures. Driver unit tests check command flow and failure handling.
 They do not establish live behavior. Use the real parser, verifier, wallet, and
 fixture builder when those components are the subject of the test.
+After a reorg, saved transaction bytes must also have active-chain confirmations.
+A lookup can return unchanged bytes from the old branch.
 
 ## Observations and failures
 
