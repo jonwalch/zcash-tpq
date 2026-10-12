@@ -17,6 +17,9 @@ import tempfile
 import tomllib
 
 MAX_JSON = 16 * 1024 * 1024
+REFERENCE_ROOT = Path(__file__).resolve().parents[2] / "tests/slh-dsa-b128s/reference"
+MAX_REFERENCE_FILE = 8 * 1024 * 1024
+MAX_REFERENCE_TOTAL = 32 * 1024 * 1024
 
 
 class BenchmarkError(ValueError):
@@ -221,3 +224,73 @@ def verify_artifacts(directory, inventory):
     require(type(inventory) is dict, "artifact inventory must be an object")
     actual = artifact_inventory(directory)
     require(actual == inventory, "artifact bytes or inventory changed")
+
+
+def snapshot_payment_reference(source, destination):
+    """Retain checked independent inputs without importing or executing them.
+
+    Only the pinned reference sources, licenses, hash vectors and prepared hash
+    library are copied. Build command paths in the receipt stay as historical
+    provenance; they are never interpreted as commands or copy destinations.
+    The payment checker validates and loads this snapshot in a separate process.
+    """
+    source = Path(source).absolute()
+    require(source.is_dir() and not source.is_symlink(), "regular reference directory required")
+    pins = read_json(REFERENCE_ROOT / "sources.json")
+    expected = {}
+    for group in ("reference", "blake3_c"):
+        for item in pins[group]["files"]:
+            name = Path(group) / item["path"]
+            require(not name.is_absolute() and ".." not in name.parts,
+                    "invalid pinned reference path")
+            require(str(name) not in expected, "duplicate pinned reference path")
+            expected[str(name)] = item["sha256"]
+
+    copied = {}
+    total = 0
+
+    def retain(name, expected_hash=None):
+        nonlocal total
+        path = source
+        for component in Path(name).parts:
+            path = path / component
+            require(not path.is_symlink(), "reference symlink")
+        require(path.is_file(), "regular reference file required")
+        with path.open("rb") as stream:
+            data = stream.read(MAX_REFERENCE_FILE + 1)
+        require(len(data) <= MAX_REFERENCE_FILE, "reference file size limit")
+        total += len(data)
+        require(total <= MAX_REFERENCE_TOTAL, "reference snapshot size limit")
+        if expected_hash is not None:
+            require(hashlib.sha256(data).hexdigest() == expected_hash, "reference source hash mismatch")
+        copied[name] = data
+        return data
+
+    receipt = strict_json(retain("hash-build.json"))
+    require(type(receipt) is dict and receipt.get("schema_version") == 1,
+            "reference build receipt schema")
+    require(receipt.get("sources_sha256") == sha256(REFERENCE_ROOT / "sources.json")
+            and receipt.get("shim_sha256") == sha256(REFERENCE_ROOT / "hash_shim.c"),
+            "reference build source mismatch")
+    library = receipt.get("library_name")
+    require(library in ("libslh_reference_blake3.dylib", "libslh_reference_blake3.so"),
+            "unexpected reference library name")
+    require(type(receipt.get("library_sha256")) is str, "reference library hash required")
+    retain(library, receipt["library_sha256"])
+    for name, digest in expected.items():
+        retain(name, digest)
+    # Match the independent loader's Python inventory check instead of silently
+    # cleaning an unexpected Python implementation out of the supplied inputs.
+    python_files = {str(path.relative_to(source)) for path in
+                    (source / "reference/slhdsa/lowlevel").rglob("*.py")}
+    require(python_files == {name for name in expected if name.endswith(".py")},
+            "reference Python inventory mismatch")
+
+    destination = fresh_directory(destination)
+    for name, data in copied.items():
+        path = destination / name
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with path.open("xb") as stream:
+            stream.write(data)
+        path.chmod(0o400)
+    return destination
