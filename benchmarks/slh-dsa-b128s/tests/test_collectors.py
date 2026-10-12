@@ -1,5 +1,7 @@
 """Synthetic filesystem checks. No live process or resource measurement."""
 
+import copy
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -245,6 +247,38 @@ class CollectorTests(unittest.TestCase):
                 self.record(first, second, effective_cpu_cores=value)
         with self.assertRaisesRegex(collectors.CollectionError, "context"):
             collectors.resource_record(first, second, {})
+
+    def test_reads_are_bounded_and_reject_nonregular_fixture_files(self):
+        self.write("oversized", "x" * (collectors.MAX_FILE_BYTES + 1))
+        with self.assertRaisesRegex(collectors.CollectionError, "input limit"):
+            collectors._read(self.root / "oversized")
+        os.mkfifo(self.root / "fifo")
+        with self.assertRaisesRegex(collectors.CollectionError, "regular"):
+            collectors._read(self.root / "fifo")
+
+    def test_saved_snapshots_reject_negative_float_and_missing_reason(self):
+        valid = self.process()
+        for value in (-1, 1.0, True, float("inf"), 10**1000):
+            bad = copy.deepcopy(valid)
+            bad["metrics"]["process_cpu_ns"] = value
+            with self.subTest(value=type(value).__name__), self.assertRaises(collectors.CollectionError):
+                collectors.validate_snapshot(bad)
+        bad = copy.deepcopy(valid)
+        bad["metrics"]["process_cpu_ns"] = None
+        with self.assertRaisesRegex(collectors.CollectionError, "reasons"):
+            collectors.validate_snapshot(bad)
+
+    def test_saved_snapshot_schema_and_identity_are_strict(self):
+        valid = self.process()
+        for mutate in (lambda item: item.update(unknown=1),
+                       lambda item: item["identity"].pop("start_ticks"),
+                       lambda item: item["metrics"].update(invented_metric=0),
+                       lambda item: item.update(kind=[]),
+                       lambda item: item["details"].update(affinity_cores=-1)):
+            bad = copy.deepcopy(valid)
+            mutate(bad)
+            with self.assertRaises(collectors.CollectionError):
+                collectors.validate_snapshot(bad)
 
 
 if __name__ == "__main__":

@@ -9,10 +9,15 @@ the product does not yet emit these events at its transaction boundaries.
 
 import hashlib
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+import math
 import re
 
-from collectors import CollectionError, _integer, _record
+from collectors import CollectionError, _bounded_json, _integer, _record
+
+MAX_INPUT_BYTES = 64 * 1024 * 1024
+MAX_ROW_BYTES = 65_536
+MAX_ROWS = 100_000
 
 
 class AdapterError(CollectionError):
@@ -28,27 +33,58 @@ def _object(pairs):
     return value
 
 
+def _float(value):
+    number = float(value)
+    if not math.isfinite(number):
+        raise AdapterError("nonfinite JSON number")
+    return number
+
+
+def _constant(value):
+    raise AdapterError(f"nonfinite JSON value {value}")
+
+
 def _rows(rows):
     if isinstance(rows, str):
+        if len(rows.encode("utf-8")) > MAX_INPUT_BYTES:
+            raise AdapterError("JSONL input exceeds byte limit")
         if not rows.endswith("\n"):
             raise AdapterError("JSONL input must end with a newline; final record may be truncated")
         parsed = []
         for number, line in enumerate(rows.splitlines(), 1):
+            if number > MAX_ROWS or len(line.encode("utf-8")) > MAX_ROW_BYTES:
+                raise AdapterError("JSONL input exceeds row count or byte limit")
             if not line.strip():
                 raise AdapterError(f"blank JSONL row {number}")
             try:
-                row = json.loads(line, object_pairs_hook=_object,
-                                 parse_constant=lambda value: (_ for _ in ()).throw(AdapterError(f"nonfinite JSON value {value}")))
-            except (ValueError, TypeError) as error:
+                row = json.loads(line, object_pairs_hook=_object, parse_float=_float, parse_constant=_constant)
+            except (ValueError, TypeError, RecursionError) as error:
                 raise AdapterError(f"invalid JSONL row {number}: {error}") from error
             parsed.append(row)
         rows = parsed
     else:
-        rows = list(rows)
+        parsed = []
+        try:
+            iterator = iter(rows)
+        except TypeError as error:
+            raise AdapterError("event input must be JSONL text or iterable objects") from error
+        for row in iterator:
+            if len(parsed) >= MAX_ROWS:
+                raise AdapterError("event input exceeds row count limit")
+            parsed.append(row)
+        rows = parsed
     if not rows:
         raise AdapterError("empty event input")
     if any(not isinstance(row, dict) for row in rows):
         raise AdapterError("each event must be a JSON object")
+    total = 0
+    for row in rows:
+        try:
+            total += len(_bounded_json(row, "event row", max_bytes=MAX_ROW_BYTES))
+        except CollectionError as error:
+            raise AdapterError(str(error)) from error
+        if total > MAX_INPUT_BYTES:
+            raise AdapterError("event input exceeds byte limit")
     return rows
 
 
@@ -81,6 +117,8 @@ def transaction_size(hex_text, context):
     """
     if not isinstance(hex_text, str):
         raise AdapterError("transaction hex must be text")
+    if len(hex_text) > MAX_INPUT_BYTES:
+        raise AdapterError("transaction hex exceeds byte limit")
     text = hex_text.removesuffix("\n").removesuffix("\r")
     if not text or len(text) % 2 or not re.fullmatch(r"[0-9a-fA-F]+", text):
         raise AdapterError("transaction must be nonempty, even-length hexadecimal without whitespace")
@@ -110,7 +148,11 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
     groups = {}
     ignored = 0
     for row in _rows(rows):
-        if row.get("source") != "block_sync_driver" or row.get("event") not in {
+        if row.get("source") != "block_sync_driver":
+            ignored += 1
+            continue
+        event = _text(row.get("event"), "block event")
+        if event not in {
             "block_submit_queued", "commit_start", "commit_finish", "commit_stalled",
         }:
             ignored += 1
@@ -122,7 +164,7 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
         height = _integer(row.get("height"), "height")
         block_hash = _hash(row.get("hash"), "block hash")
         apply_class = row.get("apply_class")
-        if apply_class not in {"full", "checkpoint"}:
+        if not isinstance(apply_class, str) or apply_class not in {"full", "checkpoint"}:
             raise AdapterError("unknown block apply_class")
         # Concurrent emitters can enqueue different blocks out of timestamp
         # order. Validate each attempt's boundary order after correlation.
@@ -158,7 +200,7 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
         result = finish.get("result")
         outcomes = {"committed": "success", "rejected": "unexpected_rejection", "duplicate": "error",
                     "unavailable": "error", "timed_out": "timeout"}
-        if result not in outcomes:
+        if not isinstance(result, str) or result not in outcomes:
             raise AdapterError(f"unknown block result: {result}")
         height, block_hash, apply_class = group["identity"]
         metric = "block_verify_commit_ns" if apply_class == "full" else "checkpoint_residence_ns"
@@ -211,9 +253,9 @@ def import_propagation(rows, context, *, expected_peers, observation_end_ns, ver
     peers = {_text(node, "peer node"): _text(epoch, "peer process epoch") for node, epoch in expected_peers.items()}
     attempts = {}
     for row in _rows(rows):
-        if set(row) != PROPAGATION_FIELDS or row.get("schema_version") != 1 or isinstance(row.get("schema_version"), bool):
+        if set(row) != PROPAGATION_FIELDS or type(row.get("schema_version")) is not int or row["schema_version"] != 1:
             raise AdapterError("propagation event fields do not match schema version 1")
-        if row["event"] not in {"origin_submit", "origin_admit", "peer_receive", "peer_admit"}:
+        if not isinstance(row["event"], str) or row["event"] not in {"origin_submit", "origin_admit", "peer_receive", "peer_admit"}:
             raise AdapterError("unknown propagation event")
         node, epoch = _text(row["node"], "node"), _text(row["process_epoch"], "process_epoch")
         _text(row["attempt_id"], "attempt_id")
@@ -330,11 +372,15 @@ def parse_mempool_metrics(text, *, labels=None):
     """
     if not isinstance(text, str):
         raise AdapterError("Prometheus scrape must be text")
+    if len(text.encode("utf-8")) > MAX_INPUT_BYTES:
+        raise AdapterError("Prometheus scrape exceeds byte limit")
     if labels is not None and (not isinstance(labels, dict) or any(not isinstance(key, str) or not isinstance(value, str) for key, value in labels.items())):
         raise AdapterError("labels must map strings to strings")
     selector = tuple(sorted((labels or {}).items()))
     series, types = {}, {}
     for line in text.splitlines():
+        if len(line.encode("utf-8")) > MAX_ROW_BYTES:
+            raise AdapterError("Prometheus line exceeds byte limit")
         line = line.strip()
         if not line:
             continue
@@ -375,7 +421,10 @@ def parse_mempool_metrics(text, *, labels=None):
             raise AdapterError("malformed needed Prometheus gauge value")
         if len(fields) == 2 and not re.fullmatch(r"-?[0-9]+", fields[1]):
             raise AdapterError("malformed Prometheus timestamp")
-        number = Decimal(fields[0])
+        try:
+            number = Decimal(fields[0])
+        except InvalidOperation as error:
+            raise AdapterError("malformed needed Prometheus gauge value") from error
         if not number.is_finite() or number != number.to_integral_value() or not 0 <= number <= 2**64 - 1:
             raise AdapterError("needed mempool gauges must be bounded nonnegative integers")
         key = (name, parsed_labels)

@@ -7,11 +7,16 @@ do not change cgroups, interfaces, affinity, or machine configuration.
 """
 
 import hashlib
+import json
 import math
 import os
 from pathlib import Path
 import re
+import stat as file_stat
 import time
+
+MAX_FILE_BYTES = 65_536
+MAX_NUMBER = 2**64 - 1
 
 
 class CollectionError(ValueError):
@@ -19,22 +24,61 @@ class CollectionError(ValueError):
 
 
 def _integer(value, name, *, positive=False):
-    if isinstance(value, bool) or not isinstance(value, int) or value < int(positive):
-        raise CollectionError(f"{name} must be a {'positive' if positive else 'nonnegative'} integer")
+    if isinstance(value, bool) or not isinstance(value, int) or not int(positive) <= value <= MAX_NUMBER:
+        raise CollectionError(f"{name} must be a bounded {'positive' if positive else 'nonnegative'} integer")
     return value
 
 
 def _counter(text, name):
     if not re.fullmatch(r"[0-9]+", text.strip()):
         raise CollectionError(f"invalid {name} counter")
-    return int(text)
+    return _integer(int(text), name)
 
 
 def _read(path):
     try:
-        return path.read_text(encoding="ascii"), None
+        # procfs counters report a zero stat size; bound the actual read.
+        # NONBLOCK prevents supplied fixture paths from blocking on a FIFO.
+        descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        with os.fdopen(descriptor, "rb") as handle:
+            if not file_stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                raise CollectionError(f"{path.name} is not a regular pseudo-file or fixture")
+            raw = handle.read(MAX_FILE_BYTES + 1)
+        if len(raw) > MAX_FILE_BYTES:
+            raise CollectionError(f"{path.name} exceeds the {MAX_FILE_BYTES}-byte input limit")
+        return raw.decode("ascii"), None
     except (OSError, UnicodeError) as error:
         return None, f"{path.name} unavailable: {type(error).__name__}"
+
+
+def _bounded_json(value, name, *, max_bytes=MAX_FILE_BYTES):
+    """Check JSON types and bounds before serializing imported data."""
+    pending, count = [(value, 0)], 0
+    while pending:
+        item, depth = pending.pop()
+        count += 1
+        if count > 2048 or depth > 8:
+            raise CollectionError(f"{name} exceeds JSON nesting or item limits")
+        if type(item) is dict:
+            if len(item) > 2048 or any(type(key) is not str or len(key) > 256 for key in item):
+                raise CollectionError(f"{name} has invalid JSON keys")
+            pending.extend((child, depth + 1) for child in item.values())
+        elif type(item) is list:
+            if len(item) > 2048:
+                raise CollectionError(f"{name} exceeds JSON item limits")
+            pending.extend((child, depth + 1) for child in item)
+        elif type(item) is str:
+            if len(item) > 4096:
+                raise CollectionError(f"{name} has an oversized JSON string")
+        elif type(item) in (int, float):
+            if abs(item) > MAX_NUMBER or not math.isfinite(item):
+                raise CollectionError(f"{name} has a nonfinite or oversized JSON number")
+        elif item is not None and type(item) is not bool:
+            raise CollectionError(f"{name} contains a non-JSON value")
+    raw = json.dumps(value, ensure_ascii=True, allow_nan=False, separators=(",", ":")).encode("ascii")
+    if len(raw) > max_bytes:
+        raise CollectionError(f"{name} exceeds its JSON byte limit")
+    return raw
 
 
 def _window(snapshot, start, clock):
@@ -42,7 +86,7 @@ def _window(snapshot, start, clock):
     if end < start:
         raise CollectionError("monotonic clock moved backwards")
     snapshot.update(window_start_ns=start, window_end_ns=end)
-    return snapshot
+    return validate_snapshot(snapshot)
 
 
 def _snapshot(kind):
@@ -313,14 +357,73 @@ def _record(context, suffix, *, metrics, unavailable, details, outcome="success"
     return record
 
 
+SNAPSHOT_METRICS = {
+    "process": {"process_cpu_ns", "process_user_cpu_ns", "process_system_cpu_ns",
+                "rss_current_bytes", "process_peak_rss_bytes"},
+    "cgroup": {"cgroup_cpu_ns", "cgroup_user_cpu_ns", "cgroup_system_cpu_ns", "cgroup_throttled_ns",
+               "cgroup_memory_current_bytes", "cgroup_memory_peak_bytes", "effective_cpu_cores"},
+    "interface": {"interface_rx_bytes", "interface_tx_bytes"},
+}
+
+
+def validate_snapshot(snapshot):
+    """Validate a saved snapshot from these readers before interval arithmetic."""
+    _bounded_json(snapshot, "resource snapshot")
+    if type(snapshot) is not dict or set(snapshot) != {
+        "kind", "identity", "metrics", "unavailable", "details", "window_start_ns", "window_end_ns",
+    }:
+        raise CollectionError("resource snapshot has missing or unknown fields")
+    kind = snapshot["kind"]
+    if not isinstance(kind, str) or kind not in SNAPSHOT_METRICS:
+        raise CollectionError("unknown resource snapshot kind")
+    metrics, unavailable, details = (snapshot[key] for key in ("metrics", "unavailable", "details"))
+    if type(metrics) is not dict or set(metrics) != SNAPSHOT_METRICS[kind]:
+        raise CollectionError("resource snapshot metrics differ from collector schema")
+    for name, value in metrics.items():
+        if value is None:
+            continue
+        if name == "effective_cpu_cores":
+            if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                raise CollectionError("effective_cpu_cores must be finite and positive")
+        else:
+            _integer(value, name)
+    if type(unavailable) is not dict or set(unavailable) != {key for key, value in metrics.items() if value is None}:
+        raise CollectionError("snapshot unavailable reasons must match null metrics")
+    if any(not isinstance(reason, str) or not reason.strip() or len(reason) > 1024 for reason in unavailable.values()):
+        raise CollectionError("snapshot unavailable reason must be bounded nonempty text")
+    if type(details) is not dict:
+        raise CollectionError("snapshot details must be an object")
+    _bounded_json(details, "snapshot details", max_bytes=16_384)
+    for key in ("cpu_periods", "cpu_throttled_periods", "user_ticks", "system_ticks", "start_ticks"):
+        if details.get(key) is not None:
+            _integer(details[key], key)
+    for key in ("affinity_cores", "clock_ticks"):
+        if details.get(key) is not None:
+            _integer(details[key], key, positive=True)
+    identity = snapshot["identity"]
+    if identity is not None:
+        identity_fields = {"process": {"pid", "start_ticks", "boot_id", "proc_root"},
+                           "cgroup": {"path", "device", "inode"},
+                           "interface": {"interface", "ifindex", "namespace", "sys_root"}}[kind]
+        if type(identity) is not dict or set(identity) != identity_fields:
+            raise CollectionError("resource snapshot identity differs from collector schema")
+        for key, value in identity.items():
+            if key in {"pid", "ifindex", "inode", "device", "start_ticks"}:
+                _integer(value, key, positive=key in {"pid", "ifindex", "inode"})
+            elif not isinstance(value, str) or not value or len(value) > 4096:
+                raise CollectionError("resource snapshot identity text must be bounded and nonempty")
+    for key in ("window_start_ns", "window_end_ns"):
+        _integer(snapshot[key], key)
+    if snapshot["window_end_ns"] < snapshot["window_start_ns"]:
+        raise CollectionError("invalid collection window")
+    return snapshot
+
+
 def _interval(before, after):
+    validate_snapshot(before)
+    validate_snapshot(after)
     if before["kind"] != after["kind"]:
         raise CollectionError("cannot compare different collector kinds")
-    for snapshot in (before, after):
-        _integer(snapshot["window_start_ns"], "window_start_ns")
-        _integer(snapshot["window_end_ns"], "window_end_ns")
-        if snapshot["window_start_ns"] > snapshot["window_end_ns"]:
-            raise CollectionError("invalid collection window")
     if after["window_start_ns"] <= before["window_end_ns"]:
         raise CollectionError("resource snapshot windows overlap or have no interval")
     if before["identity"] is not None and after["identity"] is not None and before["identity"] != after["identity"]:

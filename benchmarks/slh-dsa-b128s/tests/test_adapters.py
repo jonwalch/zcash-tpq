@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import adapters
@@ -161,6 +162,39 @@ class AdapterTests(unittest.TestCase):
     def test_real_trace_jsonl_contract(self):
         text = "\n".join(json.dumps(row) for row in block_rows()) + "\n"
         self.assertEqual(self.block(text)[0][0]["details"]["apply_token"], 7)
+
+    def test_jsonl_overflow_is_rejected_even_in_ignored_fields(self):
+        for value in ("1e999", "-1e999", "9" * 1000):
+            text = '{"source":"ignored","extra":' + value + '}\n'
+            with self.subTest(value=value[:10]), self.assertRaises(adapters.AdapterError):
+                self.block(text)
+        with self.assertRaises(adapters.AdapterError):
+            self.block([{"source": "ignored", "extra": float("inf")}])
+
+    def test_jsonl_limits_are_enforced_before_import(self):
+        text = "\n".join(json.dumps(row) for row in block_rows()) + "\n"
+        with mock.patch.object(adapters, "MAX_ROW_BYTES", 20):
+            with self.assertRaisesRegex(adapters.AdapterError, "limit"):
+                self.block(text)
+        with mock.patch.object(adapters, "MAX_INPUT_BYTES", 20):
+            with self.assertRaisesRegex(adapters.AdapterError, "limit"):
+                self.block(text)
+        with mock.patch.object(adapters, "MAX_ROWS", 2):
+            with self.assertRaisesRegex(adapters.AdapterError, "limit"):
+                self.block(text)
+            with self.assertRaisesRegex(adapters.AdapterError, "limit"):
+                self.block(block_rows())
+
+    def test_wrong_event_types_are_validation_errors(self):
+        for field in ("event", "apply_class", "result"):
+            rows = block_rows()
+            rows[-1][field] = []
+            with self.subTest(field=field), self.assertRaises(adapters.AdapterError):
+                self.block(rows)
+        rows = propagation_rows()
+        rows[0]["schema_version"] = 1.0
+        with self.assertRaisesRegex(adapters.AdapterError, "schema"):
+            self.propagation(rows)
 
     def test_propagation_explicit_stages_and_identity(self):
         records, metadata = self.propagation()
