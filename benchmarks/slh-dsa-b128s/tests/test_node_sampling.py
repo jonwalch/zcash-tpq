@@ -5,8 +5,10 @@ import hashlib
 import http.client
 import io
 from pathlib import Path
+import socket
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -175,6 +177,37 @@ class SamplingTests(unittest.TestCase):
         with self.assertRaisesRegex(BenchmarkError, "root mount"):
             sampling._membership(self.profile)
 
+    def test_replay_rejects_unregistered_cgroup_identity_or_read_window(self):
+        self.cgroup()
+        frames = self.collect()
+        before, after = [frame["evidence"] for frame in frames if frame["frame"] == "snapshot"][:2]
+        for identity in (None, {**after["cgroup"]["identity"], "path": str(self.root / "unrelated")}):
+            changed = copy.deepcopy(after)
+            changed["cgroup"]["identity"] = identity
+            with self.subTest(identity=identity), self.assertRaisesRegex(BenchmarkError, "identity differs"):
+                sampling.records_from_snapshots(before, changed, self.manifest, 0)
+        substituted = copy.deepcopy([before, after])
+        for evidence in substituted:
+            evidence["cgroup"] = copy.deepcopy(evidence["process"])
+        with self.assertRaisesRegex(BenchmarkError, "identity differs"):
+            sampling.records_from_snapshots(*substituted, self.manifest, 0)
+        changed = copy.deepcopy(after)
+        changed["cgroup"]["identity"]["inode"] += 1
+        with self.assertRaisesRegex(ValueError, "identity changed"):
+            sampling.records_from_snapshots(before, changed, self.manifest, 0)
+        changed = copy.deepcopy(after)
+        changed["cgroup"]["window_end_ns"] = changed["mempool"]["window_end_ns"] + 1
+        with self.assertRaisesRegex(BenchmarkError, "cgroup read window"):
+            sampling.records_from_snapshots(before, changed, self.manifest, 0)
+
+    def test_known_cgroup_identity_can_report_missing_capability(self):
+        self.cgroup()
+        (self.root / "cgroup/job/memory.current").unlink()
+        records = [frame["record"] for frame in self.collect() if frame["frame"] == "record"]
+        self.assertEqual(records[2]["outcome"], "success")
+        self.assertIsNone(records[2]["metrics"]["cgroup_memory_current_bytes"])
+        self.assertIn("unavailable", records[2]["unavailable"]["cgroup_memory_current_bytes"])
+
     def test_binding_detects_wrong_binary_config_and_start_command(self):
         baseline = sampling._binding(self.manifest)
         self.assertEqual(baseline["binary_sha256"], self.manifest["node_identity"]["binary_sha256"])
@@ -276,6 +309,7 @@ class HttpTests(unittest.TestCase):
     def scrape(self, *, status=200, body=GAUGES.encode(), headers=None, error=None, chunk_size=None):
         response = mock.Mock()
         response.status = status
+        response.isclosed.return_value = False
         response.getheader.side_effect = lambda name, default=None: (headers or {}).get(name, default)
         chunk_size = chunk_size or len(body) or 1
         response.read1.side_effect = [body[index:index + chunk_size] for index in range(0, len(body), chunk_size)] + [b""]
@@ -312,6 +346,67 @@ class HttpTests(unittest.TestCase):
             with self.subTest(options=options):
                 observation, _, _ = self.scrape(**options)
                 self.assertIsNotNone(observation["error"])
+
+
+class HttpStreamTests(unittest.TestCase):
+    """Real HTTPResponse framing over a local byte stream, without an HTTP server."""
+
+    def scrape(self, wire, *, eof=True, timeout=2):
+        client, peer = socket.socketpair()
+        self.addCleanup(client.close)
+        self.addCleanup(peer.close)
+        peer.sendall(wire)
+        if eof:
+            peer.shutdown(socket.SHUT_WR)
+        response = http.client.HTTPResponse(client)
+
+        def getresponse():
+            response.begin()
+            # Match HTTPConnection.getresponse for Connection: close. The
+            # response's makefile keeps the fd alive only until body completion.
+            if response.will_close:
+                client.close()
+            return response
+
+        connection = mock.Mock(sock=client)
+        connection.getresponse.side_effect = getresponse
+        connection.close.side_effect = client.close
+        started = time.monotonic()
+        with mock.patch.object(sampling.http.client, "HTTPConnection", return_value=connection), \
+                mock.patch.object(sampling, "SCRAPE_TIMEOUT_SECONDS", timeout):
+            observed = sampling._scrape(("127.0.0.1", 9999, "/metrics"),
+                                        deadline=time.monotonic_ns() + 3_000_000_000)
+        self.assertTrue(response.isclosed())
+        return observed, time.monotonic() - started
+
+    def test_content_length_chunked_and_eof_complete_normally(self):
+        body = GAUGES.encode()
+        prefix = b"HTTP/1.1 200 OK\r\nConnection: close\r\n"
+        wires = [prefix + f"Content-Length: {len(body)}\r\n\r\n".encode() + body,
+                 prefix + b"Transfer-Encoding: chunked\r\n\r\n"
+                 + f"{len(body):x}\r\n".encode() + body + b"\r\n0\r\n\r\n",
+                 prefix + b"\r\n" + body]
+        for wire in wires:
+            with self.subTest(framing=wire[:100]):
+                observed, _ = self.scrape(wire)
+                self.assertIsNone(observed["error"])
+                self.assertEqual(observed["text"], GAUGES)
+
+    def test_truncated_content_length_and_chunked_bodies_fail(self):
+        for wire in (b"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 50\r\n\r\nshort",
+                     b"HTTP/1.1 200 OK\r\nConnection: close\r\nTransfer-Encoding: chunked\r\n\r\n32\r\nshort"):
+            with self.subTest(framing=wire[:90]):
+                observed, _ = self.scrape(wire)
+                self.assertIsNotNone(observed["error"])
+                self.assertIsNone(observed["text"])
+
+    def test_body_that_never_finishes_hits_request_deadline(self):
+        observed, elapsed = self.scrape(
+            b"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 50\r\n\r\nshort",
+            eof=False, timeout=0.02)
+        self.assertIn("TimeoutError", observed["error"])
+        self.assertIsNone(observed["text"])
+        self.assertLess(elapsed, 1)
 
 
 if __name__ == "__main__":

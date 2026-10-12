@@ -150,7 +150,7 @@ def _binding(manifest, previous=None):
 def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
     start = clock()
     observation = {"window_start_ns": start, "window_end_ns": start, "text": None, "error": None}
-    connection = None
+    connection = response = None
     try:
         remaining = min(SCRAPE_TIMEOUT_SECONDS, (deadline - start) / 1_000_000_000)
         require(remaining > 0, "node collection deadline reached")
@@ -169,7 +169,9 @@ def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
                 "metrics response exceeds body limit or has invalid Content-Length")
         chunks, size = [], 0
         scrape_deadline = min(deadline, start + SCRAPE_TIMEOUT_SECONDS * 1_000_000_000)
-        while True:
+        # HTTPResponse closes its stream after the final Content-Length byte.
+        # Do not touch the detached socket after that normal completion.
+        while not response.isclosed():
             remaining = (scrape_deadline - clock()) / 1_000_000_000
             require(remaining > 0, "metrics response exceeded request deadline")
             sock.settimeout(remaining)
@@ -187,6 +189,8 @@ def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
     except (OSError, ValueError, http.client.HTTPException) as error:
         observation["error"] = f"{type(error).__name__}: {error}"[:512]
     finally:
+        if response is not None:
+            response.close()
         if connection is not None:
             connection.close()
         observation["window_end_ns"] = clock()
@@ -267,6 +271,14 @@ def records_from_snapshots(before, after, manifest, interval_index):
         require(evidence["process"]["window_end_ns"] <= scrape["window_start_ns"]
                 and scrape["window_end_ns"] <= evidence["process_guard"]["window_start_ns"],
                 "node and scrape read windows are out of order")
+        if profile["cgroup_path"] is not None:
+            cgroup = collectors.validate_snapshot(evidence["cgroup"])
+            require(cgroup["kind"] == "cgroup" and cgroup["identity"] is not None
+                    and cgroup["identity"]["path"] == profile["cgroup_path"],
+                    "cgroup snapshot identity differs from registration")
+            require(evidence["process"]["window_end_ns"] <= cgroup["window_start_ns"]
+                    and cgroup["window_end_ns"] <= scrape["window_start_ns"],
+                    "cgroup read window is out of order")
     require(before["binding"] == after["binding"], "node binding changed between observations")
     # Guard-to-endpoint checks detect a reset during a scrape as well as between snapshots.
     for left, right in ((before["process"], before["process_guard"]),
