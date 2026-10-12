@@ -102,6 +102,11 @@ arrival throughput. Point samples can miss memory peaks. Attached lifetime peaks
 and unknown process CPU entitlement remain unavailable, so a completed run can
 correctly report `complete_with_issues`. Inspect the unavailable reasons.
 
+A fresh idle mempool may not export its gauges yet: the pinned node publishes
+them after mempool mutations. A successful scrape with absent series is retained
+as unavailable. An empty `getrawmempool` response does not supply the missing
+timed gauge or growth observations, and the collector does not substitute zeros.
+
 Comparison requires matching declared workload, configuration bytes, host,
 sampling settings, instrumentation and resource scope. PID and process start
 identities are retained as provenance, rather than comparison keys. This does
