@@ -276,6 +276,9 @@ class PaymentExecutionTests(unittest.TestCase):
             self.assertIn("Wallet/payment stage overview", document)
             self.assertIn("Never add stage p50", document)
             self.assertIn("no equivalent durable wallet workflow", document)
+            self.assertIn("Registered wallet storage", document)
+            self.assertIn(manifest["wallet_storage"]["root"], document)
+            self.assertNotIn("Wallet storage identity is unavailable", document)
             with self.assertRaisesRegex(provenance.BenchmarkError, "already attempted"):
                 self.execute(output, manifest)
 
@@ -369,6 +372,9 @@ class PaymentExecutionTests(unittest.TestCase):
             summary = provenance.read_json(root / "report/summary.json")
             self.assertIsNone(summary["compatibility"]["wallet_storage"])
             self.assertIn("did not register wallet storage", summary["provenance"]["wallet_storage_unavailable"])
+            document = (root / "report/report.html").read_text()
+            self.assertIn("Wallet storage identity is unavailable", document)
+            self.assertNotIn("Registered wallet storage", document)
             for remove_field in (False, True):
                 historical = copy.deepcopy(summary)
                 if remove_field:
