@@ -56,6 +56,28 @@ def scrape(count=2, size=400):
             "zcash_mempool_cost_bytes 500\n")
 
 
+def resource_pair(kind="cgroup", before_cores=1.5, after_cores=1.5):
+    identity = ({"path": "/synthetic/job", "device": 1, "inode": 2} if kind == "cgroup" else
+                {"pid": 71, "start_ticks": 42, "boot_id": "synthetic", "proc_root": "/synthetic/proc"})
+    metrics = {f"{kind}_cpu_ns": 0, f"{kind}_user_cpu_ns": 0, f"{kind}_system_cpu_ns": 0}
+    metrics.update({"cgroup_throttled_ns": 0, "cgroup_memory_current_bytes": 100,
+                    "cgroup_memory_peak_bytes": 100, "effective_cpu_cores": before_cores} if kind == "cgroup" else
+                   {"rss_current_bytes": 100, "process_peak_rss_bytes": 100})
+    before = {"kind": kind, "identity": identity, "metrics": metrics, "unavailable": {},
+              "details": {"cpu_throttled_periods": 0} if kind == "cgroup" else {},
+              "window_start_ns": 0, "window_end_ns": 10}
+    after = copy.deepcopy(before)
+    after.update(window_start_ns=1_000_000_000, window_end_ns=1_000_000_010)
+    after["metrics"].update({f"{kind}_cpu_ns": 1_500_000_000,
+                             f"{kind}_user_cpu_ns": 1_000_000_000, f"{kind}_system_cpu_ns": 500_000_000})
+    if kind == "cgroup":
+        after["metrics"]["effective_cpu_cores"] = after_cores
+        for sample in (before, after):
+            if sample["metrics"]["effective_cpu_cores"] is None:
+                sample["unavailable"]["effective_cpu_cores"] = "ancestor constraints unknown"
+    return {"before": before, "after": after}
+
+
 class ImportTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -335,6 +357,41 @@ class ImportTests(unittest.TestCase):
         _, _, records = self.evidence(args)
         self.assertEqual(records[0]["metrics"]["interface_rx_bytes_per_second"], 400)
         self.assertEqual(records[0]["metrics"]["interface_tx_bytes_per_second"], 800)
+
+    def test_cgroup_import_compatibility_records_observed_entitlement(self):
+        for before, after, expected in ((1.5, 1.5, 1.5), (None, None, None),
+                                         (1.5, None, None), (None, 1.5, None)):
+            args = self.args("resources", json.dumps(resource_pair(before_cores=before, after_cores=after)))
+            with self.subTest(before=before, after=after):
+                imports.import_saved(args)
+                _, manifest, records = self.evidence(args)
+                self.assertEqual(records[0]["metrics"]["effective_cpu_cores"], expected)
+                self.assertEqual(manifest["adapter_compatibility"]["effective_cpu_cores"], expected)
+                self.assertEqual(records[0]["metrics"]["cgroup_cpu_normalized_percent"],
+                                 100 if expected is not None else None)
+                self.assertIn("observed cgroup constraints", manifest["adapter_metadata"]["cpu_entitlement_source"])
+
+    def test_cgroup_import_rejects_declarations_and_conflicting_observed_constraints(self):
+        for observed in (1.5, None):
+            args = self.args("resources", json.dumps(resource_pair(before_cores=observed, after_cores=observed)),
+                             profile(options={"effective_cpu_cores": 4}))
+            with self.subTest(observed=observed), self.assertRaisesRegex(ValueError, "omit effective_cpu_cores"):
+                imports.import_saved(args)
+            receipt, _, records = self.evidence(args)
+            self.assertEqual(receipt["status"], "failed")
+            self.assertEqual(records, [])
+        args = self.args("resources", json.dumps(resource_pair(after_cores=2)))
+        with self.assertRaisesRegex(ValueError, "entitlement changed"):
+            imports.import_saved(args)
+
+    def test_process_import_preserves_declared_entitlement(self):
+        args = self.args("resources", json.dumps(resource_pair(kind="process")),
+                         profile(options={"effective_cpu_cores": 3}))
+        imports.import_saved(args)
+        _, manifest, records = self.evidence(args)
+        self.assertEqual(records[0]["metrics"]["process_cpu_normalized_percent"], 50)
+        self.assertEqual(manifest["adapter_compatibility"]["effective_cpu_cores"], 3)
+        self.assertIn("caller declaration", manifest["adapter_metadata"]["cpu_entitlement_source"])
 
     def test_malformed_resource_envelope_fails_with_immutable_input_retained(self):
         args = self.args("resources", '{"before":{},"after":{},"command":"never-run"}')

@@ -157,11 +157,12 @@ def _convert(kind, data, profile):
         require(type(snapshots) is dict and set(snapshots) == {"before", "after"}, "resource pair fields")
         record = resource_record(snapshots["before"], snapshots["after"], context, **options)
         metadata = {"adapter": "saved-resource-pair-v1", "collector_kind": snapshots["before"]["kind"],
-                    "freshness_and_entitlement": "operator declarations; not independently verified"}
+                    "freshness": "operator declarations; not independently verified",
+                    "cpu_entitlement_source": record["details"].get("cpu_entitlement_source", "not applicable")}
         compatible = {"collector_kind": metadata["collector_kind"],
                       "fresh_process": options.get("fresh_process", False),
                       "fresh_cgroup": options.get("fresh_cgroup", False),
-                      "effective_cpu_cores": options.get("effective_cpu_cores"),
+                      "effective_cpu_cores": record["metrics"].get("effective_cpu_cores"),
                       "rate_interval_ns": record["details"]["rate_interval_ns"]}
         return [record], metadata, compatible
     from adapters import (transaction_size, import_block_trace, import_propagation, import_mempool)

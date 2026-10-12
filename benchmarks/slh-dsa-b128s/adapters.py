@@ -137,8 +137,10 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
     """Import current commit_state.jsonl block-driver events.
 
     Identity is (node, process_trace_id, apply_token), checked against hash,
-    height and apply_class at every boundary. Each attempt requires queued,
-    start and finish rows. A missing log row cannot establish a timeout.
+    height and apply_class at every boundary. Queued rows may omit the height
+    before it is known; subsequent boundaries must supply a matching height.
+    Each attempt requires queued, start and finish rows. A missing log row
+    cannot establish a timeout.
     Explicit timed_out results are retained with a censored duration bound.
     Actual validation durations require external evidence that the debug
     throughput probe, which bypasses consensus, was disabled for this run.
@@ -161,7 +163,9 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
         process = _text(row.get("process_trace_id"), "process_trace_id")
         token = _integer(row.get("apply_token"), "apply_token")
         ts = _integer(row.get("ts"), "ts")
-        height = _integer(row.get("height"), "height")
+        height = row.get("height")
+        if height is not None or event != "block_submit_queued":
+            height = _integer(height, "height")
         block_hash = _hash(row.get("hash"), "block hash")
         apply_class = row.get("apply_class")
         if not isinstance(apply_class, str) or apply_class not in {"full", "checkpoint"}:
@@ -169,10 +173,13 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
         # Concurrent emitters can enqueue different blocks out of timestamp
         # order. Validate each attempt's boundary order after correlation.
         key = (node, process, token)
-        identity = (height, block_hash, apply_class)
-        group = groups.setdefault(key, {"identity": identity, "events": {}, "stalls": []})
-        if group["identity"] != identity:
+        identity = (block_hash, apply_class)
+        group = groups.setdefault(key, {"identity": identity, "height": height, "events": {}, "stalls": []})
+        if (group["identity"] != identity or
+                height is not None and group["height"] is not None and group["height"] != height):
             raise AdapterError("block identity or class mismatched across boundaries")
+        if height is not None:
+            group["height"] = height
         event = row["event"]
         if event == "commit_stalled":
             _integer(row.get("elapsed_ms"), "elapsed_ms")
@@ -202,7 +209,8 @@ def import_block_trace(rows, context, *, throughput_probe_disabled=False):
                     "unavailable": "error", "timed_out": "timeout"}
         if not isinstance(result, str) or result not in outcomes:
             raise AdapterError(f"unknown block result: {result}")
-        height, block_hash, apply_class = group["identity"]
+        height = group["height"]
+        block_hash, apply_class = group["identity"]
         metric = "block_verify_commit_ns" if apply_class == "full" else "checkpoint_residence_ns"
         metrics = {"attempt_elapsed_ns": elapsed_ms * 1_000_000,
                    "trace_queue_ns": (start["ts"] - queued["ts"]) * 1000}
