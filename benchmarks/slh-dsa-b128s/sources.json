@@ -146,6 +146,114 @@
       "sha256": "a2d7595d2bffa8c9283aba6080f8285e28d7c1d9702f49b4aa4fc8324f64b49a",
       "license": "MIT OR Apache-2.0",
       "role": "Semantic reference for mempool transaction count, serialized bytes, and cost bytes."
+    },
+    {
+      "id": "research-payment-flow",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "commit": "53a6e4bd1c11d90349fd3d989507f0e1a4995112",
+      "path": "experiments/hash-four-payments/common/src/payment.rs",
+      "sha256": "554cd052d8363f6874d1e7f35daf4a7e0d557bcbe6370bea2b309132f807b3d3",
+      "license": "MIT OR Apache-2.0",
+      "role": "Foreground and component timer boundaries; actual product WatchStore replaces research memory inventory and fixture assembly."
+    },
+    {
+      "id": "research-payment-checks",
+      "repository": "https://github.com/jonwalch/zcash-transparent-pq",
+      "commit": "53a6e4bd1c11d90349fd3d989507f0e1a4995112",
+      "path": "experiments/hash-four-payments/check.py",
+      "sha256": "ad4be329b5df03d39f4d500ad9df60c8ee3ec79c49d2d8f29fddbaef7251dd22",
+      "license": "MIT OR Apache-2.0",
+      "role": "Independent per-artifact digest, byte and signature checks; explicit false verdicts for mutation controls."
+    },
+    {
+      "id": "product-wallet-payment-api",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "crates/pq-wallet/src/payment/store.rs",
+      "sha256": "a56ab6905cfc3f76a3aae450634ffb2d6ae0da3c5a35c8477f03680cba3714ef",
+      "license": "MIT OR Apache-2.0",
+      "role": "Existing prepare, sign and assemble APIs, including approval and durable journal publication, called unchanged."
+    },
+    {
+      "id": "product-wallet-payment-tests",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "crates/pq-wallet/src/payment/tests.rs",
+      "sha256": "9433729715bc80320e8e3247954343176caf9cba8d49ed570622f21914dfbd9d",
+      "license": "MIT OR Apache-2.0",
+      "role": "Synthetic PaymentSource and threshold wallet setup reference, adapted to public enrollment APIs."
+    },
+    {
+      "id": "product-wallet-watch-tests",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "crates/pq-wallet/src/watch/tests.rs",
+      "sha256": "a4b95d5ddbd15028b16b72fb5784e495f616e2f709e72a61767b1347456384f3",
+      "license": "MIT OR Apache-2.0",
+      "role": "Synthetic block/chain adapter and public wallet enrollment reference; no live funding claim."
+    },
+    {
+      "id": "product-classical-fixture",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
+      "sha256": "cb34c9ee6e154e0a899e70ef7fbedcc25f3a22f604747cbaa555f538feb9548e",
+      "license": "MIT OR Apache-2.0",
+      "role": "P2SH single and 2-of-3 secp256k1 signing, strict script shape and SIGHASH_ALL controls."
+    },
+    {
+      "id": "product-transaction-recipes",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "crates/pq-test-support/src/lib.rs",
+      "sha256": "c229e9458e325a76aa265adf147f50adf7dc656882ae0720229decbc8c07d4c1",
+      "license": "MIT OR Apache-2.0",
+      "role": "Existing neutral versioned transaction/prevout construction API used by the classical benchmark only."
+    },
+    {
+      "id": "product-independent-wire",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "tests/slh-dsa-b128s/transactions/wire.py",
+      "sha256": "94f721ba69acb5cb273373c723724884df7bd716e01f51725b4e67b9931bafbf",
+      "license": "MIT OR Apache-2.0",
+      "role": "Independent canonical transaction parsing and ZIP-244/229 digest reconstruction, reused without production digest calls."
+    },
+    {
+      "id": "product-independent-authorization",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "tests/slh-dsa-b128s/transactions/oracle.py",
+      "sha256": "cdf3f2b0991b8f3fed5991192bb57f807449685b452135ba71c89600fe337ac3",
+      "license": "MIT OR Apache-2.0",
+      "role": "Independent descriptor, authorization, key commitment and message framing checks."
+    },
+    {
+      "id": "product-independent-wallet-formats",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "tests/slh-dsa-b128s/wallet/formats/reference.py",
+      "sha256": "6234c14663abca692d8a34b9160302404bdf26256ba094d80d6917a10fc661a4",
+      "license": "MIT OR Apache-2.0",
+      "role": "Independent proposal, receiver and wallet envelope checks; existing cryptography dependency retains its own licenses."
+    },
+    {
+      "id": "product-independent-reference-loader",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "tests/slh-dsa-b128s/reference/reference.py",
+      "sha256": "59bff48466c2262dce2faa52945fac3815c3edd801edd9545038416ee6156bf9",
+      "license": "LGPL-3.0-or-later",
+      "role": "Existing separately authored Python SLH verification and portable C BLAKE3 loader, called by a separate correctness process."
+    },
+    {
+      "id": "product-independent-reference-prepare",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "e51290264ebaa52f224c8fd994545e321226ecfc",
+      "path": "tests/slh-dsa-b128s/reference/prepare.py",
+      "sha256": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f",
+      "license": "MIT OR Apache-2.0",
+      "role": "Pinned source and prepared C-library inventory reused for bounded retained reference snapshots."
     }
   ],
   "transitive_origins": [
@@ -203,10 +311,11 @@
       "sources": [
         "product-acceptance-common",
         "product-fixture-parser",
-        "research-driver"
+        "research-driver",
+        "product-independent-reference-prepare"
       ],
       "classification": "selective helper and provenance design adaptation",
-      "adaptation": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling. Resolve relative Cargo home against the Cargo invocation directory. Preserve raw configuration paths while assigning checkout-relative or external locations and ordered search roles for comparison."
+      "adaptation": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling. Resolve relative Cargo home against the Cargo invocation directory. Preserve raw configuration paths while assigning checkout-relative or external locations and ordered search roles for comparison. Payment plans retain only checked pinned reference sources, licenses, vectors, build receipt and library, with byte limits and no source execution."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/run.py",
@@ -294,6 +403,79 @@
       "sources": [],
       "classification": "new saved-report presentation",
       "adaptation": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/src/payment.rs",
+      "sources": [
+        "research-payment-flow",
+        "product-wallet-payment-api"
+      ],
+      "classification": "product API orchestration and new measurement boundaries",
+      "adaptation": "Call unchanged WatchStore lifecycle APIs; name coupled durable stages, measure an enclosing foreground interval, retain public artifacts and verify durable reopen outside timing. Separate one-case check-payment path performs no measurements."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/src/payment_fixture.rs",
+      "sources": [
+        "product-wallet-payment-tests",
+        "product-wallet-watch-tests"
+      ],
+      "classification": "selective fixture adapter adaptation",
+      "adaptation": "Build a bounded synthetic chain at the trusted-node interface. Use real public wallet creation, policy enrollment and backup APIs; retain secrets only in disposable private temporary storage, never evidence artifacts."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/src/classical.rs",
+      "sources": [
+        "product-classical-fixture",
+        "product-transaction-recipes"
+      ],
+      "classification": "selective classical control adaptation",
+      "adaptation": "Match version, input count, threshold and payment intent with actual serialized fee actions. Use libsecp256k1 signing and script-aware checks. No classical wallet journal equivalence or full Script interpreter claim."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/payment_checks.py",
+      "sources": [
+        "research-payment-checks",
+        "product-independent-wire",
+        "product-independent-authorization",
+        "product-independent-wallet-formats",
+        "product-independent-reference-loader",
+        "product-independent-reference-prepare"
+      ],
+      "classification": "existing independent oracle reuse and new artifact/control validation",
+      "adaptation": "Validate actual public artifacts, independent payment intent/fees/messages and every signature plus mutations. Add bounded public-only Python secp256k1/DER verification independent of the Rust control. Hash loaded checker and cryptography dependencies; no production verifier used as an independent oracle."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/payment_run.py",
+      "sources": [
+        "research-driver",
+        "product-acceptance-common"
+      ],
+      "classification": "bounded wallet runner integration",
+      "adaptation": "Register explicit case dimensions and limits; retain prepared reference snapshots, exact public artifacts, independent per-attempt verdicts and partial failures. Keep timing and checker subprocesses separate."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/schema/payment-metrics.json",
+      "sources": [],
+      "classification": "new additive wallet metric contract",
+      "adaptation": "Name production coupled durable stages and separate classical transaction stages; record exact nearest-rank distributions without changing the primitive metric catalog."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_payment_checks.py",
+      "sources": [],
+      "classification": "new independent checker regression controls",
+      "adaptation": "Check version/input/policy coverage, altered artifacts, strict reference verdicts and independent classical signatures with bounded public fixtures."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_payment_runner.py",
+      "sources": [],
+      "classification": "new runner and reporting regression controls",
+      "adaptation": "Synthetic success/failure/timeout, artifact binding, registration limits and readable wallet stage reports. No performance or live workload launched."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_reference_snapshot.py",
+      "sources": [],
+      "classification": "new provenance regression controls",
+      "adaptation": "Check exact source retention, no-clobber, source/library substitutions, symlinks, unexpected Python code and copy bounds without executing foreign code."
     }
   ]
 }

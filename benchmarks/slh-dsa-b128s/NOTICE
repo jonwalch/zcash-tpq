@@ -42,6 +42,24 @@ crates. A focused test consumes the existing public v5-1of1 fixture
 without generating or modifying it. Benchmark fixture inputs and CLI
 validation are new glue; they are not independent cryptographic references.
 
+Wallet payment cases additionally reuse unchanged product WatchStore APIs and
+adapt the product's synthetic wallet test sources and classical P2SH fixture
+helpers at e51290264ebaa52f224c8fd994545e321226ecfc. The research four-family
+payment experiment at 53a6e4bd1c11d90349fd3d989507f0e1a4995112 informs the
+foreground/component timer and independent artifact-check boundaries. Its
+alternate backends, memory inventory model and historical fee are not imported.
+The product wallet's actual enrollment, approval, journal and fee rules apply.
+
+The payment correctness process reuses existing independent transaction and
+wallet format oracles. Its existing SLH Python loader is LGPL-3.0-or-later and
+uses separately pinned reference Python and portable C BLAKE3 sources; licenses
+remain with those sources and in tests/slh-dsa-b128s/reference. These test-only
+references are not linked into the Rust node, wallet or benchmark executable.
+The bounded Python secp256k1 public-signature checker is new independent code;
+it is not a general Script interpreter or a secret-key implementation.
+See sources.json for exact paths, hashes and adaptations. Prepared reference
+source, license and library snapshots belong to run artifacts, not product source.
+
 The offline node adapter uses event and metric meanings from the existing
 Zakura digest, trace emitter, block-application path, and mempool gauges.
 Its strict event correlation and import validation are new Python code.
