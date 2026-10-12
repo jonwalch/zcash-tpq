@@ -39,9 +39,12 @@ class CollectorTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(value)
 
-    def process(self, *, user=100, system=50, start=42, rss=400, peak=500, at=0):
+    def process(self, *, user=100, system=50, start=42, rss=400, peak=500, at=0, affinity="0-3,8"):
         self.write("proc/71/stat", stat(user=user, system=system, start=start))
-        self.write("proc/71/status", f"VmRSS:\t{rss} kB\nVmHWM:\t{peak} kB\nCpus_allowed_list:\t0-3,8\n")
+        status = f"VmRSS:\t{rss} kB\nVmHWM:\t{peak} kB\n"
+        if affinity is not None:
+            status += f"Cpus_allowed_list:\t{affinity}\n"
+        self.write("proc/71/status", status)
         self.write("proc/sys/kernel/random/boot_id", "fake-boot-identity\n")
         return collectors.read_process(71, proc_root=self.root / "proc", clock=clock_at(at), clock_ticks=100)
 
@@ -71,6 +74,7 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(sample["metrics"]["rss_current_bytes"], 400 * 1024)
         self.assertEqual(sample["identity"]["start_ticks"], 42)
         self.assertEqual(sample["details"]["affinity_cores"], 5)
+        self.assertIn("leader thread only", sample["details"]["affinity_scope"])
         self.assertEqual((sample["window_start_ns"], sample["window_end_ns"]), (0, 100))
 
     def test_process_cpu_rate_and_lifetime_peak(self):
@@ -89,9 +93,34 @@ class CollectorTests(unittest.TestCase):
         self.assertIsNone(record["metrics"]["process_cpu_normalized_percent"])
         self.assertIn("fresh", record["unavailable"]["process_peak_rss_bytes"])
 
-    def test_affinity_caps_supplied_quota_entitlement(self):
-        record = self.record(self.process(), self.process(at=1_000_000_000), effective_cpu_cores=20)
-        self.assertEqual(record["metrics"]["effective_cpu_cores"], 5)
+    def test_leader_affinity_does_not_cap_process_entitlement(self):
+        # /proc/PID/stat includes the thread group's CPU, while the status mask
+        # can cover only one CPU for its leader and differ from worker masks.
+        first = self.process(affinity="0")
+        second = self.process(user=250, system=100, at=1_000_000_000, affinity="0")
+        record = self.record(first, second, effective_cpu_cores=4)
+        self.assertEqual(record["metrics"]["process_cpu_ns"], 2_000_000_000)
+        self.assertEqual(record["metrics"]["effective_cpu_cores"], 4)
+        self.assertEqual(record["metrics"]["process_cpu_normalized_percent"], 50)
+        self.assertEqual(record["details"]["leader_thread_affinity_cores"], [1, 1])
+        self.assertIn("not independently verified", record["details"]["cpu_entitlement_source"])
+
+    def test_missing_and_legacy_null_affinity_preserve_process_entitlement(self):
+        for missing in (True, False):
+            with self.subTest(missing=missing):
+                first = self.process(affinity=None)
+                second = self.process(user=250, system=100, at=1_000_000_000, affinity=None)
+                for sample in (first, second):
+                    # Saved snapshots made before affinity_scope was introduced
+                    # remain valid; nullable affinity_cores was already allowed.
+                    sample["details"].pop("affinity_scope")
+                    if not missing:
+                        sample["details"]["affinity_cores"] = None
+                record = self.record(first, second, effective_cpu_cores=4)
+                self.assertEqual(record["metrics"]["effective_cpu_cores"], 4)
+                self.assertEqual(record["metrics"]["process_cpu_normalized_percent"], 50)
+                self.assertEqual(record["details"]["leader_thread_affinity_cores"], [None, None])
+                self.assertIn("diagnostic", record["details"]["affinity_scope"])
 
     def test_missing_process_stays_unavailable(self):
         first = collectors.read_process(9, proc_root=self.root, clock=clock_at(0))
@@ -228,11 +257,16 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(record["details"]["rate_interval_ns"], 1001)
         self.assertEqual(record["metrics"]["interface_rx_bytes_per_second"], 1_000_000_000 / 1001)
 
-    def test_affinity_change_cannot_report_normalized_cpu(self):
-        first, second = self.process(), self.process(at=1000)
-        second["details"]["affinity_cores"] = 4
-        with self.assertRaisesRegex(collectors.CollectionError, "affinity changed"):
-            self.record(first, second, effective_cpu_cores=4)
+    def test_leader_affinity_change_does_not_change_process_entitlement(self):
+        first = self.process(affinity="0")
+        second = self.process(user=250, system=100, at=1_000_000_000, affinity="0-1")
+        record = self.record(first, second, effective_cpu_cores=4)
+        self.assertEqual(record["metrics"]["effective_cpu_cores"], 4)
+        self.assertEqual(record["metrics"]["process_cpu_normalized_percent"], 50)
+        self.assertEqual(record["details"]["leader_thread_affinity_cores"], [1, 2])
+        unknown = self.record(first, second)
+        self.assertIsNone(unknown["metrics"]["effective_cpu_cores"])
+        self.assertIsNone(unknown["metrics"]["process_cpu_normalized_percent"])
 
     def test_cpuset_rejects_ambiguous_lists_without_expansion(self):
         self.assertEqual(collectors.cpuset_count("0-999999999"), 1_000_000_000)

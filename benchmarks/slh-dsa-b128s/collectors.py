@@ -147,7 +147,8 @@ def read_process(pid, *, proc_root="/proc", clock=time.monotonic_ns, clock_ticks
 
     VmHWM is a process-lifetime high-water mark, including startup and warmup.
     ``resource_record`` exports it only for a caller-declared fresh process.
-    Affinity alone is not effective CPU entitlement: a cgroup quota may apply.
+    ``affinity_cores`` describes only the process leader thread. Other threads
+    can have different CPU masks, so this is not a process-wide entitlement.
     """
     _integer(pid, "pid", positive=True)
     start = _integer(clock(), "window_start_ns")
@@ -202,6 +203,7 @@ def read_process(pid, *, proc_root="/proc", clock=time.monotonic_ns, clock_ticks
             _put(snapshot, metric, int(match[1]) * 1024)
     if "Cpus_allowed_list" in fields:
         snapshot["details"]["affinity_cores"] = cpuset_count(fields["Cpus_allowed_list"])
+    snapshot["details"]["affinity_scope"] = "process leader thread only; other threads may have different CPU masks"
     snapshot["details"]["scope"] = "one process, excludes children; memory is not an operation-local allocation count"
     return _window(snapshot, start, clock)
 
@@ -442,6 +444,8 @@ def resource_record(before, after, context, *, fresh_process=False, fresh_cgroup
     including setup and warmup. They do not make lifetime peaks phase-local.
     CPU uses delta CPU seconds / midpoint wall seconds. Network rates use the
     same interval. Read-window widths remain in details, not hidden precision.
+    For a process, ``effective_cpu_cores`` must describe the whole process for
+    this interval. Leader thread affinity cannot establish or cap that bound.
     """
     if not isinstance(fresh_process, bool) or not isinstance(fresh_cgroup, bool):
         raise CollectionError("fresh-process and fresh-cgroup declarations must be boolean")
@@ -487,12 +491,6 @@ def resource_record(before, after, context, *, fresh_process=False, fresh_cgroup
         if effective_cpu_cores is not None:
             if isinstance(effective_cpu_cores, bool) or not isinstance(effective_cpu_cores, (int, float)) or not math.isfinite(effective_cpu_cores) or effective_cpu_cores <= 0:
                 raise CollectionError("effective_cpu_cores must be finite and positive")
-            if kind == "process":
-                affinities = [sample["details"].get("affinity_cores") for sample in (before, after)]
-                if affinities[0] is not None and affinities[1] is not None and affinities[0] != affinities[1]:
-                    raise CollectionError("process affinity changed during interval")
-                affinity = min((sample["details"].get("affinity_cores", effective_cpu_cores) for sample in (before, after)))
-                effective_cpu_cores = min(effective_cpu_cores, affinity)
         put("effective_cpu_cores", effective_cpu_cores, "effective CPU entitlement unknown")
         cpu = metrics[f"{kind}_cpu_ns"]
         cores = None if cpu is None else cpu / elapsed
@@ -531,5 +529,11 @@ def resource_record(before, after, context, *, fresh_process=False, fresh_cgroup
         "source_details": after["details"], "fresh_process": fresh_process, "fresh_cgroup": fresh_cgroup,
         "peak_scope": "lifetime including setup and warmup; never an operation-local allocation measurement",
     }
+    if kind == "process":
+        details.update(
+            leader_thread_affinity_cores=[sample["details"].get("affinity_cores") for sample in (before, after)],
+            affinity_scope="process leader thread only; diagnostic, not a process-wide CPU entitlement",
+            cpu_entitlement_source="caller declaration for the whole process and interval; not independently verified",
+        )
     return _record(context, f"resource:{kind}:{after['window_end_ns']}", metrics=metrics,
                    unavailable=unavailable, details=details, source=after["identity"])
