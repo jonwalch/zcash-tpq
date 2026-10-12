@@ -7,6 +7,21 @@ Mempool growth rates can be negative. Other metrics must be nonnegative;
 effective CPU entitlement must be positive. Boolean and nonfinite numbers are
 not measurements. Numeric magnitudes cannot exceed `2**64 - 1`.
 
+The additive [payment catalog](payment-metrics.json) defines complete-payment
+stages and shape counts. It does not change the primitive catalog hash. A run
+or import that contains payment metrics must also bind
+`metric_catalog_extensions.payment` to the payment catalog's SHA-256. Reports
+and comparisons check both identities. Older primitive receipts remain valid.
+
+SLH wallet stage names end in `_persist_ns` because the product API includes
+durable writes within preparation, signing and assembly. There is no separate
+estimated fsync time. `payment_total_ns` is one enclosing observed interval;
+it is never calculated by adding stage quantiles. Classical transaction-control
+stages use separate names and do not claim equivalent wallet persistence.
+Cached inventory is prepared outside foreground timing and omits
+`payment_inventory_ns`; explicit case metadata records this scope exclusion.
+Its omission is not a measured zero. Generated cases require that metric.
+
 Each JSONL line is one attempt with these required fields:
 
 | Field | Contract |

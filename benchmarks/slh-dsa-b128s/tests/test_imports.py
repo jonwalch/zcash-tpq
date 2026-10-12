@@ -117,6 +117,24 @@ class ImportTests(unittest.TestCase):
                 imports.import_saved(args)
             self.assertFalse(args.output.exists())
 
+    def test_payment_import_binds_extension_without_claiming_independent_execution(self):
+        args = self.args("normalized", jsonl([raw_record(metrics={"payment_total_ns": 123})]))
+        imports.import_saved(args)
+        receipt, manifest, _ = self.evidence(args)
+        self.assertEqual(manifest["metric_catalog_extensions"], {"payment": results.PAYMENT_CATALOG_SHA256})
+        report = args.output.parent / "report"
+        run.summarize_run(argparse.Namespace(directory=args.output, output=report, process_id=None))
+        summary = provenance.read_json(report / "summary.json")
+        self.assertFalse(summary["provenance"]["imported_evidence"]["authenticated"])
+        self.assertNotIn("independent_checks", summary["provenance"])
+        del manifest["metric_catalog_extensions"]
+        provenance.atomic_json(args.output / "manifest.json", manifest)
+        receipt["manifest_sha256"] = provenance.sha256(args.output / "manifest.json")
+        receipt["artifacts"] = provenance.artifact_inventory(args.output)
+        provenance.atomic_json(args.output / "receipt.json", receipt)
+        with self.assertRaisesRegex(ValueError, "payment metric catalog identity missing"):
+            run.summarize_run(argparse.Namespace(directory=args.output, output=report.parent / "missing", process_id=None))
+
     def test_profile_requires_valid_ids_and_rejects_nonfinite_unused_details(self):
         for selected in (profile(context={**CONTEXT, "run_id": "bad id"}),
                          profile(provenance={"unrelated": float("inf")}),

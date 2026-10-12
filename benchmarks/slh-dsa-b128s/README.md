@@ -5,10 +5,12 @@ measurement executable, register a bounded run and generate p50/p95/p99 reports.
 The [adapter guide](ADAPTERS.md) documents saved evidence and resource readers.
 The [record contract](schema/README.md) defines units and reporting rules.
 
-Measurements and profiling are for human execution. The first implementation
-includes primitive measurements and offline adapters; live wallet/node workload
-integration and propagation instrumentation remain open. Synthetic tests do not
-establish performance results or production budgets.
+Measurements and profiling are for human execution. The tools include primitive
+measurements, offline wallet/payment cases, matched classical transaction
+controls, and saved-data adapters. Payment cases use transaction-derived messages
+and actual SLH wallet storage. Their funding is a synthetic fixture; live chain
+acceptance, node flow and propagation instrumentation remain open. Synthetic
+tests do not establish performance results or production budgets.
 
 Run the Python tests without starting any measurement workload:
 

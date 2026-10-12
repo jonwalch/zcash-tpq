@@ -43,6 +43,12 @@ _CATALOG_PATH = Path(__file__).parent / "schema" / "metrics.json"
 _CATALOG_BYTES = _CATALOG_PATH.read_bytes()
 METRIC_CATALOG = json.loads(_CATALOG_BYTES)["metrics"]
 METRIC_CATALOG_SHA256 = hashlib.sha256(_CATALOG_BYTES).hexdigest()
+_PAYMENT_CATALOG_BYTES = (_CATALOG_PATH.parent / "payment-metrics.json").read_bytes()
+PAYMENT_METRICS = json.loads(_PAYMENT_CATALOG_BYTES)["metrics"]
+if set(PAYMENT_METRICS).intersection(METRIC_CATALOG):
+    raise ValueError("payment catalog cannot redefine an existing metric")
+PAYMENT_CATALOG_SHA256 = hashlib.sha256(_PAYMENT_CATALOG_BYTES).hexdigest()
+METRIC_CATALOG.update(PAYMENT_METRICS)
 
 
 class ValidationError(ValueError):
@@ -307,7 +313,7 @@ def summarize(records, *, complete=False):
     if unmeasured_count:
         issues.append("attempts without any measurements occurred")
     successful = not issues
-    return {
+    summary = {
         "schema_version": SCHEMA_VERSION,
         "metric_catalog_sha256": METRIC_CATALOG_SHA256,
         "quantile_method": "empirical-nearest-rank",
@@ -328,6 +334,9 @@ def summarize(records, *, complete=False):
         "unmeasured_count": unmeasured_count,
         "groups": result_groups,
     }
+    if any(set(group["metrics"]).intersection(PAYMENT_METRICS) for group in result_groups):
+        summary["metric_catalog_extensions"] = {"payment": PAYMENT_CATALOG_SHA256}
+    return summary
 
 
 def write_reports(summary, output_dir):
@@ -379,6 +388,11 @@ def compare_summaries(left, right):
     for summary in (left, right):
         if summary.get("schema_version") != SCHEMA_VERSION or summary.get("metric_catalog_sha256") != METRIC_CATALOG_SHA256:
             raise ValidationError("comparison requires the current schema and metric catalog")
+        uses_payment = any(set(group.get("metrics", {})).intersection(PAYMENT_METRICS)
+                           for group in summary.get("groups", []))
+        expected_extensions = {"payment": PAYMENT_CATALOG_SHA256} if uses_payment else {}
+        if summary.get("metric_catalog_extensions", {}) != expected_extensions:
+            raise ValidationError("comparison requires the current payment metric catalog")
         if summary.get("complete") is not True:
             raise ValidationError("comparison requires finalized summaries")
         if not summary.get("groups") or not summary.get("observation_count"):

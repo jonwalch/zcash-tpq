@@ -7,6 +7,10 @@ synthetic files and events. Live resource, propagation, and node validation
 measurements remain pending human execution under [AGENTS.md](../../AGENTS.md).
 
 The [metric registry](schema/metrics.json) fixes units and measurement scope.
+Payment metrics have a separate [catalog identity](schema/payment-metrics.json).
+Normalized imports that use those metrics bind that identity too. They remain
+operator-supplied records and do not gain the registered payment runner's
+independent artifact checks by using its metric names.
 Adapters emit raw records for the shared p50, p95, and p99 report. They do not
 calculate a second set of percentiles. Null values have an explicit reason.
 Timeout lower bounds are marked as censored and excluded from exact percentiles.

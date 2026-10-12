@@ -48,7 +48,7 @@ class ExecutionError(BenchmarkError):
         self.outcome = outcome
 
 
-def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None):
+def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_poll=None):
     """Bound both streams, wall time and a private process group; no shell."""
     require(os.name == "posix", "execution currently requires Linux or macOS")
     require(timeout > 0 and max_bytes > 0, "positive execution bounds required")
@@ -67,6 +67,8 @@ def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None):
                     os.set_blocking(stream.fileno(), False)
                     selector.register(stream, selectors.EVENT_READ, output)
                 while selector.get_map():
+                    if on_poll is not None:
+                        on_poll()
                     if (time.monotonic_ns() - started) / 1e9 > timeout:
                         raise ExecutionError("process deadline exceeded", "timeout")
                     for key, _ in selector.select(0.1):
@@ -93,6 +95,8 @@ def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None):
             except subprocess.TimeoutExpired as error:
                 raise ExecutionError("process deadline exceeded", "timeout") from error
             require(returncode == 0, f"process exited with status {returncode}")
+            if on_poll is not None:
+                on_poll()
             return {"pid": child.pid, "exit_code": returncode,
                     "elapsed_ns": time.monotonic_ns() - started, "output_bytes": total}
         except BaseException as error:
@@ -248,6 +252,9 @@ def execute(args):
     require_execute(args)
     output = Path(args.directory).resolve()
     manifest = read_json(output / "manifest.json")
+    if manifest.get("kind") == "payment":
+        from payment_run import execute_payment
+        return execute_payment(args, manifest)
     require(manifest.get("kind") == "primitive" and manifest.get("schema_version") == 1, "unknown run plan")
     require(not (output / "receipt.json").exists(), "run already attempted; register a new directory")
     require(sha256(HERE / "schema/metrics.json") == manifest["metric_catalog_sha256"] and
@@ -345,9 +352,16 @@ def summarize_run(args):
     receipt = read_json(directory / "receipt.json")
     require(manifest["metric_catalog_sha256"] == sha256(HERE / "schema/metrics.json"),
             "metric catalog changed; use the original source revision to report this run")
+    from results import PAYMENT_CATALOG_SHA256, PAYMENT_METRICS
+    extensions = manifest.get("metric_catalog_extensions", {})
+    require(extensions in ({}, {"payment": PAYMENT_CATALOG_SHA256}), "payment metric catalog changed")
+    require(manifest.get("kind") != "payment" or extensions == {"payment": PAYMENT_CATALOG_SHA256},
+            "payment catalog identity missing")
     require(receipt["manifest_sha256"] == sha256(directory / "manifest.json"), "manifest changed")
     verify_artifacts(directory, receipt["artifacts"])
     records = read_records(directory / "attempts.jsonl")
+    require(not any(set(record["metrics"]).intersection(PAYMENT_METRICS) for record in records)
+            or extensions == {"payment": PAYMENT_CATALOG_SHA256}, "payment metric catalog identity missing")
     verify_artifacts(directory, receipt["artifacts"])
     require(len(records) == receipt["records"], "receipt record count mismatch")
     if args.process_id:
@@ -361,6 +375,10 @@ def summarize_run(args):
                                 "reporter_sha256": sha256(HERE / "results.py"),
                                 "toolchain": toolchain_compatibility(manifest.get("build", {}).get("toolchain")),
                                 "adapter_compatibility": manifest.get("adapter_compatibility")}
+    if extensions:
+        summary["compatibility"]["metric_catalog_extensions"] = extensions
+    if manifest.get("kind") == "payment":
+        summary["compatibility"]["independent_checker"] = manifest["independent_checker"]
     summary["provenance"] = {"manifest_sha256": receipt["manifest_sha256"],
                              "source": manifest.get("build", {}).get("source", {}).get("commit"),
                              "html_renderer_sha256": sha256(HERE / "html_report.py"),
@@ -368,6 +386,9 @@ def summarize_run(args):
                              "execution_status": receipt["status"], "process_selection": args.process_id,
                              "imported_evidence": manifest.get("provenance"),
                              "adapter_metadata": manifest.get("adapter_metadata")}
+    if manifest.get("kind") == "payment":
+        summary["provenance"]["payment_scope"] = manifest["scope"]
+        summary["provenance"]["independent_checks"] = receipt.get("independent_checks", [])
     require(not (receipt["complete"] and receipt["records"] != manifest["expected_records"]),
             "complete receipt missing expected records")
     require(not Path(args.output).resolve().is_relative_to(directory.resolve()), "reports must be outside immutable run artifacts")
@@ -405,6 +426,8 @@ def main(argv=None):
     planning.add_argument("--timeout", type=int, required=True)
     planning.add_argument("--max-output-bytes", type=int, default=16 * 1024 * 1024)
     planning.set_defaults(action=plan)
+    from payment_run import add_payment_parser
+    add_payment_parser(commands)
     running = commands.add_parser("run", help="human: execute one registered run exactly once")
     running.add_argument("directory")
     running.add_argument("--execute", action="store_true")
