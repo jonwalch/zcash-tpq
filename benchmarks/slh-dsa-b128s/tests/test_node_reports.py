@@ -69,7 +69,7 @@ class NodeReportTests(unittest.TestCase):
         visible = page.split('<details class="audit">', 1)[0]
         self.assertLess(visible.index('id="node-scope"'), visible.index('id="node-overview"'))
         self.assertLess(visible.index('id="node-overview"'), visible.index('id="case-0"'))
-        for text in ("3 intervals × 1000 ms requested cadence", "3000 ms planned interval span",
+        for text in ("3 intervals × 1000 ms requested delay between observations", "3000 ms total requested delay",
                      "3.05 s", "includes collection overhead", "PID 101", "/node/zakurad",
                      "idle-fixture", "fresh empty chain", "source_commit", "c" * 40, "f" * 64,
                      "operator declares", "not transaction or block latency",

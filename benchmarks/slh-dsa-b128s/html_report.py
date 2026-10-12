@@ -273,8 +273,8 @@ def _node_scope(summary):
     elapsed = provenance.get("node_execution", {}).get("elapsed_ns")
     schedule = (
         f'{_escape(scope.get("samples", "Unavailable"))} intervals × '
-        f'{_escape(scope.get("interval_ms", "Unavailable"))} ms requested cadence; '
-        f'{_escape(scope.get("planned_interval_total_ms", "Unavailable"))} ms planned interval span.'
+        f'{_escape(scope.get("interval_ms", "Unavailable"))} ms requested delay between observations; '
+        f'{_escape(scope.get("planned_interval_total_ms", "Unavailable"))} ms total requested delay.'
     )
     evidence = {"identity": identity, "profile": profile, "scope": scope,
                 "execution": provenance.get("node_execution")}

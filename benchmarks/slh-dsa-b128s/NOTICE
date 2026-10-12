@@ -67,6 +67,14 @@ Linux process/cgroup/interface collection and the proposed propagation
 event adapter are new measurement code. No existing live propagation
 instrumentation is claimed by that adapter.
 
+The registered node collector reuses these process/cgroup readers and mempool
+adapters, the existing bounded process supervisor and report contract. Its static
+node-build validation selectively adapts the existing acceptance receipt checks;
+it preserves compiled source identity separately from benchmark instrumentation.
+Process/configuration binding, bounded loopback HTTP collection, raw-observation
+replay and attach-only lifecycle tests are new integration code. It does not
+launch nodes or supply funded workloads, latency hooks or chain acceptance.
+
 No alternate cryptographic backend, research node overlay, historical
 result set, research checkout, or research Git history is a runtime
 dependency. Attribution does not establish benchmark acceptance or permit

@@ -254,6 +254,24 @@
       "sha256": "54a95f9621fe9c622d50f20b3bd7e7c16a2f058a069ae28436efa3ea7716687f",
       "license": "MIT OR Apache-2.0",
       "role": "Pinned source and prepared C-library inventory reused for bounded retained reference snapshots."
+    },
+    {
+      "id": "product-node-build-receipt",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "57fa42a1a46755dd7c4403525c57140a50e858a0",
+      "path": "tests/slh-dsa-b128s/acceptance/common.py",
+      "sha256": "065a8106c9d6ec40c355ba76b6f8ec0433d565f3bd8bec19971d5acb7c6d2efc",
+      "license": "MIT OR Apache-2.0",
+      "role": "Static node build/identity receipt validation; retain historical compiled source separately from collection instrumentation."
+    },
+    {
+      "id": "product-node-build-recipe",
+      "repository": "https://github.com/jonwalch/zcash-tpq",
+      "commit": "57fa42a1a46755dd7c4403525c57140a50e858a0",
+      "path": "tests/slh-dsa-b128s/acceptance/build.py",
+      "sha256": "5fb366503e3f8b6de6a59d1640e96b297d97bdedf246cc8e93a5c1357499faec",
+      "license": "MIT OR Apache-2.0",
+      "role": "Exact node-default/node-slh locked release command and recorded verifier identity."
     }
   ],
   "transitive_origins": [
@@ -402,7 +420,7 @@
       "path": "benchmarks/slh-dsa-b128s/html_report.py",
       "sources": [],
       "classification": "new saved-report presentation",
-      "adaptation": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies."
+      "adaptation": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies. Node overview reuses the same metric tables with gauge/growth labels, attachment limits and declared workload provenance."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/src/payment.rs",
@@ -476,6 +494,40 @@
       "sources": [],
       "classification": "new provenance regression controls",
       "adaptation": "Check exact source retention, no-clobber, source/library substitutions, symlinks, unexpected Python code and copy bounds without executing foreign code."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/node_run.py",
+      "sources": [
+        "research-driver",
+        "product-node-build-receipt",
+        "product-node-build-recipe"
+      ],
+      "classification": "new node collection registration and supervision",
+      "adaptation": "Reuse bounded private-child supervision, retained source and artifact contracts. Adapt static build checks so compiled node source and sampler instrumentation are distinct; independently replay normalized rows from raw evidence."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/node_sampling.py",
+      "sources": [],
+      "classification": "new attached-node integration",
+      "adaptation": "Reuse existing attributed Linux readers and mempool parsers; add explicit process/configuration binding, bounded loopback HTTP, cgroup membership checks and raw read windows. No node ownership or traffic generation."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_runner.py",
+      "sources": [],
+      "classification": "new runner protocol regression controls",
+      "adaptation": "Validate static planning, retained evidence replay, exact accounting, timeout/cancellation and input substitutions with bounded fixture streams."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_sampling.py",
+      "sources": [],
+      "classification": "new sampler regression controls",
+      "adaptation": "Validate process/endpoint/cgroup binding and interval arithmetic using fixture counters and bounded HTTP response controls."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_reports.py",
+      "sources": [],
+      "classification": "new node report regression controls",
+      "adaptation": "Check visible resource/time-sampling scope, schedule, unavailable capabilities, gauges, net growth and escaped operator declarations."
     }
   ]
 }

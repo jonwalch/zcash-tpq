@@ -5,6 +5,9 @@ server, or generate transactions. The resource readers take one Linux snapshot;
 they do not start a workload or change host settings. Automated tests use
 synthetic files and events. Live resource, propagation, and node validation
 measurements remain pending human execution under [AGENTS.md](../../AGENTS.md).
+The separate [registered node collector](NODE_COLLECTION.md) attaches these
+readers to a running Regtest node and a bounded loopback metrics scrape. Its
+planning step remains offline; execution requires an explicit opt-in.
 
 The [metric registry](schema/metrics.json) fixes units and measurement scope.
 Payment metrics have a separate [catalog identity](schema/payment-metrics.json).

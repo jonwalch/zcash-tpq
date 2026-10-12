@@ -4,6 +4,8 @@ Use the [operating guide](../../docs/slh-dsa-b128s/benchmarking.md) to build a
 measurement executable, register a bounded run and generate p50/p95/p99 reports.
 The [adapter guide](ADAPTERS.md) documents saved evidence and resource readers.
 The [record contract](schema/README.md) defines units and reporting rules.
+The [node collection guide](NODE_COLLECTION.md) covers bounded Linux collection
+from one existing Regtest node, including CPU/RSS and mempool observations.
 
 Measurements and profiling are for human execution. The tools include primitive
 measurements, offline wallet/payment cases, matched classical transaction
