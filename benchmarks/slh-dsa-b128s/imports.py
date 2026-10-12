@@ -179,6 +179,7 @@ def _convert(kind, data, profile):
             record["details"]["probe_configuration_evidence"] = metadata["probe_configuration_evidence"]
             record["details"]["effective_config_sha256"] = fingerprint
         compatible = {"throughput_probe_disabled": disabled,
+                      "effective_config_sha256": fingerprint,
                       "probe_evidence_kind": "archived config plus operator applicability declaration" if disabled else "unknown"}
     elif kind == "propagation":
         records, metadata = import_propagation(_jsonl(data), context, **options)

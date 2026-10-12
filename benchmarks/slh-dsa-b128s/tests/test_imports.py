@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import imports
 import provenance
 import results
+import run
 
 
 CONTEXT = {"run_id": "saved-run", "case_id": "case", "configuration_id": "configuration",
@@ -80,6 +81,14 @@ class ImportTests(unittest.TestCase):
         provenance.verify_artifacts(output, receipt["artifacts"])
         records = list(results.read_records(output / "attempts.jsonl"))
         return receipt, manifest, records
+
+    def block_summary(self, selected_profile):
+        args = self.args("block-trace", jsonl(block_rows()), selected_profile)
+        imports.import_saved(args)
+        report = args.output.parent / "report"
+        run.summarize_run(argparse.Namespace(directory=args.output, process_id=None, output=report))
+        summary_path = report / "summary.json"
+        return summary_path, provenance.read_json(summary_path)
 
     def test_transaction_exact_bytes_and_operator_evidence_labels(self):
         args = self.args()
@@ -191,6 +200,7 @@ class ImportTests(unittest.TestCase):
     def test_block_probe_unknown_is_unavailable_and_declaration_is_labeled(self):
         for disabled in (False, True):
             selected = profile(options={"throughput_probe_disabled": disabled})
+            selected["provenance"]["effective_config_sha256"] = "f" * 64
             if disabled:
                 text = "[sync]\nparallel_cpu_threads = 2\n"
                 selected["options"]["effective_config_toml"] = text
@@ -206,8 +216,47 @@ class ImportTests(unittest.TestCase):
                 self.assertIn("operator-declared", manifest["adapter_metadata"]["probe_configuration_evidence"])
                 self.assertEqual(records[0]["details"]["effective_config_sha256"],
                                  selected["provenance"]["effective_config_sha256"])
+                self.assertEqual(manifest["adapter_compatibility"]["effective_config_sha256"],
+                                 selected["provenance"]["effective_config_sha256"])
             else:
                 self.assertIn("not established", manifest["adapter_metadata"]["probe_configuration_evidence"])
+                self.assertIsNone(manifest["adapter_compatibility"]["effective_config_sha256"])
+                self.assertEqual(manifest["adapter_compatibility"]["probe_evidence_kind"], "unknown")
+
+    def test_block_comparison_rejects_different_validated_effective_configs(self):
+        summaries = []
+        for threads in (1, 32):
+            text = f"[sync]\nparallel_cpu_threads = {threads}\n"
+            selected = profile(options={"throughput_probe_disabled": True, "effective_config_toml": text})
+            selected["provenance"]["effective_config_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+            summaries.append(self.block_summary(selected))
+        (left_path, left), (right_path, right) = summaries
+        self.assertEqual(left["compatibility"]["settings"], right["compatibility"]["settings"])
+        self.assertNotEqual(left["provenance"]["adapter_metadata"]["effective_config_sha256"],
+                            right["provenance"]["adapter_metadata"]["effective_config_sha256"])
+        destination = self.root / "comparison.json"
+        with self.assertRaisesRegex(ValueError, "incompatible hardware, workload, cache or instrumentation"):
+            run.compare(argparse.Namespace(baseline=left_path, candidate=right_path, output=destination))
+        self.assertFalse(destination.exists())
+
+    def test_block_comparison_accepts_changed_source_and_binary_with_matched_config(self):
+        text = "[sync]\nparallel_cpu_threads = 2\n"
+        selected = profile(options={"throughput_probe_disabled": True, "effective_config_toml": text})
+        selected["provenance"]["effective_config_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+        left_path, left = self.block_summary(selected)
+        candidate = copy.deepcopy(selected)
+        candidate["context"]["run_id"] = "candidate-run"
+        candidate["provenance"].update(source_revision="d" * 40, binary_sha256="e" * 64)
+        right_path, right = self.block_summary(candidate)
+        self.assertNotEqual(left["provenance"]["imported_evidence"]["declarations"]["source_revision"],
+                            right["provenance"]["imported_evidence"]["declarations"]["source_revision"])
+        self.assertNotEqual(left["provenance"]["imported_evidence"]["declarations"]["binary_sha256"],
+                            right["provenance"]["imported_evidence"]["declarations"]["binary_sha256"])
+        self.assertEqual(left["compatibility"], right["compatibility"])
+        destination = self.root / "comparison.json"
+        comparison = run.compare(argparse.Namespace(baseline=left_path, candidate=right_path, output=destination))
+        self.assertEqual({group["outcome"] for group in comparison["groups"]}, {"success", "all_outcomes"})
+        self.assertEqual(provenance.read_json(destination), comparison)
 
     def test_block_probe_declaration_requires_matching_saved_disabled_config(self):
         missing = profile(options={"throughput_probe_disabled": True})
