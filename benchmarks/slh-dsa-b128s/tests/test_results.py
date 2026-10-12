@@ -323,9 +323,11 @@ class HtmlReportTests(unittest.TestCase):
         page, _ = self.render([record("warm", warmup=True), record()],
                               provenance={"marker": "large-provenance-follows-results"})
         parsed = ReportElements(page)
-        self.assertEqual(parsed.table_headers[:6],
+        self.assertEqual(parsed.table_headers[:7],
+                         ["Case / process", "Outcome", "p50 · median", "p95", "p99", "Exact n", "Coverage / details"])
+        self.assertEqual(parsed.table_headers[7:13],
                          ["Metric", "p50 · median", "p95", "p99", "Exact n", "Coverage and interpretation"])
-        self.assertEqual(len(parsed.table_headers), 12)  # outcome plus the explicit audit view
+        self.assertEqual(len(parsed.table_headers), 19)  # timing overview, outcome, explicit audit view
         self.assertIn("summary.json", parsed.links)
         self.assertIn("summary.csv", parsed.links)
         self.assertLess(page.index("<table>"), page.index("large-provenance-follows-results"))
@@ -407,6 +409,36 @@ class HtmlReportTests(unittest.TestCase):
                     self.assertIn("No exact samples; no quantiles.", page)
                 else:
                     self.assertIn("No measured populations are available.", page)
+
+    def test_timing_overview_keeps_each_process_outcome_and_varying_scope_separate(self):
+        page, _ = self.render([
+            record("first", metrics={"signature_verify_ns": 1_000_000}),
+            record("second", process_id="process-2", metrics={"signature_verify_ns": 9_000_000}),
+            record("invalid", case_id="primitive.verify-invalid", outcome="expected_rejection",
+                   metrics={"signature_verify_ns": 2_000_000}),
+            record("other-run", run_id="run-2", configuration_id="config-2",
+                   metrics={"signature_verify_ns": 5_000_000}),
+            record("peak", phase="process", metrics={"process_peak_rss_bytes": 2**20}),
+        ])
+        overview = page.split('<section id="timing-overview">', 1)[1].split("</section>", 1)[0]
+        self.assertEqual(overview.count("<tr>"), 5)  # four independent rows plus the header
+        self.assertIn("Run: run-1", overview)
+        self.assertIn("Run: run-2", overview)
+        self.assertIn("Configuration: config-1", overview)
+        self.assertIn("Configuration: config-2", overview)
+        self.assertIn("expected rejection · expected result", overview)
+        for milliseconds in (1, 2, 5, 9):
+            self.assertIn(f">{milliseconds} ms</span>", overview)
+        self.assertNotIn("all outcomes", overview)
+        self.assertNotIn("Process lifetime peak RSS", overview)
+        self.assertIn("4 primitive timing records · 1 separate process-peak records", page)
+        self.assertIn('<div class="status">Complete</div>', page)
+        self.assertLess(page.index('id="timing-overview"'), page.index('id="case-0"'))
+
+    def test_serialized_transaction_label_does_not_claim_chain_acceptance(self):
+        page, _ = self.render([record(metrics={"transaction_bytes": 8000})])
+        self.assertIn("Serialized transaction size", page)
+        self.assertNotIn("On-chain transaction size", page)
 
 
 class ComparisonTests(unittest.TestCase):

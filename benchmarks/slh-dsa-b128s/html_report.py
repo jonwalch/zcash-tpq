@@ -23,7 +23,7 @@ _LABELS = {
     "public_key_bytes": "Public key size",
     "signature_bytes": "Signature size",
     "message_bytes": "Message size",
-    "transaction_bytes": "On-chain transaction size",
+    "transaction_bytes": "Serialized transaction size",
     "authorization_bytes": "Authorization size",
     "descriptor_bytes": "Descriptor size",
 }
@@ -39,7 +39,7 @@ a{color:#075ea7}code,pre{font:12px/1.5 ui-monospace,monospace}code{overflow-wrap
 .card,.panel,.population{background:white;border:1px solid var(--line);border-radius:10px}
 .card{padding:10px 18px}.card strong{display:block;font-size:23px}.card span{color:var(--muted)}
 .panel{padding:14px 18px;margin:12px 0}.notice{border-left:4px solid #ba7400;background:#fff9e9}
-.good{border-left:4px solid #18815a}.status{font-size:18px;font-weight:650}.status code{margin-left:8px;font-weight:400}
+.good{border-left:4px solid #18815a}.status{font-size:18px;font-weight:650}
 .population{margin:14px 0;overflow:hidden}.population header{padding:14px 18px;border-bottom:1px solid var(--line)}
 .scope{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13px;margin-top:6px}.scope b{color:var(--ink)}
 .outcome{display:inline-block;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin-left:8px}
@@ -50,6 +50,8 @@ th{position:sticky;top:0;background:#eef3f7;color:#41556a;font-size:12px;white-s
 td.number{white-space:nowrap;font-variant-numeric:tabular-nums}td.metric{min-width:210px;width:24%}
 td.notes{min-width:250px;width:31%;font-size:12px}.metric strong{display:block}.metric code{display:block;color:var(--muted);font-size:11px}
 .scope-note{color:var(--muted);font-size:12px;margin-top:4px}.caution{color:#875000;margin-bottom:4px}
+.timing-overview td{padding:7px 13px}.timing-overview .outcome{margin:0}.timing-overview td:first-child{min-width:190px}
+.timing-overview code{display:block;font-size:11px}.timing-overview .notes{min-width:210px;width:25%}
 .empty{padding:15px 18px}.jump{display:flex;flex-wrap:wrap;gap:8px 18px;padding:0;list-style:none}
 details{margin:6px 0}summary{cursor:pointer;color:#075ea7}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f8;padding:12px;border-radius:6px;max-height:420px;overflow:auto}
 .audit{margin-top:24px}.audit>summary{font-size:18px;font-weight:600}.outcomes{display:flex;flex-wrap:wrap;gap:8px 18px}
@@ -140,18 +142,21 @@ def _metric_row(name, metric, catalog):
     )
 
 
-def _population(group, catalog):
-    outcome = group["outcome"]
+def _outcome(outcome):
     label = outcome.replace("_", " ")
     if outcome == "expected_rejection":
         label += " · expected result"
     style = "outcome-good" if outcome in ("success", "expected_rejection") else "outcome-issue"
     if outcome == "all_outcomes":
         style = ""
+    return f'<span class="outcome {style}">{_escape(label)}</span>'
+
+
+def _population(group, catalog, index):
     scope = "".join(f'<span><b>{label}:</b> {_escape(group[key])}</span>' for label, key in (
         ("Run", "run_id"), ("Configuration", "configuration_id"), ("Phase", "phase"), ("Cache", "cache_mode")))
     header = (
-        f'<header><h3>{_escape(group["process_id"])} <span class="outcome {style}">{_escape(label)}</span></h3>'
+        f'<header><h3>{_escape(group["process_id"])} {_outcome(group["outcome"])}</h3>'
         f'<div class="scope">{scope}</div><p class="scope">'
         f'{_escape(group["observation_count"])} non-warmup records · {_escape(group["warmup_count"])} warmup records excluded from quantiles</p></header>'
     )
@@ -165,7 +170,68 @@ def _population(group, catalog):
             '<th scope="col">Exact n</th><th scope="col">Coverage and interpretation</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div>'
         )
-    return f'<section class="population">{header}{content}</section>'
+    return f'<section class="population" id="population-{index}">{header}{content}</section>'
+
+
+def _timing_overview(groups):
+    timing_groups = [group for group in groups if group["outcome"] != "all_outcomes"
+                     and any(name in group["metrics"] for name in _PRIMARY_METRICS)]
+    dimensions = (("Run", "run_id"), ("Configuration", "configuration_id"),
+                  ("Phase", "phase"), ("Cache", "cache_mode"))
+    varying = [(label, key) for label, key in dimensions
+               if len({group[key] for group in timing_groups}) > 1]
+    rows = []
+    for index, group in enumerate(groups):
+        if group["outcome"] == "all_outcomes":
+            continue
+        for name in _PRIMARY_METRICS:
+            if name not in group["metrics"]:
+                continue
+            metric = group["metrics"][name]
+            samples = metric["samples"]
+            notes = []
+            if samples == 0:
+                notes.append("No exact samples")
+            elif samples == 1:
+                notes.append("One sample; all percentiles repeat it")
+            elif samples < 20:
+                notes.append("Small n: p95 = p99 = observed max")
+            elif samples < 100:
+                notes.append("Small n: p99 = observed max")
+            for field, label in (("missing_count", "missing"), ("unavailable_count", "unavailable"),
+                                 ("censored_count", "censored")):
+                if metric[field]:
+                    notes.append(f'{metric[field]} {label}')
+            if metric["tail_incomplete"]:
+                notes.append("Incomplete tail")
+            coverage = "".join(f'<div class="caution">{_escape(note)}</div>' for note in notes)
+            scope = "".join(f'<code>{label}: {_escape(group[key])}</code>' for label, key in varying)
+            if sum(candidate in group["metrics"] for candidate in _PRIMARY_METRICS) > 1:
+                scope += f'<code>{_escape(name)}</code>'
+            values = "".join(f'<td class="number">{_value(metric[key], metric["unit"])}</td>'
+                             for key in ("p50", "p95", "p99"))
+            rows.append(
+                f'<tr><td><strong>{_escape(group["case_id"])}</strong>'
+                f'<code>{_escape(group["process_id"])}</code>{scope}</td>'
+                f'<td>{_outcome(group["outcome"])}</td>{values}'
+                f'<td class="number">{_escape(samples)}</td><td class="notes">{coverage}'
+                f'<a href="#population-{index}">Full metrics and scope</a></td></tr>'
+            )
+    if not rows:
+        return ""
+    shared = "".join(f'<p><b>{label}:</b> <code>{_escape(timing_groups[0][key])}</code></p>'
+                     for label, key in dimensions if (label, key) not in varying)
+    return (
+        '<section id="timing-overview"><h2>Primitive timing overview</h2>'
+        '<p class="muted">One row per recorded case, process and outcome. No pooling. '
+        'Small samples do not establish stable tail percentiles.</p>'
+        + (f'<details><summary>Shared measurement scope</summary>{shared}</details>' if shared else "") +
+        '<div class="panel table-wrap timing-overview" style="padding:0"><table><thead><tr>'
+        '<th scope="col">Case / process</th><th scope="col">Outcome</th>'
+        '<th scope="col">p50 · median</th><th scope="col">p95</th><th scope="col">p99</th>'
+        '<th scope="col">Exact n</th><th scope="col">Coverage / details</th></tr></thead><tbody>'
+        + "".join(rows) + '</tbody></table></div></section>'
+    )
 
 
 def render_report(summary, catalog):
@@ -176,10 +242,22 @@ def render_report(summary, catalog):
     status = summary["status"].replace("_", " ").capitalize()
     style = "good" if summary["successful"] else "notice"
     issues = "".join(f'<li>{_escape(issue)}</li>' for issue in summary["issues"])
-    status_detail = '<ul>' + issues + '</ul>' if issues else '<p>No recorded failures, missing values or censored observations.</p>'
+    status_detail = '<ul>' + issues + '</ul>' if issues else ""
     cards = "".join(f'<div class="card"><strong>{value:,}</strong><span>{label}</span></div>' for value, label in (
         (len(cases), "cases"), (len(processes), "process populations"),
         (summary["observation_count"], "non-warmup records"), (summary["warmup_count"], "warmup records")))
+    timing_count = sum(group["observation_count"] for group in groups
+                       if group["outcome"] != "all_outcomes"
+                       and any(name in group["metrics"] for name in _PRIMARY_METRICS))
+    peak_count = sum(group["observation_count"] for group in groups
+                     if group["outcome"] != "all_outcomes"
+                     and set(group["metrics"]) == {"process_peak_rss_bytes"})
+    record_note = ""
+    if timing_count or peak_count:
+        other_count = summary["observation_count"] - timing_count - peak_count
+        other = f" · {other_count} other records" if other_count else ""
+        record_note = (f'<p class="muted">{timing_count} primitive timing records · '
+                       f'{peak_count} separate process-peak records{other}. Exact n varies per metric.</p>')
     outcomes = "".join(
         f'<span><b>{_escape(outcome.replace("_", " "))}:</b> {_escape(count)}</span>'
         for outcome, count in summary["measurement_outcome_counts"].items() if count
@@ -191,12 +269,12 @@ def render_report(summary, catalog):
     jump = "".join(f'<li><a href="#case-{index}">{_escape(case)}</a></li>' for index, case in enumerate(cases))
     main = []
     for index, case in enumerate(cases):
-        populations = "".join(_population(group, catalog) for group in groups
+        populations = "".join(_population(group, catalog, group_index) for group_index, group in enumerate(groups)
                               if group["case_id"] == case and group["outcome"] != "all_outcomes")
         main.append(f'<section id="case-{index}"><h2>{_escape(case)}</h2>{populations}</section>')
     combined = "".join(
-        f'<h3>{_escape(group["case_id"])}</h3>{_population(group, catalog)}'
-        for group in groups if group["outcome"] == "all_outcomes")
+        f'<h3>{_escape(group["case_id"])}</h3>{_population(group, catalog, group_index)}'
+        for group_index, group in enumerate(groups) if group["outcome"] == "all_outcomes")
     overview = {key: value for key, value in summary.items() if key != "groups"}
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
@@ -205,20 +283,21 @@ def render_report(summary, catalog):
         '<h1>SLH benchmark report</h1><p class="muted">Per-process measurements · empirical nearest-rank percentiles</p>'
         '<nav class="downloads" aria-label="Download data"><a href="summary.json">Summary JSON</a>'
         '<a href="summary.csv">Metric CSV</a></nav>'
-        f'<div class="panel {style}"><div class="status">{_escape(status)} <code>{_escape(summary["status"])}</code></div>'
+        f'<div class="panel {style}"><div class="status">{_escape(status)}</div>'
         f'<p>Producer finalized: {"yes" if summary["complete"] else "no"} · Evidence successful: {"yes" if summary["successful"] else "no"}</p>'
-        f'{status_detail}</div><div class="cards">{cards}</div>'
-        f'<div class="panel"><b>Non-warmup outcomes</b><div class="outcomes">{outcomes}</div>'
-        f'<details><summary>Warmup outcomes</summary><div class="outcomes">{warmup_outcomes}</div></details></div>'
+        f'{status_detail}<div class="outcomes"><b>Non-warmup outcomes:</b>{outcomes}</div></div>'
+        f'<div class="cards">{cards}</div>{record_note}{_timing_overview(groups)}'
         '<div class="panel notice"><b>Read exact n before interpreting tail percentiles.</b>'
-        '<p>For n &lt; 20, p95 and p99 are the observed maximum. For n = 1, all three percentiles repeat one value.</p>'
+        '<p>With 1–19 exact samples, p95 and p99 are the observed maximum. With one sample, all three percentiles repeat one value.</p>'
         '<details><summary>How to read these measurements</summary>'
         '<p>Each row is one case, configuration, run, process, phase, cache mode and outcome. '
         'Runs and processes are never pooled. Exact n counts measured values, not warmups, unavailable values or censored bounds. '
         'Record totals can include a separate final process-peak record; they are not operation sample counts.</p>'
-        '<p>For fewer than 100 exact samples, p99 is the observed maximum. More samples alone do not establish tail stability. '
+        '<p>With 1–99 exact samples, p99 is the observed maximum. More samples alone do not establish tail stability. '
         'Expected rejection means the negative test returned its expected result. '
-        'Displayed values are rounded; expand “Exact values and scope” for precise recorded units.</p></details></div>'
+        'Displayed values are rounded; expand “Exact values and scope” for precise recorded units. '
+        'The timing overview repeats the linked distributions and adds no measurements.</p></details>'
+        f'<details><summary>Warmup outcomes</summary><div class="outcomes">{warmup_outcomes}</div></details></div>'
         f'<nav aria-label="Cases"><ul class="jump">{jump}</ul></nav>'
         + ("".join(main) if main else '<p class="panel">No measured populations are available.</p>')
         + '<details class="audit"><summary>Combined outcome distributions (audit view)</summary>'
