@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import http.client
+import io
 import ipaddress
 import os
 from pathlib import Path
@@ -147,20 +148,77 @@ def _binding(manifest, previous=None):
             "endpoint_association": ASSOCIATION}
 
 
+class _DeadlineReader(io.RawIOBase):
+    """Refresh the absolute deadline before every socket read, including framing."""
+
+    def __init__(self, sock, remaining):
+        self._sock = sock
+        self._remaining = remaining
+        # Retain the descriptor while HTTPConnection releases Connection: close
+        # sockets; HTTPResponse owns this stream until body completion.
+        self._stream = None
+        self._stream = sock.makefile("rb", buffering=0)
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        self._sock.settimeout(self._remaining())
+        size = self._stream.readinto(buffer)
+        self._remaining()
+        return size
+
+    def close(self):
+        try:
+            if self._stream is not None:
+                self._stream.close()
+        finally:
+            super().close()
+
+
+class _DeadlineSocket:
+    """Give HTTPConnection and its standard parser one shared request deadline."""
+
+    def __init__(self, sock, remaining):
+        self._sock = sock
+        self._remaining = remaining
+
+    def sendall(self, data):
+        self._sock.settimeout(self._remaining())
+        self._sock.sendall(data)
+        self._remaining()
+
+    def makefile(self, mode):
+        require(mode == "rb", "metrics response requires a binary read stream")
+        return io.BufferedReader(_DeadlineReader(self._sock, self._remaining))
+
+    def close(self):
+        self._sock.close()
+
+
 def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
     start = clock()
     observation = {"window_start_ns": start, "window_end_ns": start, "text": None, "error": None}
     connection = response = None
     try:
-        remaining = min(SCRAPE_TIMEOUT_SECONDS, (deadline - start) / 1_000_000_000)
-        require(remaining > 0, "node collection deadline reached")
+        scrape_deadline = min(deadline, start + SCRAPE_TIMEOUT_SECONDS * 1_000_000_000)
+
+        def remaining():
+            seconds = (scrape_deadline - clock()) / 1_000_000_000
+            if seconds <= 0:
+                raise TimeoutError("metrics response exceeded request deadline")
+            return seconds
+
         host, port, path = endpoint
         # HTTPConnection neither follows redirects nor reads proxy environment variables.
-        connection = http.client.HTTPConnection(host, port, timeout=remaining)
+        connection = http.client.HTTPConnection(host, port, timeout=remaining())
+        connection.connect()
+        remaining()
+        connection.sock = _DeadlineSocket(connection.sock, remaining)
         connection.request("GET", path, headers={"Accept": "text/plain", "Accept-Encoding": "identity",
                                                  "Connection": "close"})
-        sock = connection.sock
         response = connection.getresponse()
+        remaining()
         require(response.status == 200, "metrics endpoint did not return HTTP 200 (redirects are rejected)")
         require(response.getheader("Content-Encoding", "identity") == "identity",
                 "compressed metrics response is unsupported")
@@ -168,13 +226,8 @@ def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
         require(length is None or (length.isascii() and length.isdigit() and int(length) <= MAX_SCRAPE_BYTES),
                 "metrics response exceeds body limit or has invalid Content-Length")
         chunks, size = [], 0
-        scrape_deadline = min(deadline, start + SCRAPE_TIMEOUT_SECONDS * 1_000_000_000)
-        # HTTPResponse closes its stream after the final Content-Length byte.
-        # Do not touch the detached socket after that normal completion.
         while not response.isclosed():
-            remaining = (scrape_deadline - clock()) / 1_000_000_000
-            require(remaining > 0, "metrics response exceeded request deadline")
-            sock.settimeout(remaining)
+            remaining()
             chunk = response.read1(min(65536, MAX_SCRAPE_BYTES + 1 - size))
             if not chunk:
                 break
@@ -186,6 +239,7 @@ def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
         observation["text"] = b"".join(chunks).decode("utf8")
         # Reject malformed needed families before exporting a successful observation.
         adapters.parse_mempool_metrics(observation["text"])
+        remaining()
     except (OSError, ValueError, http.client.HTTPException) as error:
         observation["error"] = f"{type(error).__name__}: {error}"[:512]
     finally:

@@ -326,7 +326,9 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(observation["text"], GAUGES)
         self.assertIsNone(observation["error"])
         self.assertLess(observation["window_start_ns"], observation["window_end_ns"])
-        factory.assert_called_once_with("127.0.0.1", 9999, timeout=2)
+        self.assertEqual(factory.call_args.args, ("127.0.0.1", 9999))
+        self.assertAlmostEqual(factory.call_args.kwargs["timeout"], 2, places=6)
+        connection.connect.assert_called_once_with()
         connection.request.assert_called_once_with("GET", "/metrics", headers={
             "Accept": "text/plain", "Accept-Encoding": "identity", "Connection": "close"})
 
@@ -358,25 +360,15 @@ class HttpStreamTests(unittest.TestCase):
         peer.sendall(wire)
         if eof:
             peer.shutdown(socket.SHUT_WR)
-        response = http.client.HTTPResponse(client)
-
-        def getresponse():
-            response.begin()
-            # Match HTTPConnection.getresponse for Connection: close. The
-            # response's makefile keeps the fd alive only until body completion.
-            if response.will_close:
-                client.close()
-            return response
-
-        connection = mock.Mock(sock=client)
-        connection.getresponse.side_effect = getresponse
-        connection.close.side_effect = client.close
+        # Preserve the real request writer, response parser, and socket ownership;
+        # replace only the outbound connection with this private byte stream.
         started = time.monotonic()
-        with mock.patch.object(sampling.http.client, "HTTPConnection", return_value=connection), \
+        with mock.patch.object(sampling.http.client.HTTPConnection, "connect",
+                               new=lambda connection: setattr(connection, "sock", client)), \
                 mock.patch.object(sampling, "SCRAPE_TIMEOUT_SECONDS", timeout):
             observed = sampling._scrape(("127.0.0.1", 9999, "/metrics"),
                                         deadline=time.monotonic_ns() + 3_000_000_000)
-        self.assertTrue(response.isclosed())
+        self.assertEqual(client.fileno(), -1)
         return observed, time.monotonic() - started
 
     def test_content_length_chunked_and_eof_complete_normally(self):
@@ -385,7 +377,12 @@ class HttpStreamTests(unittest.TestCase):
         wires = [prefix + f"Content-Length: {len(body)}\r\n\r\n".encode() + body,
                  prefix + b"Transfer-Encoding: chunked\r\n\r\n"
                  + f"{len(body):x}\r\n".encode() + body + b"\r\n0\r\n\r\n",
-                 prefix + b"\r\n" + body]
+                 prefix + b"Transfer-Encoding: chunked\r\n\r\n"
+                 + f"{len(body):x};name=value\r\n".encode() + body
+                 + b"\r\n0\r\nX-Metrics: complete\r\n\r\n",
+                 prefix + b"\r\n" + body,
+                 b"HTTP/1.1 100 Continue\r\n\r\n" + prefix
+                 + f"Content-Length: {len(body)}\r\n\r\n".encode() + body]
         for wire in wires:
             with self.subTest(framing=wire[:100]):
                 observed, _ = self.scrape(wire)
@@ -407,6 +404,153 @@ class HttpStreamTests(unittest.TestCase):
         self.assertIn("TimeoutError", observed["error"])
         self.assertIsNone(observed["text"])
         self.assertLess(elapsed, 1)
+
+
+class FragmentedSocket:
+    """Model timed socket reads without sleeps, threads, or network listeners."""
+
+    def __init__(self, fragments, *, connect_ns=0, write_ns=0, late_final_read_ns=0):
+        self.fragments = list(fragments)
+        self.now = 0
+        self.connect_ns = connect_ns
+        self.write_ns = write_ns
+        self.late_final_read_ns = late_final_read_ns
+        self.timeouts = []
+        self.closed = False
+        self.streams = []
+        self.sent = []
+
+    def wait(self, duration):
+        allowed = round(self.timeout * 1_000_000_000)
+        if duration >= allowed:
+            self.now += allowed
+            raise TimeoutError("fixture socket timed out")
+        self.now += duration
+
+    def settimeout(self, seconds):
+        self.timeout = seconds
+        self.timeouts.append(seconds)
+
+    def connect(self, connection):
+        self.settimeout(connection.timeout)
+        self.wait(self.connect_ns)
+        connection.sock = self
+
+    def sendall(self, data):
+        self.sent.append(data)
+        self.wait(self.write_ns)
+
+    def makefile(self, mode, buffering):
+        assert (mode, buffering) == ("rb", 0)
+        owner = self
+
+        class Stream(io.RawIOBase):
+            def readable(self):
+                return True
+
+            def readinto(self, buffer):
+                if not owner.fragments:
+                    return 0
+                delay, data = owner.fragments.pop(0)
+                owner.wait(delay)
+                size = min(len(buffer), len(data))
+                buffer[:size] = data[:size]
+                if size < len(data):
+                    owner.fragments.insert(0, (0, data[size:]))
+                if not owner.fragments:
+                    owner.now += owner.late_final_read_ns
+                return size
+
+        stream = Stream()
+        self.streams.append(stream)
+        return stream
+
+    def close(self):
+        self.closed = True
+
+
+class HttpDeadlineTests(unittest.TestCase):
+    def scrape(self, fragments, *, timeout=0.02, deadline=1_000_000_000,
+               connect_ns=0, write_ns=0, late_final_read_ns=0):
+        sock = FragmentedSocket(fragments, connect_ns=connect_ns, write_ns=write_ns,
+                                late_final_read_ns=late_final_read_ns)
+        with mock.patch.object(sampling.http.client.HTTPConnection, "connect",
+                               new=lambda connection: sock.connect(connection)), \
+                mock.patch.object(sampling, "SCRAPE_TIMEOUT_SECONDS", timeout):
+            observed = sampling._scrape(("127.0.0.1", 9999, "/metrics"), deadline=deadline,
+                                        clock=lambda: sock.now)
+        self.assertTrue(sock.closed)
+        self.assertTrue(all(stream.closed for stream in sock.streams))
+        return observed, sock
+
+    def test_trickling_status_headers_chunk_sizes_trailers_and_body_share_deadline(self):
+        prefix = b"HTTP/1.1 200 OK\r\nConnection: close\r\n"
+        chunked = prefix + b"Transfer-Encoding: chunked\r\n\r\n"
+        cases = {
+            "status": (b"", [b"HTTP/", b"1.1 ", b"200 ", b"OK\r\n", b"Content-Length: 0\r\n\r\n"]),
+            "headers": (prefix, [b"Content-", b"Length:", b" 0", b"\r\n", b"\r\n"]),
+            "chunk size": (chunked, [b"0", b"0", b"0", b"1\r\n", b"x\r\n0\r\n\r\n"]),
+            "chunk separator": (chunked + b"1\r\nx", [b"\r", b"\n", b"0", b"\r\n", b"\r\n"]),
+            "trailers": (chunked + b"0\r\n", [b"X-", b"Test:", b" yes", b"\r\n", b"\r\n"]),
+            "body": (prefix + b"Content-Length: 5\r\n\r\n", [b"1", b"2", b"3", b"4", b"5"]),
+        }
+        for phase, (immediate, delayed) in cases.items():
+            fragments = ([(0, immediate)] if immediate else []) + [(6_000_000, part) for part in delayed]
+            with self.subTest(phase=phase):
+                observed, sock = self.scrape(fragments)
+                self.assertIn("TimeoutError", observed["error"])
+                self.assertIsNone(observed["text"])
+                self.assertEqual(sock.now, 20_000_000)
+                self.assertAlmostEqual(sock.timeouts[-1], 0.002)
+                self.assertEqual(observed["window_end_ns"], 20_000_000)
+
+    def test_connect_and_write_use_the_same_budget_as_response(self):
+        prefix = b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\nConnection: close\r\n\r\n"
+        observed, sock = self.scrape([(6_000_000, prefix), (6_000_000, b"x")],
+                                     connect_ns=6_000_000, write_ns=6_000_000)
+        self.assertIn("TimeoutError", observed["error"])
+        self.assertIsNone(observed["text"])
+        self.assertEqual(sock.now, 20_000_000)
+        self.assertEqual(len(sock.sent), 1)
+        for actual, expected in zip(sock.timeouts, (0.02, 0.014, 0.008, 0.002), strict=True):
+            self.assertAlmostEqual(actual, expected)
+
+    def test_request_write_is_bounded_by_remaining_budget(self):
+        observed, sock = self.scrape([], connect_ns=6_000_000, write_ns=18_000_000)
+        self.assertIn("TimeoutError", observed["error"])
+        self.assertEqual(sock.now, 20_000_000)
+        self.assertEqual(sock.streams, [])
+
+    def test_shorter_collection_deadline_is_used(self):
+        prefix = b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\nConnection: close\r\n\r\n"
+        observed, sock = self.scrape([(6_000_000, prefix), (6_000_000, b"x")],
+                                     timeout=2, deadline=10_000_000)
+        self.assertIn("TimeoutError", observed["error"])
+        self.assertEqual(sock.now, 10_000_000)
+        self.assertAlmostEqual(sock.timeouts[0], 0.01)
+        self.assertAlmostEqual(sock.timeouts[-1], 0.004)
+
+    def test_complete_final_read_after_deadline_is_not_accepted(self):
+        body = GAUGES.encode()
+        prefix = (b"HTTP/1.1 200 OK\r\nConnection: close\r\n"
+                  + f"Content-Length: {len(body)}\r\n\r\n".encode())
+        # Simulate the thread returning from the final read after its budget,
+        # even though a full, valid response was delivered by the socket.
+        observed, sock = self.scrape([(0, prefix), (6_000_000, body)], late_final_read_ns=20_000_000)
+        self.assertIn("TimeoutError", observed["error"])
+        self.assertIsNone(observed["text"])
+        self.assertEqual(sock.now, 26_000_000)
+
+    def test_framing_fragments_complete_within_deadline(self):
+        body = GAUGES.encode()
+        parts = [b"HTTP/1.1 ", b"200 OK\r\n", b"Transfer-Encoding: ", b"chunked\r\n",
+                 b"Connection: close\r\n\r\n", f"{len(body):x}".encode(), b";test=yes\r\n",
+                 body, b"\r", b"\n0\r\n", b"X-Test: done\r\n", b"\r\n"]
+        observed, sock = self.scrape([(1_000_000, part) for part in parts])
+        self.assertIsNone(observed["error"])
+        self.assertEqual(observed["text"], GAUGES)
+        self.assertEqual(sock.now, len(parts) * 1_000_000)
+        self.assertTrue(all(left >= right for left, right in zip(sock.timeouts, sock.timeouts[1:])))
 
 
 if __name__ == "__main__":
