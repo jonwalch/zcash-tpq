@@ -173,7 +173,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "65058497d0a61ade19e5150095365e701f78a7766744f7e944d0046a313a9a92"
+      "sha256": "2b09cc90e588bbdf7db36ffd57f61c8a3104cdad13324d8f4877d00aa4722f89"
     },
     {
       "disposition": "new",
@@ -239,7 +239,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Python standard-library Linux proc/cgroup/interface readers with explicit sampling boundaries and availability. No copied external collector implementation.",
-      "sha256": "51a68a3a5d4c8a81d43ade2983bfeef57b6e01517f8eda5f40f13c9c110f77c9"
+      "sha256": "2c0614f2bf1d34f657d5ea0ae8284a64fd072900337245c84a4385c20cc6488d"
     },
     {
       "disposition": "adapted",
@@ -250,7 +250,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use.",
-      "sha256": "bc5dc971fe4409a1e21bb171be97b60ec7517825801b9e3f8efe0b0400080780"
+      "sha256": "8febb85d5f88e28d43de78551521e4ff55841f7d52cdd47076ae7b21fd21b3e4"
     },
     {
       "disposition": "adapted",
@@ -261,7 +261,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling.",
-      "sha256": "cf433f587034713355e530039cd8f57ff91bc5c5dcecea706653a5d35ba65bc4"
+      "sha256": "7ca3b455a373102ec3b2b2da67ecf296918eb8ca9f2a2cbc37d253be973e2701"
     },
     {
       "disposition": "adapted",
@@ -283,7 +283,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads.",
-      "sha256": "891622abb5badb711559d46d1ac4fa13d7c9eae444e7a4d21ffb431abe0fa57d"
+      "sha256": "c5cbb6f84eacd4e7adf43c2aeb5bd37a6dd8ee7bf5d649af95cdce06f180a15b"
     },
     {
       "disposition": "new",
@@ -294,7 +294,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "2dbbb1da56123c1eea941f81e86bbf6a3ab4e2735a970aaa3d18e3841b0fa042"
+      "sha256": "2ede2d31289e9acccc1cbaf44301f31d6f2a345d470d26134d714728ec24ac85"
     },
     {
       "disposition": "new",
@@ -305,7 +305,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Declare units and measurement boundaries for primitive, process, transaction, node, and propagation observations; unavailable capabilities are not measurements.",
-      "sha256": "acfb993f51a848c58bbb609d2ef490de3b14a38c3753967e695b9de4d827e52a"
+      "sha256": "c08dbc9c859f5c71f6bb23a8c0345a16583e7173778bee0ff595c39ec47b8357"
     },
     {
       "disposition": "attribution",
@@ -316,7 +316,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
-      "sha256": "5cb1ecde80d422e5350e1d0ee0664a74038966f83a2d65e8596c93ef5746764e"
+      "sha256": "fd88844b29ebfc5ddac2ae66b715cc3f8a45d682fcd4132a81093f0305e1f185"
     },
     {
       "disposition": "new",
@@ -382,7 +382,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Exercise Linux resource snapshots and counter handling using synthetic file content, without profiling a live process.",
-      "sha256": "629cd8f300800d799f657ebd9ddfd2eec84c5043899c48e1abaf3304200d1895"
+      "sha256": "5057808b9684bcca870d79d214299288232c897a5b34a4722dc3d928b4ec838f"
     },
     {
       "disposition": "new",
@@ -393,7 +393,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed.",
-      "sha256": "0c6f4d595eeb42abfcf8e378e418b84c61a425df0ac63bbb5e8103c2927b4ad8"
+      "sha256": "147d77e7bc6b15ffe494b876892fc07f2b2535d440ef8046add77eeb380cb190"
     },
     {
       "disposition": "new",
@@ -415,7 +415,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution.",
-      "sha256": "c634e818287aa4565b96baca874e04e4d11af3552716f027005f4ad043171ecd"
+      "sha256": "44ffe2f4fbf5554bce07bc6f1b28ee10a3d05cbda78ca51c98cb88ca8172de64"
     },
     {
       "disposition": "adapted",
@@ -2309,7 +2309,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "5dc234bcde2217c8b44da0b5ea2dd1c801a35222d9909b0c2bc517adc3ba1071"
+      "sha256": "74e45d58b23ceb24a62cdd8108e569172b4959a9ffec27e6e51d3fcd44d161a9"
     },
     {
       "disposition": "new",

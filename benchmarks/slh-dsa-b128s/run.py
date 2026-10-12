@@ -21,7 +21,8 @@ import uuid
 
 from provenance import (BenchmarkError, artifact_inventory, atomic_json, canonical, claim_run,
                         digest_value, fresh_directory, host_state, read_json, require,
-                        sha256, source_state, strict_json, toolchain, verify_artifacts)
+                        sha256, source_state, strict_json, toolchain, toolchain_compatibility,
+                        verify_artifacts)
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -120,7 +121,7 @@ def require_execute(args):
 def build(args):
     require_execute(args)
     before = source_state(ROOT)
-    compiler = toolchain(HERE)
+    compiler = toolchain(HERE, source_root=ROOT)
     output = fresh_directory(args.output)
     receipt = {"schema_version": 1, "kind": "tpq-primitive-build", "complete": False,
                "source": before, "toolchain": compiler, "host": host_state()}
@@ -142,7 +143,7 @@ def build(args):
                                           timeout=args.timeout, max_bytes=64 * 1024 * 1024,
                                           on_line=artifact)
         require(len(binaries) == 1, "expected exactly one benchmark executable")
-        require(source_state(ROOT) == before and toolchain(HERE) == compiler,
+        require(source_state(ROOT) == before and toolchain(HERE, source_root=ROOT) == compiler,
                 "build inputs changed during compilation")
         binary = output / "tpq-bench"
         shutil.copy2(binaries[0], binary)
@@ -358,10 +359,11 @@ def summarize_run(args):
                                 "metric_catalog_sha256": manifest["metric_catalog_sha256"],
                                 "instrumentation": manifest.get("instrumentation"),
                                 "reporter_sha256": sha256(HERE / "results.py"),
-                                "toolchain": manifest.get("build", {}).get("toolchain"),
+                                "toolchain": toolchain_compatibility(manifest.get("build", {}).get("toolchain")),
                                 "adapter_compatibility": manifest.get("adapter_compatibility")}
     summary["provenance"] = {"manifest_sha256": receipt["manifest_sha256"],
                              "source": manifest.get("build", {}).get("source", {}).get("commit"),
+                             "toolchain": manifest.get("build", {}).get("toolchain"),
                              "execution_status": receipt["status"], "process_selection": args.process_id,
                              "imported_evidence": manifest.get("provenance"),
                              "adapter_metadata": manifest.get("adapter_metadata")}

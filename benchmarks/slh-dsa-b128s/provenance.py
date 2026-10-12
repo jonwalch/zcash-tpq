@@ -138,17 +138,26 @@ def source_state(root):
             "files": inventory, "inventory_sha256": digest_value(inventory)}
 
 
-def toolchain(root):
+def toolchain(root, *, source_root=None):
     # Cargo searches the invocation directory's ancestors and Cargo home. Hash
     # configuration without copying possible registry credentials into receipts.
-    paths = set()
     root = Path(root).resolve()
+    source_root = Path(source_root).resolve() if source_root is not None else root
+    require(root.is_relative_to(source_root), "Cargo invocation must be inside the source checkout")
+    paths = {}
     for parent in (root, *root.parents):
-        paths.update((parent / ".cargo/config", parent / ".cargo/config.toml"))
-    cargo_home = Path(os.environ.get("CARGO_HOME", str(Path.home() / ".cargo")))
-    paths.update((cargo_home / "config", cargo_home / "config.toml"))
+        for name in ("config", "config.toml"):
+            paths.setdefault(parent / ".cargo" / name, []).append("ancestor")
+    cargo_home = Path(os.environ.get("CARGO_HOME") or Path.home() / ".cargo")
+    if not cargo_home.is_absolute():
+        cargo_home = root / cargo_home
+    cargo_home = cargo_home.resolve()
+    for name in ("config", "config.toml"):
+        paths.setdefault(cargo_home / name, []).append("cargo_home")
     configs = []
-    for path in sorted(paths):
+    # Preserve search precedence and both filename forms. Hashing the unused
+    # .toml form when legacy config exists is deliberately conservative.
+    for path, roles in paths.items():
         if path.exists():
             config = tomllib.loads(path.read_text())
             require(not any(config.get("build", {}).get(name) for name in
@@ -156,7 +165,10 @@ def toolchain(root):
                     "custom Cargo compiler or wrapper is not supported")
             require(not {"RUSTC", "CARGO_BUILD_RUSTC", "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER"}
                     .intersection(config.get("env", {})), "custom Cargo compiler environment is not supported")
-            configs.append({"path": str(path), "sha256": sha256(path)})
+            location = ({"checkout_relative": str(path.relative_to(source_root))}
+                        if path.is_relative_to(source_root) else {"external_absolute": str(path)})
+            configs.append({"path": str(path), "location": location,
+                            "search_roles": roles, "sha256": sha256(path)})
     require(not any(os.environ.get(name) for name in ("RUSTC", "CARGO_BUILD_RUSTC",
                 "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER", "CARGO_BUILD_RUSTC_WRAPPER",
                 "CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER")), "custom Cargo compiler or wrapper is not supported")
@@ -167,8 +179,22 @@ def toolchain(root):
         ("CARGO_PROFILE_", "CARGO_BUILD_", "CARGO_TARGET_")))
     return {"rustc": command_output(["rustc", "-vV"], root).strip(),
             "cargo": command_output(["cargo", "-V"], root).strip(),
+            "cargo_configuration_identity_version": 1,
             "cargo_configurations": configs,
             "environment": {name: os.environ.get(name) for name in sorted(names)}}
+
+
+def toolchain_compatibility(identity):
+    """Ignore only the checkout prefix, keeping raw paths in build provenance.
+
+    Old receipts have no scoped locations or search order. Keep their absolute
+    paths as a conservative identity instead of guessing missing provenance.
+    """
+    if identity is None or identity.get("cargo_configuration_identity_version") != 1:
+        return identity
+    return {**identity, "cargo_configurations": [
+        {key: value for key, value in config.items() if key != "path"}
+        for config in identity["cargo_configurations"]]}
 
 
 def host_state():

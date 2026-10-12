@@ -148,6 +148,11 @@ the validation/residence metric is null with a reason; the observed driver
 attempt duration remains available. The operator must still establish that this
 was the producer's effective configuration, including any command-line overrides.
 Checking the saved text does not authenticate the producer or that applicability.
+Comparisons require the same validated effective-configuration hash. This binds
+all archived TOML bytes, including CPU-thread settings, even when case and
+configuration labels match. Source and binary revisions can still differ.
+Re-import older saved block inputs and their original profiles into fresh
+directories to add this comparison guard; preserve the original receipts.
 
 Rejected, duplicate, unavailable, and timed-out results remain in raw records.
 Explicit `timed_out` results have a censored duration lower bound when the probe
@@ -239,12 +244,17 @@ blocking read. `resource_record` validates both snapshots and returns one
 normalized interval record. JSON import uses `{"before": ..., "after": ...}`.
 
 Process identity contains PID, start-time ticks, boot ID, and proc root.
-CPU counters cover one process and exclude its children. RSS comes from
+CPU counters cover the process thread group and exclude child processes. RSS comes from
 `VmRSS`; lifetime peak RSS comes from `VmHWM`. A process that has exited may
 already have lost these files. The reader does not recover a final peak after
-exit. Effective CPU normalization requires the applicable quota entitlement;
-the process affinity count can further cap it. Affinity alone cannot establish
-the quota.
+exit. Effective CPU normalization uses the operator-declared process-wide
+entitlement, including applicable CPU quotas and worker-thread restrictions.
+The reader does not independently verify this declaration. The affinity count
+from `/proc/PID/status` describes only the thread-group leader; it remains an
+endpoint diagnostic and does not cap the whole-process denominator. A change
+in leader affinity alone does not reject the interval. Missing or null affinity
+also leaves the declared entitlement unchanged. Without an entitlement, the
+normalized percentage is unavailable.
 
 Cgroup identity contains path, device, and inode. CPU, memory, and throttling
 counters cover the cgroup and its descendants. `boundary` must identify the

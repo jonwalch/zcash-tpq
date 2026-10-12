@@ -93,6 +93,9 @@ python3 benchmarks/slh-dsa-b128s/run.py summarize .context/bench-run-01 \
 The receipt records the exact compiler, Cargo configuration hashes, relevant
 build environment, source tree and all tracked source-file hashes. It copies
 and hashes the selected executable. Custom `RUSTC` overrides are rejected.
+Relative `CARGO_HOME` paths are resolved from the benchmark crate directory,
+where the runner invokes Cargo. The receipt hashes and checks that directory's
+configuration even when the Python command starts at the repository root.
 Builds are not hermetic or independently reproducible merely because they have
 receipts. The hashes bind the files that this runner observed.
 
@@ -161,7 +164,16 @@ censored values and cannot establish the unobserved tail.
 
 Reports keep case, configuration, process, phase, input mode and outcome
 separate. Comparisons require matching hardware, workload, compiler and
-instrumentation metadata. Source revisions can differ. When a run has repeated
+instrumentation metadata. New receipts compare checkout-local Cargo config
+locations relative to the checkout, with hashes and search precedence intact;
+different worktree prefixes alone do not prevent a comparison. External config
+paths remain exact. Raw absolute paths stay in report provenance. Older build
+receipts keep their original path-sensitive identity.
+
+Saved block imports require matching validated effective-config hashes. To
+apply this guard to older saved imports, re-import their original input and
+profile into fresh directories. Preserve the old artifacts. Source and binary
+revisions can differ. When a run has repeated
 processes, select one process from each run before comparison:
 
 ```sh

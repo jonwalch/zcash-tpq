@@ -1,6 +1,7 @@
 """Synthetic process and artifact tests; no signer, node or benchmark is run."""
 
 import argparse
+from contextlib import chdir
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
 import provenance
 import run
+import results
 
 
 class ProcessTests(unittest.TestCase):
@@ -113,6 +115,79 @@ class ProvenanceTests(unittest.TestCase):
                     provenance.toolchain(directory)
 
 
+    def test_relative_cargo_home_uses_cargo_invocation_directory(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(provenance, "command_output", return_value="test") as command, \
+                patch.dict(os.environ, {"CARGO_HOME": "relative-home"}, clear=True):
+            checkout = Path(directory).resolve()
+            invocation = checkout / "benchmarks/primitive"
+            config = invocation / "relative-home/config.toml"
+            config.parent.mkdir(parents=True)
+            config.write_text('[build]\nrustflags = ["-C", "opt-level=1"]\n')
+            # The runner can be launched from the repository root, while Cargo
+            # is run in the benchmark crate. A caller-relative decoy must not win.
+            decoy = checkout / "relative-home/config.toml"
+            decoy.parent.mkdir()
+            decoy.write_text('[build]\nrustc = "wrong-cwd-compiler"\n')
+            with chdir(checkout):
+                before = provenance.toolchain(invocation, source_root=checkout)
+                configs = before["cargo_configurations"]
+                actual = next(item for item in configs if item["path"] == str(config))
+                self.assertEqual(actual["sha256"], provenance.sha256(config))
+                self.assertEqual(actual["search_roles"], ["cargo_home"])
+                self.assertNotIn(str(decoy), [item["path"] for item in configs])
+                config.write_text('[build]\nrustflags = ["-C", "opt-level=3"]\n')
+                after = provenance.toolchain(invocation, source_root=checkout)
+            self.assertNotEqual(provenance.toolchain_compatibility(before),
+                                provenance.toolchain_compatibility(after))
+            self.assertTrue(all(call.args[1] == invocation for call in command.call_args_list))
+
+    def test_relative_cargo_home_cannot_hide_custom_compiler(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(provenance, "command_output", return_value="test"), \
+                patch.dict(os.environ, {"CARGO_HOME": "relative-home"}, clear=True):
+            checkout = Path(directory).resolve()
+            invocation = checkout / "benchmarks/primitive"
+            config = invocation / "relative-home/config.toml"
+            config.parent.mkdir(parents=True)
+            overrides = [f'[build]\n{key} = "custom"\n' for key in
+                         ("rustc", "rustc-wrapper", "rustc-workspace-wrapper")]
+            overrides += [f'[env]\n{key} = "custom"\n' for key in
+                          ("RUSTC", "CARGO_BUILD_RUSTC", "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER")]
+            with chdir(checkout):
+                for override in overrides:
+                    with self.subTest(override=override):
+                        config.write_text(override)
+                        with self.assertRaisesRegex(provenance.BenchmarkError, "custom Cargo compiler"):
+                            provenance.toolchain(invocation, source_root=checkout)
+
+    def test_config_identity_keeps_scope_precedence_and_legacy_paths(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(provenance, "command_output", return_value="test"), \
+                patch.dict(os.environ, {"CARGO_HOME": str(Path(directory) / "cargo-home")}, clear=True):
+            checkout = Path(directory).resolve() / "checkout"
+            invocation = checkout / "benchmarks/primitive"
+            upper, lower = checkout / ".cargo/config.toml", invocation / ".cargo/config.toml"
+            for path in (upper, lower):
+                path.parent.mkdir(parents=True)
+            upper.write_text('[build]\njobs = 1\n')
+            lower.write_text('[build]\njobs = 2\n')
+            first = provenance.toolchain_compatibility(provenance.toolchain(invocation, source_root=checkout))
+            local = [item for item in first["cargo_configurations"] if "checkout_relative" in item["location"]]
+            self.assertEqual([item["location"]["checkout_relative"] for item in local],
+                             ["benchmarks/primitive/.cargo/config.toml", ".cargo/config.toml"])
+            upper_text, lower_text = upper.read_text(), lower.read_text()
+            upper.write_text(lower_text)
+            lower.write_text(upper_text)
+            swapped = provenance.toolchain_compatibility(provenance.toolchain(invocation, source_root=checkout))
+            self.assertNotEqual(first, swapped)
+            lower.unlink()
+            moved = provenance.toolchain_compatibility(provenance.toolchain(invocation, source_root=checkout))
+            self.assertNotEqual(swapped, moved)
+        legacy = {"cargo_configurations": [{"path": "/old/.cargo/config.toml", "sha256": "a" * 64}]}
+        self.assertEqual(provenance.toolchain_compatibility(legacy), legacy)
+
+
 class RegistrationTests(unittest.TestCase):
     def settings(self):
         return {"cases": ["verify"], "samples": 3, "warmup": 1, "repetitions": 2,
@@ -189,12 +264,12 @@ class ExecutionTests(unittest.TestCase):
             "public_key_bytes": 32, "message_bytes": 101, "signature_bytes": 7856}},
                 {**base, "phase": "process", "outcome": "success", "metrics": {"process_peak_rss_bytes": 120}}]
 
-    def execute(self, output, rows):
+    def execute(self, output, rows, build=None):
         def supervisor(_command, **kwargs):
             for row in rows:
                 kwargs["on_line"](123, provenance.canonical(row))
             return {"pid": 123, "exit_code": 0, "elapsed_ns": 100, "output_bytes": 10}
-        with patch.object(run, "validate_build", return_value={"synthetic": True}), \
+        with patch.object(run, "validate_build", return_value=build or {"synthetic": True}), \
                 patch.object(run, "host_state", return_value={"synthetic": True}), \
                 patch.object(run, "supervise", side_effect=supervisor):
             return run.execute(argparse.Namespace(execute=True, directory=output))
@@ -209,6 +284,45 @@ class ExecutionTests(unittest.TestCase):
             self.assertTrue(report["successful"])
             with self.assertRaisesRegex(provenance.BenchmarkError, "already attempted"):
                 self.execute(output, [])
+
+    def test_worktree_paths_compare_but_changed_build_inputs_do_not(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(provenance, "command_output", return_value="test"), \
+                patch.dict(os.environ, {"CARGO_HOME": str(Path(directory) / "cargo-home")}, clear=True):
+            base = Path(directory).resolve()
+            reports = []
+            for label, config_text, flags in (
+                    ("baseline", '[build]\njobs = 1\n', "same"),
+                    ("candidate", '[build]\njobs = 1\n', "same"),
+                    ("changed-config", '[build]\njobs = 2\n', "same"),
+                    ("changed-flags", '[build]\njobs = 1\n', "changed")):
+                checkout = base / label
+                config = checkout / ".cargo/config.toml"
+                config.parent.mkdir(parents=True)
+                config.write_text(config_text)
+                invocation = checkout / "benchmarks/primitive"
+                invocation.mkdir(parents=True)
+                with patch.dict(os.environ, {"RUSTFLAGS": flags}):
+                    identity = provenance.toolchain(invocation, source_root=checkout)
+                output, manifest = self.prepare(checkout)
+                manifest["build"]["toolchain"] = identity
+                provenance.atomic_json(output / "manifest.json", manifest)
+                self.execute(output, self.child_rows("verify"), build=manifest["build"])
+                destination = checkout / "report"
+                run.summarize_run(argparse.Namespace(directory=output, output=destination, process_id=None))
+                report = provenance.read_json(destination / "summary.json")
+                self.assertEqual(report["provenance"]["toolchain"], identity)
+                self.assertIn(str(config), [item["path"] for item in
+                                           report["provenance"]["toolchain"]["cargo_configurations"]])
+                reports.append(report)
+            self.assertNotEqual(reports[0]["provenance"]["toolchain"], reports[1]["provenance"]["toolchain"])
+            compared = results.compare_summaries(reports[0], reports[1])
+            self.assertEqual({(group["phase"], group["outcome"]) for group in compared["groups"]},
+                             {(phase, outcome) for phase in ("primitive", "process")
+                              for outcome in ("success", "all_outcomes")})
+            for changed in reports[2:]:
+                with self.assertRaisesRegex(ValueError, "incompatible"):
+                    results.compare_summaries(reports[0], changed)
 
     def test_short_success_exit_retains_explicit_failure(self):
         with tempfile.TemporaryDirectory() as directory:

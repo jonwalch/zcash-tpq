@@ -78,6 +78,18 @@ source-independent hardware, workload, cache, compiler and instrumentation
 identity. The objects must match exactly. Source revisions can differ and stay
 in separate source metadata.
 
+New build receipts identify checkout-local Cargo configuration files by their
+checkout-relative location, search roles, precedence order and content hash.
+Only the checkout's absolute prefix is removed from comparison identity.
+External configuration paths, compiler versions and build flags still match
+exactly. Original absolute paths remain in build and report provenance. Older
+receipts without this scoped identity retain their absolute-path comparison
+rule; do not infer missing provenance from a relocated checkout.
+
+Saved block imports also compare the validated effective TOML hash. Its
+applicability to the producer remains operator-declared. Re-import older saved
+inputs and original profiles into new directories to obtain the guard.
+
 Comparisons match case, configuration, phase, cache and outcome. They preserve
 both run and process identities. Multiple processes for one matched population
 are ambiguous: select explicit process runs before comparison. The tool never

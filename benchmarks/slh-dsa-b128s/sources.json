@@ -206,7 +206,7 @@
         "research-driver"
       ],
       "classification": "selective helper and provenance design adaptation",
-      "adaptation": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling."
+      "adaptation": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling. Resolve relative Cargo home against the Cargo invocation directory. Preserve raw configuration paths while assigning checkout-relative or external locations and ordered search roles for comparison."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/run.py",
@@ -216,7 +216,7 @@
         "product-fixture-parser"
       ],
       "classification": "selective driver design adaptation and new supervision",
-      "adaptation": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads."
+      "adaptation": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads. Compare scoped compiler configuration identities while retaining original absolute paths in report provenance."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/results.py",
@@ -230,13 +230,13 @@
       "path": "benchmarks/slh-dsa-b128s/schema/metrics.json",
       "sources": [],
       "classification": "new metric contract",
-      "adaptation": "Declare units and measurement boundaries for primitive, process, transaction, node, and propagation observations; unavailable capabilities are not measurements."
+      "adaptation": "Declare units and measurement boundaries for primitive, process, transaction, node, and propagation observations; unavailable capabilities are not measurements. Process normalization uses operator-declared whole-process entitlement, not leader-thread affinity."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/collectors.py",
       "sources": [],
       "classification": "new bounded measurement plumbing",
-      "adaptation": "Python standard-library Linux proc/cgroup/interface readers with explicit sampling boundaries and availability. No copied external collector implementation."
+      "adaptation": "Python standard-library Linux proc/cgroup/interface readers with explicit sampling boundaries and availability. No copied external collector implementation. Preserve operator-declared process-wide CPU entitlement; leader-thread affinity is diagnostic only, including missing, null or changed masks."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/adapters.py",
@@ -254,7 +254,7 @@
       "path": "benchmarks/slh-dsa-b128s/tests/test_runner.py",
       "sources": [],
       "classification": "new synthetic controls",
-      "adaptation": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution."
+      "adaptation": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution. Regressions cover relative Cargo-home hashing/compiler guards and full report comparison across worktrees, changed config bytes and changed flags."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/tests/test_results.py",
@@ -266,7 +266,7 @@
       "path": "benchmarks/slh-dsa-b128s/tests/test_collectors.py",
       "sources": [],
       "classification": "new synthetic controls",
-      "adaptation": "Exercise Linux resource snapshots and counter handling using synthetic file content, without profiling a live process."
+      "adaptation": "Exercise Linux resource snapshots and counter handling using synthetic file content, without profiling a live process. Regressions separate group CPU accounting from leader-thread affinity and retain declared entitlement with changed or unknown leader masks."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/tests/test_adapters.py",
@@ -281,13 +281,13 @@
         "product-fixture-parser"
       ],
       "classification": "new saved-evidence adapter orchestration",
-      "adaptation": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use."
+      "adaptation": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use. Bind block comparison compatibility to the validated effective-configuration hash, retaining explicit unknown evidence when probe disablement is not established."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/tests/test_imports.py",
       "sources": [],
       "classification": "new synthetic integration controls",
-      "adaptation": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed."
+      "adaptation": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed. End-to-end import/report/compare controls reject changed effective config and permit changed source/binary identities with matched config."
     }
   ]
 }

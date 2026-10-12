@@ -168,7 +168,7 @@
     "process_cpu_normalized_percent": {
       "unit": "percent",
       "integer": false,
-      "description": "100 times process core equivalents divided by measured effective CPU entitlement."
+      "description": "100 times process core equivalents divided by operator-declared process-wide effective CPU entitlement; leader-thread affinity is diagnostic only."
     },
     "process_cpu_ns": {
       "unit": "ns",
