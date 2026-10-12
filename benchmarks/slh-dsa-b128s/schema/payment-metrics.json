@@ -55,7 +55,7 @@
     "payment_wallet_setup_ns": {
       "unit": "ns",
       "integer": true,
-      "description": "Fresh SLH wallet setup within the foreground interval, including its actual storage initialization. Cached inventory does not mean a warm existing wallet database."
+      "description": "Fresh SLH watch-store setup within the foreground interval, including actual storage initialization and synchronization against the synthetic chain source. Cached inventory does not mean a warm existing wallet database."
     }
   }
 }
