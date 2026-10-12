@@ -162,6 +162,20 @@ samples has null quantiles and a reason. Failures, missing capabilities,
 censored lower bounds and warmups remain visible. Exact quantiles exclude
 censored values and cannot establish the unobserved tail.
 
+Open `report.html` for the readable view. Primitive timings appear together,
+with one row per process and outcome, followed by the full metric tables.
+Durations use ns, µs, ms or seconds; larger byte values use binary units. Expand
+the exact-value details or use JSON/CSV for unrounded values in catalog units.
+CPU/wall is core equivalents, not total host CPU percentage. Each process peak
+is one lifetime high-water sample, including setup and warmups.
+
+Completion, failures, missing values and censored bounds stay visible. With
+1–19 exact samples, both p95 and p99 select the observed maximum. One sample
+repeats the same value for all three percentiles. These values do not establish
+tail stability. Combined-outcome distributions repeat the same attempts and
+are kept in a separate audit view. Provenance is expandable, and the HTML
+renderer hash is recorded separately from the measured source and binary.
+
 Reports keep case, configuration, process, phase, input mode and outcome
 separate. Comparisons require matching hardware, workload, compiler and
 instrumentation metadata. New receipts compare checkout-local Cargo config

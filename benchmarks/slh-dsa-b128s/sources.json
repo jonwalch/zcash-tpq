@@ -216,7 +216,7 @@
         "product-fixture-parser"
       ],
       "classification": "selective driver design adaptation and new supervision",
-      "adaptation": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads. Compare scoped compiler configuration identities while retaining original absolute paths in report provenance."
+      "adaptation": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads. Compare scoped compiler configuration identities while retaining original absolute paths in report provenance. Record the HTML renderer hash separately from the measured source/binary and statistical compatibility."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/results.py",
@@ -224,7 +224,7 @@
         "research-os-and-stats"
       ],
       "classification": "nearest-rank algorithm reference and new reporting",
-      "adaptation": "Use the empirical nearest-rank index ceil(n*p/100)-1 for p50/p95/p99. New Python validation and reporting preserve process/case boundaries, warmups, outcome populations, unavailable values, and censored observations. No research result rows are imported."
+      "adaptation": "Use the empirical nearest-rank index ceil(n*p/100)-1 for p50/p95/p99. New Python validation and reporting preserve process/case boundaries, warmups, outcome populations, unavailable values, and censored observations. No research result rows are imported. Delegate only HTML presentation to a local renderer; JSON/CSV contracts and quantile calculation remain unchanged."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/schema/metrics.json",
@@ -260,7 +260,7 @@
       "path": "benchmarks/slh-dsa-b128s/tests/test_results.py",
       "sources": [],
       "classification": "new synthetic controls",
-      "adaptation": "Exercise percentile edge cases, strict record validation, failure and warmup populations, absent/censored observations, and compatibility reporting."
+      "adaptation": "Exercise percentile edge cases, strict record validation, failure and warmup populations, absent/censored observations, and compatibility reporting. Test readable HTML, escaped metadata, exact values, separate process/outcome populations and sample/coverage caveats."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/tests/test_collectors.py",
@@ -288,6 +288,12 @@
       "sources": [],
       "classification": "new synthetic integration controls",
       "adaptation": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed. End-to-end import/report/compare controls reject changed effective config and permit changed source/binary identities with matched config."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/html_report.py",
+      "sources": [],
+      "classification": "new saved-report presentation",
+      "adaptation": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies."
     }
   ]
 }

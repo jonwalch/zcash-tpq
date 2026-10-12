@@ -242,6 +242,17 @@
       "sha256": "2c0614f2bf1d34f657d5ea0ae8284a64fd072900337245c84a4385c20cc6488d"
     },
     {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/html_report.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies.",
+      "sha256": "78230657b5c0e4ecda63ce99c0c92e5afa020521c8066489f49fee9d8694d52c"
+    },
+    {
       "disposition": "adapted",
       "path": "benchmarks/slh-dsa-b128s/imports.py",
       "provenance": [
@@ -272,7 +283,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Use the empirical nearest-rank index ceil(n*p/100)-1 for p50/p95/p99. New Python validation and reporting preserve process/case boundaries, warmups, outcome populations, unavailable values, and censored observations. No research result rows are imported.",
-      "sha256": "6110faeb9be47a59e7ef480c9c01957dae49162b61b19ae25c5dfacd8113a103"
+      "sha256": "d34a2c59e33e3b32a8c2ff7ddf2b4568d47b7811f7541f44dea5912f91fe1955"
     },
     {
       "disposition": "adapted",
@@ -283,7 +294,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads.",
-      "sha256": "c5cbb6f84eacd4e7adf43c2aeb5bd37a6dd8ee7bf5d649af95cdce06f180a15b"
+      "sha256": "84520276fc5ed98982170276b268a98cfe20b9117187a3e62b57d36731eaf607"
     },
     {
       "disposition": "new",
@@ -294,7 +305,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "2ede2d31289e9acccc1cbaf44301f31d6f2a345d470d26134d714728ec24ac85"
+      "sha256": "6feec9e27ef67c99c3edcf2717c8a882ba252335c49a9eda7f238641fca9ff3b"
     },
     {
       "disposition": "new",
@@ -316,7 +327,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
-      "sha256": "fd88844b29ebfc5ddac2ae66b715cc3f8a45d682fcd4132a81093f0305e1f185"
+      "sha256": "d5f45ab2e47e102fe2096bb9ca96b5b719bdc6563a7c946a124dbd633ae3c83f"
     },
     {
       "disposition": "new",
@@ -404,7 +415,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Exercise percentile edge cases, strict record validation, failure and warmup populations, absent/censored observations, and compatibility reporting.",
-      "sha256": "7b6cb5923e7647c8a83d0a3a3fb65f7f0bbc961342035e593c89260232d9f3e4"
+      "sha256": "5ba1af734b15d1214dcd711011d7cf0013213e9614e57712183ae438f6481312"
     },
     {
       "disposition": "new",
@@ -415,7 +426,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution.",
-      "sha256": "44ffe2f4fbf5554bce07bc6f1b28ee10a3d05cbda78ca51c98cb88ca8172de64"
+      "sha256": "d7960ab16f71ea343649801f66477e53962541379bdf7f4b6af9420f281b9a55"
     },
     {
       "disposition": "adapted",
@@ -2309,7 +2320,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "74e45d58b23ceb24a62cdd8108e569172b4959a9ffec27e6e51d3fcd44d161a9"
+      "sha256": "03f08ddb1d3fa4a396a31192af2d2a1cd2fd81878ccbbb7ff624eb570686cfd8"
     },
     {
       "disposition": "new",

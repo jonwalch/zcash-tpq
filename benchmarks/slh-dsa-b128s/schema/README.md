@@ -71,6 +71,11 @@ refuses to replace existing report files. All external HTML text is escaped.
 Caller-supplied metadata, including source hashes and compatibility information,
 stays in JSON and the HTML overview. Reports contain counts and completion
 status beside the quantiles.
+The HTML view uses rounded display units and per-process timing overviews;
+exact catalog-unit values remain in row details and the JSON/CSV downloads.
+Failure outcomes and coverage cautions remain visible. Combined-outcome tables
+and provenance are expandable. HTML renderer identity is separate report
+provenance and does not change statistical comparison compatibility.
 
 Comparisons require finalized, measured summaries with the current schema and
 catalog hash. The runner supplies a nonempty `compatibility` object with

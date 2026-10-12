@@ -363,6 +363,7 @@ def summarize_run(args):
                                 "adapter_compatibility": manifest.get("adapter_compatibility")}
     summary["provenance"] = {"manifest_sha256": receipt["manifest_sha256"],
                              "source": manifest.get("build", {}).get("source", {}).get("commit"),
+                             "html_renderer_sha256": sha256(HERE / "html_report.py"),
                              "toolchain": manifest.get("build", {}).get("toolchain"),
                              "execution_status": receipt["status"], "process_selection": args.process_id,
                              "imported_evidence": manifest.get("provenance"),

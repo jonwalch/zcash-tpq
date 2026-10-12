@@ -282,6 +282,8 @@ class ExecutionTests(unittest.TestCase):
             self.assertTrue(receipt["complete"] and receipt["successful"])
             report = run.summarize_run(argparse.Namespace(directory=output, output=root / "report", process_id=None))
             self.assertTrue(report["successful"])
+            saved = provenance.read_json(root / "report/summary.json")
+            self.assertEqual(saved["provenance"]["html_renderer_sha256"], provenance.sha256(HERE / "html_report.py"))
             with self.assertRaisesRegex(provenance.BenchmarkError, "already attempted"):
                 self.execute(output, [])
 
