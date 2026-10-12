@@ -29,8 +29,10 @@ COMMON_METRICS = {"payment_verify_ns", "payment_total_ns",
 SLH_METRICS = {"payment_wallet_setup_ns", "payment_prepare_persist_ns", "payment_sign_persist_ns",
                "payment_assemble_persist_ns"}
 CLASSICAL_METRICS = {"payment_assembly_ns", "payment_sign_ns"}
-INSTRUMENTS = ("run.py", "payment_run.py", "payment_checks.py", "src/payment.rs", "src/payment_fixture.rs",
+INSTRUMENTS = ("run.py", "payment_run.py", "payment_checks.py", "src/config.rs", "src/payment.rs", "src/payment_fixture.rs",
                "src/classical.rs", "src/measurement.rs", "src/main.rs", "provenance.py")
+STORAGE_PROFILE_FIELDS = {"description", "medium", "filesystem", "mount_options", "sync_policy"}
+STORAGE_FACT_FIELDS = {"st_dev", "st_ino", "f_bsize", "f_frsize", "f_flag"}
 SCOPE = {
     "trust": "Offline fixture supplied at the wallet trusted-node interface; previous outputs are not authenticated against a live chain.",
     "slh": "Complete product WatchStore prepare/sign/assemble lifecycle with coupled durable journal writes.",
@@ -85,6 +87,54 @@ def checker_identity(reference_inputs):
             "checker_sha256": code_identity()}
 
 
+def wallet_storage_profile(profile):
+    """Validate operator declarations; filesystem facts do not attest durability."""
+    require(type(profile) is dict and set(profile) == STORAGE_PROFILE_FIELDS,
+            "wallet storage profile needs description, medium, filesystem, mount_options and sync_policy")
+    for name, value in profile.items():
+        require(type(value) is str and bool(value.strip()) and "\0" not in value
+                and len(value.encode("utf8")) <= 512, "invalid wallet storage declaration: " + name)
+    return dict(profile)
+
+
+def wallet_storage_identity(root, profile):
+    """Pin one existing directory and stable filesystem facts without writing to it."""
+    path = Path(root).absolute()
+    require(not path.is_symlink() and path.is_dir(), "wallet storage root must be an existing directory, not a symlink")
+    path = path.resolve(strict=True)
+    info = path.stat(follow_symlinks=False)
+    require(stat.S_ISDIR(info.st_mode), "wallet storage root must be a directory")
+    filesystem = os.statvfs(path)
+    return {"root": str(path), "st_dev": info.st_dev, "st_ino": info.st_ino,
+            "f_bsize": filesystem.f_bsize, "f_frsize": filesystem.f_frsize,
+            "f_flag": filesystem.f_flag, "profile": wallet_storage_profile(profile)}
+
+
+def validate_wallet_storage(identity, host_profile):
+    """Validate retained identity without requiring the original disk to report it."""
+    require(type(identity) is dict and set(identity) == STORAGE_FACT_FIELDS | {"root", "profile"},
+            "registered wallet storage identity missing or invalid")
+    require(type(host_profile) is dict, "registered wallet storage host profile missing")
+    root = identity["root"]
+    require(type(root) is str and bool(root) and "\0" not in root and len(root.encode("utf8")) <= 4096
+            and Path(root).is_absolute() and ".." not in Path(root).parts and str(Path(root)) == root
+            and not root.startswith("//"),
+            "registered wallet storage root must be canonical and absolute")
+    for field in STORAGE_FACT_FIELDS:
+        require(type(identity[field]) is int and identity[field] >= (1 if field in {"f_bsize", "f_frsize"} else 0),
+                "invalid registered wallet storage fact: " + field)
+    require(wallet_storage_profile(identity["profile"]) == wallet_storage_profile(host_profile.get("wallet_storage")),
+            "registered wallet storage declarations changed")
+    return identity
+
+
+def check_wallet_storage(manifest):
+    identity = validate_wallet_storage(manifest.get("wallet_storage"), manifest["host_profile"])
+    require(wallet_storage_identity(identity["root"], identity["profile"]) == identity,
+            "registered wallet storage directory or filesystem changed")
+    return identity
+
+
 def plan_payment(args):
     dimensions = []
     for field in CASE_FIELDS:
@@ -100,6 +150,8 @@ def plan_payment(args):
                 "checker_max_output_bytes": args.checker_max_output_bytes}
     expected = validate_payment_settings(settings)
     host_profile = runner.validate_host_profile(read_json(args.host_profile))
+    storage = wallet_storage_identity(args.wallet_storage_root, host_profile.get("wallet_storage"))
+    validate_wallet_storage(storage, host_profile)
     build_dir = Path(args.build).resolve()
     receipt = runner.validate_build(build_dir)
     instruments = {name: sha256(runner.HERE / name) for name in INSTRUMENTS}
@@ -111,6 +163,7 @@ def plan_payment(args):
                 "configuration_id": digest_value(settings), "settings": settings,
                 "build_directory": str(build_dir), "build_receipt_sha256": sha256(build_dir / "build.json"),
                 "build": receipt, "host": host_state(), "host_profile": host_profile,
+                "wallet_storage": storage,
                 "expected_records": expected, "metric_catalog_sha256": sha256(runner.HERE / "schema/metrics.json"),
                 "metric_catalog_extensions": {"payment": PAYMENT_CATALOG_SHA256},
                 "reference_inputs": str(reference), "independent_checker": checker,
@@ -270,6 +323,7 @@ def execute_payment(args, manifest):
             runner.validate_build(build_dir) == manifest["build"], "payment registered build changed")
     require(host_state() == manifest["host"], "payment host facts changed")
     runner.validate_host_profile(manifest["host_profile"])
+    storage = check_wallet_storage(manifest)
     require(checker_identity(manifest["reference_inputs"]) == manifest["independent_checker"],
             "payment independent checker inputs changed")
     claim_run(output)
@@ -321,6 +375,7 @@ def execute_payment(args, manifest):
                         for name in CASE_FIELDS:
                             command += ["--" + name, str(active_case[name])]
                         command += ["--samples", str(settings["samples"]), "--warmup", str(settings["warmup"]),
+                                    "--wallet-storage-root", storage["root"],
                                     "--artifact-directory", str(artifacts), "--execute"]
                         process = {"case": active_case, "repetition": repetition, "command": command, "complete": False}
                         receipt["processes"].append(process)
@@ -330,6 +385,7 @@ def execute_payment(args, manifest):
                                                      max_bytes=settings["max_output_bytes_per_process"],
                                                      on_line=accept, on_poll=check_bounds)
                         process.update(execution)
+                        check_wallet_storage(manifest)
                         require(all(row["outcome"] == "success" for row in rows), "payment attempt outcome mismatch")
                         require(count == settings["samples"] + settings["warmup"] + 1, "missing payment records")
                         expected_paths = {f"attempt-{index:06}.json" for index in range(count - 1)}
@@ -358,6 +414,7 @@ def execute_payment(args, manifest):
                         atomic_json(output / "receipt.json", receipt)
                 require(receipt["records"] == manifest["expected_records"], "incomplete payment matrix")
                 require(runner.validate_build(build_dir) == manifest["build"], "payment inputs changed during run")
+                check_wallet_storage(manifest)
                 checked = summarize(all_records, complete=True)
                 receipt.update(complete=True, successful=checked["successful"], status="complete")
             except BaseException as error:
@@ -393,7 +450,7 @@ def add_payment_parser(commands):
     parser = commands.add_parser("plan-payment", help="register bounded offline wallet cases without measuring")
     for field, choices in zip(CASE_FIELDS, DIMENSION_CHOICES):
         parser.add_argument("--" + field, choices=choices, type=type(choices[0]), action="append", required=True)
-    for name in ("build", "output", "host-profile", "reference-inputs"):
+    for name in ("build", "output", "host-profile", "reference-inputs", "wallet-storage-root"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--samples", type=int, required=True)
     parser.add_argument("--warmup", type=int, required=True)

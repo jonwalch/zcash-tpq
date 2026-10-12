@@ -26,6 +26,9 @@ MAX_RECORDS = 100_000
 MAX_GROUPS = 10_000
 MAX_METRICS = 128
 MAX_NUMBER = 2**64 - 1
+# Payment identities retain 48 workload cases, independent checker inputs and
+# storage facts/declarations. Other metadata keeps the existing 16 KiB bound.
+MAX_PAYMENT_COMPATIBILITY_BYTES = 64 * 1024
 OUTCOMES = (
     "success", "expected_rejection", "unexpected_rejection", "timeout",
     "cancelled", "error",
@@ -400,7 +403,13 @@ def compare_summaries(left, right):
         compatibility = summary.get("compatibility")
         if type(compatibility) is not dict or not compatibility:
             raise ValidationError("comparison requires nonempty compatibility metadata")
-        _bounded_json(compatibility)
+        if uses_payment:
+            from payment_run import validate_wallet_storage
+            try:
+                validate_wallet_storage(compatibility.get("wallet_storage"), compatibility.get("host_profile"))
+            except ValueError as error:
+                raise ValidationError("comparison requires registered wallet storage identity and declarations") from error
+        _bounded_json(compatibility, max_bytes=MAX_PAYMENT_COMPATIBILITY_BYTES if uses_payment else 16_384)
     if (json.dumps(left["compatibility"], sort_keys=True)
             != json.dumps(right["compatibility"], sort_keys=True)):
         raise ValidationError("incompatible hardware, workload, cache or instrumentation")

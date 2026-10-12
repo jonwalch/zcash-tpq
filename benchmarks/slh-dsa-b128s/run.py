@@ -357,6 +357,9 @@ def summarize_run(args):
     require(extensions in ({}, {"payment": PAYMENT_CATALOG_SHA256}), "payment metric catalog changed")
     require(manifest.get("kind") != "payment" or extensions == {"payment": PAYMENT_CATALOG_SHA256},
             "payment catalog identity missing")
+    if manifest.get("kind") == "payment" and manifest.get("wallet_storage") is not None:
+        from payment_run import validate_wallet_storage
+        validate_wallet_storage(manifest.get("wallet_storage"), manifest["host_profile"])
     require(receipt["manifest_sha256"] == sha256(directory / "manifest.json"), "manifest changed")
     verify_artifacts(directory, receipt["artifacts"])
     records = read_records(directory / "attempts.jsonl")
@@ -379,6 +382,7 @@ def summarize_run(args):
         summary["compatibility"]["metric_catalog_extensions"] = extensions
     if manifest.get("kind") == "payment":
         summary["compatibility"]["independent_checker"] = manifest["independent_checker"]
+        summary["compatibility"]["wallet_storage"] = manifest.get("wallet_storage")
     summary["provenance"] = {"manifest_sha256": receipt["manifest_sha256"],
                              "source": manifest.get("build", {}).get("source", {}).get("commit"),
                              "html_renderer_sha256": sha256(HERE / "html_report.py"),
@@ -388,6 +392,10 @@ def summarize_run(args):
                              "adapter_metadata": manifest.get("adapter_metadata")}
     if manifest.get("kind") == "payment":
         summary["provenance"]["payment_scope"] = manifest["scope"]
+        summary["provenance"]["wallet_storage"] = manifest.get("wallet_storage")
+        if manifest.get("wallet_storage") is None:
+            summary["provenance"]["wallet_storage_unavailable"] = (
+                "This historical run did not register wallet storage; matched payment comparison is unavailable.")
         summary["provenance"]["independent_checks"] = receipt.get("independent_checks", [])
     require(not (receipt["complete"] and receipt["records"] != manifest["expected_records"]),
             "complete receipt missing expected records")

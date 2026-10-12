@@ -3,7 +3,9 @@
 import argparse
 import copy
 import hashlib
+import itertools
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -28,6 +30,12 @@ def settings(**changes):
             "timeout_seconds_per_process": 10, "max_output_bytes_per_process": 4096,
             "max_artifact_bytes_per_process": 4096, "checker_timeout_seconds": 10,
             "checker_max_output_bytes": 4096, **changes}
+
+
+def storage_profile(**changes):
+    return {"description": "synthetic test storage", "medium": "test medium",
+            "filesystem": "operator-declared filesystem", "mount_options": "test options",
+            "sync_policy": "test sync policy", **changes}
 
 
 def rows(selected=None, *, samples=1, warmup=0):
@@ -57,8 +65,62 @@ def rows(selected=None, *, samples=1, warmup=0):
 
 
 class PaymentRegistrationTests(unittest.TestCase):
+    def test_plan_registers_storage_without_changing_workload_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            storage = root / "wallet-storage"
+            storage.mkdir()
+            build = root / "build"
+            build.mkdir()
+            provenance.atomic_json(build / "build.json", {"synthetic": True})
+            profile = {"description": "mock", "cpu_model": "mock", "affinity": "mock",
+                       "power_policy": "mock", "effective_cpu_cores": 1, "memory_limit_bytes": 1024,
+                       "wallet_storage": storage_profile()}
+            provenance.atomic_json(root / "host.json", profile)
+            parser = argparse.ArgumentParser()
+            payment_run.add_payment_parser(parser.add_subparsers())
+            arguments = ["plan-payment", "--build", str(build), "--output", str(root / "plan"),
+                         "--host-profile", str(root / "host.json"), "--reference-inputs", str(root / "reference"),
+                         "--wallet-storage-root", str(storage), "--samples", "1", "--warmup", "0", "--timeout", "10"]
+            for name, value in case().items():
+                arguments += ["--" + name, str(value)]
+            args = parser.parse_args(arguments)
+            with patch.object(run, "validate_build", return_value={"synthetic": True}), \
+                    patch.object(provenance, "snapshot_payment_reference", side_effect=lambda _source, dest: provenance.fresh_directory(dest)), \
+                    patch.object(payment_run, "checker_identity", return_value={"synthetic": True}):
+                manifest = payment_run.plan_payment(args)
+            self.assertEqual(manifest["wallet_storage"], payment_run.wallet_storage_identity(storage, storage_profile()))
+            self.assertNotIn("wallet_storage", manifest["settings"])
+            self.assertEqual(manifest["configuration_id"], provenance.digest_value(manifest["settings"]))
+            self.assertEqual(manifest["instrumentation"]["src/config.rs"], provenance.sha256(HERE / "src/config.rs"))
+            provenance.atomic_json(root / "host.json", {key: value for key, value in profile.items() if key != "wallet_storage"})
+            args.output = str(root / "invalid-plan")
+            with self.assertRaisesRegex(provenance.BenchmarkError, "wallet storage profile"):
+                payment_run.plan_payment(args)
+            self.assertFalse(Path(args.output).exists())
+
+    def test_wallet_storage_requires_existing_nonsymlink_root_and_bounded_declarations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            identity = payment_run.wallet_storage_identity(root, storage_profile())
+            self.assertEqual(identity["root"], str(root))
+            self.assertEqual(identity["st_dev"], root.stat().st_dev)
+            self.assertEqual(identity["st_ino"], root.stat().st_ino)
+            self.assertEqual(identity["f_bsize"], os.statvfs(root).f_bsize)
+            payment_run.validate_wallet_storage(identity, {"wallet_storage": storage_profile()})
+            symlink = root / "alias"
+            symlink.symlink_to(root, target_is_directory=True)
+            regular = root / "file"
+            regular.touch()
+            for path in (root / "missing", symlink, regular):
+                with self.subTest(path=path), self.assertRaises(provenance.BenchmarkError):
+                    payment_run.wallet_storage_identity(path, storage_profile())
+            for profile in (None, {}, storage_profile(medium=" "), storage_profile(sync_policy="x" * 513),
+                            storage_profile(extra="unexpected"), storage_profile(filesystem=True)):
+                with self.subTest(profile=profile), self.assertRaises(provenance.BenchmarkError):
+                    payment_run.wallet_storage_identity(root, profile)
+
     def test_all_shapes_register_separate_identifiers(self):
-        import itertools
         matrix = [dict(zip(payment_run.CASE_FIELDS, values))
                   for values in itertools.product(*payment_run.DIMENSION_CHOICES)]
         self.assertEqual(len({payment_run.case_id(item) for item in matrix}), 48)
@@ -118,13 +180,17 @@ class PaymentExecutionTests(unittest.TestCase):
         provenance.atomic_json(build / "build.json", {"synthetic": True})
         output = root / "run"
         output.mkdir()
+        storage = root / "wallet-storage"
+        storage.mkdir()
         configuration = settings(cases=[selected])
         manifest = {"schema_version": 1, "kind": "payment", "run_id": "synthetic",
                     "configuration_id": provenance.digest_value(configuration), "settings": configuration,
                     "build_directory": str(build), "build_receipt_sha256": provenance.sha256(build / "build.json"),
                     "build": {"synthetic": True}, "host": {"synthetic": True},
                     "host_profile": {"description": "mock", "cpu_model": "mock", "affinity": "mock",
-                                     "power_policy": "mock", "effective_cpu_cores": 1, "memory_limit_bytes": 1024},
+                                     "power_policy": "mock", "effective_cpu_cores": 1, "memory_limit_bytes": 1024,
+                                     "wallet_storage": storage_profile()},
+                    "wallet_storage": payment_run.wallet_storage_identity(storage, storage_profile()),
                     "expected_records": 2, "metric_catalog_sha256": provenance.sha256(HERE / "schema/metrics.json"),
                     "metric_catalog_extensions": {"payment": results.PAYMENT_CATALOG_SHA256},
                     "runner_sha256": provenance.sha256(HERE / "run.py"),
@@ -136,7 +202,7 @@ class PaymentExecutionTests(unittest.TestCase):
         return output, manifest
 
     def execute(self, output, manifest, *, child_rows=None, checker_changes=None, preflight_error=False,
-                child_error=False, artifact_extra=False, artifact_replaced=False):
+                child_error=False, artifact_extra=False, artifact_replaced=False, on_child=None):
         selected = manifest["settings"]["cases"][0]
         child_rows = rows(selected) if child_rows is None else child_rows
         order = []
@@ -159,6 +225,8 @@ class PaymentExecutionTests(unittest.TestCase):
                 emitted = [checked]
             else:
                 order.append("child")
+                if on_child is not None:
+                    on_child(command)
                 artifact_dir = Path(command[command.index("--artifact-directory") + 1])
                 for index, row in enumerate(child_rows):
                     if row["phase"] == "wallet":
@@ -201,6 +269,8 @@ class PaymentExecutionTests(unittest.TestCase):
             run.summarize_run(argparse.Namespace(directory=output, output=root / "report", process_id=None))
             summary = provenance.read_json(root / "report/summary.json")
             self.assertEqual(summary["metric_catalog_extensions"], {"payment": results.PAYMENT_CATALOG_SHA256})
+            self.assertEqual(summary["compatibility"]["wallet_storage"], manifest["wallet_storage"])
+            self.assertEqual(summary["provenance"]["wallet_storage"], manifest["wallet_storage"])
             self.assertTrue(summary["successful"])
             document = (root / "report/report.html").read_text()
             self.assertIn("Wallet/payment stage overview", document)
@@ -208,6 +278,103 @@ class PaymentExecutionTests(unittest.TestCase):
             self.assertIn("no equivalent durable wallet workflow", document)
             with self.assertRaisesRegex(provenance.BenchmarkError, "already attempted"):
                 self.execute(output, manifest)
+
+    def test_changed_tmpdir_cannot_select_child_wallet_storage(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, manifest = self.prepare(root)
+            other = root / "other-temp"
+            other.mkdir()
+            commands = []
+            with patch.dict(os.environ, {"TMPDIR": str(other)}):
+                receipt, _ = self.execute(output, manifest, on_child=commands.append)
+            self.assertTrue(receipt["successful"])
+            self.assertEqual(len(commands), 1)
+            command = commands[0]
+            self.assertEqual(command[command.index("--wallet-storage-root") + 1], manifest["wallet_storage"]["root"])
+            self.assertNotEqual(command[command.index("--wallet-storage-root") + 1], str(other))
+
+    def test_changed_storage_is_rejected_before_claim_or_child_launch(self):
+        for change in ("replace-root", "device", "profile", "missing-identity"):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                output, manifest = self.prepare(root)
+                if change == "replace-root":
+                    storage = Path(manifest["wallet_storage"]["root"])
+                    storage.rename(root / "original-storage")
+                    storage.mkdir()
+                elif change == "device":
+                    manifest["wallet_storage"]["st_dev"] += 1
+                elif change == "profile":
+                    manifest["host_profile"]["wallet_storage"]["medium"] = "changed medium"
+                else:
+                    del manifest["wallet_storage"]
+                provenance.atomic_json(output / "manifest.json", manifest)
+                commands = []
+                with self.assertRaisesRegex(provenance.BenchmarkError, "wallet storage"):
+                    self.execute(output, manifest, on_child=commands.append)
+                self.assertEqual(commands, [])
+                self.assertFalse((output / "execution.claim").exists())
+                self.assertFalse((output / "receipt.json").exists())
+
+    def test_replaced_storage_after_child_marks_run_incomplete(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, manifest = self.prepare(root)
+
+            def replace_storage(_command):
+                storage = Path(manifest["wallet_storage"]["root"])
+                storage.rename(root / "original-storage")
+                storage.mkdir()
+
+            with self.assertRaisesRegex(provenance.BenchmarkError, "wallet storage"):
+                self.execute(output, manifest, on_child=replace_storage)
+            receipt = provenance.read_json(output / "receipt.json")
+            self.assertFalse(receipt["complete"])
+            self.assertEqual(receipt["status"], "failed")
+            self.assertEqual(len(receipt["independent_checks"]), 1)
+            self.assertFalse(receipt["processes"][0]["complete"])
+
+    def test_storage_identity_and_declarations_participate_in_report_comparison(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, manifest = self.prepare(root)
+            self.execute(output, manifest)
+            run.summarize_run(argparse.Namespace(directory=output, output=root / "report", process_id=None))
+            original = provenance.read_json(root / "report/summary.json")
+            results.compare_summaries(original, copy.deepcopy(original))
+            for field, value in (("root", "/another/storage/root"), ("st_dev", 999999), ("f_flag", 999999),
+                                 ("profile", storage_profile(medium="changed medium"))):
+                with self.subTest(field=field):
+                    changed = copy.deepcopy(original)
+                    changed["compatibility"]["wallet_storage"][field] = value
+                    if field == "profile":
+                        changed["compatibility"]["host_profile"]["wallet_storage"] = value
+                    with self.assertRaisesRegex(results.ValidationError, "compatib"):
+                        results.compare_summaries(original, changed)
+
+    def test_old_payment_reports_remain_readable_but_cannot_compare_without_storage(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, manifest = self.prepare(root)
+            self.execute(output, manifest)
+            del manifest["wallet_storage"]
+            del manifest["host_profile"]["wallet_storage"]
+            provenance.atomic_json(output / "manifest.json", manifest)
+            receipt = provenance.read_json(output / "receipt.json")
+            receipt["manifest_sha256"] = provenance.sha256(output / "manifest.json")
+            receipt["artifacts"] = provenance.artifact_inventory(output)
+            provenance.atomic_json(output / "receipt.json", receipt)
+            run.summarize_run(argparse.Namespace(directory=output, output=root / "report", process_id=None))
+            summary = provenance.read_json(root / "report/summary.json")
+            self.assertIsNone(summary["compatibility"]["wallet_storage"])
+            self.assertIn("did not register wallet storage", summary["provenance"]["wallet_storage_unavailable"])
+            for remove_field in (False, True):
+                historical = copy.deepcopy(summary)
+                if remove_field:
+                    historical["compatibility"].pop("wallet_storage")
+                with self.assertRaisesRegex(results.ValidationError, "wallet storage"):
+                    results.compare_summaries(historical, historical)
 
     def test_independent_failure_keeps_every_measured_attempt(self):
         for changed in ({"artifact_sha256": "0" * 64}, {"input_count": 2}, {"policy": "multisig"},
@@ -287,6 +454,29 @@ class PaymentExecutionTests(unittest.TestCase):
 
 
 class PaymentReportTests(unittest.TestCase):
+    def test_payment_comparison_bounds_allow_large_registered_identity_only(self):
+        from test_results import record
+        profile = storage_profile(**{field: "x" * 512 for field in payment_run.STORAGE_PROFILE_FIELDS})
+        payment = results.summarize([record(metrics={"payment_total_ns": 100})], complete=True)
+        payment["compatibility"] = {
+            "host_profile": {"wallet_storage": profile},
+            "wallet_storage": {"root": "/synthetic", "st_dev": 0, "st_ino": 0,
+                               "f_bsize": 4096, "f_frsize": 4096, "f_flag": 0, "profile": profile},
+            "settings": settings(cases=[dict(zip(payment_run.CASE_FIELDS, values))
+                                        for values in itertools.product(*payment_run.DIMENSION_CHOICES)]),
+            "independent_checker": {f"synthetic-input-{index:03}": "0" * 64 for index in range(80)}}
+        with self.assertRaisesRegex(results.ValidationError, "byte limit"):
+            results._bounded_json(payment["compatibility"])
+        results.compare_summaries(payment, copy.deepcopy(payment))
+        oversized = copy.deepcopy(payment)
+        oversized["compatibility"]["extra"] = ["x" * 4096] * 16
+        with self.assertRaisesRegex(results.ValidationError, "byte limit"):
+            results.compare_summaries(oversized, oversized)
+        primitive = results.summarize([record()], complete=True)
+        primitive["compatibility"] = {"extra": ["x" * 4096] * 5}
+        with self.assertRaisesRegex(results.ValidationError, "byte limit"):
+            results.compare_summaries(primitive, primitive)
+
     def test_enclosing_quantiles_are_observed_not_sum_of_stage_quantiles(self):
         manifest = {"run_id": "synthetic", "configuration_id": "configuration", "settings": settings(samples=3)}
         records = []
@@ -305,7 +495,10 @@ class PaymentReportTests(unittest.TestCase):
         primitive = results.summarize([record()], complete=True)
         self.assertNotIn("metric_catalog_extensions", primitive)
         payment = results.summarize([record(metrics={"payment_total_ns": 100})], complete=True)
-        payment["compatibility"] = {"fixture": "synthetic"}
+        payment["compatibility"] = {
+            "fixture": "synthetic", "host_profile": {"wallet_storage": storage_profile()},
+            "wallet_storage": {"root": "/synthetic", "st_dev": 0, "st_ino": 0,
+                               "f_bsize": 4096, "f_frsize": 4096, "f_flag": 0, "profile": storage_profile()}}
         changed = copy.deepcopy(payment)
         changed["metric_catalog_extensions"]["payment"] = "0" * 64
         with self.assertRaisesRegex(results.ValidationError, "payment metric catalog"):
