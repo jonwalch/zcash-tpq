@@ -460,6 +460,19 @@ class PaymentExecutionTests(unittest.TestCase):
 
 
 class PaymentReportTests(unittest.TestCase):
+    def test_fixture_boundary_notice_uses_saved_scope_and_marks_legacy_unknown(self):
+        from html_report import render_report
+        from test_results import record
+        summary = results.summarize([record(metrics={"payment_total_ns": 100})], complete=True)
+        summary["provenance"] = {"payment_scope": {"fixture_preparation": "saved <boundary>"}}
+        document = render_report(summary, results.METRIC_CATALOG)
+        self.assertIn("saved &lt;boundary&gt;", document)
+        self.assertNotIn("Fixture preparation boundaries were not registered", document)
+        summary["provenance"]["payment_scope"] = {}
+        legacy = render_report(summary, results.METRIC_CATALOG)
+        self.assertIn("Fixture preparation boundaries were not registered", legacy)
+        self.assertNotIn(payment_run.SCOPE["fixture_preparation"], legacy)
+
     def test_payment_comparison_bounds_allow_large_registered_identity_only(self):
         from test_results import record
         profile = storage_profile(**{field: "x" * 512 for field in payment_run.STORAGE_PROFILE_FIELDS})

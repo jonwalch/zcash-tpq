@@ -76,6 +76,48 @@ class AdapterTests(unittest.TestCase):
         self.assertNotIn("block_commit_ns", records[0]["metrics"])
         self.assertTrue(metadata["throughput_probe_disabled"])
 
+    def test_queued_height_may_be_absent_or_null_and_boundaries_resolve_it(self):
+        for absent in (False, True):
+            for reversed_rows in (False, True):
+                rows = block_rows()
+                if absent:
+                    del rows[0]["height"]
+                else:
+                    rows[0]["height"] = None
+                if reversed_rows:
+                    rows.reverse()
+                with self.subTest(absent=absent, reversed_rows=reversed_rows):
+                    record = self.block(rows)[0][0]
+                    self.assertEqual(record["details"]["height"], 110)
+                    self.assertEqual(record["metrics"]["block_verify_commit_ns"], 10_000_000)
+
+    def test_optional_queued_height_still_rejects_invalid_or_conflicting_values(self):
+        for height in (-1, True, "110", 111):
+            rows = block_rows()
+            rows[0]["height"] = height
+            with self.subTest(height=height), self.assertRaises(ValueError):
+                self.block(rows)
+        rows = block_rows()
+        rows[0]["height"] = None
+        rows[-1]["height"] = 111
+        with self.assertRaisesRegex(adapters.AdapterError, "mismatch"):
+            self.block(rows)
+
+    def test_missing_queued_height_does_not_relax_required_boundaries_or_heights(self):
+        rows = block_rows()
+        rows[0]["height"] = None
+        with self.assertRaisesRegex(adapters.AdapterError, "incomplete"):
+            self.block(rows[:2])
+        for event in ("commit_start", "commit_finish", "commit_stalled"):
+            rows = block_rows()
+            rows[0]["height"] = None
+            if event == "commit_stalled":
+                rows.append(dict(rows[1], event=event, ts=6000, elapsed_ms=4))
+            target = next(row for row in rows if row["event"] == event)
+            del target["height"]
+            with self.subTest(event=event), self.assertRaisesRegex(ValueError, "height"):
+                self.block(rows)
+
     def test_checkpoint_not_mixed_with_full_verification(self):
         rows = block_rows() + block_rows(apply_class="checkpoint", token=8, offset=13000)
         records, _ = self.block(rows)

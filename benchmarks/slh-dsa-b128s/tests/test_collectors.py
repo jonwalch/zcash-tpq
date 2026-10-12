@@ -207,6 +207,31 @@ class CollectorTests(unittest.TestCase):
         with self.assertRaisesRegex(collectors.CollectionError, "entitlement changed"):
             self.record(first, second)
 
+    def test_cgroup_rejects_caller_entitlement_instead_of_silently_ignoring_it(self):
+        for observed in (1.5, None):
+            first, second = self.cgroup(), self.cgroup(at=1000)
+            if observed is None:
+                for sample in (first, second):
+                    sample["metrics"]["effective_cpu_cores"] = None
+                    sample["unavailable"]["effective_cpu_cores"] = "ancestor constraints unknown"
+            for declared in (1.5, 4):
+                with self.subTest(observed=observed, declared=declared):
+                    with self.assertRaisesRegex(collectors.CollectionError, "omit effective_cpu_cores"):
+                        self.record(first, second, effective_cpu_cores=declared)
+
+    def test_cgroup_missing_endpoint_constraint_cannot_normalize_cpu(self):
+        for missing in ((0,), (1,), (0, 1)):
+            samples = [self.cgroup(), self.cgroup(cpu=1_501_000, at=1_000_000_000)]
+            for index in missing:
+                samples[index]["metrics"]["effective_cpu_cores"] = None
+                samples[index]["unavailable"]["effective_cpu_cores"] = "ancestor constraints unknown"
+            with self.subTest(missing=missing):
+                record = self.record(*samples)
+                self.assertEqual(record["metrics"]["cgroup_cpu_core_equivalents"], 1.5)
+                self.assertIsNone(record["metrics"]["effective_cpu_cores"])
+                self.assertIsNone(record["metrics"]["cgroup_cpu_normalized_percent"])
+                self.assertIn("observed cgroup constraints", record["details"]["cpu_entitlement_source"])
+
     def test_cgroup_malformed_quota_and_duplicate_counter_rejected(self):
         self.cgroup()
         self.write("cgroup/parent/job/cpu.max", "20 0")

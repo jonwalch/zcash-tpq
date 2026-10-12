@@ -7,6 +7,7 @@
 use std::{
     fs::{self, OpenOptions},
     io::{self, Cursor, Write},
+    ops::Range,
     path::{Path, PathBuf},
     sync::Arc,
     time::Instant,
@@ -21,6 +22,7 @@ use zakura_chain::{
     transparent::{Input, Output, Script},
 };
 use zakura_pq_slh_dsa_b_exp::{Authorization, TransactionContext};
+use zakura_pq_test_support::inputs_mut;
 use zakura_pq_tx_context::NetworkDomain;
 use zakura_pq_wallet::{
     payment::{Partial, PaymentState, Proposal, Review},
@@ -31,7 +33,7 @@ use crate::{
     classical::ClassicalPayment,
     config::{Algorithm, PaymentConfig},
     measurement::{observe, process_peak, Observation},
-    payment_fixture::{self, Inventory, Session},
+    payment_fixture::{self, Inventory, OfflineSource, Session},
     write_record,
 };
 
@@ -81,7 +83,8 @@ pub fn metadata() -> Value {
         "max_samples": crate::config::MAX_PAYMENT_SAMPLES,
         "max_warmup": crate::config::MAX_PAYMENT_WARMUP,
         "scope": "offline synthetic payment implementation, no live node, consensus validation, relay, mining, propagation or authenticated funding",
-        "slh_boundary": "foreground wraps optional fresh enrolled inventory, fresh WatchStore setup and scan, prepare_payment, threshold sign_payment calls, assemble_payment, and full TransactionContext input verification",
+        "slh_boundary": "foreground wraps optional fresh enrolled inventory, fresh WatchStore setup and scan, prepare_payment, threshold sign_payment calls, assemble_payment, and full TransactionContext input verification; generated inventory requires synthetic source preparation inside total after keys exist",
+        "fixture_boundary": "synthetic source responses are prepared outside wallet setup; cached SLH preparation is also outside total/CPU, but generated SLH preparation remains inside total/CPU after key generation; lookups use prepared hashes and bytes",
         "durability_boundary": "production wallet stages include their mandatory journal writes and file/directory syncs; persistence is not separately attributable from those APIs",
         "classical_boundary": "matched transparent P2SH transaction assembly, secp256k1 signing and script-aware verification; no SLH wallet lifecycle or durability comparison",
         "inventory_boundary": "cached means public enrolled inventory prepared outside foreground; both modes derive secret SigningKey afresh during actual Wallet signing; no CPU/OS cache flush",
@@ -151,7 +154,24 @@ struct SlhCompleted {
     proposal: Proposal,
     review: Review,
     signed: Vec<u8>,
-    persisted_partials: Vec<Vec<Partial>>,
+    transaction: Transaction,
+    persisted_partials: RetainedPartials,
+}
+
+/// Own each returned partial once, while retaining signer boundaries for the
+/// untimed durable readback. Moving partials does not copy their signature text.
+#[derive(Default)]
+struct RetainedPartials {
+    records: Vec<Partial>,
+    signers: Vec<Range<usize>>,
+}
+
+impl RetainedPartials {
+    fn push_signer(&mut self, partials: Vec<Partial>) {
+        let start = self.records.len();
+        self.records.extend(partials);
+        self.signers.push(start..self.records.len());
+    }
 }
 
 struct ClassicalCompleted {
@@ -197,13 +217,15 @@ impl Completed {
                     proposal,
                     review,
                     signed,
+                    transaction,
                     persisted_partials,
                     ..
                 } = *result;
                 // Closing and reopening proves the wallet can recover the actual
                 // signed bytes/partials, without counting readback as signing cost.
                 drop(session);
-                for (index, expected) in persisted_partials.into_iter().enumerate() {
+                for (index, range) in persisted_partials.signers.iter().enumerate() {
+                    let expected = &persisted_partials.records[range.clone()];
                     let store = WatchStore::open(
                         &directory.join(format!("watch-{index}")),
                         &payment_fixture::profile(),
@@ -211,7 +233,7 @@ impl Completed {
                     .map_err(error)?;
                     let records = store.payments().map_err(error)?;
                     if records.len() != 1
-                        || records[0].partials != expected
+                        || records[0].partials.as_slice() != expected
                         || records[0].proposal != proposal
                     {
                         return Err("durable wallet partials did not survive reopen".into());
@@ -224,7 +246,6 @@ impl Completed {
                         return Err("durable signed transaction did not survive reopen".into());
                     }
                 }
-                let transaction: Transaction = decode(&signed)?;
                 let previous = Arc::new(
                     proposal
                         .inputs
@@ -260,6 +281,7 @@ fn slh(
     config: &PaymentConfig,
     cached: &Cached,
     directory: &Path,
+    prepared_source: Option<OfflineSource>,
     stages: &mut Stages,
 ) -> Result<Completed, String> {
     let generated = if config.generated {
@@ -276,8 +298,16 @@ fn slh(
     let intent = inventory
         .intent(config.version, config.inputs)
         .map_err(error)?;
+    let source = if config.generated {
+        // Fresh funding scripts depend on the just-generated inventory. This
+        // fixture preparation remains inside the enclosing total, but not the
+        // wallet-setup stage. Cached cases prepare it before the total starts.
+        OfflineSource::new(&inventory.wallets[0], config.inputs).map_err(error)?
+    } else {
+        prepared_source.ok_or("cached SLH source was not prepared outside timing")?
+    };
     let mut session = stages.run("payment_wallet_setup_ns", || {
-        Session::new(inventory, config.inputs, directory).map_err(error)
+        Session::new(inventory, source, directory).map_err(error)
     })?;
     let (proposal, review) = stages.run("payment_prepare_persist_ns", || {
         session.stores[0]
@@ -285,13 +315,13 @@ fn slh(
             .map_err(error)
     })?;
     if proposal.inputs.len() != config.inputs
-        || review.checks as usize != config.inputs * if config.multisig { 2 } else { 1 }
+        || usize::try_from(review.checks).map_err(error)?
+            != config.inputs * if config.multisig { 2 } else { 1 }
     {
         return Err("wallet selected a different input/policy workload".into());
     }
-    let mut persisted_partials = Vec::new();
     let partials = stages.run("payment_sign_persist_ns", || {
-        let mut partials = Vec::new();
+        let mut partials = RetainedPartials::default();
         for (index, store) in session.stores.iter_mut().enumerate() {
             let signed = store
                 .sign_payment(
@@ -302,8 +332,7 @@ fn slh(
                     review.proposal_id,
                 )
                 .map_err(error)?;
-            persisted_partials.push(signed.clone());
-            partials.extend(signed);
+            partials.push_signer(signed);
         }
         Ok(partials)
     })?;
@@ -314,7 +343,7 @@ fn slh(
                 &mut session.source,
                 &proposal,
                 &intent,
-                &partials,
+                &partials.records,
             )
             .map_err(error)
     })?;
@@ -341,7 +370,8 @@ fn slh(
         proposal,
         review,
         signed,
-        persisted_partials,
+        transaction,
+        persisted_partials: partials,
     })))
 }
 
@@ -378,11 +408,24 @@ fn perform(
     cached: &Cached,
     directory: &Path,
     attempt: u32,
+    prepared_source: Option<OfflineSource>,
     stages: &mut Stages,
 ) -> Result<Completed, String> {
     match config.algorithm {
-        Algorithm::Slh => slh(config, cached, directory, stages),
+        Algorithm::Slh => slh(config, cached, directory, prepared_source, stages),
         Algorithm::Classical => classical(config, cached, attempt, stages),
+    }
+}
+
+fn prepare_cached_source(
+    config: &PaymentConfig,
+    cached: &Cached,
+) -> Result<Option<OfflineSource>, String> {
+    match cached {
+        Cached::Slh(inventory) => OfflineSource::new(&inventory.wallets[0], config.inputs)
+            .map(Some)
+            .map_err(error),
+        _ => Ok(None),
     }
 }
 
@@ -456,13 +499,21 @@ pub fn measure(config: PaymentConfig) -> Result<(), String> {
     let mut failed = false;
     for attempt in 0..config.warmup + config.samples {
         let directory = wallet_directory(&storage)?;
+        let prepared_source = prepare_cached_source(&config, &cached)?;
         let mut stages = Stages::new(true);
         let (completed, mut observation) = observe("payment_total_ns", || {
-            perform(&config, &cached, directory.path(), attempt, &mut stages)
+            perform(
+                &config,
+                &cached,
+                directory.path(),
+                attempt,
+                prepared_source,
+                &mut stages,
+            )
         });
         observation.metrics.extend(stages.metrics);
         let name = format!("attempt-{attempt:06}.json");
-        let mut details = json!({"fixture_index":attempt,"public_fixture":true,"offline_fixture":true,"trusted_utxos":false,"node_acceptance":false,"inventory_timing":inventory_timing(&config),"measurement_scope":if config.algorithm==Algorithm::Slh {"offline-wallet-with-durable-journal"} else {"classical-transaction-control-no-wallet-journal"}});
+        let mut details = json!({"fixture_index":attempt,"public_fixture":true,"offline_fixture":true,"trusted_utxos":false,"node_acceptance":false,"inventory_timing":inventory_timing(&config),"synthetic_source_preparation_inside_total":config.algorithm==Algorithm::Slh && config.generated,"measurement_scope":if config.algorithm==Algorithm::Slh {"offline-wallet-with-durable-journal"} else {"classical-transaction-control-no-wallet-journal"}});
         let result = completed.and_then(|completed| {
             observation
                 .metrics
@@ -520,8 +571,16 @@ pub fn check(config: PaymentConfig) -> Result<(), String> {
     let cached_directory = wallet_directory(&storage)?;
     let cached = Cached::prepare(&config, cached_directory.path())?;
     let directory = wallet_directory(&storage)?;
+    let prepared_source = prepare_cached_source(&config, &cached)?;
     let mut stages = Stages::new(false);
-    let completed = perform(&config, &cached, directory.path(), 0, &mut stages)?;
+    let completed = perform(
+        &config,
+        &cached,
+        directory.path(),
+        0,
+        prepared_source,
+        &mut stages,
+    )?;
     let artifact = completed.finish(&config, &cached, directory.path())?;
     let (blake3, sha256) = publish(
         &config.artifact_directory.join("attempt-000000.json"),
@@ -551,7 +610,7 @@ fn record(
 fn decode<T: ZcashDeserialize>(bytes: &[u8]) -> Result<T, String> {
     let mut cursor = Cursor::new(bytes);
     let value = T::zcash_deserialize(&mut cursor).map_err(error)?;
-    if cursor.position() != bytes.len() as u64 {
+    if cursor.position() != u64::try_from(bytes.len()).map_err(error)? {
         return Err("trailing serialized bytes".into());
     }
     Ok(value)
@@ -573,13 +632,6 @@ fn verify(transaction: &Transaction, previous: Arc<Vec<Output>>) -> Result<(), S
         context.verify_input(index).map_err(error)?;
     }
     Ok(())
-}
-
-fn inputs_mut(transaction: &mut Transaction) -> Result<&mut Vec<Input>, String> {
-    match transaction {
-        Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. } => Ok(inputs),
-        _ => Err("unsupported transaction version".into()),
-    }
 }
 
 /// These product-side negative controls complement (and never replace) the
@@ -606,7 +658,7 @@ fn negative_controls(artifact: &Value) -> Result<(), String> {
         return Err("changed fixture prevout value was accepted".into());
     }
     let mut changed = transaction.clone();
-    let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut changed)?[0] else {
+    let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut changed)[0] else {
         return Err("coinbase in payment".into());
     };
     let mut authorization = Authorization::decode(unlock_script.as_raw_bytes()).map_err(error)?;
@@ -616,7 +668,7 @@ fn negative_controls(artifact: &Value) -> Result<(), String> {
         return Err("corrupt signature was accepted".into());
     }
     let mut changed = transaction.clone();
-    let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut changed)?[0] else {
+    let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut changed)[0] else {
         return Err("coinbase in payment".into());
     };
     let mut bytes = unlock_script.as_raw_bytes().to_vec();
@@ -648,6 +700,40 @@ mod tests {
             .collect::<std::collections::BTreeSet<_>>();
         assert_eq!(cases.len(), 48);
         assert_eq!(unique.len(), 48);
+    }
+
+    #[test]
+    fn signer_groups_retain_signature_ownership_without_copying() {
+        let partial = |input_index, signer_index| Partial {
+            format: "test".into(),
+            input_index,
+            proposal_id: zakura_pq_wallet::Hex([0x42; 32]),
+            public_key_hex: "ab".repeat(32),
+            signature_hex: "cd".repeat(7856),
+            signer_index,
+        };
+        let first = vec![partial(0, 0), partial(1, 0)];
+        let second = vec![partial(0, 1), partial(1, 1)];
+        let pointers = first
+            .iter()
+            .chain(&second)
+            .map(|partial| partial.signature_hex.as_ptr())
+            .collect::<Vec<_>>();
+        let mut retained = RetainedPartials::default();
+        retained.push_signer(first);
+        retained.push_signer(second);
+        assert_eq!(retained.signers, [0..2, 2..4]);
+        for (partial, pointer) in retained.records.iter().zip(pointers) {
+            assert_eq!(partial.signature_hex.as_ptr(), pointer);
+        }
+        assert_eq!(
+            retained.records[retained.signers[0].clone()][1].input_index,
+            1
+        );
+        assert_eq!(
+            retained.records[retained.signers[1].clone()][0].signer_index,
+            1
+        );
     }
 
     #[test]

@@ -29,6 +29,10 @@ HERE = Path(__file__).resolve().parent
 CASES = ("keygen", "sign", "verify", "verify-invalid")
 CACHE_MODES = ("repeated-input", "varied-input")
 MAX_LINE = 1024 * 1024
+# A primitive record is one compact JSON line, not a signature/transaction
+# artifact. Enforce this contract on both child and normalized bytes instead of
+# estimating future output from the size of a typical successful observation.
+PRIMITIVE_RECORD_BYTES = 4096
 
 
 def validate_host_profile(profile):
@@ -48,10 +52,10 @@ class ExecutionError(BenchmarkError):
         self.outcome = outcome
 
 
-def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_poll=None):
+def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_poll=None, max_line_bytes=MAX_LINE):
     """Bound both streams, wall time and a private process group; no shell."""
     require(os.name == "posix", "execution currently requires Linux or macOS")
-    require(timeout > 0 and max_bytes > 0, "positive execution bounds required")
+    require(timeout > 0 and max_bytes > 0 and 0 < max_line_bytes <= 2 * MAX_LINE, "positive execution bounds required")
     directory = fresh_directory(directory)
     started = time.monotonic_ns()
     with (directory / "stdout.log").open("xb") as stdout_log, \
@@ -85,9 +89,9 @@ def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_pol
                             while b"\n" in pending:
                                 line, _, remainder = pending.partition(b"\n")
                                 pending = bytearray(remainder)
-                                require(len(line) <= MAX_LINE and bool(line), "invalid output line")
+                                require(len(line) <= max_line_bytes and bool(line), "invalid output line")
                                 on_line(child.pid, bytes(line))
-                            require(len(pending) <= MAX_LINE, "unterminated output line limit")
+                            require(len(pending) <= max_line_bytes, "unterminated output line limit")
             require(not pending, "partial final output line")
             remaining = max(0.01, timeout - (time.monotonic_ns() - started) / 1e9)
             try:
@@ -181,13 +185,13 @@ def plan(args):
             "time/output bounds")
     host_profile = read_json(args.host_profile)
     validate_host_profile(host_profile)
-    build_dir = Path(args.build).resolve()
-    receipt = validate_build(build_dir)
-    output = fresh_directory(args.output)
     settings = {"cases": args.case, "samples": args.samples, "warmup": args.warmup,
                 "repetitions": args.repetitions, "cache_mode": args.cache_mode,
                 "timeout_seconds_per_process": args.timeout, "max_output_bytes_per_process": args.max_output_bytes}
     expected = validate_settings(settings)
+    build_dir = Path(args.build).resolve()
+    receipt = validate_build(build_dir)
+    output = fresh_directory(args.output)
     instrumentation = {name: sha256(HERE / name) for name in (
         "run.py", "provenance.py", "src/config.rs", "src/fixture.rs", "src/main.rs", "src/measurement.rs")}
     manifest = {"schema_version": 1, "kind": "primitive", "run_id": uuid.uuid4().hex,
@@ -195,10 +199,11 @@ def plan(args):
                 "build_directory": str(build_dir), "build_receipt_sha256": sha256(build_dir / "build.json"),
                 "build": receipt, "host": host_state(), "host_profile": host_profile,
                 "expected_records": expected,
+                "output_budget": primitive_output_budget(settings),
                 "metric_catalog_sha256": sha256(HERE / "schema/metrics.json"),
                 "instrumentation": instrumentation,
                 "runner_sha256": sha256(__file__),
-                "limits_note": "Includes timed/warmup attempts. Primitive setup cost is separately described by the executable metadata; the process wall deadline covers setup too."}
+                "limits_note": "Includes timed/warmup attempts and one lifetime record per process. Output budgets use the enforced per-record limit, not an estimate. Unexpected stderr shares the process output cap. Primitive setup cost is separately described by the executable metadata; the process wall deadline covers setup too."}
     atomic_json(output / "manifest.json", manifest)
     return manifest
 
@@ -217,7 +222,27 @@ def validate_settings(settings):
     # Each fresh process also emits one lifetime high-water observation.
     expected = len(settings["cases"]) * settings["repetitions"] * (settings["samples"] + settings["warmup"] + 1)
     require(expected < 100000, "registered total observation limit (reserves a failure record)")
+    budget = primitive_output_budget(settings)
+    require(budget["run_records_bytes"] + budget["failure_record_reserve_bytes"] <= budget["run_byte_limit"],
+            "primitive run byte budget exceeds the record-file limit; reduce samples or repetitions")
+    require(budget["per_process_stdout_bytes"] <= settings["max_output_bytes_per_process"],
+            "primitive stdout byte budget exceeds the process output limit; increase --max-output-bytes or reduce samples")
     return expected
+
+
+def primitive_output_budget(settings):
+    """Upper bounds for records that satisfy the enforced primitive contract.
+
+    Each bound includes JSONL newlines. The process cap covers stderr too:
+    normal successful measurement emits only the registered stdout records;
+    unexpected diagnostics remain subject to that cap and can fail the run.
+    """
+    from results import MAX_INPUT_BYTES, MAX_RECORD_BYTES
+    per_process = (settings["samples"] + settings["warmup"] + 1) * PRIMITIVE_RECORD_BYTES
+    return {"record_bytes_including_newline": PRIMITIVE_RECORD_BYTES,
+            "per_process_stdout_bytes": per_process,
+            "run_records_bytes": per_process * len(settings["cases"]) * settings["repetitions"],
+            "failure_record_reserve_bytes": MAX_RECORD_BYTES, "run_byte_limit": MAX_INPUT_BYTES}
 
 
 def normalized_child_record(raw, manifest, case, repetition, index, pid):
@@ -255,6 +280,9 @@ def execute(args):
     if manifest.get("kind") == "payment":
         from payment_run import execute_payment
         return execute_payment(args, manifest)
+    if manifest.get("kind") == "node-collection":
+        from node_run import execute_node
+        return execute_node(args, manifest)
     require(manifest.get("kind") == "primitive" and manifest.get("schema_version") == 1, "unknown run plan")
     require(not (output / "receipt.json").exists(), "run already attempted; register a new directory")
     require(sha256(HERE / "schema/metrics.json") == manifest["metric_catalog_sha256"] and
@@ -281,8 +309,10 @@ def execute(args):
                     def accept(pid, line):
                         nonlocal count
                         require(count < settings["samples"] + settings["warmup"] + 1, "extra child record")
+                        require(len(line) + 1 <= PRIMITIVE_RECORD_BYTES, "primitive child record byte limit")
                         record = normalized_child_record(strict_json(line), manifest, case, repetition, count, pid)
                         encoded = canonical(record) + b"\n"
+                        require(len(encoded) <= PRIMITIVE_RECORD_BYTES, "primitive normalized record byte limit")
                         require(len(encoded) <= MAX_RECORD_BYTES and
                                 stream.tell() + len(encoded) <= MAX_INPUT_BYTES - MAX_RECORD_BYTES,
                                 "run record byte limit")
@@ -345,6 +375,57 @@ def read_records(path):
     return list(checked_records(path))
 
 
+def compatibility_metadata(manifest):
+    """Common comparison identity, shared by registration bounds and reports."""
+    return {"kind": manifest["kind"], "settings": manifest.get("settings"),
+            "host": manifest.get("host"), "host_profile": manifest.get("host_profile"),
+            "metric_catalog_sha256": manifest["metric_catalog_sha256"],
+            "instrumentation": manifest.get("instrumentation"),
+            "reporter_sha256": sha256(HERE / "results.py"),
+            "toolchain": toolchain_compatibility(manifest.get("build", {}).get("toolchain")),
+            "adapter_compatibility": manifest.get("adapter_compatibility")}
+
+
+def recover_records(directory, manifest, receipt):
+    """Inspect unfinalized evidence without authenticating its original bytes.
+
+    A killed controller cannot leave a retrospective producer inventory. The
+    explicit recovery mode checks stable current bytes, preserves every valid
+    record and refuses malformed/truncated evidence. Its report is always
+    incomplete and cannot support a matched comparison.
+    """
+    require(type(receipt.get("schema_version")) is int and receipt["schema_version"] == 1
+            and receipt.get("complete") is False and receipt.get("successful") is False
+            and type(receipt.get("status")) is str and receipt["status"] in {"running", "importing"},
+            "recovery requires an unfinalized running/importing receipt")
+    require(type(receipt.get("records")) is int and receipt["records"] >= 0,
+            "recovery requires a nonnegative receipt record count")
+    receipt_hash = sha256(directory / "receipt.json")
+    inventory = artifact_inventory(directory)
+    require(inventory.get("manifest.json") == receipt["manifest_sha256"], "manifest changed")
+    require(read_json(directory / "receipt.json") == receipt
+            and read_json(directory / "manifest.json") == manifest, "run metadata changed before recovery")
+    attempts = directory / "attempts.jsonl"
+    try:
+        records = read_records(attempts) if attempts.exists() else []
+    except (ValueError, OSError) as error:
+        raise BenchmarkError("recovery requires complete, valid JSONL records; evidence is truncated or invalid: "
+                             + str(error)) from error
+    require(len(records) >= receipt["records"], "recovery is missing records already counted by the controller")
+    require(all(record["run_id"] == manifest["run_id"]
+                and record["configuration_id"] == manifest["configuration_id"] for record in records),
+            "recovered record differs from the registered run identity")
+    verify_artifacts(directory, inventory)
+    require(sha256(directory / "receipt.json") == receipt_hash, "receipt changed during recovery")
+    recovery = {"original_artifact_integrity_verified": False,
+                "producer_artifact_inventory": "absent",
+                "recovery_inventory_sha256": digest_value(inventory),
+                "receipt_sha256_at_recovery": receipt_hash,
+                "receipt_records": receipt["records"], "recovered_records": len(records),
+                "notice": "These observations are unverified saved evidence. The inventory records recovery-time bytes only; it cannot detect changes made before recovery or authenticate the original measurements."}
+    return records, recovery, inventory
+
+
 def summarize_run(args):
     from results import summarize, write_reports
     directory = Path(args.directory)
@@ -361,28 +442,38 @@ def summarize_run(args):
         from payment_run import validate_wallet_storage
         validate_wallet_storage(manifest.get("wallet_storage"), manifest["host_profile"])
     require(receipt["manifest_sha256"] == sha256(directory / "manifest.json"), "manifest changed")
-    verify_artifacts(directory, receipt["artifacts"])
-    records = read_records(directory / "attempts.jsonl")
+    attempts = directory / "attempts.jsonl"
+    empty_node_failure = (manifest.get("kind") == "node-collection" and receipt["status"] == "failed"
+                          and not receipt["complete"] and receipt["records"] == 0
+                          and receipt.get("processes") == [])
+    # A failure to create the first output can precede both the attempts file
+    # and a sampler process. The verified inventory must retain that absence.
+    recovery, recovery_inventory = None, None
+    if "artifacts" not in receipt:
+        require(getattr(args, "recover_incomplete", False),
+                "producer did not finalize an artifact inventory; inspect with summarize --recover-incomplete (unverified evidence)")
+        records, recovery, recovery_inventory = recover_records(directory, manifest, receipt)
+    else:
+        # Recovery never bypasses a producer inventory, even when requested.
+        verify_artifacts(directory, receipt["artifacts"])
+        records = [] if empty_node_failure and not attempts.exists() else read_records(attempts)
+        verify_artifacts(directory, receipt["artifacts"])
+        require(len(records) == receipt["records"], "receipt record count mismatch")
     require(not any(set(record["metrics"]).intersection(PAYMENT_METRICS) for record in records)
             or extensions == {"payment": PAYMENT_CATALOG_SHA256}, "payment metric catalog identity missing")
-    verify_artifacts(directory, receipt["artifacts"])
-    require(len(records) == receipt["records"], "receipt record count mismatch")
     if args.process_id:
         records = [record for record in records if record["process_id"] == args.process_id]
         require(bool(records), "unknown process selection")
     summary = summarize(records, complete=receipt["complete"])
-    summary["compatibility"] = {"kind": manifest["kind"], "settings": manifest.get("settings"),
-                                "host": manifest.get("host"), "host_profile": manifest.get("host_profile"),
-                                "metric_catalog_sha256": manifest["metric_catalog_sha256"],
-                                "instrumentation": manifest.get("instrumentation"),
-                                "reporter_sha256": sha256(HERE / "results.py"),
-                                "toolchain": toolchain_compatibility(manifest.get("build", {}).get("toolchain")),
-                                "adapter_compatibility": manifest.get("adapter_compatibility")}
+    summary["compatibility"] = compatibility_metadata(manifest)
     if extensions:
         summary["compatibility"]["metric_catalog_extensions"] = extensions
     if manifest.get("kind") == "payment":
         summary["compatibility"]["independent_checker"] = manifest["independent_checker"]
         summary["compatibility"]["wallet_storage"] = manifest.get("wallet_storage")
+    if manifest.get("kind") == "node-collection":
+        from node_run import node_compatibility
+        summary["compatibility"]["node_collection"] = node_compatibility(manifest)
     summary["provenance"] = {"manifest_sha256": receipt["manifest_sha256"],
                              "source": manifest.get("build", {}).get("source", {}).get("commit"),
                              "html_renderer_sha256": sha256(HERE / "html_report.py"),
@@ -390,6 +481,9 @@ def summarize_run(args):
                              "execution_status": receipt["status"], "process_selection": args.process_id,
                              "imported_evidence": manifest.get("provenance"),
                              "adapter_metadata": manifest.get("adapter_metadata")}
+    if recovery is not None:
+        summary["provenance"]["recovery"] = recovery
+        summary["issues"].append("Recovered unverified evidence: the producer did not record artifact hashes; original integrity and completion cannot be established.")
     if manifest.get("kind") == "payment":
         summary["provenance"]["payment_scope"] = manifest["scope"]
         summary["provenance"]["wallet_storage"] = manifest.get("wallet_storage")
@@ -397,11 +491,25 @@ def summarize_run(args):
             summary["provenance"]["wallet_storage_unavailable"] = (
                 "This historical run did not register wallet storage; matched payment comparison is unavailable.")
         summary["provenance"]["independent_checks"] = receipt.get("independent_checks", [])
+    if manifest.get("kind") == "node-collection":
+        processes = receipt.get("processes", [])
+        summary["provenance"].update(node_scope=manifest["scope"], node_profile=manifest["node_profile"],
+                                     node_identity=manifest["node_identity"],
+                                     node_build={name: manifest["build"][name] for name in ("kind", "features")},
+                                     node_execution=processes[0] if processes else {},
+                                     execution_failure=receipt.get("failure"), execution_outcome=receipt.get("outcome"),
+                                     source=manifest["build"]["source"]["source_commit"])
+        if receipt["status"] == "failed":
+            summary["issues"].append(
+                f"Node collection failed ({receipt.get('outcome', 'error')}): {receipt.get('failure', 'unknown failure')}."
+                + (" No sampler process was started." if not processes else ""))
     require(not (receipt["complete"] and receipt["records"] != manifest["expected_records"]),
             "complete receipt missing expected records")
     require(not Path(args.output).resolve().is_relative_to(directory.resolve()), "reports must be outside immutable run artifacts")
     output = fresh_directory(args.output)
     write_reports(summary, output)
+    if recovery is not None:
+        atomic_json(output / "recovery-inventory.json", recovery_inventory)
     return {"output": str(output), "successful": summary["successful"], "complete": summary["complete"]}
 
 
@@ -422,6 +530,8 @@ def main(argv=None):
     building.add_argument("--timeout", type=int, default=1800)
     building.add_argument("--execute", action="store_true")
     building.set_defaults(action=build)
+    from node_build import add_node_build_parser
+    add_node_build_parser(commands)
     planning = commands.add_parser("plan", help="register a bounded primitive run without executing it")
     planning.add_argument("--build", required=True)
     planning.add_argument("--output", required=True)
@@ -436,6 +546,8 @@ def main(argv=None):
     planning.set_defaults(action=plan)
     from payment_run import add_payment_parser
     add_payment_parser(commands)
+    from node_run import add_node_parser
+    add_node_parser(commands)
     running = commands.add_parser("run", help="human: execute one registered run exactly once")
     running.add_argument("directory")
     running.add_argument("--execute", action="store_true")
@@ -444,6 +556,8 @@ def main(argv=None):
     summarizing.add_argument("directory")
     summarizing.add_argument("--output", required=True)
     summarizing.add_argument("--process-id")
+    summarizing.add_argument("--recover-incomplete", action="store_true",
+                             help="inspect unfinalized evidence without authenticating original bytes; comparisons remain disabled")
     summarizing.set_defaults(action=summarize_run)
     comparing = commands.add_parser("compare", help="compare compatible saved summaries offline")
     comparing.add_argument("--baseline", required=True)

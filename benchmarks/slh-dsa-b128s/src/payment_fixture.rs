@@ -3,7 +3,7 @@
 //! The adapter supplies disposable responses at the wallet's trusted-node interface;
 //! it must never be used with real keys, funding, or a network connection.
 
-use std::{path::Path, sync::Arc};
+use std::{collections::BTreeMap, path::Path, sync::Arc};
 
 use zakura_chain::{
     block::{genesis::regtest_genesis_block, Block, Height},
@@ -122,8 +122,11 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(inventory: &Inventory, inputs: usize, directory: &Path) -> Result<Self, Error> {
-        let mut source = OfflineSource::new(&inventory.wallets[0], inputs)?;
+    pub fn new(
+        inventory: &Inventory,
+        mut source: OfflineSource,
+        directory: &Path,
+    ) -> Result<Self, Error> {
         // Only threshold participants are needed for signing. All three public
         // participants were generated and included in the 2-of-3 policy above.
         let threshold = if inventory.wallets.len() == 1 { 1 } else { 2 };
@@ -147,15 +150,29 @@ impl Session {
 }
 
 pub struct OfflineSource {
-    blocks: Vec<Block>,
+    blocks: Vec<(Hex<32>, Vec<u8>)>,
+    block_indexes: BTreeMap<Hex<32>, usize>,
     funding: Arc<Transaction>,
+    funding_hash: Hex<32>,
+    funding_bytes: Vec<u8>,
 }
 
 impl OfflineSource {
-    fn new(wallet: &Wallet, input_count: usize) -> Result<Self, Error> {
+    /// Prepare the synthetic node's responses before observing wallet work.
+    pub fn new(wallet: &Wallet, input_count: usize) -> Result<Self, Error> {
+        Self::with_script(
+            wallet.manifest().entries[0].policy()?.lock_script(),
+            input_count,
+        )
+    }
+
+    fn with_script(lock_script: Script, input_count: usize) -> Result<Self, Error> {
+        if ![1, 2, 5].contains(&input_count) {
+            return Err(Error::Limits);
+        }
         let output = Output {
             value: INPUT_VALUE.try_into().map_err(|_| Error::Funds)?,
-            lock_script: wallet.manifest().entries[0].policy()?.lock_script(),
+            lock_script,
         };
         let funding = Arc::new(Transaction::V6 {
             network_upgrade: NetworkUpgrade::Nu7,
@@ -174,10 +191,7 @@ impl OfflineSource {
             orchard_shielded_data: None,
             ironwood_shielded_data: None,
         });
-        let mut source = Self {
-            blocks: vec![(*regtest_genesis_block()).clone()],
-            funding,
-        };
+        let mut blocks = vec![(*regtest_genesis_block()).clone()];
         for height in 1..=TIP_HEIGHT {
             let mut transactions = vec![Arc::new(Transaction::V1 {
                 inputs: vec![Input::Coinbase {
@@ -192,21 +206,48 @@ impl OfflineSource {
                 lock_time: LockTime::unlocked(),
             })];
             if height == FUNDING_HEIGHT {
-                transactions.push(source.funding.clone());
+                transactions.push(funding.clone());
             }
-            let previous = source.blocks.last().ok_or(Error::HistoryUnavailable)?;
+            let previous = blocks.last().ok_or(Error::HistoryUnavailable)?;
             let mut header = *previous.header;
             header.previous_block_hash = previous.hash();
             header.merkle_root = transactions
                 .iter()
                 .map(|transaction| transaction.hash())
                 .collect();
-            source.blocks.push(Block {
+            blocks.push(Block {
                 header: Arc::new(header),
                 transactions,
             });
         }
-        Ok(source)
+        let blocks = blocks
+            .into_iter()
+            .map(|block| {
+                Ok((
+                    Hex(block.hash().bytes_in_display_order()),
+                    block
+                        .zcash_serialize_to_vec()
+                        .map_err(|_| Error::Encoding)?,
+                ))
+            })
+            .collect::<Result<Vec<_>, Error>>()?;
+        let block_indexes = blocks
+            .iter()
+            .enumerate()
+            .map(|(index, (hash, _))| (*hash, index))
+            .collect::<BTreeMap<_, _>>();
+        if block_indexes.len() != blocks.len() {
+            return Err(Error::Encoding);
+        }
+        Ok(Self {
+            blocks,
+            block_indexes,
+            funding_hash: Hex(funding.hash().bytes_in_display_order()),
+            funding_bytes: funding
+                .zcash_serialize_to_vec()
+                .map_err(|_| Error::Encoding)?,
+            funding,
+        })
     }
 }
 
@@ -225,31 +266,30 @@ impl ChainSource for OfflineSource {
 
     fn block_hash(&mut self, height: u32) -> Result<Hex<32>, Error> {
         self.blocks
-            .get(height as usize)
-            .map(|block| Hex(block.hash().bytes_in_display_order()))
+            .get(usize::try_from(height).map_err(|_| Error::Limits)?)
+            .map(|(hash, _)| *hash)
             .ok_or(Error::HistoryUnavailable)
     }
 
     fn block_bytes(&mut self, hash: Hex<32>) -> Result<Vec<u8>, Error> {
-        self.blocks
-            .iter()
-            .find(|block| Hex(block.hash().bytes_in_display_order()) == hash)
-            .ok_or(Error::HistoryUnavailable)?
-            .zcash_serialize_to_vec()
-            .map_err(|_| Error::Encoding)
+        let index = self
+            .block_indexes
+            .get(&hash)
+            .ok_or(Error::HistoryUnavailable)?;
+        Ok(self.blocks[*index].1.clone())
     }
 }
 
 impl PaymentSource for OfflineSource {
     fn resolve(&mut self, point: Outpoint) -> Result<Option<ResolvedInput>, Error> {
         let tip = self.context()?.tip;
-        if point.txid != Hex(self.funding.hash().bytes_in_display_order()) {
+        if point.txid != self.funding_hash {
             return Ok(None);
         }
         Ok(self
             .funding
             .outputs()
-            .get(point.index as usize)
+            .get(usize::try_from(point.index).map_err(|_| Error::Limits)?)
             .map(|output| ResolvedInput {
                 output: output.clone(),
                 height: FUNDING_HEIGHT,
@@ -259,14 +299,11 @@ impl PaymentSource for OfflineSource {
     }
 
     fn transaction(&mut self, txid: Hex<32>) -> Result<Option<LocatedTransaction>, Error> {
-        if txid != Hex(self.funding.hash().bytes_in_display_order()) {
+        if txid != self.funding_hash {
             return Ok(None);
         }
         Ok(Some(LocatedTransaction {
-            bytes: self
-                .funding
-                .zcash_serialize_to_vec()
-                .map_err(|_| Error::Encoding)?,
+            bytes: self.funding_bytes.clone(),
             block: Some(Checkpoint {
                 height: FUNDING_HEIGHT,
                 hash: self.block_hash(FUNDING_HEIGHT)?,
@@ -277,5 +314,83 @@ impl PaymentSource for OfflineSource {
     fn submit(&mut self, _transaction: &[u8]) -> Result<Hex<32>, Error> {
         // A benchmark must not manufacture a submission/acceptance receipt.
         Err(Error::UnsupportedContext)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use zakura_chain::serialization::ZcashDeserialize;
+
+    #[test]
+    fn prepared_responses_preserve_chain_links_and_funding() {
+        let script = Policy::new(1, vec![[0x42; 32]]).unwrap().lock_script();
+        let mut source = OfflineSource::with_script(script.clone(), 5).unwrap();
+        let mut previous = None;
+        for height in 0..=TIP_HEIGHT {
+            let hash = source.block_hash(height).unwrap();
+            let bytes = source.block_bytes(hash).unwrap();
+            let block = Block::zcash_deserialize(bytes.as_slice()).unwrap();
+            assert_eq!(Hex(block.hash().bytes_in_display_order()), hash);
+            assert_eq!(block.zcash_serialize_to_vec().unwrap(), bytes);
+            if let Some(previous) = previous {
+                assert_eq!(block.header.previous_block_hash, previous);
+                let merkle_root = block
+                    .transactions
+                    .iter()
+                    .map(|tx| tx.hash())
+                    .collect::<zakura_chain::block::merkle::Root>();
+                assert_eq!(block.header.merkle_root, merkle_root);
+            }
+            if height == FUNDING_HEIGHT {
+                assert_eq!(block.transactions.len(), 2);
+                assert_eq!(block.transactions[1], source.funding);
+            }
+            previous = Some(block.hash());
+        }
+        let funding_hash = source.funding_hash;
+        let located = source.transaction(funding_hash).unwrap().unwrap();
+        assert_eq!(
+            located.bytes,
+            source.funding.zcash_serialize_to_vec().unwrap()
+        );
+        assert_eq!(located.block.unwrap().height, FUNDING_HEIGHT);
+        for index in 0..5 {
+            let resolved = source
+                .resolve(Outpoint {
+                    txid: funding_hash,
+                    index,
+                })
+                .unwrap()
+                .unwrap();
+            assert_eq!(resolved.output.lock_script, script);
+            assert_eq!(u64::from(resolved.output.value), INPUT_VALUE);
+            assert_eq!(resolved.height, FUNDING_HEIGHT);
+            assert_eq!(resolved.tip, source.context().unwrap().tip);
+            assert!(!resolved.coinbase);
+        }
+    }
+
+    #[test]
+    fn prepared_lookups_reject_missing_items_and_return_owned_bytes() {
+        let mut source = OfflineSource::with_script(Script::new(&[0x51]), 1).unwrap();
+        assert!(source.block_hash(TIP_HEIGHT + 1).is_err());
+        assert!(source.block_hash(u32::MAX).is_err());
+        assert!(source.block_bytes(Hex([0xff; 32])).is_err());
+        assert!(source.transaction(Hex([0xff; 32])).unwrap().is_none());
+        assert!(source
+            .resolve(Outpoint {
+                txid: source.funding_hash,
+                index: u32::MAX
+            })
+            .unwrap()
+            .is_none());
+        let hash = source.block_hash(FUNDING_HEIGHT).unwrap();
+        let original = source.block_bytes(hash).unwrap();
+        let mut response = source.block_bytes(hash).unwrap();
+        response[0] ^= 1;
+        assert_eq!(source.block_bytes(hash).unwrap(), original);
+        assert!(OfflineSource::with_script(Script::new(&[]), 0).is_err());
+        assert!(OfflineSource::with_script(Script::new(&[]), 6).is_err());
     }
 }

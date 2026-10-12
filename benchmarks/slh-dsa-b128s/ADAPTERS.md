@@ -5,6 +5,9 @@ server, or generate transactions. The resource readers take one Linux snapshot;
 they do not start a workload or change host settings. Automated tests use
 synthetic files and events. Live resource, propagation, and node validation
 measurements remain pending human execution under [AGENTS.md](../../AGENTS.md).
+The separate [registered node collector](NODE_COLLECTION.md) attaches these
+readers to a running Regtest node and a bounded loopback metrics scrape. Its
+planning step remains offline; execution requires an explicit opt-in.
 
 The [metric registry](schema/metrics.json) fixes units and measurement scope.
 Payment metrics have a separate [catalog identity](schema/payment-metrics.json).
@@ -85,7 +88,7 @@ This template contains no measurement results.
 | `block-trace` | Current `commit_state.jsonl`. | Optional `throughput_probe_disabled`, default `false`; `true` requires `effective_config_toml` and the matching `provenance.effective_config_sha256`. |
 | `propagation` | Proposed event JSONL described below. | Required `expected_peers`, `observation_end_ns`, and `verified_clock_domain`. |
 | `mempool` | Saved Prometheus scrape text. | Required `monotonic_ns` and `process_epoch`; optional `labels`, `previous_text`, `previous_monotonic_ns`, and `previous_process_epoch`. |
-| `resources` | JSON object with exactly `before` and `after` snapshots. | Optional boolean `fresh_process`, boolean `fresh_cgroup`, and positive `effective_cpu_cores`. |
+| `resources` | JSON object with exactly `before` and `after` snapshots. | Optional boolean `fresh_process`, boolean `fresh_cgroup`, and positive `effective_cpu_cores` for process snapshots only. |
 
 The previous mempool scrape is stored inside `options.previous_text`, so the
 archived profile includes it. Its timestamp and process epoch are also required.
@@ -127,10 +130,15 @@ The adapter follows the current
 [block driver emitter](../../crates/zakurad/src/commands/start/zakura/trace/block_driver.rs)
 and [trace envelope](../../crates/zakura-jsonl-trace/src/lib.rs). It groups rows by
 `node`, `process_trace_id`, and `apply_token`, then checks `height`, `hash`, and
-`apply_class` at every boundary. Each attempt needs one `block_submit_queued`,
+`apply_class` at every boundary. The queued height may be absent or null, as
+allowed by the emitter; all known heights must agree with start and finish.
+Each attempt needs one `block_submit_queued`,
 one `commit_start`, and one `commit_finish`. Their `ts` fields are emitter-local
 monotonic microseconds. Missing, duplicate, mismatched, and reversed boundaries
 fail the import. Concurrent attempts may appear in interleaved file order.
+An unknown queued height does not excuse missing completion events. The current
+driver rejects blocks without coinbase height before start/finish; those traces
+remain incomplete. The adapter never silently removes unfinished attempts.
 
 For a committed `full` attempt, `elapsed_ms` supplies
 `block_verify_commit_ns`. This includes consensus verification and state commit.
@@ -266,6 +274,10 @@ cgroup-v2 mount boundary so the reader can inspect every ancestor quota.
 Effective CPU cores are the minimum of the effective cpuset count and known
 ancestor quotas. This is an upper limit; other tasks can share ancestor quotas.
 Without a known boundary or quota capability, normalization is unavailable.
+Do not supply `effective_cpu_cores` for a cgroup or interface import. Such a
+declaration is rejected instead of being silently ignored. Cgroup normalization
+uses the snapshot constraints, and comparison metadata records the entitlement
+actually used. Missing constraints remain unavailable.
 `memory.current` and `memory.peak` have different scope from process RSS.
 
 Interface identity includes name, index, network namespace, and sysfs root.

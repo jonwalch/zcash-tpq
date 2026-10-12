@@ -105,6 +105,11 @@ receipts. The hashes bind the files that this runner observed.
 
 `plan` checks the build receipt and writes the case list, sample counts, warmups,
 fresh-process repetitions, input mode and bounds. It starts no measurement.
+Primitive plans reserve 4 KiB for each stdout and normalized record, including
+its newline, and 64 KiB for a terminal failure record in the normalized stream.
+The per-process output bound and the full 64 MiB record bound must fit this
+reservation. Execution enforces the per-record bound too. Split a larger study
+into separate plans. Unexpected extra output or stderr can still fail a run.
 `run` rechecks these inputs, claims the directory once, supervises each child
 with wall-time and output bounds, and retains stdout and stderr. A missing row,
 wrong case outcome, partial line, extra row or nonzero exit prevents completion.
@@ -114,8 +119,13 @@ plan directory for its retry.
 The raw `attempts.jsonl`, `manifest.json`, logs and `receipt.json` are the primary
 artifacts. Reports verify their inventory before reading records. Keep them
 together. Do not edit saved inputs to make an incomplete run appear complete.
-After a hard kill, a run may have only an incomplete running receipt; it cannot
-be reported as finalized. Retain it for diagnosis and register a new run.
+After a hard kill, a run may have only an incomplete running receipt. Use
+`summarize --recover-incomplete` to inspect retained observations in a separate
+report. Recovery checks the retained manifest hash and snapshots the current
+artifacts; it cannot establish their original identity without the finalized
+inventory. The report stays incomplete and cannot enter a matched comparison.
+Recovery does not bypass a finalized inventory or repair malformed records.
+Retain the original evidence and register a new run for a retry.
 
 Every operation record has its timing, CPU and RSS endpoints. A final record in
 the separate `process` phase contains one process high-water reading. Thus one
@@ -157,6 +167,16 @@ The timings have these boundaries:
 The production API couples wallet writes with payment stages. These names
 preserve that boundary. They do not estimate isolated fsync cost. The driver
 checks saved wallet state after timing, but a readback is not a power-loss test.
+Synthetic chain construction, header hashing and block serialization happen
+before wallet setup timing. Lookups use prepared hashes and serialized bytes;
+copying a source response remains part of the wallet call. Cached SLH cases
+prepare this source before the total and CPU interval too. Generated SLH cases
+need the new inventory's keys first, so their enclosing total and CPU interval
+still include source preparation. Do not label those totals as isolated wallet
+cost. Reports record and display this distinction. Older reports without this
+declaration retain their original boundaries; inspect their recorded source.
+Signature retention for later readback moves the returned partials instead of
+cloning their signature strings inside the signing stage.
 Cached mode prepares backed inventory outside the foreground interval. It still
 sets up fresh payment watch stores and uses the actual wallet signer. Generated
 mode includes the inventory work in the enclosing interval. Neither mode claims
@@ -327,8 +347,12 @@ separate. Comparisons require matching hardware, workload, compiler and
 instrumentation metadata. New receipts compare checkout-local Cargo config
 locations relative to the checkout, with hashes and search precedence intact;
 different worktree prefixes alone do not prevent a comparison. External config
-paths remain exact. Raw absolute paths stay in report provenance. Older build
-receipts keep their original path-sensitive identity.
+paths remain exact. Raw absolute paths stay in report provenance. Older
+primitive/payment build receipts keep their original path-sensitive identity.
+Node collection requires the separate [node build wrapper](../../benchmarks/slh-dsa-b128s/NODE_COLLECTION.md)
+to record build-time compiler and Cargo settings for matched comparisons.
+Legacy node acceptance receipts and their reports remain readable, but cannot
+establish a matched comparison. Current machine settings cannot fill that gap.
 
 Saved block imports require matching validated effective-config hashes. To
 apply this guard to older saved imports, re-import their original input and

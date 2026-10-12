@@ -67,6 +67,26 @@ Linux process/cgroup/interface collection and the proposed propagation
 event adapter are new measurement code. No existing live propagation
 instrumentation is claimed by that adapter.
 
+The registered node collector reuses these process/cgroup readers and mempool
+adapters, the existing bounded process supervisor and report contract. Its static
+node-build validation selectively adapts the existing acceptance receipt checks;
+it preserves compiled source identity separately from benchmark instrumentation.
+Process/configuration binding, bounded loopback HTTP collection, raw-observation
+replay and attach-only lifecycle tests are new integration code. It does not
+launch nodes or supply funded workloads, latency hooks or chain acceptance.
+The separate benchmark node-build wrapper calls the unchanged acceptance build
+helper and reuses the benchmark compiler/configuration provenance reader. It
+retains the original acceptance receipt and adds build-time settings for matched
+comparison. Legacy acceptance receipts remain readable without claiming those
+missing settings. HTTP deadline enforcement adapts the standard-library parser's
+I/O boundary; no HTTP parser or transport implementation is imported.
+Node comparison identities separate the default/SLH build variant from matched
+observation conditions. End-to-end comparison tests adapt the existing mocked
+build, sampler and report fixtures, while retaining historical configuration IDs.
+Portable receipt validation preserves historical build command paths and checks
+current artifact bytes. Mempool evidence retains exact required metric lines
+for replay and a whole-response hash/size, avoiding unrelated scrape output.
+
 No alternate cryptographic backend, research node overlay, historical
 result set, research checkout, or research Git history is a runtime
 dependency. Attribution does not establish benchmark acceptance or permit

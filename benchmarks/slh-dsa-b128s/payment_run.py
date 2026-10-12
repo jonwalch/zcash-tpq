@@ -39,6 +39,7 @@ SCOPE = {
     "classical": "Matched transparent transaction controls; no equivalent durable classical wallet implementation.",
     "cache": "Cached public enrolled SLH inventory is prepared outside foreground timing; both SLH modes derive secret signing keys through the actual wallet and create fresh watch stores with empty journals. Classical cached controls reuse prepared secp256k1 key pairs.",
     "timing": "Total is one enclosing observed interval, never a sum of stage percentiles. Independent checks run after the measured child exits.",
+    "fixture_preparation": "Synthetic chain construction, hashing and serialization are outside wallet setup timing. Cached SLH cases prepare the source before the foreground interval. Generated SLH cases need the newly created keys first, so their enclosing total and CPU interval still include source preparation; these totals are not isolated wallet cost. Source responses copy prepared bytes during wallet calls.",
 }
 
 

@@ -446,6 +446,8 @@ def resource_record(before, after, context, *, fresh_process=False, fresh_cgroup
     same interval. Read-window widths remain in details, not hidden precision.
     For a process, ``effective_cpu_cores`` must describe the whole process for
     this interval. Leader thread affinity cannot establish or cap that bound.
+    Cgroup entitlement comes only from matching observed constraints at both
+    endpoints; a caller declaration cannot fill gaps in ancestor-limit evidence.
     """
     if not isinstance(fresh_process, bool) or not isinstance(fresh_cgroup, bool):
         raise CollectionError("fresh-process and fresh-cgroup declarations must be boolean")
@@ -471,6 +473,8 @@ def resource_record(before, after, context, *, fresh_process=False, fresh_cgroup
         return right - left
 
     kind = before["kind"]
+    if kind != "process" and effective_cpu_cores is not None:
+        raise CollectionError("omit effective_cpu_cores for non-process snapshots; cgroup entitlement uses observed constraints")
     if kind in {"process", "cgroup"}:
         for name in (f"{kind}_cpu_ns", f"{kind}_user_cpu_ns", f"{kind}_system_cpu_ns"):
             delta(name)
@@ -535,5 +539,7 @@ def resource_record(before, after, context, *, fresh_process=False, fresh_cgroup
             affinity_scope="process leader thread only; diagnostic, not a process-wide CPU entitlement",
             cpu_entitlement_source="caller declaration for the whole process and interval; not independently verified",
         )
+    elif kind == "cgroup":
+        details["cpu_entitlement_source"] = "matching observed cgroup constraints at both endpoints; missing ancestor limits remain unknown"
     return _record(context, f"resource:{kind}:{after['window_end_ns']}", metrics=metrics,
                    unavailable=unavailable, details=details, source=after["identity"])
