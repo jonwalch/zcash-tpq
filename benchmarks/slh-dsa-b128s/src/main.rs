@@ -13,7 +13,7 @@ use std::{
 
 use config::{CacheMode, Case, Command, Config};
 use fixture::SignatureFixture;
-use measurement::{observe, Observation};
+use measurement::{observe, process_peak, Observation};
 use serde_json::{json, Value};
 use zakura_pq_slh_dsa_b_sign::{SigningKey, MESSAGE_BYTES, PUBLIC_KEY_BYTES, SIGNATURE_BYTES};
 use zakura_pq_slh_dsa_b_verify::{verify, VerifyError};
@@ -57,7 +57,7 @@ fn metadata() -> Value {
         "keygen_boundary": "SigningKey::from_seed: complete public root; seed derivation excluded; key drop excluded",
         "sign_boundary": "SigningKey::sign: OS entropy, signing, mandatory local verification, and signature release",
         "verify_boundary": "verify: external Pure interface with empty context; fixture preparation excluded",
-        "rss_boundary": "endpoint resident sizes; process_peak_rss_bytes is process-lifetime peak including setup",
+        "rss_boundary": "primitive endpoint resident sizes; one final process_peak_rss_bytes snapshot includes setup, warmups, attempts, and prior output, but excludes final-record allocation and later teardown",
         "cpu_boundary": "getrusage process user+system delta; includes timer boundary overhead; ratio is CPU/wall, not host utilization",
         "preflight": "untimed valid and same-length last-byte-corrupted signature checks",
         "fixture_security": "synthetic public seeds; never use benchmark keys for funds",
@@ -179,17 +179,22 @@ fn measure(config: Config) -> Result<(), String> {
         }
         details["fixture_index"] = index.into();
         details["public_fixture"] = true.into();
-        details["process_peak_includes_setup"] = true.into();
         let record = record(config, attempt, observation, outcome, details);
-        serde_json::to_writer(&mut output, &record).map_err(|error| error.to_string())?;
-        output.write_all(b"\n").map_err(|error| error.to_string())?;
-        output.flush().map_err(|error| error.to_string())?;
+        write_record(&mut output, &record)?;
         errors |= outcome == "error";
     }
+    let final_record = process_record(config, process_peak(), errors);
+    write_record(&mut output, &final_record)?;
     if errors {
         return Err("one or more attempts failed; error records were emitted".into());
     }
     Ok(())
+}
+
+fn write_record(output: &mut impl Write, record: &Value) -> Result<(), String> {
+    serde_json::to_writer(&mut *output, record).map_err(|error| error.to_string())?;
+    output.write_all(b"\n").map_err(|error| error.to_string())?;
+    output.flush().map_err(|error| error.to_string())
 }
 
 fn hash(bytes: &[u8]) -> String {
@@ -208,6 +213,18 @@ fn record(
         "warmup": attempt < config.warmup, "outcome": outcome,
         "metrics": observation.metrics, "unavailable": observation.unavailable,
         "censored": [], "details": details,
+    })
+}
+
+fn process_record(config: Config, observation: Observation, errors: bool) -> Value {
+    json!({
+        "case_id": config.case.id(), "phase": "process", "cache_mode": config.cache_mode.name(),
+        "warmup": false, "outcome": if errors { "error" } else { "success" },
+        "metrics": observation.metrics, "unavailable": observation.unavailable,
+        "censored": [], "details": {
+            "scope": "one process-lifetime peak through the final snapshot; includes setup, warmups, attempts, and prior output; excludes final-record allocation and later teardown",
+            "samples": config.samples, "warmup_attempts": config.warmup,
+        },
     })
 }
 
@@ -257,6 +274,44 @@ mod tests {
         assert!(
             raw.get("schema_version").is_none(),
             "the parent assigns run identity and schema"
+        );
+    }
+
+    #[test]
+    fn lifetime_peak_has_one_separate_final_process_record() {
+        let config = Config {
+            case: Case::VerifyInvalid,
+            samples: 2,
+            warmup: 1,
+            cache_mode: CacheMode::RepeatedInput,
+        };
+        let observation = Observation {
+            metrics: Map::from_iter([("process_peak_rss_bytes".into(), 12_288.into())]),
+            unavailable: Map::new(),
+        };
+        let raw = process_record(config, observation, false);
+        assert_eq!(raw["case_id"], "primitive.verify-invalid");
+        assert_eq!(raw["phase"], "process");
+        assert_eq!(raw["warmup"], false);
+        assert_eq!(raw["outcome"], "success");
+        assert_eq!(raw["metrics"].as_object().unwrap().len(), 1);
+        assert_eq!(raw["metrics"]["process_peak_rss_bytes"], 12_288);
+        assert_eq!(raw["details"]["samples"], 2);
+        assert_eq!(raw["details"]["warmup_attempts"], 1);
+
+        let unavailable = Observation {
+            metrics: Map::from_iter([("process_peak_rss_bytes".into(), Value::Null)]),
+            unavailable: Map::from_iter([(
+                "process_peak_rss_bytes".into(),
+                "OS query failed".into(),
+            )]),
+        };
+        let failed = process_record(config, unavailable, true);
+        assert_eq!(failed["outcome"], "error");
+        assert!(failed["metrics"]["process_peak_rss_bytes"].is_null());
+        assert_eq!(
+            failed["unavailable"]["process_peak_rss_bytes"],
+            "OS query failed"
         );
     }
 }

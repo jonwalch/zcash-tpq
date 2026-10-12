@@ -171,7 +171,7 @@
         "research-os-and-stats"
       ],
       "classification": "selective source adaptation",
-      "adaptation": "Retain the getrusage/current-RSS observation order and nanosecond/byte units, plus the synthetic unit-conversion control. Add checked counters and explicit null/reason metrics. Keep process-lifetime peak distinct from endpoint RSS. Omit the global allocator, heap counters, and statistics."
+      "adaptation": "Retain the getrusage/current-RSS observation order and nanosecond/byte units, plus the synthetic unit-conversion control. Add checked counters and explicit null/reason metrics. Emit one separate final process-lifetime peak snapshot per child; primitive observations retain endpoint RSS only. The final snapshot excludes later record allocation and teardown. Omit the global allocator, heap counters, and statistics."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/src/config.rs",

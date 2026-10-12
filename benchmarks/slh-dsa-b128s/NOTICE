@@ -14,7 +14,9 @@ the pinned research revision.
 
 The local Rust measurement module adapts the OS observation sequence and
 unit conversions from crates/pq-bench-support/src/lib.rs. It adds explicit
-unavailable results and checked conversions. It does not install the
+unavailable results and checked conversions. One separate final process
+record reports the lifetime RSS peak through that snapshot; primitive
+records retain endpoint RSS only. It does not install the
 research allocator or import the support crate's statistics implementation.
 The Python reporter follows that source's nearest-rank percentile rule,
 with new record validation and separate treatment of failures, warmups,

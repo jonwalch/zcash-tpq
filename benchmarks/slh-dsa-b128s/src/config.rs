@@ -9,6 +9,7 @@ tpq-bench measure --case keygen|sign|verify|verify-invalid --samples N --warmup 
 --cache-mode repeated-input|varied-input --execute\n\n\
 Measurement is a human-run workload. No command measures by default.\n\
 samples: 1..10000; warmup: 0..1000. Warmups are recorded, excluded from summaries.\n\
+One additional final process record reports a lifetime peak through that snapshot.\n\
 repeated-input reuses a public seed/key/message; signing always uses fresh OS entropy.\n\
 varied-input varies public keygen seeds or messages; signing/verification reuse one key.\n\
 Neither mode flushes processor or OS caches. Verification fixtures are signed untimed.";

@@ -3,8 +3,9 @@
 //!
 //! The OS observation sequence and units are retained. This local subset omits
 //! the allocator and statistics. OS errors are explicit unavailable metrics.
-//! Endpoint RSS is not an interval peak; the high-water mark includes all setup
-//! and earlier attempts in this process. CPU boundaries include timer overhead.
+//! Endpoint RSS is not an interval peak. One separate final high-water snapshot
+//! includes setup and all attempts in this process, through that snapshot only.
+//! CPU boundaries include timer overhead.
 
 use std::{hint::black_box, mem::MaybeUninit, time::Instant};
 
@@ -137,10 +138,6 @@ pub fn observe<T>(timing_metric: &str, operation: impl FnOnce() -> T) -> (T, Obs
             .checked_sub(before)
             .ok_or_else(|| "process CPU counter moved backwards".into())
     })();
-    let peak_rss = after
-        .as_ref()
-        .map_err(Clone::clone)
-        .and_then(peak_rss_bytes);
     let mut observation = Observation {
         metrics: Map::new(),
         unavailable: Map::new(),
@@ -150,7 +147,6 @@ pub fn observe<T>(timing_metric: &str, operation: impl FnOnce() -> T) -> (T, Obs
     observation.insert("process_cpu_ns", process_cpu.clone());
     observation.insert("rss_before_bytes", rss_before);
     observation.insert("rss_after_bytes", rss_after);
-    observation.insert("process_peak_rss_bytes", peak_rss);
     match (process_cpu, elapsed) {
         (Ok(cpu), Ok(wall)) if wall != 0 => {
             // The bounded nanosecond counters fit finite f64 values. Precision
@@ -171,6 +167,19 @@ pub fn observe<T>(timing_metric: &str, operation: impl FnOnce() -> T) -> (T, Obs
         }
     }
     (output, observation)
+}
+
+/// One process-lifetime high-water snapshot after all attempt records are
+/// emitted. This excludes allocation for this final record and later teardown.
+/// Never attach repeated cumulative snapshots to primitive observations.
+pub fn process_peak() -> Observation {
+    let peak_rss = usage().and_then(|usage| peak_rss_bytes(&usage));
+    let mut observation = Observation {
+        metrics: Map::new(),
+        unavailable: Map::new(),
+    };
+    observation.insert("process_peak_rss_bytes", peak_rss);
+    observation
 }
 
 #[cfg(test)]
