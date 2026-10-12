@@ -136,3 +136,15 @@ cannot be used for matched comparisons. PID and process start
 identities are retained as provenance, rather than comparison keys. This does
 not independently establish matched load or topology. No funded transactions,
 mining, block-validation timing, propagation or bandwidth are generated here.
+
+New plans can compare `node-default` with `node-slh` under these same conditions.
+Build kind and features are the comparison variable, shown for each side of the
+comparison. Compiler and Cargo settings still must match. The report stores those
+settings once in its comparison identity and retains full build provenance.
+
+Configuration bytes must match too. Comparing a default build with an SLH-compiled
+build under one common configuration measures the effect of the compiled feature.
+An SLH-activated workload needs an explicit matched-control design; the comparer
+does not discard activation fields or accept different workload fixtures.
+Historical plans retain their original configuration IDs and comparison rules.
+Register new plans for both builds to use the cross-build comparison.

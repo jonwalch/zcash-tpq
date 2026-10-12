@@ -544,6 +544,12 @@
       "sources": [],
       "classification": "new node-build provenance regression controls",
       "adaptation": "Use mocked compiler/build children to check compiler flags, configuration changes, wrapper rejection, receipt binding, failure retention and historical comparison refusal without compiling or running a node."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_comparison.py",
+      "sources": [],
+      "classification": "new node comparison regression controls",
+      "adaptation": "Reuse mocked build and observation fixtures through planning, execution, reporting and comparison. Check default/SLH matching, complete compiler and profile evidence, per-side build identities and unchanged historical configuration IDs."
     }
   ]
 }

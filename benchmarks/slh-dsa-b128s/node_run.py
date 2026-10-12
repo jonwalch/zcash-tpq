@@ -166,21 +166,27 @@ def node_identity(profile, build):
 
 
 def node_compatibility(manifest):
-    """Ignore runtime PIDs and binary paths; retain the cgroup accounting scope."""
+    """Match observation conditions, keeping the build variant as provenance."""
     profile, build = manifest["node_profile"], manifest["build"]
+    version = manifest.get("node_comparison_version", 1)
+    require(type(version) is int and version in (1, 2), "node comparison identity version")
+    conditions = {"network": profile["network"], "workload": profile["workload"],
+                  "config_sha256": manifest["node_identity"]["config_sha256"],
+                  "resources": {"process": "attached-node", "cgroup": profile["cgroup_path"] is not None,
+                                "cgroup_path": profile["cgroup_path"],
+                                "cgroup_boundary": profile["cgroup_boundary"]},
+                  "endpoint_association": "operator-declared-loopback-metrics-config"}
+    if version == 2:
+        # Compiler settings are matched once, in compatibility.toolchain. The
+        # default/SLH recipe is the comparison variable, not an observation condition.
+        return {"comparison_identity_version": version, **conditions}
     build_settings = {name: build[name] for name in ("kind", "features", "rustc", "cargo", "environment")}
     # Preserve existing plan IDs for legacy receipts. Their missing build-time
     # evidence is rejected at comparison, not replaced with current settings.
     if "toolchain" in build:
         from provenance import toolchain_compatibility
         build_settings["toolchain"] = toolchain_compatibility(build["toolchain"])
-    return {"network": profile["network"], "workload": profile["workload"],
-            "config_sha256": manifest["node_identity"]["config_sha256"],
-            "resources": {"process": "attached-node", "cgroup": profile["cgroup_path"] is not None,
-                          "cgroup_path": profile["cgroup_path"],
-                          "cgroup_boundary": profile["cgroup_boundary"]},
-            "endpoint_association": "operator-declared-loopback-metrics-config",
-            "build": build_settings}
+    return {**conditions, "build": build_settings}
 
 
 def plan_node(args):
@@ -192,6 +198,7 @@ def plan_node(args):
     validate_endpoint_config(profile)
     build = node_build(profile)
     manifest = {"schema_version": 1, "kind": "node-collection", "run_id": uuid.uuid4().hex,
+                "node_comparison_version": 2,
                 "settings": settings, "node_profile": profile, "build": build,
                 "node_identity": node_identity(profile, build), "host": host_state(), "host_profile": host_profile,
                 "expected_records": settings["samples"] * (2 + (profile["cgroup_path"] is not None)),

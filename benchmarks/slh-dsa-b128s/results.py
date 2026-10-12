@@ -406,7 +406,7 @@ def compare_summaries(left, right):
         if compatibility.get("kind") == "node-collection" or "node_collection" in compatibility:
             from node_build import validate_comparison_toolchain
             try:
-                validate_comparison_toolchain(compatibility)
+                validate_comparison_toolchain(compatibility, summary.get("provenance", {}).get("node_build"))
             except ValueError as error:
                 raise ValidationError("node comparison requires complete recorded build-time toolchain provenance") from error
         if uses_payment:
@@ -459,7 +459,11 @@ def compare_summaries(left, right):
                 "tail_incomplete": a["tail_incomplete"] or b["tail_incomplete"], **changes,
             }
         comparisons.append(row)
-    return {"schema_version": SCHEMA_VERSION, "compatibility": left["compatibility"],
+    variants = {}
+    if left["compatibility"].get("node_collection", {}).get("comparison_identity_version") == 2:
+        variants["node_builds"] = {"left": left["provenance"]["node_build"],
+                                  "right": right["provenance"]["node_build"]}
+    return {"schema_version": SCHEMA_VERSION, "compatibility": left["compatibility"], **variants,
             "method": "descriptive per-process nearest-rank differences; no pooled quantiles or significance test",
             "left_successful": left["successful"], "right_successful": right["successful"],
             "groups": comparisons}

@@ -281,6 +281,7 @@ def _node_scope(summary):
         'build-time Cargo configuration and compiler settings. Existing measurements remain readable.</p>'
     ) if summary.get("compatibility", {}).get("toolchain") is None else ""
     evidence = {"identity": identity, "profile": profile, "scope": scope,
+                "build": provenance.get("node_build"),
                 "toolchain": provenance.get("toolchain"),
                 "execution": provenance.get("node_execution")}
     return (
@@ -291,6 +292,7 @@ def _node_scope(summary):
         f'<p><b>Node:</b> {_escape(profile.get("network", "Unavailable"))} · '
         f'PID {_escape(profile.get("pid", "Unavailable"))} · '
         f'<code>{_escape(profile.get("binary_path", "Unavailable"))}</code></p>'
+        f'<p><b>Build variant:</b> {_escape(provenance.get("node_build", {}).get("kind", "Unavailable"))}</p>'
         f'<p><b>Declared workload:</b> <code>{_escape(workload.get("id", "Unavailable"))}</code> · '
         f'{_escape(workload.get("description", "Unavailable"))}</p>'
         f'<p><b>Declared state / activity:</b> {_escape(workload.get("state", "Unavailable"))} / '

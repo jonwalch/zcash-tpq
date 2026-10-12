@@ -34,25 +34,34 @@ class NodeBuildTests(unittest.TestCase):
     def fake_build(self, argv, **kwargs):
         self.assertEqual(kwargs["root"], self.root)
         self.assertEqual(argv[:5], [sys.executable, str(self.root / "tests/slh-dsa-b128s/acceptance/build.py"),
-                                   "--human-run", "--kind", "node-default"])
+                                   "--human-run", "--kind", argv[4]])
         directory = Path(argv[-1])
         directory.mkdir()
         (directory / "zakurad").write_bytes(self.fixture.binary.read_bytes())
         acceptance = copy.deepcopy(self.fixture.build)
+        acceptance["kind"] = argv[4]
+        enabled = acceptance["kind"] == "node-slh"
+        if enabled:
+            (directory / "zakurad").write_bytes(self.fixture.binary.read_bytes() + b" SLH fixture")
+            acceptance["binary_sha256"] = provenance.sha256(directory / "zakurad")
+        acceptance["features"] = ["default-release-binaries"] + (["experimental-slh-dsa-b128s"] if enabled else [])
+        acceptance["command"][-1] = ",".join(acceptance["features"])
+        acceptance["identity"].update(backend="portable-rust" if enabled else "disabled",
+                                      verifier_compiled=enabled, runtime_supported=enabled)
         acceptance["command"][10] = str(directory / "target")
         provenance.atomic_json(directory / "build.json", acceptance)
         (directory / "build.log").write_text("mocked compiler output\n")
         kwargs["on_poll"]()
         return {"pid": 100, "exit_code": 0, "elapsed_ns": 1000, "output_bytes": 8}
 
-    def build(self, name="built", *, opt="3", incremental=None, operation=None):
+    def build(self, name="built", *, opt="3", incremental=None, operation=None, kind="node-default"):
         environment = {"CARGO_HOME": str(self.root / "cargo-home"), "CARGO_PROFILE_RELEASE_OPT_LEVEL": opt}
         if incremental is not None:
             environment["CARGO_INCREMENTAL"] = incremental
         with patch.dict(os.environ, environment, clear=True), patch.object(run, "ROOT", self.root), \
                 patch.object(provenance, "command_output", side_effect=self.compiler_output) as probes, \
                 patch.object(run, "supervise", side_effect=operation or self.fake_build):
-            receipt = node_build.build_node(argparse.Namespace(output=str(self.root / name), kind="node-default",
+            receipt = node_build.build_node(argparse.Namespace(output=str(self.root / name), kind=kind,
                                                               timeout=30, execute=True))
             self.assertEqual(len(probes.call_args_list), 4)
             self.assertTrue(all(call.args[1] == self.root for call in probes.call_args_list))
@@ -248,7 +257,7 @@ class NodeBuildTests(unittest.TestCase):
             self.build(operation=grow_after_poll)
         self.assertFalse(provenance.read_json(self.root / "built/build.json")["complete"])
 
-    def test_plan_bounds_the_full_duplicated_comparison_identity(self):
+    def test_plan_bounds_the_complete_comparison_identity(self):
         self.build()
         profile = self.registered()["node_profile"]
         provenance.atomic_json(self.root / "profile.json", profile)
@@ -259,6 +268,8 @@ class NodeBuildTests(unittest.TestCase):
         for name in ("toolchain", "toolchain_after"):
             receipt[name]["environment"]["CARGO_PROFILE_RELEASE_DEBUG"] = "a" * 4096
             receipt[name]["environment"]["CARGO_PROFILE_RELEASE_OPT_LEVEL"] = "b" * 4096
+            receipt[name]["environment"]["CARGO_PROFILE_RELEASE_LTO"] = "c" * 4096
+            receipt[name]["environment"]["CARGO_PROFILE_RELEASE_DEBUG_ASSERTIONS"] = "d" * 4096
         provenance.atomic_json(self.root / "built/build.json", receipt)
         with self.assertRaisesRegex(results.ValidationError, "byte limit"):
             self.fixture.plan("oversized")

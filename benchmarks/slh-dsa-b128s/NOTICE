@@ -80,6 +80,9 @@ retains the original acceptance receipt and adds build-time settings for matched
 comparison. Legacy acceptance receipts remain readable without claiming those
 missing settings. HTTP deadline enforcement adapts the standard-library parser's
 I/O boundary; no HTTP parser or transport implementation is imported.
+Node comparison identities separate the default/SLH build variant from matched
+observation conditions. End-to-end comparison tests adapt the existing mocked
+build, sampler and report fixtures, while retaining historical configuration IDs.
 
 No alternate cryptographic backend, research node overlay, historical
 result set, research checkout, or research Git history is a runtime

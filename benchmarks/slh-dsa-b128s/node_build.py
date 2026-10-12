@@ -155,11 +155,21 @@ def unwrap_build(path, receipt):
     return acceptance, compiler
 
 
-def validate_comparison_toolchain(compatibility):
+def validate_comparison_toolchain(compatibility, variant=None):
     """Old reports remain readable, but missing evidence is never comparable."""
     compiler = validate_toolchain(compatibility.get("toolchain"), normalized=True)
     node = compatibility.get("node_collection")
-    require(type(node) is dict and type(node.get("build")) is dict, "node comparison build identity")
+    require(type(node) is dict, "node comparison identity")
+    if "comparison_identity_version" in node:
+        require(type(node["comparison_identity_version"]) is int and node["comparison_identity_version"] == 2
+                and "build" not in node, "node comparison identity version")
+        require(type(variant) is dict and set(variant) == {"kind", "features"}
+                and variant["kind"] in KINDS, "node comparison build variant")
+        expected = ["default-release-binaries"] + (["experimental-slh-dsa-b128s"]
+                                                   if variant["kind"] == "node-slh" else [])
+        require(variant["features"] == expected, "node comparison feature metadata")
+        return
+    require(type(node.get("build")) is dict, "node comparison build identity")
     build = node["build"]
     require(set(build) == {"kind", "features", "rustc", "cargo", "environment", "toolchain"}
             and build["kind"] in KINDS, "node comparison recipe metadata")

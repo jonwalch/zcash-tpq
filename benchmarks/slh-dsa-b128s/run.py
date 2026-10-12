@@ -411,6 +411,7 @@ def summarize_run(args):
     if manifest.get("kind") == "node-collection":
         summary["provenance"].update(node_scope=manifest["scope"], node_profile=manifest["node_profile"],
                                      node_identity=manifest["node_identity"],
+                                     node_build={name: manifest["build"][name] for name in ("kind", "features")},
                                      node_execution=receipt.get("processes", [{}])[0],
                                      source=manifest["build"]["source"]["source_commit"])
     require(not (receipt["complete"] and receipt["records"] != manifest["expected_records"]),
