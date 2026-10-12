@@ -166,7 +166,17 @@ Classical cached controls reuse their prepared secp256k1 key pairs. Their key
 handling does not exercise the SLH wallet API.
 
 Prepare the [pinned independent reference](../../tests/slh-dsa-b128s/reference/README.md)
-first. `plan-payment` copies only its allowlisted source files, licenses, build
+first. The payment checker also reuses the independent wallet-format oracle,
+which requires the pinned Python package in
+[`wallet/formats/requirements.txt`](../../tests/slh-dsa-b128s/wallet/formats/requirements.txt).
+Install it in the Python environment used for the runner and its tests:
+
+```sh
+python3 -m pip install -r tests/slh-dsa-b128s/wallet/formats/requirements.txt
+```
+
+The checker records hashes of the loaded Python and native package files.
+`plan-payment` copies only its allowlisted reference source files, licenses, build
 receipt and C library into the run directory. It validates their identities
 without signing, verification or measurement. The snapshot stays with the run.
 
@@ -326,6 +336,8 @@ No new node instrumentation or consensus/wallet behavior is changed here.
 
 ## Check the framework without measuring performance
 
+The Python tests require the wallet-format oracle dependency described above.
+
 ```sh
 python3 -m unittest discover -s benchmarks/slh-dsa-b128s/tests -v
 cargo fmt --manifest-path benchmarks/slh-dsa-b128s/Cargo.toml --all -- --check
@@ -338,6 +350,27 @@ The Rust tests check parsing, unit conversions, bounded fixture construction and
 retained public signatures. The Python tests use mocked child and checker
 processes to check run registration, failure retention and reports. They do not
 call the measurement command or generate a new signature corpus.
+
+After building the executable, check one actual offline payment without timing
+or CPU/RSS collection. Use a fresh public-artifact directory. This command uses
+disposable wallet keys and private temporary stores, then retains only the public
+transaction evidence. Run the separate independent checker on that evidence:
+
+```sh
+mkdir .context/payment-check-01
+.context/bench-build-01/tpq-bench check-payment \
+  --algorithm slh-dsa-b128s --version v5 --policy single --inputs 1 \
+  --inventory cached --artifact-directory .context/payment-check-01
+python3 -B benchmarks/slh-dsa-b128s/payment_checks.py \
+  --repo-root . --reference-inputs .context/slh-reference \
+  --artifact .context/payment-check-01/attempt-000000.json
+```
+
+`check-payment` accepts exactly one case. It rejects measurement flags and emits
+no timing or resource observations. It is a bounded correctness check, not a
+benchmark pilot. The measured `payment` command still requires `--execute` and
+human execution under the workspace rules.
+
 Dependency inspection is locked and offline; fetch missing locked dependencies
 before running that guard. The [source map](../../benchmarks/slh-dsa-b128s/sources.json)
 and [notice](../../benchmarks/slh-dsa-b128s/NOTICE) identify reused sources and

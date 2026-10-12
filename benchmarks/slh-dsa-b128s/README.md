@@ -12,9 +12,11 @@ and actual SLH wallet storage. Their funding is a synthetic fixture; live chain
 acceptance, node flow and propagation instrumentation remain open. Synthetic
 tests do not establish performance results or production budgets.
 
-Run the Python tests without starting any measurement workload:
+Install the [pinned wallet-format oracle dependency](../../tests/slh-dsa-b128s/wallet/formats/requirements.txt)
+in your Python environment, then run tests without starting any measurement workload:
 
 ```sh
+python3 -m pip install -r tests/slh-dsa-b128s/wallet/formats/requirements.txt
 python3 -m unittest discover -s benchmarks/slh-dsa-b128s/tests -v
 ```
 
