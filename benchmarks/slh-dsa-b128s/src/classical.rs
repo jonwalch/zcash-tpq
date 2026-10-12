@@ -23,6 +23,7 @@ pub struct ClassicalPayment {
     input_count: usize,
     multisig: bool,
     keys: Vec<SecretKey>,
+    public_keys: Vec<PublicKey>,
     redeem: Vec<u8>,
     previous: Arc<Vec<Output>>,
     recipient: Script,
@@ -40,13 +41,14 @@ impl ClassicalPayment {
             return Err("classical control requires v5/v6 and 1, 2 or 5 inputs".into());
         }
         let signing_keys = keys(public_seed, if multisig { 3 } else { 1 });
-        let (lock, redeem) = scripts(&signing_keys, multisig);
-        let (recipient, _) = scripts(&keys(0xfeed_0123, 1), false);
+        let (lock, redeem, public_keys) = scripts(&signing_keys, multisig);
+        let (recipient, _, _) = scripts(&keys(0xfeed_0123, 1), false);
         Ok(Self {
             version,
             input_count,
             multisig,
             keys: signing_keys,
+            public_keys,
             redeem,
             previous: Arc::new(vec![output(10_000_000, lock)?; input_count]),
             recipient,
@@ -104,16 +106,17 @@ impl ClassicalPayment {
             if self.multisig {
                 script.push(0); // CHECKMULTISIG historical dummy.
             }
-            for key in self.keys.iter().take(self.threshold()) {
+            for (key, public_key) in self
+                .keys
+                .iter()
+                .zip(&self.public_keys)
+                .take(self.threshold())
+            {
                 let signature = secp.sign_ecdsa(&message, key);
                 // Match SLH's release contract: do not release an unchecked
                 // signature. Full transaction verification remains separate.
-                secp.verify_ecdsa(
-                    &message,
-                    &signature,
-                    &PublicKey::from_secret_key(&secp, key),
-                )
-                .map_err(|e| e.to_string())?;
+                secp.verify_ecdsa(&message, &signature, public_key)
+                    .map_err(|e| e.to_string())?;
                 let mut encoded = signature.serialize_der().to_vec();
                 encoded.push(1); // SIGHASH_ALL, committed from actual tx fields.
                 push(&encoded, &mut script)?;
@@ -136,7 +139,7 @@ impl ClassicalPayment {
             return Err("classical payment effects changed".into());
         }
         let digests = self.digests(tx)?;
-        let secp = Secp256k1::new();
+        let secp = Secp256k1::verification_only();
         for (input, digest) in tx.inputs().iter().zip(digests) {
             let Input::PrevOut { unlock_script, .. } = input else {
                 return Err("unexpected classical coinbase input".into());
@@ -146,7 +149,7 @@ impl ClassicalPayment {
             if self.multisig && raw.first() != Some(&0) {
                 return Err("classical multisig dummy must be zero".into());
             }
-            for key in self.keys.iter().take(self.threshold()) {
+            for public_key in self.public_keys.iter().take(self.threshold()) {
                 let encoded = take_push(raw, &mut cursor)?;
                 if encoded.last() != Some(&1) {
                     return Err("classical signature must use SIGHASH_ALL".into());
@@ -161,12 +164,8 @@ impl ClassicalPayment {
                 if normalized != signature {
                     return Err("classical signature must use low S".into());
                 }
-                secp.verify_ecdsa(
-                    &Message::from_digest(digest),
-                    &signature,
-                    &PublicKey::from_secret_key(&secp, key),
-                )
-                .map_err(|e| e.to_string())?;
+                secp.verify_ecdsa(&Message::from_digest(digest), &signature, public_key)
+                    .map_err(|e| e.to_string())?;
             }
             if take_push(raw, &mut cursor)? != self.redeem || cursor != raw.len() {
                 return Err("classical redeem script or trailing bytes changed".into());
@@ -245,15 +244,21 @@ fn keys(seed: u32, count: usize) -> Vec<SecretKey> {
         .collect()
 }
 
-fn scripts(keys: &[SecretKey], multisig: bool) -> (Script, Vec<u8>) {
+fn scripts(keys: &[SecretKey], multisig: bool) -> (Script, Vec<u8>, Vec<PublicKey>) {
     let secp = Secp256k1::new();
+    // Retain the public inventory created here so signing self-checks and
+    // verification never regenerate public keys inside their stage timers.
+    let public_keys = keys
+        .iter()
+        .map(|key| PublicKey::from_secret_key(&secp, key))
+        .collect::<Vec<_>>();
     let mut redeem = Vec::new();
     if multisig {
         redeem.push(0x52);
     }
-    for key in keys {
+    for key in &public_keys {
         redeem.push(33);
-        redeem.extend(PublicKey::from_secret_key(&secp, key).serialize());
+        redeem.extend(key.serialize());
     }
     redeem.extend(if multisig {
         &[0x53, 0xae][..]
@@ -263,7 +268,7 @@ fn scripts(keys: &[SecretKey], multisig: bool) -> (Script, Vec<u8>) {
     let mut lock = vec![0xa9, 20];
     lock.extend(Ripemd160::digest(Sha256::digest(&redeem)));
     lock.push(0x87);
-    (Script::new(&lock), redeem)
+    (Script::new(&lock), redeem, public_keys)
 }
 
 fn output(value: u64, lock_script: Script) -> Result<Output, String> {
@@ -341,6 +346,29 @@ mod tests {
                     assert!(fixture.verify(&tx).is_err());
                 }
             }
+        }
+    }
+
+    #[test]
+    fn verification_checks_signatures_without_secret_keys() {
+        for multisig in [false, true] {
+            let mut fixture = ClassicalPayment::new(6, 5, multisig, 7).unwrap();
+            let mut tx = fixture.assemble().unwrap();
+            fixture.sign(&mut tx).unwrap();
+            fixture.keys.clear();
+            fixture.verify(&tx).unwrap();
+
+            let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut tx)[0] else {
+                unreachable!("fixture always has prevouts")
+            };
+            let mut raw = unlock_script.as_raw_bytes().to_vec();
+            // Change an interior R byte while preserving DER and script framing.
+            raw[usize::from(multisig) + 6] ^= 1;
+            let mut cursor = usize::from(multisig);
+            let encoded = take_push(&raw, &mut cursor).unwrap();
+            Signature::from_der(&encoded[..encoded.len() - 1]).unwrap();
+            *unlock_script = Script::new(&raw);
+            assert!(fixture.verify(&tx).is_err());
         }
     }
 
