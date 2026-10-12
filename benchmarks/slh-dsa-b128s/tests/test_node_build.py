@@ -25,6 +25,7 @@ class NodeBuildTests(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.root = self.fixture.root
+        (self.root / "Cargo.toml").write_text("[workspace]\n")
 
     @staticmethod
     def compiler_output(argv, root):
@@ -44,8 +45,10 @@ class NodeBuildTests(unittest.TestCase):
         kwargs["on_poll"]()
         return {"pid": 100, "exit_code": 0, "elapsed_ns": 1000, "output_bytes": 8}
 
-    def build(self, name="built", *, opt="3", operation=None):
+    def build(self, name="built", *, opt="3", incremental=None, operation=None):
         environment = {"CARGO_HOME": str(self.root / "cargo-home"), "CARGO_PROFILE_RELEASE_OPT_LEVEL": opt}
+        if incremental is not None:
+            environment["CARGO_INCREMENTAL"] = incremental
         with patch.dict(os.environ, environment, clear=True), patch.object(run, "ROOT", self.root), \
                 patch.object(provenance, "command_output", side_effect=self.compiler_output) as probes, \
                 patch.object(run, "supervise", side_effect=operation or self.fake_build):
@@ -89,6 +92,80 @@ class NodeBuildTests(unittest.TestCase):
         self.assertEqual(left["compatibility"]["toolchain"]["environment"]["CARGO_PROFILE_RELEASE_OPT_LEVEL"], "0")
         with self.assertRaisesRegex(results.ValidationError, "incompatible"):
             results.compare_summaries(left, right)
+
+    def test_workspace_profile_defaults_and_package_overrides_cannot_compare(self):
+        variants = (("defaults", '[profile.release]\nopt-level = 0\nlto = false\n',
+                                  '[profile.release]\nopt-level = 3\nlto = "thin"\n'),
+                    ("package", '[profile.release.package.zakura]\nopt-level = 0\n',
+                                 '[profile.release.package.zakura]\nopt-level = 3\n'),
+                    ("build-override", '[profile.release.build-override]\nopt-level = 0\n',
+                                        '[profile.release.build-override]\nopt-level = 3\n'))
+        for name, before, after in variants:
+            with self.subTest(name=name):
+                (self.root / "Cargo.toml").write_text(before)
+                self.build(name + "0")
+                (self.root / "Cargo.toml").write_text(after)
+                self.build(name + "3")
+                left, right = (self.summary(self.registered(name + suffix)) for suffix in ("0", "3"))
+                self.assertNotEqual(left["compatibility"]["toolchain"]["workspace_manifest_profiles"],
+                                    right["compatibility"]["toolchain"]["workspace_manifest_profiles"])
+                with self.assertRaisesRegex(results.ValidationError, "incompatible"):
+                    results.compare_summaries(left, right)
+
+    def test_whole_profile_table_is_canonical_and_independent_of_manifest_formatting(self):
+        (self.root / "Cargo.toml").write_text('[profile.release]\nopt-level = 3\n[profile.ci]\ninherits = "release"\n')
+        first = self.build("first")
+        self.assertEqual(first["toolchain"]["workspace_manifest_profiles"],
+                         {"release": {"opt-level": 3}, "ci": {"inherits": "release"}})
+        (self.root / "Cargo.toml").write_text('# same profiles, different order\n[profile.ci]\ninherits="release"\n'
+                                             '[profile.release]\nopt-level=3\n')
+        self.build("second")
+        results.compare_summaries(self.summary(self.registered("first")), self.summary(self.registered("second")))
+
+    def test_incremental_build_setting_cannot_compare(self):
+        self.build("incremental0", incremental="0")
+        self.build("incremental1", incremental="1")
+        left, right = (self.summary(self.registered(name)) for name in ("incremental0", "incremental1"))
+        self.assertEqual(left["compatibility"]["toolchain"]["environment"]["CARGO_INCREMENTAL"], "0")
+        self.assertEqual(right["compatibility"]["toolchain"]["environment"]["CARGO_INCREMENTAL"], "1")
+        with self.assertRaisesRegex(results.ValidationError, "incompatible"):
+            results.compare_summaries(left, right)
+
+    def test_profile_or_incremental_changes_during_build_preserve_failure(self):
+        for setting in ("profile", "incremental"):
+            with self.subTest(setting=setting):
+                (self.root / "Cargo.toml").write_text('[profile.release.package.zakura]\nopt-level=0\n')
+
+                def mutate(argv, **kwargs):
+                    execution = self.fake_build(argv, **kwargs)
+                    if setting == "profile":
+                        (self.root / "Cargo.toml").write_text('[profile.release.package.zakura]\nopt-level=3\n')
+                    else:
+                        os.environ["CARGO_INCREMENTAL"] = "1"
+                    return execution
+
+                with self.assertRaisesRegex(provenance.BenchmarkError, "changed during compilation"):
+                    self.build(setting, incremental="0", operation=mutate)
+                receipt = provenance.read_json(self.root / setting / "build.json")
+                self.assertFalse(receipt["complete"])
+                self.assertNotEqual(receipt["toolchain"], receipt["toolchain_after"])
+
+    def test_missing_or_malformed_profile_and_incremental_evidence_cannot_compare(self):
+        self.build()
+        original = self.summary(self.registered())
+        for value in (None, [], {"release": []}):
+            summary = copy.deepcopy(original)
+            summary["compatibility"]["toolchain"]["workspace_manifest_profiles"] = value
+            summary["compatibility"]["node_collection"]["build"]["toolchain"]["workspace_manifest_profiles"] = value
+            with self.subTest(value=value), self.assertRaisesRegex(results.ValidationError, "build-time toolchain provenance"):
+                results.compare_summaries(summary, summary)
+        for field in ("workspace_manifest_profiles", "CARGO_INCREMENTAL"):
+            summary = copy.deepcopy(original)
+            for identity in (summary["compatibility"]["toolchain"],
+                             summary["compatibility"]["node_collection"]["build"]["toolchain"]):
+                (identity if field == "workspace_manifest_profiles" else identity["environment"]).pop(field, None)
+            with self.subTest(field=field), self.assertRaisesRegex(results.ValidationError, "build-time toolchain provenance"):
+                results.compare_summaries(summary, summary)
 
     def test_cargo_configuration_hash_and_search_order_are_recorded(self):
         (self.root / ".cargo").mkdir()

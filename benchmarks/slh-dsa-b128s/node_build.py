@@ -11,16 +11,17 @@ import os
 from pathlib import Path
 import re
 import sys
+import tomllib
 
-from provenance import (atomic_json, fresh_directory, read_json, require, sha256,
-                        toolchain)
+from provenance import (MAX_JSON, atomic_json, canonical, fresh_directory, read_json, require,
+                        sha256, toolchain)
 
 KINDS = ("node-default", "node-slh")
 ACCEPTANCE_RECEIPT = "acceptance/build.json"
 MAX_BUILD_LOG_BYTES = 64 * 1024 * 1024
 ENVIRONMENT_BASE = {"RUSTUP_TOOLCHAIN", "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "RUSTDOCFLAGS",
                     "CC", "CXX", "CFLAGS", "CXXFLAGS", "SDKROOT", "MACOSX_DEPLOYMENT_TARGET",
-                    "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER", "CARGO_BUILD_TARGET"}
+                    "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER", "CARGO_BUILD_TARGET", "CARGO_INCREMENTAL"}
 ACCEPTANCE_ENVIRONMENT = {"RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "RUSTDOCFLAGS",
                           "CC", "CXX", "CFLAGS", "CXXFLAGS", "CARGO_BUILD_TARGET"}
 WRAPPERS = {"RUSTC", "CARGO_BUILD_RUSTC", "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER",
@@ -39,7 +40,8 @@ def _absolute(value):
 def validate_toolchain(identity, *, normalized=False):
     """Validate saved build-time evidence without consulting the current host."""
     require(type(identity) is dict and set(identity) == {"rustc", "cargo", "environment",
-            "cargo_configuration_identity_version", "cargo_configurations"}, "node toolchain schema")
+            "cargo_configuration_identity_version", "cargo_configurations",
+            "workspace_manifest_profiles"}, "node toolchain schema")
     require(type(identity["cargo_configuration_identity_version"]) is int
             and identity["cargo_configuration_identity_version"] == 1, "node Cargo identity version")
     require(all(_text(identity[name]) and identity[name].strip() for name in ("rustc", "cargo")),
@@ -52,6 +54,11 @@ def validate_toolchain(identity, *, normalized=False):
             "node compiler environment identity")
     require(not any(environment.get(name) for name in WRAPPERS), "custom Cargo compiler or wrapper is not supported")
     require(not environment["CARGO_BUILD_TARGET"], "node builds require the native target")
+    profiles = identity["workspace_manifest_profiles"]
+    require(type(profiles) is dict and all(type(name) is str and bool(name) and type(profile) is dict
+                                         for name, profile in profiles.items()), "node workspace profile table")
+    from results import _bounded_json
+    _bounded_json(profiles)
     configurations = identity["cargo_configurations"]
     require(type(configurations) is list and len(configurations) <= 128, "node Cargo configuration list")
     seen = set()
@@ -84,7 +91,16 @@ def _capture_toolchain(root):
     # directory override and Cargo's ancestor search have the same scope.
     compiler = toolchain(root, source_root=root)
     compiler["environment"].update({name: os.environ.get(name)
-                                  for name in ("RUSTDOCFLAGS", "CARGO_BUILD_TARGET")})
+                                  for name in ("RUSTDOCFLAGS", "CARGO_BUILD_TARGET", "CARGO_INCREMENTAL")})
+    manifest = Path(root) / "Cargo.toml"
+    require(manifest.is_file() and not manifest.is_symlink(), "regular workspace Cargo.toml required")
+    with manifest.open("rb") as stream:
+        contents = stream.read(MAX_JSON + 1)
+    require(len(contents) <= MAX_JSON, "workspace Cargo.toml byte limit")
+    # Cargo takes workspace profile defaults, package/build overrides and profile
+    # inheritance from this manifest. Keep the whole table, independently of the
+    # source inventory deliberately omitted from matched comparison identity.
+    compiler["workspace_manifest_profiles"] = tomllib.loads(contents.decode("utf8")).get("profile", {})
     return validate_toolchain(compiler)
 
 
@@ -108,7 +124,7 @@ def unwrap_build(path, receipt):
             "complete benchmark node build receipt required")
     require(_absolute(receipt["invocation_directory"]), "node build invocation directory")
     compiler = validate_toolchain(receipt["toolchain"])
-    require(validate_toolchain(receipt["toolchain_after"]) == compiler,
+    require(canonical(validate_toolchain(receipt["toolchain_after"])) == canonical(compiler),
             "node build toolchain changed during compilation")
     for config in compiler["cargo_configurations"]:
         location = config["location"]
@@ -186,7 +202,8 @@ def build_node(args):
                                                  on_poll=bound_log)
         bound_log()
         receipt["toolchain_after"] = _capture_toolchain(runner.ROOT)
-        require(receipt["toolchain_after"] == receipt["toolchain"], "node build toolchain changed during compilation")
+        require(canonical(receipt["toolchain_after"]) == canonical(receipt["toolchain"]),
+                "node build toolchain changed during compilation")
         inner = output / ACCEPTANCE_RECEIPT
         receipt["acceptance_receipt_sha256"] = sha256(inner)
         receipt["binary_sha256"] = sha256(output / "acceptance/zakurad")
