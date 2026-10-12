@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "description": "Names fix units and measurement scope. A numeric null requires an explicit unavailable reason. Censored numeric values are lower bounds, never exact durations.",
+  "metrics": {
+    "attempt_elapsed_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Observed monotonic elapsed time for an attempt, including completed failure handling."
+    },
+    "authorization_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Canonical serialized authorization script length."
+    },
+    "block_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Exact canonical serialized block length."
+    },
+    "block_commit_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "State commit interval, with verification excluded."
+    },
+    "block_verify_commit_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Combined full block verification and commit interval; not pure signature verification."
+    },
+    "block_verify_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Block verification only, with state commit excluded."
+    },
+    "cgroup_cpu_core_equivalents": {
+      "unit": "cores",
+      "integer": false,
+      "description": "Cgroup CPU seconds divided by monotonic wall seconds."
+    },
+    "cgroup_cpu_normalized_percent": {
+      "unit": "percent",
+      "integer": false,
+      "description": "100 times cgroup core equivalents divided by measured effective CPU entitlement."
+    },
+    "cgroup_cpu_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Cgroup v2 total CPU-time delta over the stated observation interval."
+    },
+    "cgroup_memory_current_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Cgroup v2 memory.current at one timestamp; includes more than process RSS."
+    },
+    "cgroup_memory_peak_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Cgroup v2 memory.peak over its recorded reset/lifetime scope; includes more than RSS."
+    },
+    "cgroup_system_cpu_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Cgroup v2 system CPU-time delta over the stated observation interval."
+    },
+    "cgroup_throttled_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Cgroup v2 throttled CPU-time delta; not added to used CPU time."
+    },
+    "cgroup_throttled_periods": {
+      "unit": "count",
+      "integer": true,
+      "description": "Cgroup v2 nr_throttled counter delta over the observation interval."
+    },
+    "cgroup_user_cpu_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Cgroup v2 user CPU-time delta over the stated observation interval."
+    },
+    "checkpoint_residence_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Checkpoint residence interval including batching and waiting."
+    },
+    "descriptor_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Canonical serialized policy descriptor length."
+    },
+    "effective_cpu_cores": {
+      "unit": "cores",
+      "integer": false,
+      "description": "Effective CPU entitlement from the stated affinity/quota source, not worker count.",
+      "positive": true
+    },
+    "interface_rx_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Received byte counter delta for one named isolated interface and interval."
+    },
+    "interface_rx_bytes_per_second": {
+      "unit": "bytes/s",
+      "integer": false,
+      "description": "Interface rx byte counter delta divided by the stated monotonic wall interval."
+    },
+    "interface_tx_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Transmitted byte counter delta for one named isolated interface and interval."
+    },
+    "interface_tx_bytes_per_second": {
+      "unit": "bytes/s",
+      "integer": false,
+      "description": "Interface tx byte counter delta divided by the stated monotonic wall interval."
+    },
+    "keygen_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Complete product SigningKey::from_seed public-root computation; seed preparation excluded."
+    },
+    "mempool_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Exact encoded bytes in the observed mempool population."
+    },
+    "mempool_cost": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Zakura mempool cost in bytes; distinct from encoded transaction bytes."
+    },
+    "mempool_drain_transactions_per_second": {
+      "unit": "transactions/s",
+      "integer": false,
+      "description": "Nonnegative observed reduction in mempool transaction count per second; not gross removal throughput under concurrent arrivals."
+    },
+    "mempool_growth_bytes_per_second": {
+      "unit": "bytes/s",
+      "integer": false,
+      "description": "Signed change in observed mempool bytes divided by the monotonic window.",
+      "signed": true
+    },
+    "mempool_growth_transactions_per_second": {
+      "unit": "transactions/s",
+      "integer": false,
+      "description": "Signed change in observed mempool transaction count divided by the monotonic window.",
+      "signed": true
+    },
+    "mempool_queue_transactions": {
+      "unit": "count",
+      "integer": true,
+      "description": "Transactions currently queued for the named admission stage."
+    },
+    "mempool_transactions": {
+      "unit": "count",
+      "integer": true,
+      "description": "Transactions currently in the observed mempool."
+    },
+    "message_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Verifier/signing message length before internal Pure framing."
+    },
+    "process_cpu_core_equivalents": {
+      "unit": "cores",
+      "integer": false,
+      "description": "Process CPU seconds divided by monotonic wall seconds."
+    },
+    "process_cpu_normalized_percent": {
+      "unit": "percent",
+      "integer": false,
+      "description": "100 times process core equivalents divided by measured effective CPU entitlement."
+    },
+    "process_cpu_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Process user plus system CPU-time delta over the stated observation interval."
+    },
+    "process_peak_rss_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Process lifetime resident-set high-water mark, including setup; never a delta."
+    },
+    "process_system_cpu_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Process system CPU-time delta over the stated observation interval."
+    },
+    "process_user_cpu_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Process user CPU-time delta over the stated observation interval."
+    },
+    "propagation_admit_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Origin admission to remote admission for one transaction authorization."
+    },
+    "propagation_origin_admit_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Origin submission to origin admission for one transaction authorization."
+    },
+    "propagation_receive_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Origin admission to remote receipt for one transaction authorization."
+    },
+    "proposal_verify_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Block proposal verification interval; scope and verifier route required in case metadata."
+    },
+    "protocol_rx_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Received encoded-protocol byte counter delta; not wire traffic."
+    },
+    "protocol_rx_bytes_per_second": {
+      "unit": "bytes/s",
+      "integer": false,
+      "description": "Protocol rx byte counter delta divided by the stated monotonic wall interval."
+    },
+    "protocol_tx_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Transmitted encoded-protocol byte counter delta; not wire traffic."
+    },
+    "protocol_tx_bytes_per_second": {
+      "unit": "bytes/s",
+      "integer": false,
+      "description": "Protocol tx byte counter delta divided by the stated monotonic wall interval."
+    },
+    "public_key_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Serialized public-key length."
+    },
+    "rpc_elapsed_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Client monotonic elapsed time for one RPC attempt; not node admission latency."
+    },
+    "rss_after_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Resident process bytes at the end endpoint; not an operation peak."
+    },
+    "rss_before_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Resident process bytes at the start endpoint; not an operation peak."
+    },
+    "rss_current_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Resident process bytes at one timestamp; sampling may miss peaks."
+    },
+    "sign_release_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Complete product sign call, including randomness and mandatory verification before release."
+    },
+    "signature_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Serialized signature length."
+    },
+    "signature_verify_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Product signature verifier call; message and signature preparation excluded."
+    },
+    "trace_queue_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Named queue wait interval; enqueue/dequeue event names must be recorded."
+    },
+    "trace_residence_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Named trace residence interval; start/end event names must be recorded."
+    },
+    "transaction_bytes": {
+      "unit": "bytes",
+      "integer": true,
+      "description": "Exact canonical serialized transaction length, not hex or JSON length."
+    }
+  }
+}
