@@ -36,7 +36,8 @@ The import profile has exactly these fields:
 
 Identifiers use letters, digits, `_`, `.`, `:`, and `-`, begin with a letter or
 digit, and have at most 128 characters. Imported normalized records retain their
-source process and attempt IDs; other context fields must match the profile.
+source process and attempt IDs and warmup flags; other context fields must match
+the profile. For adapter-generated records, the context supplies the warmup flag.
 
 This complete profile template imports one serialized transaction. Replace the
 uppercase placeholders with the producer's evidence. An unavailable identity
