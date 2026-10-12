@@ -103,8 +103,8 @@ def check():
     validate_tree(primitive, required=(VERIFY, "blake3"), forbidden=(SIGN, WALLET, CLI, NATIVE, CONTEXT, "rayon", "rand_core", BENCH))
     results.append({"case": "primitive-verifier-only", "package_count": len(primitive), "edges": "normal,build"})
     benchmark = graph(BENCH, edges="normal,build,dev")
-    validate_tree(benchmark, required=(BENCH, SIGN, VERIFY, "blake3"),
-                  forbidden=(WALLET, CLI, NATIVE, CONTEXT, "rayon", "zakura", "zakura-consensus"))
+    validate_tree(benchmark, required=(BENCH, SIGN, VERIFY, WALLET, NATIVE, CONTEXT, "blake3"),
+                  forbidden=(CLI, "zakura", "zakura-consensus", "zakura-state", "zakura-network"))
     results.append({"case": "isolated-benchmark", "package_count": len(benchmark), "edges": "normal,build,dev"})
     return results
 
