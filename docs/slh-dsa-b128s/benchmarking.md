@@ -1,12 +1,12 @@
 # Benchmark framework
 
-The framework records primitive timings and imports saved node and resource
-observations. It writes raw attempts, source and artifact hashes, and reports
+The framework records primitive and offline wallet/payment timings and imports
+saved node and resource observations. It writes raw attempts, source and artifact hashes, and reports
 with median (p50), p95 and p99 for every measured metric. The code is under
 [`benchmarks/slh-dsa-b128s`](../../benchmarks/slh-dsa-b128s).
 
-This is the first implementation. Focused tests use synthetic records, mocked
-resource files and an existing public signature. No new performance results,
+Focused tests use synthetic records, mocked resource files and retained public
+signatures. No new performance results,
 live node acceptance or production budgets are established by those tests.
 Builds and measurement commands below are for a human to execute. Agents must
 not run profiling, live nodes or performance matrices under the delivery task's
@@ -21,6 +21,10 @@ authorization for an agent to run a workload.
 | Signing | Product `SigningKey::sign` timer | Includes OS entropy, signing and mandatory verification before release |
 | Signature verification | Valid and same-length corrupted signature timers | External Pure interface with empty context; fixture preparation is outside timing |
 | CPU and memory for primitives | Linux/macOS process CPU, endpoint RSS and one final high-water reading per fresh process | CPU/wall is core equivalents; peak RSS includes setup and warmups and is read before exit |
+| SLH wallet/payment stages | Actual wallet setup, prepare, sign, assemble and authorization verification | Stage times include coupled durable journal writes; funding is an offline synthetic source |
+| Payment shape matrix | v5/v6, 1-of-1/2-of-3, 1/2/5 inputs, cached/generated inventory | Every SLH attempt uses fresh wallet storage; modes do not flush machine caches |
+| Classical payment controls | Matched P2SH single-signature and 2-of-3 transparent transactions | No equivalent durable classical wallet workflow; total times are not equivalent wallet-payment costs |
+| Independent payment checks | Pinned SLH reference, independent transaction digest/encoding oracle and classical signature checks | Check every public attempt after the measured process exits; no live UTXO or chain acceptance claim |
 | Transaction size | Exact saved serialized byte count | Does not establish transaction validity, block inclusion or a full wallet payment |
 | Node resources | Linux process, cgroup-v2 and isolated-interface snapshot library | Processes, cgroups and interfaces keep different accounting boundaries |
 | Mempool | Saved Prometheus gauges and growth between two observations | Serialized bytes, cost bytes and process memory remain distinct |
@@ -119,6 +123,146 @@ process supplies only one peak sample. The report shows p50=p95=p99 for that
 one-sample peak distribution; it does not estimate a process-peak population.
 Setup costs and earlier warmups can dominate that peak.
 
+## Register an offline wallet/payment run
+
+These cases use the actual SLH `WatchStore` payment workflow. A synthetic
+`ChainSource`/`PaymentSource` supplies known transparent previous outputs. The
+wallet derives signing messages from each transaction and the supplied previous
+outputs. No RPC call, node, mining, mempool or peer network is involved. The
+fixture substitutes for an authenticated funding source only inside this test;
+it does not relax the production trusted-UTXO boundary.
+
+`single` means a 1-of-1 SLH policy or the classical P2SH CHECKSIG control. `multisig`
+means a 2-of-3 SLH policy or classical 2-of-3 P2SH. The controls match version,
+input count, signer threshold, output count and the stated transaction fixture.
+Their exact scripts and byte counts differ. Inputs and recipient value match;
+fees use actual serialized actions, so fees and change can differ. They do not provide a classical
+equivalent of SLH wallet persistence. The comparator rejects different case
+identities instead of silently treating these totals as equivalent work.
+
+The timings have these boundaries:
+
+| Metric | Scope |
+| --- | --- |
+| `payment_inventory_ns` | Generated inventory, including SLH enrollment and verified backup publication; omitted in cached cases |
+| `payment_wallet_setup_ns` | Fresh SLH watch-store setup and sync in both inventory modes |
+| `payment_prepare_persist_ns` | Actual SLH payment preparation and its durable writes |
+| `payment_sign_persist_ns` | Actual SLH signing, mandatory verification and durable writes |
+| `payment_assemble_persist_ns` | Actual SLH authorization assembly and durable writes |
+| `payment_assembly_ns`, `payment_sign_ns` | Classical transaction controls without a durable wallet journal |
+| `payment_verify_ns` | All-input verification through SLH `TransactionContext` or the classical script-aware control; neither is full node validation |
+| `payment_total_ns` | One enclosing foreground interval, including generated inventory and wallet setup when applicable |
+| `transaction_bytes` | Exact serialized transaction bytes, checked independently against each saved public artifact |
+
+The production API couples wallet writes with payment stages. These names
+preserve that boundary. They do not estimate isolated fsync cost. The driver
+checks saved wallet state after timing, but a readback is not a power-loss test.
+Cached mode prepares backed inventory outside the foreground interval. It still
+sets up fresh payment watch stores and uses the actual wallet signer. Generated
+mode includes the inventory work in the enclosing interval. Neither mode claims
+a cold or warm processor cache. Never add stage p50, p95 or p99 values to obtain
+a total; those quantiles can refer to different attempts.
+Classical cached controls reuse their prepared secp256k1 key pairs. Their key
+handling does not exercise the SLH wallet API. Classical verification uses the
+public keys prepared with the inventory and a verification-only context. It does
+not derive public keys from secret scalars inside the verification timer.
+
+Choose an existing directory on the filesystem whose wallet writes you intend
+to measure. Pass it as `--wallet-storage-root`. Both cached inventory backups
+and each attempt's fresh private stores are created below this root; `TMPDIR`
+does not choose their location. Keep this directory outside public artifacts.
+Temporary stores are removed on normal exit. Interrupted processes can leave
+disposable private stores here; do not archive them as public evidence.
+
+Add a `wallet_storage` object to the host profile for payment runs. Replace the
+example declarations with the actual device, filesystem, mount options and sync
+behavior. These are operator declarations, not a power-loss durability test:
+
+```json
+"wallet_storage": {
+  "description": "replace with device and storage isolation description",
+  "medium": "replace with local SSD, HDD, RAM disk, or other medium",
+  "filesystem": "replace with actual filesystem and version",
+  "mount_options": "replace with effective mount options",
+  "sync_policy": "replace with filesystem and device flush guarantees"
+}
+```
+
+Registration records the resolved root, directory/device identity, filesystem
+block sizes and flags, and these declarations. Execution rechecks the identity
+and passes the registered root to the child. Reports retain it in provenance and
+comparison metadata. A changed root, device, filesystem flags or storage profile
+cannot silently count as the same persistence workload. Historical payment runs
+without storage identity can be inspected, but cannot establish matched storage
+comparisons. Primitive reporting does not require this payment-specific field.
+
+Prepare the [pinned independent reference](../../tests/slh-dsa-b128s/reference/README.md)
+first. The payment checker also reuses the independent wallet-format oracle,
+which requires the pinned Python package in
+[`wallet/formats/requirements.txt`](../../tests/slh-dsa-b128s/wallet/formats/requirements.txt).
+Install it in the Python environment used for the runner and its tests:
+
+```sh
+python3 -m pip install -r tests/slh-dsa-b128s/wallet/formats/requirements.txt
+```
+
+The checker records hashes of the loaded Python and native package files.
+`plan-payment` copies only its allowlisted reference source files, licenses, build
+receipt and C library into the run directory. It validates their identities
+without signing, verification or measurement. The snapshot stays with the run.
+
+This example registers two cases, one SLH wallet workflow and one classical
+transaction control. All dimension flags are required. Repeat a dimension flag
+to select more cases; the runner registers their Cartesian product. The small
+sample count demonstrates commands and does not establish tail stability.
+
+```sh
+mkdir -p .context/wallet-storage
+python3 benchmarks/slh-dsa-b128s/run.py plan-payment \
+  --build .context/bench-build-01 --output .context/payment-run-01 \
+  --host-profile .context/bench-host.json \
+  --reference-inputs .context/slh-reference \
+  --wallet-storage-root .context/wallet-storage \
+  --algorithm slh-dsa-b128s --algorithm ecdsa-secp256k1 \
+  --version v5 --policy single --inputs 1 --inventory cached \
+  --samples 3 --warmup 1 --repetitions 1 --timeout 1800 \
+  --max-output-bytes 1048576 --max-artifact-bytes 4194304 \
+  --checker-timeout 120 --checker-max-output-bytes 262144
+
+python3 benchmarks/slh-dsa-b128s/run.py run .context/payment-run-01 --execute
+
+python3 benchmarks/slh-dsa-b128s/run.py summarize .context/payment-run-01 \
+  --output .context/payment-report-01
+```
+
+For the other cases, select `--version v6`, `--policy multisig`, `--inputs 2`
+or `--inputs 5`, and `--inventory generated`. Each process permits 1–100 timed
+attempts and 0–10 warmups. The plan limits the full run to 4,096 records, keeps
+one separate process-peak record per child, and bounds process wall time,
+stdout/stderr, public artifact files and bytes. The total registered output
+allowance, including checker logs and a reference/receipt reserve, is at most
+2 GiB. A large matrix must be split into registered runs.
+
+Before any measured child starts, the separate checker verifies retained known
+answers and negative controls. Each successful attempt writes one public
+`attempt-NNNNNN.json` with transaction bytes, previous outputs, messages and
+case metadata. The runner checks every warmup and timed artifact after that
+child exits, so reference verification does not compete with its measured
+work. It uses separately implemented wire parsing, digests and signatures;
+production self-verification alone cannot satisfy this gate. Checker processes
+have separate wall-time and output limits. A missing reference, changed source,
+bad signature, changed message, wrong shape or byte-count mismatch prevents
+completion. The full checker stdout, artifact hashes and compact receipt index
+remain with the run.
+
+An independent-check failure leaves the observed attempt rows intact and adds
+a separate failure row. No failed artifact is relabeled as independently valid.
+Timeouts, short output, unexpected artifact files and nonzero exits also keep
+the run incomplete. Retain the whole run directory; the framework never edits
+failed runs into successful evidence. The artifact directory contains public
+synthetic transactions only. Disposable wallet keys and stores are not copied
+into the report evidence. Never use benchmark keys for funds.
+
 ## Import saved observations
 
 `run.py import` is offline. Supported kinds are `normalized`, `transaction`,
@@ -162,8 +306,10 @@ samples has null quantiles and a reason. Failures, missing capabilities,
 censored lower bounds and warmups remain visible. Exact quantiles exclude
 censored values and cannot establish the unobserved tail.
 
-Open `report.html` for the readable view. Primitive timings appear together,
-with one row per process and outcome, followed by the full metric tables.
+Open `report.html` for the readable view. Primitive timings and wallet/payment
+stages have separate overviews, with one row per metric, process and outcome,
+followed by the full metric tables. Wallet scope notes explain cached inventory,
+coupled durable writes and the classical controls' different boundaries.
 Durations use ns, µs, ms or seconds; larger byte values use binary units. Expand
 the exact-value details or use JSON/CSV for unrounded values in catalog units.
 CPU/wall is core equivalents, not total host CPU percentage. Each process peak
@@ -205,8 +351,10 @@ Use the original source revision to report a run if the metric catalog changes.
 
 ## Remaining integration
 
-The next work is funded wallet transaction cases and separate key storage,
-sighash, assembly and submission timings. Node work still needs isolated
+The next work is funded live wallet transaction cases, RPC submission and node
+flow. The offline payment cases above do not establish live acceptance.
+Separate digest and isolated storage microbenchmarks are not supplied; current
+timings retain their real API boundaries. Node work still needs isolated
 resource collection sessions, verified build/configuration/fixture receipts,
 full-validation controls, per-stage tracing, peer receive/admit instrumentation,
 and multi-node topology orchestration. Upstream RPC and codec benchmarks are
@@ -221,6 +369,8 @@ No new node instrumentation or consensus/wallet behavior is changed here.
 
 ## Check the framework without measuring performance
 
+The Python tests require the wallet-format oracle dependency described above.
+
 ```sh
 python3 -m unittest discover -s benchmarks/slh-dsa-b128s/tests -v
 cargo fmt --manifest-path benchmarks/slh-dsa-b128s/Cargo.toml --all -- --check
@@ -229,8 +379,33 @@ cargo clippy --manifest-path benchmarks/slh-dsa-b128s/Cargo.toml --all-targets -
 python3 tests/slh-dsa-b128s/dependencies/check.py
 ```
 
-The Rust tests check parsing, unit conversions and a retained public signature.
-They do not call the measurement command or generate a new signature corpus.
+The Rust tests check parsing, unit conversions, bounded fixture construction and
+retained public signatures. The Python tests use mocked child and checker
+processes to check run registration, failure retention and reports. They do not
+call the measurement command or generate a new signature corpus.
+
+After building the executable, check one actual offline payment without timing
+or CPU/RSS collection. Use a fresh public-artifact directory. This command uses
+disposable wallet keys and private temporary stores, then retains only the public
+transaction evidence. Run the separate independent checker on that evidence:
+
+```sh
+mkdir .context/payment-check-01
+mkdir -p .context/wallet-storage
+.context/bench-build-01/tpq-bench check-payment \
+  --algorithm slh-dsa-b128s --version v5 --policy single --inputs 1 \
+  --inventory cached --artifact-directory .context/payment-check-01 \
+  --wallet-storage-root .context/wallet-storage
+python3 -B benchmarks/slh-dsa-b128s/payment_checks.py \
+  --repo-root . --reference-inputs .context/slh-reference \
+  --artifact .context/payment-check-01/attempt-000000.json
+```
+
+`check-payment` accepts exactly one case. It rejects measurement flags and emits
+no timing or resource observations. It is a bounded correctness check, not a
+benchmark pilot. The measured `payment` command still requires `--execute` and
+human execution under the workspace rules.
+
 Dependency inspection is locked and offline; fetch missing locked dependencies
 before running that guard. The [source map](../../benchmarks/slh-dsa-b128s/sources.json)
 and [notice](../../benchmarks/slh-dsa-b128s/NOTICE) identify reused sources and

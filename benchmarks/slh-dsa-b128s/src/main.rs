@@ -1,9 +1,13 @@
-//! Explicit human-run primitive measurements using the actual product APIs.
-//! No transaction, secret seed, signature, or entropy bytes are emitted.
+//! Explicit human-run measurements using the actual product APIs.
+//! Primitive records emit hashes only. Payment artifacts contain public
+//! transaction evidence; secret keys, seeds and entropy bytes are never emitted.
 
+mod classical;
 mod config;
 mod fixture;
 mod measurement;
+mod payment;
+mod payment_fixture;
 
 use std::{
     hint::black_box,
@@ -36,10 +40,12 @@ fn execute() -> Result<(), String> {
             json!({"cases": Case::ALL.map(|case| json!({
                 "case": case.name(), "case_id": case.id(), "phase": "primitive",
                 "timing_metric": case.timing_metric(), "human_execution_required": true,
-            }))})
+            })), "payment_cases": payment::cases()})
         ),
         Command::Metadata => println!("{}", metadata()),
         Command::Measure(config) => measure(config)?,
+        Command::Payment(config) => payment::measure(config)?,
+        Command::CheckPayment(config) => payment::check(config)?,
     }
     Ok(())
 }
@@ -62,6 +68,7 @@ fn metadata() -> Value {
         "preflight": "untimed valid and same-length last-byte-corrupted signature checks",
         "fixture_security": "synthetic public seeds; never use benchmark keys for funds",
         "cache_boundary": "input reuse only; no processor or OS cache flush; varied verification signs a fresh fixture before each timer",
+        "payment": payment::metadata(),
     })
 }
 

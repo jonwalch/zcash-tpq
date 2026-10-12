@@ -29,11 +29,12 @@ The guard rejects alternate PQ packages, including optional and test-only packag
 Local dependency paths must stay inside the repository.
 The signer is allowed in enabled wallet/CLI graphs and the separate benchmark.
 The benchmark package is forbidden in every node, wallet and verifier graph.
-Its graph must contain the real signer and verifier and must exclude the node,
-wallet, fixture tools and Rayon.
+Its graph must contain the real signer, verifier, wallet and native transaction
+context. Wallet payment cases run in this isolated executable. Its graph excludes
+the node, consensus service, state database, network service, CLI and fixture tools.
 The default CLI also excludes the wallet library.
 BLAKE3 stays pinned to 1.8.5 without its Rayon feature.
-Upstream node use of Rayon is unchanged.
+Upstream node and chain-library use of Rayon is unchanged.
 
 These checks establish dependency isolation. Runtime support now follows the
 explicit SLH feature, and CLI source is integrated. Neither the dependency graph

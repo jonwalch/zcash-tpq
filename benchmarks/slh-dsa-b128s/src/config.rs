@@ -1,18 +1,91 @@
 //! Strict, bounded arguments. Parsing never performs cryptographic work.
 
+use std::path::PathBuf;
+
 pub const MAX_SAMPLES: u32 = 10_000;
 pub const MAX_WARMUP: u32 = 1_000;
+pub const MAX_PAYMENT_SAMPLES: u32 = 100;
+pub const MAX_PAYMENT_WARMUP: u32 = 10;
 
 pub const HELP: &str = "tpq-bench list\n\
 tpq-bench check-metadata\n\
 tpq-bench measure --case keygen|sign|verify|verify-invalid --samples N --warmup N \
---cache-mode repeated-input|varied-input --execute\n\n\
+--cache-mode repeated-input|varied-input --execute\n\
+tpq-bench payment --algorithm slh-dsa-b128s|ecdsa-secp256k1 --version v5|v6 \
+--policy single|multisig --inputs 1|2|5 --inventory cached|generated \
+--samples N --warmup N --artifact-directory PATH --wallet-storage-root PATH --execute\n\n\
+tpq-bench check-payment --algorithm slh-dsa-b128s|ecdsa-secp256k1 --version v5|v6 \
+--policy single|multisig --inputs 1|2|5 --inventory cached|generated \
+--artifact-directory PATH --wallet-storage-root PATH\n\n\
 Measurement is a human-run workload. No command measures by default.\n\
 samples: 1..10000; warmup: 0..1000. Warmups are recorded, excluded from summaries.\n\
 One additional final process record reports a lifetime peak through that snapshot.\n\
 repeated-input reuses a public seed/key/message; signing always uses fresh OS entropy.\n\
 varied-input varies public keygen seeds or messages; signing/verification reuse one key.\n\
-Neither mode flushes processor or OS caches. Verification fixtures are signed untimed.";
+Neither mode flushes processor or OS caches. Verification fixtures are signed untimed.\n\
+Payments are disposable offline fixtures, never authenticated chain funding.\n\
+Payment bounds: samples 1..100, warmup 0..10; artifacts contain public bytes only.\n\
+Wallet storage uses an explicit existing directory; TMPDIR does not select its filesystem.\n\
+single means 1-of-1; multisig means 2-of-3. Inventory caching is not secret-key caching.\n\
+SLH foreground includes real wallet preparation, signing and assembly with durable journals.\n\
+Classical controls measure transaction assembly/signing/verification, not the SLH wallet.";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Algorithm {
+    Slh,
+    Classical,
+}
+
+impl Algorithm {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Slh => "slh-dsa-b128s",
+            Self::Classical => "ecdsa-secp256k1",
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PaymentConfig {
+    pub algorithm: Algorithm,
+    pub version: u8,
+    pub multisig: bool,
+    pub inputs: usize,
+    pub generated: bool,
+    pub samples: u32,
+    pub warmup: u32,
+    pub artifact_directory: PathBuf,
+    pub wallet_storage_root: PathBuf,
+}
+
+impl PaymentConfig {
+    pub fn inventory(&self) -> &'static str {
+        if self.generated {
+            "generated"
+        } else {
+            "cached"
+        }
+    }
+
+    pub fn policy(&self) -> &'static str {
+        if self.multisig {
+            "multisig"
+        } else {
+            "single"
+        }
+    }
+
+    pub fn case_id(&self) -> String {
+        format!(
+            "payment.{}.v{}.{}.i{}.{}",
+            self.algorithm.name(),
+            self.version,
+            self.policy(),
+            self.inputs,
+            self.inventory()
+        )
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Case {
@@ -82,12 +155,14 @@ pub struct Config {
     pub cache_mode: CacheMode,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Command {
     List,
     Metadata,
     Help,
     Measure(Config),
+    Payment(PaymentConfig),
+    CheckPayment(PaymentConfig),
 }
 
 pub fn parse(arguments: impl IntoIterator<Item = String>) -> Result<Command, String> {
@@ -95,6 +170,12 @@ pub fn parse(arguments: impl IntoIterator<Item = String>) -> Result<Command, Str
     let command = arguments
         .next()
         .ok_or("a command is required; use --help")?;
+    if command == "payment" {
+        return parse_payment(arguments, true).map(Command::Payment);
+    }
+    if command == "check-payment" {
+        return parse_payment(arguments, false).map(Command::CheckPayment);
+    }
     let non_measuring = match command.as_str() {
         "list" => Some(Command::List),
         "check-metadata" => Some(Command::Metadata),
@@ -163,6 +244,142 @@ pub fn parse(arguments: impl IntoIterator<Item = String>) -> Result<Command, Str
         warmup: warmup.ok_or("--warmup is required")?,
         cache_mode: cache_mode.ok_or("--cache-mode is required")?,
     }))
+}
+
+fn parse_payment(
+    mut arguments: impl Iterator<Item = String>,
+    measure: bool,
+) -> Result<PaymentConfig, String> {
+    let (mut algorithm, mut version, mut multisig, mut inputs, mut generated) =
+        (None, None, None, None, None);
+    let (mut samples, mut warmup, mut artifact_directory) = (None, None, None);
+    let mut wallet_storage_root = None;
+    let mut execute = false;
+    while let Some(flag) = arguments.next() {
+        if !measure && matches!(flag.as_str(), "--execute" | "--samples" | "--warmup") {
+            return Err(
+                "check-payment is one untimed correctness case and accepts no measurement flags"
+                    .into(),
+            );
+        }
+        if flag == "--execute" {
+            if execute {
+                return Err("duplicate --execute".into());
+            }
+            execute = true;
+            continue;
+        }
+        if !matches!(
+            flag.as_str(),
+            "--algorithm"
+                | "--version"
+                | "--policy"
+                | "--inputs"
+                | "--inventory"
+                | "--samples"
+                | "--warmup"
+                | "--artifact-directory"
+                | "--wallet-storage-root"
+        ) {
+            return Err(format!("unknown payment option: {flag}"));
+        }
+        let value = arguments
+            .next()
+            .ok_or_else(|| format!("missing value for {flag}"))?;
+        match flag.as_str() {
+            "--algorithm" => set_once(
+                &mut algorithm,
+                match value.as_str() {
+                    "slh-dsa-b128s" => Algorithm::Slh,
+                    "ecdsa-secp256k1" => Algorithm::Classical,
+                    _ => return Err("algorithm must be slh-dsa-b128s or ecdsa-secp256k1".into()),
+                },
+                &flag,
+            )?,
+            "--version" => set_once(
+                &mut version,
+                match value.as_str() {
+                    "v5" => 5,
+                    "v6" => 6,
+                    _ => return Err("version must be v5 or v6".into()),
+                },
+                &flag,
+            )?,
+            "--policy" => set_once(
+                &mut multisig,
+                match value.as_str() {
+                    "single" => false,
+                    "multisig" => true,
+                    _ => return Err("policy must be single or multisig".into()),
+                },
+                &flag,
+            )?,
+            "--inputs" => set_once(
+                &mut inputs,
+                match value.as_str() {
+                    "1" => 1,
+                    "2" => 2,
+                    "5" => 5,
+                    _ => return Err("inputs must be 1, 2 or 5".into()),
+                },
+                &flag,
+            )?,
+            "--inventory" => set_once(
+                &mut generated,
+                match value.as_str() {
+                    "cached" => false,
+                    "generated" => true,
+                    _ => return Err("inventory must be cached or generated".into()),
+                },
+                &flag,
+            )?,
+            "--samples" => set_once(
+                &mut samples,
+                count(&value, 1, MAX_PAYMENT_SAMPLES, &flag)?,
+                &flag,
+            )?,
+            "--warmup" => set_once(
+                &mut warmup,
+                count(&value, 0, MAX_PAYMENT_WARMUP, &flag)?,
+                &flag,
+            )?,
+            "--artifact-directory" => {
+                if value.is_empty() {
+                    return Err("artifact directory cannot be empty".into());
+                }
+                set_once(&mut artifact_directory, PathBuf::from(value), &flag)?;
+            }
+            "--wallet-storage-root" => {
+                if value.is_empty() {
+                    return Err("wallet storage root cannot be empty".into());
+                }
+                set_once(&mut wallet_storage_root, PathBuf::from(value), &flag)?;
+            }
+            _ => unreachable!("unknown payment options are rejected above"),
+        }
+    }
+    if measure && !execute {
+        return Err("payment measurement requires explicit --execute by a human".into());
+    }
+    Ok(PaymentConfig {
+        algorithm: algorithm.ok_or("--algorithm is required")?,
+        version: version.ok_or("--version is required")?,
+        multisig: multisig.ok_or("--policy is required")?,
+        inputs: inputs.ok_or("--inputs is required")?,
+        generated: generated.ok_or("--inventory is required")?,
+        samples: if measure {
+            samples.ok_or("--samples is required")?
+        } else {
+            1
+        },
+        warmup: if measure {
+            warmup.ok_or("--warmup is required")?
+        } else {
+            0
+        },
+        artifact_directory: artifact_directory.ok_or("--artifact-directory is required")?,
+        wallet_storage_root: wallet_storage_root.ok_or("--wallet-storage-root is required")?,
+    })
 }
 
 fn set_once<T>(slot: &mut Option<T>, value: T, flag: &str) -> Result<(), String> {
@@ -252,5 +469,69 @@ mod tests {
         assert!(args("check-metadata measure").is_err());
         assert_eq!(CacheMode::RepeatedInput.input_index(10), 0);
         assert_eq!(CacheMode::VariedInput.input_index(10), 11);
+    }
+
+    const PAYMENT: &str = "payment --algorithm slh-dsa-b128s --version v6 --policy multisig --inputs 2 --inventory generated --samples 2 --warmup 1 --artifact-directory /tmp/public --wallet-storage-root /tmp/wallet-storage --execute";
+
+    #[test]
+    fn payment_parser_requires_bounded_explicit_dimensions() {
+        let Command::Payment(config) = args(PAYMENT).unwrap() else {
+            panic!("payment command")
+        };
+        assert_eq!(
+            config.case_id(),
+            "payment.slh-dsa-b128s.v6.multisig.i2.generated"
+        );
+        for missing in [
+            " --algorithm slh-dsa-b128s",
+            " --version v6",
+            " --policy multisig",
+            " --inputs 2",
+            " --inventory generated",
+            " --samples 2",
+            " --warmup 1",
+            " --artifact-directory /tmp/public",
+            " --wallet-storage-root /tmp/wallet-storage",
+            " --execute",
+        ] {
+            assert!(args(&PAYMENT.replace(missing, "")).is_err(), "{missing}");
+        }
+        for (from, to) in [
+            ("--samples 2", "--samples 101"),
+            ("--warmup 1", "--warmup 11"),
+            ("--inputs 2", "--inputs 3"),
+            ("--version v6", "--version 6"),
+            ("--policy multisig", "--policy 15-of-15"),
+            ("--inventory generated", "--inventory cold"),
+            ("--algorithm slh-dsa-b128s", "--algorithm unknown"),
+        ] {
+            assert!(args(&PAYMENT.replace(from, to)).is_err(), "{to}");
+        }
+        for duplicate in [
+            "--version v5",
+            "--execute",
+            "--inputs 1",
+            "--artifact-directory /tmp/other",
+            "--wallet-storage-root /tmp/other",
+        ] {
+            assert!(args(&format!("{PAYMENT} {duplicate}")).is_err());
+        }
+    }
+
+    #[test]
+    fn correctness_command_cannot_enable_performance_collection() {
+        let check = PAYMENT
+            .replacen("payment", "check-payment", 1)
+            .replace(" --samples 2", "")
+            .replace(" --warmup 1", "")
+            .replace(" --execute", "");
+        let Command::CheckPayment(config) = args(&check).unwrap() else {
+            panic!("correctness command")
+        };
+        assert_eq!(config.samples, 1);
+        assert_eq!(config.warmup, 0);
+        for forbidden in ["--execute", "--samples 1", "--warmup 0"] {
+            assert!(args(&format!("{check} {forbidden}")).is_err());
+        }
     }
 }

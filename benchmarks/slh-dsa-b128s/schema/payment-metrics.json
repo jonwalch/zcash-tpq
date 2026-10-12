@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "description": "Additive payment metric catalog. The original catalog hash and primitive receipts remain valid. Stage boundaries differ between SLH wallet workflows and classical transaction controls.",
+  "metrics": {
+    "payment_prepare_persist_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "SLH WatchStore payment preparation including its durable journal writes and production transaction/digest preparation."
+    },
+    "payment_sign_persist_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "SLH WatchStore signing including mandatory signature verification and durable journal writes; not isolated signature primitive time."
+    },
+    "payment_assemble_persist_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "SLH WatchStore payment assembly including authorization assembly and durable journal writes."
+    },
+    "payment_assembly_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Classical transaction-control assembly only; does not exercise the SLH wallet journal or persistent payment workflow."
+    },
+    "payment_sign_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Classical transaction-control signing; does not include a durable wallet journal."
+    },
+    "payment_verify_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "All-input verification: production TransactionContext for SLH; benchmark classical script-aware control using production secp256k1 and sighash APIs. Neither is full node validation. Independent verification is untimed and separate."
+    },
+    "payment_total_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Enclosing foreground payment interval, including generated inventory work when selected. Independently observed, never a sum of stage quantiles; excludes independent artifact checks."
+    },
+    "input_count": {
+      "unit": "count",
+      "integer": true,
+      "description": "Number of transparent inputs in this complete payment."
+    },
+    "signature_count": {
+      "unit": "count",
+      "integer": true,
+      "description": "Number of authorization signatures across this complete payment."
+    },
+    "payment_inventory_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Foreground inventory preparation for generated mode, including SLH wallet creation, key derivation, policy enrollment and verified backup publication. Cached inventory is prepared outside timing and omits this metric; not a measured zero."
+    },
+    "payment_wallet_setup_ns": {
+      "unit": "ns",
+      "integer": true,
+      "description": "Fresh SLH watch-store setup within the foreground interval, including actual storage initialization and synchronization against the synthetic chain source. Cached inventory does not mean a warm existing wallet database."
+    }
+  }
+}

@@ -246,6 +246,8 @@ def import_saved(args):
             total = 0
             for record in records:
                 results.validate_record(record)
+                if set(record["metrics"]).intersection(results.PAYMENT_METRICS):
+                    manifest["metric_catalog_extensions"] = {"payment": results.PAYMENT_CATALOG_SHA256}
                 encoded = canonical(record) + b"\n"
                 total += len(encoded)
                 require(len(encoded) <= results.MAX_RECORD_BYTES and total <= results.MAX_INPUT_BYTES,

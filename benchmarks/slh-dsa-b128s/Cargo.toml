@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.97"
 publish = false
 license = "MIT OR Apache-2.0"
-description = "Explicitly invoked SLH-DSA-B-128s primitive measurements"
+description = "Explicitly invoked SLH-DSA-B-128s primitive and wallet payment measurements"
 
 # A separate executable and lock file keep measurement dependencies out of nodes.
 [workspace]
@@ -13,14 +13,21 @@ description = "Explicitly invoked SLH-DSA-B-128s primitive measurements"
 [dependencies]
 zakura-pq-slh-dsa-b-sign = { path = "../../crates/pq-slh-dsa-b-sign" }
 zakura-pq-slh-dsa-b-verify = { path = "../../crates/pq-slh-dsa-b-verify" }
+zakura-pq-wallet = { path = "../../crates/pq-wallet", features = ["experimental-slh-dsa-b128s"] }
+zakura-pq-tx-context = { path = "../../crates/pq-tx-context" }
+zakura-pq-slh-dsa-b-exp = { path = "../../crates/pq-slh-dsa-b-exp" }
+zakura-pq-test-support = { path = "../../crates/pq-test-support" }
+zakura-chain = { path = "../../crates/zakura-chain" }
 blake3 = { version = "=1.8.5", default-features = false, features = ["std"] }
-libc = "=0.2.186"
-serde_json = "=1.0.150"
-zeroize = "=1.9.0"
-
-[dev-dependencies]
 hex = "=0.4.3"
+libc = "=0.2.186"
+rand_core = { version = "=0.6.4", features = ["getrandom"] }
+ripemd = "0.1"
+secp256k1 = "0.29"
+sha2 = "0.10"
+serde_json = "=1.0.150"
+tempfile = "=3.27.0"
+zeroize = "=1.9.0"
 
 [lints.rust]
 unsafe_op_in_unsafe_fn = "deny"
-

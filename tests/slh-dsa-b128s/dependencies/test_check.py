@@ -100,8 +100,8 @@ class IsolationPolicyTests(unittest.TestCase):
         self.policy = {key: (required, (*forbidden, c.BENCH))
                        for key, (required, forbidden) in self.policy.items()}
         self.policy[(c.BENCH, (), "normal,build,dev")] = (
-            (c.BENCH, c.SIGN, c.VERIFY, "blake3"),
-            (c.WALLET, c.CLI, c.NATIVE, c.CONTEXT, "rayon", "zakura", "zakura-consensus"))
+            (c.BENCH, c.SIGN, c.VERIFY, c.WALLET, c.NATIVE, c.CONTEXT, "blake3"),
+            (c.CLI, "zakura", "zakura-consensus", "zakura-state", "zakura-network"))
 
     def clean_trees(self):
         trees = {}

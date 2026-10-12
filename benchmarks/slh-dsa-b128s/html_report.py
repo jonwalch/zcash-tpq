@@ -26,8 +26,22 @@ _LABELS = {
     "transaction_bytes": "Serialized transaction size",
     "authorization_bytes": "Authorization size",
     "descriptor_bytes": "Descriptor size",
+    "payment_inventory_ns": "Generated inventory and enrollment",
+    "payment_wallet_setup_ns": "Fresh wallet setup and sync",
+    "payment_prepare_persist_ns": "Payment preparation and durable writes",
+    "payment_sign_persist_ns": "Signing and durable writes",
+    "payment_assemble_persist_ns": "Assembly and durable writes",
+    "payment_assembly_ns": "Classical transaction assembly",
+    "payment_sign_ns": "Classical transaction signing",
+    "payment_verify_ns": "Complete authorization verification",
+    "payment_total_ns": "Foreground payment total",
+    "input_count": "Transparent input count",
+    "signature_count": "Authorization signature count",
 }
 _PRIMARY_METRICS = ("keygen_ns", "sign_release_ns", "signature_verify_ns")
+_PAYMENT_METRICS = ("payment_total_ns", "payment_inventory_ns", "payment_wallet_setup_ns",
+                    "payment_prepare_persist_ns", "payment_sign_persist_ns", "payment_assemble_persist_ns",
+                    "payment_assembly_ns", "payment_sign_ns", "payment_verify_ns")
 _STYLE = """
 :root{color-scheme:light;--ink:#172536;--muted:#516173;--line:#dbe2e9;--bg:#f4f7fa}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
@@ -102,7 +116,8 @@ def _value(value, unit):
 
 def _metric_sort(item):
     name = item[0]
-    return (_PRIMARY_METRICS.index(name) if name in _PRIMARY_METRICS else len(_PRIMARY_METRICS), name)
+    ordered = _PRIMARY_METRICS + _PAYMENT_METRICS
+    return (ordered.index(name) if name in ordered else len(ordered), name)
 
 
 def _metric_row(name, metric, catalog):
@@ -173,9 +188,9 @@ def _population(group, catalog, index):
     return f'<section class="population" id="population-{index}">{header}{content}</section>'
 
 
-def _timing_overview(groups):
+def _timing_overview(groups, metrics=_PRIMARY_METRICS, *, title="Primitive timing overview", anchor="timing-overview"):
     timing_groups = [group for group in groups if group["outcome"] != "all_outcomes"
-                     and any(name in group["metrics"] for name in _PRIMARY_METRICS)]
+                     and any(name in group["metrics"] for name in metrics)]
     dimensions = (("Run", "run_id"), ("Configuration", "configuration_id"),
                   ("Phase", "phase"), ("Cache", "cache_mode"))
     varying = [(label, key) for label, key in dimensions
@@ -184,7 +199,7 @@ def _timing_overview(groups):
     for index, group in enumerate(groups):
         if group["outcome"] == "all_outcomes":
             continue
-        for name in _PRIMARY_METRICS:
+        for name in metrics:
             if name not in group["metrics"]:
                 continue
             metric = group["metrics"][name]
@@ -206,8 +221,8 @@ def _timing_overview(groups):
                 notes.append("Incomplete tail")
             coverage = "".join(f'<div class="caution">{_escape(note)}</div>' for note in notes)
             scope = "".join(f'<code>{label}: {_escape(group[key])}</code>' for label, key in varying)
-            if sum(candidate in group["metrics"] for candidate in _PRIMARY_METRICS) > 1:
-                scope += f'<code>{_escape(name)}</code>'
+            if sum(candidate in group["metrics"] for candidate in metrics) > 1:
+                scope += f'<code>{_escape(_LABELS.get(name, name))}</code>'
             values = "".join(f'<td class="number">{_value(metric[key], metric["unit"])}</td>'
                              for key in ("p50", "p95", "p99"))
             rows.append(
@@ -222,7 +237,7 @@ def _timing_overview(groups):
     shared = "".join(f'<p><b>{label}:</b> <code>{_escape(timing_groups[0][key])}</code></p>'
                      for label, key in dimensions if (label, key) not in varying)
     return (
-        '<section id="timing-overview"><h2>Primitive timing overview</h2>'
+        f'<section id="{_escape(anchor)}"><h2>{_escape(title)}</h2>'
         '<p class="muted">One row per recorded case, process and outcome. No pooling. '
         'Small samples do not establish stable tail percentiles.</p>'
         + (f'<details><summary>Shared measurement scope</summary>{shared}</details>' if shared else "") +
@@ -249,15 +264,46 @@ def render_report(summary, catalog):
     timing_count = sum(group["observation_count"] for group in groups
                        if group["outcome"] != "all_outcomes"
                        and any(name in group["metrics"] for name in _PRIMARY_METRICS))
+    payment_count = sum(group["observation_count"] for group in groups
+                        if group["outcome"] != "all_outcomes"
+                        and any(name in group["metrics"] for name in _PAYMENT_METRICS))
     peak_count = sum(group["observation_count"] for group in groups
                      if group["outcome"] != "all_outcomes"
                      and set(group["metrics"]) == {"process_peak_rss_bytes"})
     record_note = ""
-    if timing_count or peak_count:
-        other_count = summary["observation_count"] - timing_count - peak_count
+    if timing_count or peak_count or payment_count:
+        other_count = summary["observation_count"] - timing_count - peak_count - payment_count
         other = f" · {other_count} other records" if other_count else ""
+        payments = f" · {payment_count} wallet/payment records" if payment_count else ""
         record_note = (f'<p class="muted">{timing_count} primitive timing records · '
-                       f'{peak_count} separate process-peak records{other}. Exact n varies per metric.</p>')
+                       f'{peak_count} separate process-peak records{payments}{other}. Exact n varies per metric.</p>')
+    storage = summary.get("provenance", {}).get("wallet_storage")
+    storage_notice = (
+        '<details><summary>Registered wallet storage</summary>'
+        f'<p><b>Root:</b> <code>{_escape(storage["root"])}</code></p>'
+        f'<p><b>Device / directory:</b> {_escape(storage["st_dev"])} / {_escape(storage["st_ino"])}</p>'
+        '<p>Storage descriptions below are operator declarations; they do not establish power-loss durability.</p>'
+        f'<pre>{_json(storage["profile"])}</pre></details>'
+    ) if storage else (
+        '<p class="caution">Wallet storage identity is unavailable. '
+        'These records cannot establish matched persistence comparisons.</p>'
+    )
+    payment_notice = (
+        '<div class="panel notice"><b>Wallet stages and classical controls have different boundaries.</b>'
+        '<p>SLH preparation, signing and assembly include the actual durable wallet writes within each stage. '
+        'The classical cases measure matched transparent transactions, with no equivalent durable wallet workflow. '
+        'Compare exact transaction bytes and explicitly matched operations; do not compare their total times as equivalent wallet payments.</p>'
+        '<p>Cached inventory is prepared outside foreground timing, so no inventory duration is shown for cached cases. '
+        'Generated inventory is inside the foreground interval. Both SLH modes derive secret signing keys through the actual wallet. '
+        'Classical cached controls reuse prepared secp256k1 key pairs. '
+        'Every SLH attempt sets up fresh watch stores with empty journals. '
+        'These modes do not establish cold or warm processor caches.</p>'
+        '<p>Foreground total is measured directly. Never add stage p50, p95 or p99 values to obtain a total. '
+        'Registered payment runs verify artifacts after the measured process exits, outside its timing. '
+        'Their funding is an offline synthetic fixture. Imported timing records remain operator-supplied evidence; '
+        'their presence here does not establish independent checks or live chain acceptance.</p>'
+        + storage_notice + '</div>'
+    ) if payment_count else ""
     outcomes = "".join(
         f'<span><b>{_escape(outcome.replace("_", " "))}:</b> {_escape(count)}</span>'
         for outcome, count in summary["measurement_outcome_counts"].items() if count
@@ -286,7 +332,8 @@ def render_report(summary, catalog):
         f'<div class="panel {style}"><div class="status">{_escape(status)}</div>'
         f'<p>Producer finalized: {"yes" if summary["complete"] else "no"} · Evidence successful: {"yes" if summary["successful"] else "no"}</p>'
         f'{status_detail}<div class="outcomes"><b>Non-warmup outcomes:</b>{outcomes}</div></div>'
-        f'<div class="cards">{cards}</div>{record_note}{_timing_overview(groups)}'
+        f'<div class="cards">{cards}</div>{record_note}{payment_notice}{_timing_overview(groups)}'
+        f'{_timing_overview(groups, _PAYMENT_METRICS, title="Wallet/payment stage overview", anchor="payment-overview")}'
         '<div class="panel notice"><b>Read exact n before interpreting tail percentiles.</b>'
         '<p>With 1–19 exact samples, p95 and p99 are the observed maximum. With one sample, all three percentiles repeat one value.</p>'
         '<details><summary>How to read these measurements</summary>'
