@@ -162,6 +162,8 @@ sets up fresh payment watch stores and uses the actual wallet signer. Generated
 mode includes the inventory work in the enclosing interval. Neither mode claims
 a cold or warm processor cache. Never add stage p50, p95 or p99 values to obtain
 a total; those quantiles can refer to different attempts.
+Classical cached controls reuse their prepared secp256k1 key pairs. Their key
+handling does not exercise the SLH wallet API.
 
 Prepare the [pinned independent reference](../../tests/slh-dsa-b128s/reference/README.md)
 first. `plan-payment` copies only its allowlisted source files, licenses, build

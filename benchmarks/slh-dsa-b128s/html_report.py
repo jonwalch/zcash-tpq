@@ -284,6 +284,7 @@ def render_report(summary, catalog):
         'Compare exact transaction bytes and explicitly matched operations; do not compare their total times as equivalent wallet payments.</p>'
         '<p>Cached inventory is prepared outside foreground timing, so no inventory duration is shown for cached cases. '
         'Generated inventory is inside the foreground interval. Both SLH modes derive secret signing keys through the actual wallet. '
+        'Classical cached controls reuse prepared secp256k1 key pairs. '
         'Every SLH attempt sets up fresh watch stores with empty journals. '
         'These modes do not establish cold or warm processor caches.</p>'
         '<p>Foreground total is measured directly. Never add stage p50, p95 or p99 values to obtain a total. '

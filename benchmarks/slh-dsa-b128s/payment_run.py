@@ -35,7 +35,7 @@ SCOPE = {
     "trust": "Offline fixture supplied at the wallet trusted-node interface; previous outputs are not authenticated against a live chain.",
     "slh": "Complete product WatchStore prepare/sign/assemble lifecycle with coupled durable journal writes.",
     "classical": "Matched transparent transaction controls; no equivalent durable classical wallet implementation.",
-    "cache": "Cached public enrolled inventory is prepared outside foreground timing; both modes derive secret signing keys through the actual wallet and create fresh watch stores with empty journals.",
+    "cache": "Cached public enrolled SLH inventory is prepared outside foreground timing; both SLH modes derive secret signing keys through the actual wallet and create fresh watch stores with empty journals. Classical cached controls reuse prepared secp256k1 key pairs.",
     "timing": "Total is one enclosing observed interval, never a sum of stage percentiles. Independent checks run after the measured child exits.",
 }
 
