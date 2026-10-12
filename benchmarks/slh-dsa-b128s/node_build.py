@@ -139,8 +139,12 @@ def unwrap_build(path, receipt):
     command = receipt["command"]
     helper = Path(receipt["invocation_directory"]) / "tests/slh-dsa-b128s/acceptance/build.py"
     require(type(command) is list and len(command) == 7 and _absolute(command[0])
-            and command[1:] == [str(helper), "--human-run", "--kind", receipt["build_kind"],
-                                "--artifacts", str(directory / "acceptance")], "node acceptance wrapper command")
+            and command[1:6] == [str(helper), "--human-run", "--kind", receipt["build_kind"], "--artifacts"]
+            and _absolute(command[6]) and Path(command[6]).name == "acceptance",
+            "node acceptance wrapper command")
+    # Commands retain their build-host paths. A copied artifact directory has a
+    # new location, but both recorded commands must still describe the same build.
+    build_directory = Path(command[6])
     execution = receipt["execution"]
     require(type(execution) is dict and set(execution) == {"pid", "exit_code", "elapsed_ns", "output_bytes"}
             and all(type(value) is int and value >= 0 for value in execution.values())
@@ -150,7 +154,7 @@ def unwrap_build(path, receipt):
             and acceptance.get("binary_sha256") == receipt["binary_sha256"], "node wrapped build identity")
     from node_run import validate_acceptance_build
     validate_acceptance_build(acceptance, directory / "acceptance/zakurad")
-    require(acceptance["command"][10] == str(directory / "acceptance/target"), "node wrapped build target")
+    require(acceptance["command"][10] == str(build_directory / "target"), "node wrapped build target")
     validate_acceptance_toolchain(acceptance, compiler)
     return acceptance, compiler
 
@@ -216,7 +220,10 @@ def build_node(args):
                 "node build toolchain changed during compilation")
         inner = output / ACCEPTANCE_RECEIPT
         receipt["acceptance_receipt_sha256"] = sha256(inner)
-        receipt["binary_sha256"] = sha256(output / "acceptance/zakurad")
+        acceptance = read_json(inner)
+        require(type(acceptance) is dict, "node acceptance receipt schema")
+        # unwrap_build validates this digest against the current binary once.
+        receipt["binary_sha256"] = acceptance.get("binary_sha256")
         receipt["complete"] = True
         unwrap_build(output / "build.json", receipt)
     except BaseException as error:

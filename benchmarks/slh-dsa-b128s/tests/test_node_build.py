@@ -4,6 +4,7 @@ import argparse
 import copy
 import os
 from pathlib import Path
+import shutil
 import sys
 import unittest
 from unittest.mock import patch
@@ -331,6 +332,70 @@ class NodeBuildTests(unittest.TestCase):
         (self.root / "binary/acceptance/zakurad").write_bytes(b"changed")
         with self.assertRaisesRegex(provenance.BenchmarkError, "binary changed"):
             self.registered("binary")
+
+    def test_moved_build_keeps_historical_paths_and_can_register_and_plan(self):
+        self.build()
+        before = self.registered()
+        original = {name: (self.root / "built" / name).read_bytes()
+                    for name in ("build.json", "acceptance/build.json", "acceptance/zakurad")}
+        shutil.move(self.root / "built", self.root / "copied-to-collection-host")
+        after = self.registered("copied-to-collection-host")
+        self.assertEqual(after["build"], before["build"])
+        self.assertEqual(after["node_identity"], before["node_identity"])
+        for name, contents in original.items():
+            self.assertEqual((self.root / "copied-to-collection-host" / name).read_bytes(), contents)
+        provenance.atomic_json(self.root / "profile.json", after["node_profile"])
+        planned = self.fixture.plan("moved-plan")
+        self.assertEqual(planned["build"], before["build"])
+        results.compare_summaries(self.summary(before), self.summary(after))
+
+    def test_moved_build_still_rejects_changed_receipts_and_binaries(self):
+        for name, artifact, message in (("receipt", "acceptance/build.json", "acceptance receipt changed"),
+                                        ("binary", "acceptance/zakurad", "binary changed")):
+            with self.subTest(artifact=artifact):
+                self.build(name)
+                moved = "moved-" + name
+                shutil.move(self.root / name, self.root / moved)
+                path = self.root / moved / artifact
+                path.write_bytes(path.read_bytes() + b"\n")
+                with self.assertRaisesRegex(provenance.BenchmarkError, message):
+                    self.registered(moved)
+
+    def test_historical_commands_must_agree_after_directory_move(self):
+        self.build()
+        shutil.move(self.root / "built", self.root / "moved")
+        path = self.root / "moved/build.json"
+        original = provenance.read_json(path)
+        for directory, message in (("relative/acceptance", "wrapper command"),
+                                    (str(self.root / "wrong-name"), "wrapper command"),
+                                    (str(self.root / "other/acceptance"), "wrapped build target")):
+            with self.subTest(directory=directory):
+                receipt = copy.deepcopy(original)
+                receipt["command"][6] = directory
+                with self.assertRaisesRegex(provenance.BenchmarkError, message):
+                    node_build.unwrap_build(path, receipt)
+
+    def test_wrapper_and_registration_hash_each_distinct_binary_once(self):
+        with patch.object(node_build, "sha256", wraps=provenance.sha256) as outer_hash, \
+                patch.object(node_run, "sha256", wraps=provenance.sha256) as inner_hash:
+            self.build()
+        calls = outer_hash.call_args_list + inner_hash.call_args_list
+        self.assertEqual(sum(Path(call.args[0]).name == "zakurad" for call in calls), 1)
+        with patch.object(node_run, "sha256", wraps=provenance.sha256) as hashes:
+            registered = self.registered()
+        self.assertEqual(sum(Path(call.args[0]).name == "zakurad" for call in hashes.call_args_list), 1)
+        # A different selected executable is permitted only if its own bytes match.
+        selected = self.root / "separate-zakurad"
+        shutil.copyfile(self.root / "built/acceptance/zakurad", selected)
+        profile = {**registered["node_profile"], "binary_path": str(selected)}
+        with patch.object(node_run, "sha256", wraps=provenance.sha256) as hashes:
+            self.assertEqual(node_run.node_build(profile), registered["build"])
+        paths = [Path(call.args[0]) for call in hashes.call_args_list]
+        self.assertEqual(paths.count(self.root / "built/acceptance/zakurad"), 1)
+        self.assertEqual(paths.count(selected), 1)
+        selected.write_bytes(b"changed selected binary")
+        with self.assertRaisesRegex(provenance.BenchmarkError, "binary changed"):
+            node_run.node_build(profile)
 
     def test_rejects_toolchain_that_disagrees_with_acceptance(self):
         self.build()

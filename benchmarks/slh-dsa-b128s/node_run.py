@@ -15,6 +15,7 @@ import sys
 import uuid
 
 import run as runner
+from node_build import ACCEPTANCE_ENVIRONMENT
 from provenance import (MAX_JSON, artifact_inventory, atomic_json, canonical, claim_run,
                         digest_value, fresh_directory, host_state, read_json, require,
                         sha256, strict_json)
@@ -100,15 +101,16 @@ def node_build(profile):
         path = Path(profile[name])
         require(str(path.resolve(strict=True)) == str(path), "node registration path contains a symlink")
     receipt = read_json(profile["build_receipt_path"])
-    compiler = None
     if type(receipt) is dict and receipt.get("kind") == "tpq-node-build":
         from node_build import unwrap_build
         receipt, compiler = unwrap_build(Path(profile["build_receipt_path"]), receipt)
-    validate_acceptance_build(receipt, profile["binary_path"])
-    if compiler is not None:
-        from node_build import validate_acceptance_toolchain
-        validate_acceptance_toolchain(receipt, compiler)
+        # unwrap_build already checks the complete receipt and bundled binary.
+        # A separate executable copy still needs its own digest check.
+        bundled = Path(profile["build_receipt_path"]).parent / "acceptance/zakurad"
+        if Path(profile["binary_path"]) != bundled:
+            require(receipt["binary_sha256"] == sha256(profile["binary_path"]), "node binary changed")
         return {**receipt, "toolchain": compiler}
+    validate_acceptance_build(receipt, profile["binary_path"])
     return receipt
 
 
@@ -151,8 +153,7 @@ def validate_acceptance_build(receipt, binary):
     for name in ("rustc", "cargo"):
         _text(receipt[name], name, 4096)
     environment = receipt["environment"]
-    require(type(environment) is dict and set(environment) == {"RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "RUSTDOCFLAGS",
-            "CC", "CXX", "CFLAGS", "CXXFLAGS", "CARGO_BUILD_TARGET"}
+    require(type(environment) is dict and set(environment) == ACCEPTANCE_ENVIRONMENT
             and all(value is None or (type(value) is str and len(value) <= 4096) for value in environment.values())
             and not environment["CARGO_BUILD_TARGET"], "node compiler environment schema")
     require(receipt["binary_sha256"] == sha256(binary), "node binary changed")
