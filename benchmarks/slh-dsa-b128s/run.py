@@ -376,7 +376,13 @@ def summarize_run(args):
         validate_wallet_storage(manifest.get("wallet_storage"), manifest["host_profile"])
     require(receipt["manifest_sha256"] == sha256(directory / "manifest.json"), "manifest changed")
     verify_artifacts(directory, receipt["artifacts"])
-    records = read_records(directory / "attempts.jsonl")
+    attempts = directory / "attempts.jsonl"
+    empty_node_failure = (manifest.get("kind") == "node-collection" and receipt["status"] == "failed"
+                          and not receipt["complete"] and receipt["records"] == 0
+                          and receipt.get("processes") == [])
+    # A failure to create the first output can precede both the attempts file
+    # and a sampler process. The verified inventory must retain that absence.
+    records = [] if empty_node_failure and not attempts.exists() else read_records(attempts)
     require(not any(set(record["metrics"]).intersection(PAYMENT_METRICS) for record in records)
             or extensions == {"payment": PAYMENT_CATALOG_SHA256}, "payment metric catalog identity missing")
     verify_artifacts(directory, receipt["artifacts"])
@@ -409,11 +415,17 @@ def summarize_run(args):
                 "This historical run did not register wallet storage; matched payment comparison is unavailable.")
         summary["provenance"]["independent_checks"] = receipt.get("independent_checks", [])
     if manifest.get("kind") == "node-collection":
+        processes = receipt.get("processes", [])
         summary["provenance"].update(node_scope=manifest["scope"], node_profile=manifest["node_profile"],
                                      node_identity=manifest["node_identity"],
                                      node_build={name: manifest["build"][name] for name in ("kind", "features")},
-                                     node_execution=receipt.get("processes", [{}])[0],
+                                     node_execution=processes[0] if processes else {},
+                                     execution_failure=receipt.get("failure"), execution_outcome=receipt.get("outcome"),
                                      source=manifest["build"]["source"]["source_commit"])
+        if receipt["status"] == "failed":
+            summary["issues"].append(
+                f"Node collection failed ({receipt.get('outcome', 'error')}): {receipt.get('failure', 'unknown failure')}."
+                + (" No sampler process was started." if not processes else ""))
     require(not (receipt["complete"] and receipt["records"] != manifest["expected_records"]),
             "complete receipt missing expected records")
     require(not Path(args.output).resolve().is_relative_to(directory.resolve()), "reports must be outside immutable run artifacts")

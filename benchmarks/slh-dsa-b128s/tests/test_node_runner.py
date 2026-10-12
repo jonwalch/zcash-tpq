@@ -227,6 +227,52 @@ class NodeRunnerTests(unittest.TestCase):
             node_run.execute_node(argparse.Namespace(directory=str(self.root / "run"), execute=True), manifest)
         self.assertEqual(self.receipt()["records"], 1)
 
+    def test_prelaunch_failure_with_no_process_remains_reportable(self):
+        manifest = self.plan()
+        # Opening evidence fails after the empty attempts stream was created,
+        # before a sampler command or process exists.
+        (self.root / "run/evidence.jsonl").touch()
+        with patch.object(run, "supervise", side_effect=AssertionError("must not start")), \
+                self.assertRaises(FileExistsError):
+            node_run.execute_node(argparse.Namespace(directory=str(self.root / "run"), execute=True), manifest)
+        receipt = self.receipt()
+        self.assertEqual(receipt["processes"], [])
+        self.assertEqual(receipt["records"], 0)
+        self.assertEqual(receipt["failure"], "FileExistsError")
+        result = run.summarize_run(argparse.Namespace(directory=str(self.root / "run"),
+                                  output=str(self.root / "report"), process_id=None))
+        self.assertFalse(result["complete"])
+        self.assertFalse(result["successful"])
+        summary = provenance.read_json(self.root / "report/summary.json")
+        self.assertEqual(summary["groups"], [])
+        self.assertEqual(summary["provenance"]["node_execution"], {})
+        self.assertEqual(summary["provenance"]["execution_failure"], "FileExistsError")
+        page = (self.root / "report/report.html").read_text()
+        self.assertIn("Node collection failed (error): FileExistsError", page)
+        self.assertIn("No sampler process was started", page)
+
+    def test_prelaunch_failure_without_attempts_file_remains_reportable(self):
+        manifest = self.plan()
+        original_open = Path.open
+
+        def deny_attempts(path, *args, **kwargs):
+            if path == self.root / "run/attempts.jsonl" and args == ("xb",):
+                raise PermissionError("cannot create attempts")
+            return original_open(path, *args, **kwargs)
+
+        with patch.object(Path, "open", deny_attempts), \
+                patch.object(run, "supervise", side_effect=AssertionError("must not start")), \
+                self.assertRaises(PermissionError):
+            node_run.execute_node(argparse.Namespace(directory=str(self.root / "run"), execute=True), manifest)
+        receipt = self.receipt()
+        self.assertEqual(receipt["processes"], [])
+        self.assertNotIn("attempts.jsonl", receipt["artifacts"])
+        run.summarize_run(argparse.Namespace(directory=str(self.root / "run"),
+                          output=str(self.root / "report"), process_id=None))
+        summary = provenance.read_json(self.root / "report/summary.json")
+        self.assertEqual(summary["groups"], [])
+        self.assertEqual(summary["provenance"]["execution_failure"], "PermissionError")
+
     def test_comparison_ignores_pid_but_checks_workload_and_config(self):
         manifest = self.plan()
         other = copy.deepcopy(manifest)
