@@ -150,7 +150,7 @@ The timings have these boundaries:
 | `payment_sign_persist_ns` | Actual SLH signing, mandatory verification and durable writes |
 | `payment_assemble_persist_ns` | Actual SLH authorization assembly and durable writes |
 | `payment_assembly_ns`, `payment_sign_ns` | Classical transaction controls without a durable wallet journal |
-| `payment_verify_ns` | Production authorization verification of all transaction inputs |
+| `payment_verify_ns` | All-input verification through SLH `TransactionContext` or the classical script-aware control; neither is full node validation |
 | `payment_total_ns` | One enclosing foreground interval, including generated inventory and wallet setup when applicable |
 | `transaction_bytes` | Exact serialized transaction bytes, checked independently against each saved public artifact |
 

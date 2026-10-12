@@ -30,7 +30,7 @@
     "payment_verify_ns": {
       "unit": "ns",
       "integer": true,
-      "description": "Production transaction-derived authorization verification for all transparent inputs; independent verification is untimed and separate."
+      "description": "All-input verification: production TransactionContext for SLH; benchmark classical script-aware control using production secp256k1 and sighash APIs. Neither is full node validation. Independent verification is untimed and separate."
     },
     "payment_total_ns": {
       "unit": "ns",
