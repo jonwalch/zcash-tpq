@@ -74,6 +74,12 @@ it preserves compiled source identity separately from benchmark instrumentation.
 Process/configuration binding, bounded loopback HTTP collection, raw-observation
 replay and attach-only lifecycle tests are new integration code. It does not
 launch nodes or supply funded workloads, latency hooks or chain acceptance.
+The separate benchmark node-build wrapper calls the unchanged acceptance build
+helper and reuses the benchmark compiler/configuration provenance reader. It
+retains the original acceptance receipt and adds build-time settings for matched
+comparison. Legacy acceptance receipts remain readable without claiming those
+missing settings. HTTP deadline enforcement adapts the standard-library parser's
+I/O boundary; no HTTP parser or transport implementation is imported.
 
 No alternate cryptographic backend, research node overlay, historical
 result set, research checkout, or research Git history is a runtime

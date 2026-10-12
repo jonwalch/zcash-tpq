@@ -276,7 +276,12 @@ def _node_scope(summary):
         f'{_escape(scope.get("interval_ms", "Unavailable"))} ms requested delay between observations; '
         f'{_escape(scope.get("planned_interval_total_ms", "Unavailable"))} ms total requested delay.'
     )
+    comparison_notice = (
+        '<p class="caution">Matched comparison unavailable: this node build receipt does not record '
+        'build-time Cargo configuration and compiler settings. Existing measurements remain readable.</p>'
+    ) if summary.get("compatibility", {}).get("toolchain") is None else ""
     evidence = {"identity": identity, "profile": profile, "scope": scope,
+                "toolchain": provenance.get("toolchain"),
                 "execution": provenance.get("node_execution")}
     return (
         '<section id="node-scope" class="panel notice"><h2>Attached node collection</h2>'
@@ -297,6 +302,7 @@ def _node_scope(summary):
         'Mempool count, encoded bytes and cost are gauges; growth is a signed net change per second, '
         'not arrival or removal throughput. Attached process and cgroup lifetime peaks are unavailable. '
         'An observed sample maximum does not establish peak memory.</p>'
+        f'{comparison_notice}'
         '<details><summary>Node identity, source and collection evidence</summary>'
         '<p>The operator declares the workload and associates the metrics endpoint with this process. '
         'Collection does not launch a node, send transactions or mine blocks. '

@@ -74,6 +74,7 @@ class NodeReportTests(unittest.TestCase):
                      "idle-fixture", "fresh empty chain", "source_commit", "c" * 40, "f" * 64,
                      "operator declares", "not transaction or block latency",
                      "No isolated validation, admission, propagation or bandwidth measurement",
+                     "Matched comparison unavailable", "Existing measurements remain readable",
                      "An observed sample maximum does not establish peak memory"):
             self.assertIn(text, visible)
 

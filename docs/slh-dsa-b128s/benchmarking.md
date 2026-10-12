@@ -327,8 +327,12 @@ separate. Comparisons require matching hardware, workload, compiler and
 instrumentation metadata. New receipts compare checkout-local Cargo config
 locations relative to the checkout, with hashes and search precedence intact;
 different worktree prefixes alone do not prevent a comparison. External config
-paths remain exact. Raw absolute paths stay in report provenance. Older build
-receipts keep their original path-sensitive identity.
+paths remain exact. Raw absolute paths stay in report provenance. Older
+primitive/payment build receipts keep their original path-sensitive identity.
+Node collection requires the separate [node build wrapper](../../benchmarks/slh-dsa-b128s/NODE_COLLECTION.md)
+to record build-time compiler and Cargo settings for matched comparisons.
+Legacy node acceptance receipts and their reports remain readable, but cannot
+establish a matched comparison. Current machine settings cannot fill that gap.
 
 Saved block imports require matching validated effective-config hashes. To
 apply this guard to older saved imports, re-import their original input and
