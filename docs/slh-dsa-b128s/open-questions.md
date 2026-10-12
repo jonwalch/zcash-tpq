@@ -66,6 +66,16 @@ Zcash already has transaction, block, and signature-operation limits in its
 Which additional consensus limits should apply to SLH verification per transaction and block?
 Which limits permit useful multisig payments while keeping full-node operation practical?
 
+The current 2 MB (2,000,000-byte) block limit likely needs to increase for broad SLH adoption.
+At the [documented encoding sizes](protocol.md#byte-contract), that space can hold at most
+247 1-of-1 payments or 16 15-of-15 payments, each with one input, a recipient output,
+and a change output.
+These are byte-only upper bounds before block overhead, coinbase, other transactions,
+and verification limits.
+
+What higher block size limit would support useful payment volume while keeping
+propagation, storage, synchronization, and full-node requirements practical?
+
 Evaluate mixed SLH, classical, and shielded work under the existing block rules.
 Use adversarial whole-node measurements across implementations and representative hardware.
 Include the added bandwidth, historical storage, and synchronization costs of SLH authorizations.
