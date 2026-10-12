@@ -191,7 +191,7 @@ def node_compatibility(manifest):
 
 
 def plan_node(args):
-    from node_sampling import validate_endpoint_config
+    from node_sampling import SCRAPE_TIMEOUT_SECONDS, validate_endpoint_config
     profile = validate_node_profile(read_json(args.node_profile))
     host_profile = runner.validate_host_profile(read_json(args.host_profile))
     settings = validate_node_settings({"samples": args.samples, "interval_ms": args.interval_ms,
@@ -208,6 +208,19 @@ def plan_node(args):
                 "scope": {**SCOPE, "samples": settings["samples"], "interval_ms": settings["interval_ms"],
                           "planned_interval_total_ms": settings["samples"] * settings["interval_ms"],
                           "timeout_seconds": settings["timeout_seconds"]}}
+    delay_ms = settings["samples"] * settings["interval_ms"]
+    request_allowance_ms = (settings["samples"] + 1) * SCRAPE_TIMEOUT_SECONDS * 1000
+    remaining_ms = settings["timeout_seconds"] * 1000 - delay_ms - request_allowance_ms
+    manifest["scope"]["time_budget"] = {
+        "delay_total_ms": delay_ms,
+        "maximum_request_total_ms": request_allowance_ms,
+        "remaining_after_delays_and_requests_ms": remaining_ms,
+        "startup_and_local_io": "not estimated: initial binary hash, procfs/config reads, parsing and output",
+        "completion_guaranteed": False,
+        "warning": ("Hard timeout cannot cover all interval delays and full request allowances; "
+                    "the run can end before its requested samples. Increase timeout for more headroom."
+                    if remaining_ms <= 0 else None),
+    }
     compatibility = node_compatibility(manifest)
     _bounded_json({**runner.compatibility_metadata(manifest), "node_collection": compatibility})
     manifest["configuration_id"] = digest_value({"settings": settings, "node": compatibility})

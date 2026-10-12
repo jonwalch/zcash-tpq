@@ -28,6 +28,7 @@ from results import validate_record
 
 PROC_ROOT = Path("/proc")
 MAX_SCRAPE_BYTES = 256 * 1024
+MAX_MEMPOOL_EVIDENCE_BYTES = 16 * 1024
 SCRAPE_TIMEOUT_SECONDS = 2
 MAX_CONFIG_BYTES = 1024 * 1024
 MEMPOOL_GROWTH = ("mempool_growth_transactions_per_second", "mempool_growth_bytes_per_second")
@@ -86,6 +87,7 @@ def _file_identity(path):
 
 
 def _hash(path):
+    """Hash the live /proc executable symlink; provenance.sha256 rejects symlinks."""
     with Path(path).open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
@@ -196,9 +198,29 @@ class _DeadlineSocket:
         self._sock.close()
 
 
+def _mempool_evidence_text(text):
+    """Keep exact needed-family lines after validating the complete response."""
+    expected = adapters.parse_mempool_metrics(text)
+    lines = []
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        parts = stripped.split()
+        name = adapters._PROM_NAME.match(stripped)
+        if ((name is not None and name[1] in adapters.MEMPOOL_SERIES)
+                or (len(parts) >= 3 and parts[:2] == ["#", "TYPE"]
+                    and parts[2] in adapters.MEMPOOL_SERIES)):
+            lines.append(line)
+    retained = "".join(lines)
+    require(len(retained.encode("utf8")) <= MAX_MEMPOOL_EVIDENCE_BYTES,
+            "needed mempool families exceed evidence byte limit")
+    require(adapters.parse_mempool_metrics(retained) == expected, "mempool evidence changed parsed gauges")
+    return retained
+
+
 def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
     start = clock()
-    observation = {"window_start_ns": start, "window_end_ns": start, "text": None, "error": None}
+    observation = {"window_start_ns": start, "window_end_ns": start, "text": None, "error": None,
+                   "text_scope": "mempool-families-v1", "response_sha256": None, "response_bytes": None}
     connection = response = None
     try:
         scrape_deadline = min(deadline, start + SCRAPE_TIMEOUT_SECONDS * 1_000_000_000)
@@ -236,11 +258,15 @@ def _scrape(endpoint, *, deadline, clock=time.monotonic_ns):
             require(size <= MAX_SCRAPE_BYTES, "metrics response exceeds body limit")
         if length is not None:
             require(size == int(length), "metrics response body was truncated")
-        observation["text"] = b"".join(chunks).decode("utf8")
-        # Reject malformed needed families before exporting a successful observation.
-        adapters.parse_mempool_metrics(observation["text"])
+        raw = b"".join(chunks)
+        observation.update(response_sha256=hashlib.sha256(raw).hexdigest(), response_bytes=len(raw))
+        # Validate the complete response before retaining only the needed families.
+        # Replay still parses exact gauge/TYPE lines; unrelated families need not
+        # consume the sampler's bounded output twice in stdout and evidence.jsonl.
+        observation["text"] = _mempool_evidence_text(raw.decode("utf8"))
         remaining()
     except (OSError, ValueError, http.client.HTTPException) as error:
+        observation["text"] = None
         observation["error"] = f"{type(error).__name__}: {error}"[:512]
     finally:
         if response is not None:
@@ -312,8 +338,21 @@ def records_from_snapshots(before, after, manifest, interval_index):
             collectors.validate_snapshot(evidence[name])
             require(evidence[name]["identity"] == _expected_identity(profile), "snapshot node identity differs")
         scrape = evidence["mempool"]
-        require(type(scrape) is dict and set(scrape) == {"window_start_ns", "window_end_ns", "text", "error"},
+        legacy_fields = {"window_start_ns", "window_end_ns", "text", "error"}
+        compact_fields = legacy_fields | {"text_scope", "response_sha256", "response_bytes"}
+        require(type(scrape) is dict and set(scrape) in (legacy_fields, compact_fields),
                 "mempool observation schema")
+        if set(scrape) == compact_fields:
+            require(scrape["text_scope"] == "mempool-families-v1", "mempool evidence scope")
+            digest, size = scrape["response_sha256"], scrape["response_bytes"]
+            require((digest is None and size is None and scrape["text"] is None)
+                    or (type(digest) is str and len(digest) == 64
+                        and all(char in "0123456789abcdef" for char in digest)
+                        and type(size) is int and 0 <= size <= MAX_SCRAPE_BYTES),
+                    "mempool response identity invalid")
+            require(scrape["text"] is None or (type(scrape["text"]) is str
+                    and len(scrape["text"].encode("utf8")) <= min(size, MAX_MEMPOOL_EVIDENCE_BYTES)),
+                    "mempool compact text invalid")
         require(all(type(scrape[name]) is int and 0 <= scrape[name] <= collectors.MAX_NUMBER
                     for name in ("window_start_ns", "window_end_ns"))
                 and scrape["window_start_ns"] <= scrape["window_end_ns"], "mempool read window invalid")
@@ -355,9 +394,11 @@ def records_from_snapshots(before, after, manifest, interval_index):
     text = last["text"] if last["error"] is None else ""
     mempool = adapters.import_mempool(text, _context(manifest, interval_index, "mempool"),
                                      monotonic_ns=times[1], process_epoch=epoch, **kwargs)[0][0]
-    failure = first["error"] or last["error"]
+    # A record samples the ending gauges. A failed starting scrape prevents
+    # growth calculation but must not reclassify a recovered endpoint as error.
+    failure = last["error"] or first["error"]
     if failure:
-        mempool["outcome"] = "error"
+        mempool["outcome"] = "error" if last["error"] else "success"
         for name in MEMPOOL_GROWTH:
             mempool["metrics"][name] = None
             mempool["unavailable"][name] = "scrape interval unavailable: " + failure

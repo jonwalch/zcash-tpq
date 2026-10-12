@@ -117,6 +117,20 @@ class NodeRunnerTests(unittest.TestCase):
         self.assertEqual(manifest["node_identity"]["binary_sha256"], provenance.sha256(self.binary))
         self.assertFalse((self.root / "run/execution.claim").exists())
 
+    def test_plan_exposes_request_budget_without_promising_completion(self):
+        manifest = self.plan(samples=10, interval_ms=1000, timeout=30)
+        budget = manifest["scope"]["time_budget"]
+        self.assertEqual(budget["delay_total_ms"], 10000)
+        self.assertEqual(budget["maximum_request_total_ms"], 22000)
+        self.assertEqual(budget["remaining_after_delays_and_requests_ms"], -2000)
+        self.assertIn("cannot cover", budget["warning"])
+        self.assertFalse(budget["completion_guaranteed"])
+        manifest = self.plan("more-headroom", samples=10, interval_ms=1000, timeout=40)
+        budget = manifest["scope"]["time_budget"]
+        self.assertEqual(budget["remaining_after_delays_and_requests_ms"], 8000)
+        self.assertIsNone(budget["warning"])
+        self.assertFalse(budget["completion_guaranteed"])
+
     def test_strict_registration_and_bounds(self):
         for change in ({"network": "Mainnet"}, {"pid": True}, {"extra": 1},
                        {"cgroup_path": "/outside", "cgroup_boundary": "/sys/fs/cgroup"},

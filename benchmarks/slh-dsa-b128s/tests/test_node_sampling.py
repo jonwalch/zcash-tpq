@@ -14,7 +14,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import node_sampling as sampling
-from provenance import BenchmarkError
+from provenance import BenchmarkError, canonical
 from results import summarize
 
 
@@ -275,12 +275,72 @@ class SamplingTests(unittest.TestCase):
             target["mempool"].update(text=None, error="TimeoutError: fixture timeout")
             process, mempool = sampling.records_from_snapshots(*pair, self.manifest, 0)
             self.assertEqual(process["outcome"], "success")
-            self.assertEqual(mempool["outcome"], "error")
+            self.assertEqual(mempool["outcome"], "error" if failed is after else "success")
             self.assertIsNone(mempool["metrics"]["mempool_growth_bytes_per_second"])
             if failed is after:
                 self.assertIsNone(mempool["metrics"]["mempool_bytes"])
             else:
                 self.assertEqual(mempool["metrics"]["mempool_bytes"], 600)
+
+    def test_failed_middle_scrape_has_one_error_and_recovery_gauges_remain_successful(self):
+        self.manifest["settings"]["samples"] = 3
+        self.manifest["settings"]["timeout_seconds"] = 30
+        observations = iter((3, None, 50, 99))
+
+        def scrape(*args, **kwargs):
+            value = next(observations)
+            return {"window_start_ns": self.clock(), "window_end_ns": self.clock(),
+                    "text": None if value is None else GAUGES.replace("transactions 3", f"transactions {value}"),
+                    "error": "TimeoutError: fixture timeout" if value is None else None}
+
+        frames = []
+        with mock.patch.object(sampling, "_scrape", side_effect=scrape):
+            sampling.collect(self.manifest, frames.append, clock=self.clock, sleep=self.sleep)
+        records = [frame["record"] for frame in frames if frame["frame"] == "record"]
+        mempool = [record for record in records if record["phase"] == "mempool"]
+        self.assertEqual([record["outcome"] for record in mempool], ["error", "success", "success"])
+        self.assertEqual([record["metrics"]["mempool_transactions"] for record in mempool], [None, 50, 99])
+        self.assertIsNone(mempool[0]["metrics"]["mempool_growth_transactions_per_second"])
+        self.assertIsNone(mempool[1]["metrics"]["mempool_growth_transactions_per_second"])
+        self.assertGreater(mempool[2]["metrics"]["mempool_growth_transactions_per_second"], 0)
+        summary = summarize(records)
+        self.assertEqual(summary["outcome_counts"]["error"], 1)
+        gauges = next(group for group in summary["groups"]
+                      if group["phase"] == "mempool" and group["outcome"] == "success")["metrics"]["mempool_transactions"]
+        self.assertEqual((gauges["samples"], gauges["p50"], gauges["p95"], gauges["p99"]), (2, 50, 99, 99))
+
+    def test_compact_scrapes_keep_1000_intervals_under_default_output_limit(self):
+        full = "unrelated_metric 1\n" * 2300 + GAUGES
+        retained = sampling._mempool_evidence_text(full)
+        self.cgroup()
+        self.manifest["settings"].update(samples=1000, interval_ms=10, timeout_seconds=60)
+
+        def scrape(*args, **kwargs):
+            return {"window_start_ns": self.clock(), "window_end_ns": self.clock(), "text": retained, "error": None,
+                    "text_scope": "mempool-families-v1", "response_sha256": hashlib.sha256(full.encode()).hexdigest(),
+                    "response_bytes": len(full.encode())}
+
+        frames = []
+        with mock.patch.object(sampling, "_scrape", side_effect=scrape):
+            sampling.collect(self.manifest, frames.append, clock=self.clock, sleep=self.sleep)
+        self.assertEqual(sum(frame["frame"] == "record" for frame in frames), 3000)
+        self.assertLess(sum(len(canonical(frame)) + 1 for frame in frames), 16 * 1024 * 1024)
+        self.assertGreater(len(full), 40 * 1024)
+        self.assertEqual(retained, GAUGES)
+
+    def test_replay_accepts_compact_and_legacy_evidence_and_rejects_bad_identity(self):
+        frames = self.collect()
+        before, after = [frame["evidence"] for frame in frames if frame["frame"] == "snapshot"][:2]
+        expected = sampling.records_from_snapshots(before, after, self.manifest, 0)
+        for sample in (before, after):
+            sample["mempool"].update(text_scope="mempool-families-v1",
+                                     response_sha256=hashlib.sha256(GAUGES.encode()).hexdigest(), response_bytes=len(GAUGES))
+        self.assertEqual(sampling.records_from_snapshots(before, after, self.manifest, 0), expected)
+        for field, value in (("response_sha256", "invalid"), ("response_bytes", 0), ("text_scope", "all-gauges")):
+            invalid = copy.deepcopy(after)
+            invalid["mempool"][field] = value
+            with self.subTest(field=field), self.assertRaises(BenchmarkError):
+                sampling.records_from_snapshots(before, invalid, self.manifest, 0)
 
     def test_absent_metrics_are_unavailable_and_negative_growth_is_valid(self):
         frames = self.collect()
@@ -331,6 +391,31 @@ class HttpTests(unittest.TestCase):
         connection.connect.assert_called_once_with()
         connection.request.assert_called_once_with("GET", "/metrics", headers={
             "Accept": "text/plain", "Accept-Encoding": "identity", "Connection": "close"})
+
+    def test_large_response_keeps_exact_needed_lines_and_response_identity(self):
+        selected = ("# TYPE zcash_mempool_size_transactions gauge\n"
+                    "zcash_mempool_size_transactions{scope=\"other\"} 7\n" + GAUGES)
+        full = ("# unrelated help\nzcash_mempool_size_bytes_total 5\n" * 900 + selected).encode()
+        observation, _, _ = self.scrape(body=full)
+        self.assertIsNone(observation["error"])
+        self.assertEqual(observation["text"], selected)
+        self.assertEqual(observation["text_scope"], "mempool-families-v1")
+        self.assertEqual(observation["response_sha256"], hashlib.sha256(full).hexdigest())
+        self.assertEqual(observation["response_bytes"], len(full))
+        self.assertEqual(sampling.adapters.parse_mempool_metrics(selected), sampling.adapters.parse_mempool_metrics(full.decode()))
+
+    def test_compaction_cannot_hide_bad_needed_families_or_unbounded_rows(self):
+        invalid = [GAUGES + "zcash_mempool_size_bytes 2\n",
+                   GAUGES + "# TYPE zcash_mempool_size_bytes counter\n",
+                   GAUGES + "zcash_mempool_size_bytes{bad} 2\n",
+                   GAUGES + "zcash_mempool_size_bytes{scope=\"other\"} 2\n" * 2,
+                   "unknown_metric " + "x" * (sampling.adapters.MAX_ROW_BYTES + 1),
+                   "".join(f'zcash_mempool_size_bytes{{scope="{index}"}} 2\n' for index in range(1000))]
+        for body in invalid:
+            with self.subTest(body=body[:90]):
+                observation, _, _ = self.scrape(body=body.encode())
+                self.assertIsNotNone(observation["error"])
+                self.assertIsNone(observation["text"])
 
     def test_redirect_compression_and_oversize_are_errors(self):
         for options in ({"status": 302}, {"headers": {"Content-Encoding": "gzip"}},
