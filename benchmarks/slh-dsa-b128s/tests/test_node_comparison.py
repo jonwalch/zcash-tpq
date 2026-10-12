@@ -46,6 +46,8 @@ class NodeComparisonTests(unittest.TestCase):
         for name, kind in (("default", "node-default"), ("slh", "node-slh")):
             page = (self.root / (name + "-report/report.html")).read_text()
             self.assertIn("Build variant:</b> " + kind, page)
+            self.assertIn("Full request allowances:", page)
+            self.assertIn("Hard timeout cannot cover", page)
         self.assertEqual(left["compatibility"], right["compatibility"])
         self.assertNotIn("build", left["compatibility"]["node_collection"])
         comparison = results.compare_summaries(left, right)
@@ -83,6 +85,11 @@ class NodeComparisonTests(unittest.TestCase):
 
     def test_new_comparison_requires_complete_toolchain_and_valid_build_variant(self):
         summary = self.report("one", self.plan("one"))
+        for provenance_value in (None, [], "invalid"):
+            changed = copy.deepcopy(summary)
+            changed["provenance"] = provenance_value
+            with self.subTest(provenance=provenance_value), self.assertRaisesRegex(results.ValidationError, "build-time toolchain"):
+                results.compare_summaries(changed, changed)
         for variant in (None, {}, {"kind": "node-default", "features": ["experimental-slh-dsa-b128s"]},
                         {"kind": "unknown", "features": []}):
             changed = copy.deepcopy(summary)

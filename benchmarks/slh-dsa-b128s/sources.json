@@ -503,13 +503,13 @@
         "product-node-build-recipe"
       ],
       "classification": "new node collection registration and supervision",
-      "adaptation": "Reuse bounded private-child supervision, retained source and artifact contracts. Adapt static build checks so compiled node source and sampler instrumentation are distinct; independently replay normalized rows from raw evidence. Bind benchmark build-time compiler settings separately from legacy acceptance receipts."
+      "adaptation": "Reuse bounded private-child supervision, retained source and artifact contracts. Adapt static build checks so compiled node source and sampler instrumentation are distinct; independently replay normalized rows from raw evidence. Bind benchmark build-time compiler settings separately from legacy acceptance receipts. Separate build variant from matched conditions and expose request/delay budgets without promising completion."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/node_sampling.py",
       "sources": [],
       "classification": "new attached-node integration",
-      "adaptation": "Reuse existing attributed Linux readers and mempool parsers; add explicit process/configuration binding, bounded loopback HTTP, cgroup membership checks and raw read windows. Enforce one absolute request deadline beneath the standard-library HTTP parser, including framing reads. No node ownership or traffic generation."
+      "adaptation": "Reuse existing attributed Linux readers and mempool parsers; add explicit process/configuration binding, bounded loopback HTTP, cgroup membership checks and raw read windows. Enforce one absolute request deadline beneath the standard-library HTTP parser, including framing reads. No node ownership or traffic generation. Retain exact needed mempool families and response identity for bounded replay; classify recovered ending gauges independently of unavailable growth."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/tests/test_node_runner.py",
@@ -537,7 +537,7 @@
         "product-node-build-recipe"
       ],
       "classification": "new benchmark node-build wrapper and comparison guard",
-      "adaptation": "Call the unchanged acceptance build helper under the existing bounded supervisor. Reuse benchmark compiler/Cargo configuration discovery before and after compilation, retain workspace manifest profiles and incremental settings, preserve the acceptance receipt separately, and require complete build-time metadata for matched node comparisons. Legacy node reports remain readable."
+      "adaptation": "Call the unchanged acceptance build helper under the existing bounded supervisor. Reuse benchmark compiler/Cargo configuration discovery before and after compilation, retain workspace manifest profiles and incremental settings, preserve the acceptance receipt separately, and require complete build-time metadata for matched node comparisons. Legacy node reports remain readable. Treat stored command paths as build-host evidence and verify relocated artifacts without repeating the same binary hash."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/tests/test_node_build.py",

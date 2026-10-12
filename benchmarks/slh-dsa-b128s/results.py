@@ -405,8 +405,10 @@ def compare_summaries(left, right):
             raise ValidationError("comparison requires nonempty compatibility metadata")
         if compatibility.get("kind") == "node-collection" or "node_collection" in compatibility:
             from node_build import validate_comparison_toolchain
+            provenance = summary.get("provenance")
+            variant = provenance.get("node_build") if type(provenance) is dict else None
             try:
-                validate_comparison_toolchain(compatibility, summary.get("provenance", {}).get("node_build"))
+                validate_comparison_toolchain(compatibility, variant)
             except ValueError as error:
                 raise ValidationError("node comparison requires complete recorded build-time toolchain provenance") from error
         if uses_payment:

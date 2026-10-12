@@ -83,6 +83,9 @@ I/O boundary; no HTTP parser or transport implementation is imported.
 Node comparison identities separate the default/SLH build variant from matched
 observation conditions. End-to-end comparison tests adapt the existing mocked
 build, sampler and report fixtures, while retaining historical configuration IDs.
+Portable receipt validation preserves historical build command paths and checks
+current artifact bytes. Mempool evidence retains exact required metric lines
+for replay and a whole-response hash/size, avoiding unrelated scrape output.
 
 No alternate cryptographic backend, research node overlay, historical
 result set, research checkout, or research Git history is a runtime

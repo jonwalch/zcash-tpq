@@ -280,6 +280,13 @@ def _node_scope(summary):
         '<p class="caution">Matched comparison unavailable: this node build receipt does not record '
         'build-time Cargo configuration and compiler settings. Existing measurements remain readable.</p>'
     ) if summary.get("compatibility", {}).get("toolchain") is None else ""
+    budget = scope.get("time_budget", {})
+    budget_notice = (
+        f'<p><b>Full request allowances:</b> {_escape(budget.get("maximum_request_total_ms"))} ms; '
+        f'{_escape(budget.get("remaining_after_delays_and_requests_ms"))} ms remains after delays and requests. '
+        'Startup, the binary hash and local I/O also consume time; completion is not guaranteed.</p>'
+        + (f'<p class="caution">{_escape(budget["warning"])}</p>' if budget.get("warning") else "")
+    ) if budget else ""
     evidence = {"identity": identity, "profile": profile, "scope": scope,
                 "build": provenance.get("node_build"),
                 "toolchain": provenance.get("toolchain"),
@@ -287,6 +294,7 @@ def _node_scope(summary):
     return (
         '<section id="node-scope" class="panel notice"><h2>Attached node collection</h2>'
         f'<p><b>Schedule:</b> {schedule}</p>'
+        f'{budget_notice}'
         f'<p><b>Sampler elapsed:</b> {_value(elapsed, "ns")} (includes collection overhead; '
         'actual rate intervals use the recorded monotonic collection windows).</p>'
         f'<p><b>Node:</b> {_escape(profile.get("network", "Unavailable"))} · '

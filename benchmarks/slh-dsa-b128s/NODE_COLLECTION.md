@@ -38,6 +38,11 @@ binary hash without executing the binary. Compiled node source and collection
 instrumentation have separate identities. A receipt is local provenance, not
 independent proof of compilation.
 
+To collect on another host, copy the complete build output directory with both
+receipts intact. Update `binary_path` and `build_receipt_path` to their new
+locations in the node profile. Recorded command paths remain build-time evidence;
+registration checks the copied artifacts against their recorded hashes.
+
 Start the node separately with absolute paths and this exact argument shape:
 
 ```sh
@@ -95,7 +100,7 @@ but are not verified execution or chain-acceptance evidence.
 ```sh
 python3 benchmarks/slh-dsa-b128s/run.py plan-node \
   --node-profile node-profile.json --host-profile host-profile.json \
-  --output node-run --samples 10 --interval-ms 1000 --timeout 30 \
+  --output node-run --samples 10 --interval-ms 1000 --timeout 60 \
   --max-output-bytes 16777216
 python3 benchmarks/slh-dsa-b128s/run.py run node-run --execute
 python3 benchmarks/slh-dsa-b128s/run.py summarize node-run --output node-report
@@ -111,9 +116,19 @@ Each metrics request also has an absolute deadline covering connection, request
 writes, response headers, chunk framing and body reads. A stream of small
 fragments does not extend that deadline.
 
+The plan reports the requested delays, the full allowance for all metrics
+requests, and remaining timeout headroom. The example allows 10 seconds of delays
+and up to 22 seconds for eleven requests. The initial binary hash, local reads,
+parsing and output also take time. Their duration is not predicted. A warning
+identifies plans whose cap cannot cover both delays and full request allowances.
+Registration permits a deliberately short cap; it does not guarantee completion.
+
 ## Read the results
 
-Raw snapshots and scrape text are retained with normalized records and hashes.
+Raw snapshots retain the exact required mempool metric and TYPE lines, plus the
+full response's hash and byte count. Unrelated metrics are not retained. Each
+response is validated before filtering; parent replay parses the retained lines.
+The response hash identifies the original payload but cannot reconstruct it.
 The parent independently reconstructs each record from the snapshots. A timeout,
 process replacement, counter reset, changed input or failed scrape preserves
 available evidence and prevents an unqualified successful result.
@@ -128,6 +143,13 @@ A fresh idle mempool may not export its gauges yet: the pinned node publishes
 them after mempool mutations. A successful scrape with absent series is retained
 as unavailable. An empty `getrawmempool` response does not supply the missing
 timed gauge or growth observations, and the collector does not substitute zeros.
+
+Each mempool record describes its ending scrape. If that scrape fails, the record
+is an error. The next successful scrape supplies valid gauges even when growth
+is unavailable because its starting scrape failed. Both intervals adjacent to a
+failed scrape lack growth; recovered gauges still enter successful percentiles.
+A failure of the initial baseline scrape makes the first growth unavailable.
+Failures before sampler startup remain reportable with zero measured populations.
 
 Comparison requires matching declared workload, configuration bytes, host,
 sampling settings, instrumentation, build-time compiler/Cargo settings and resource
