@@ -20,6 +20,7 @@ The [SLH guide](docs/slh-dsa-b128s/README.md) contains these instructions:
 - [Save and restore backups](docs/slh-dsa-b128s/recovery.md).
 - [Build the software and run acceptance tests](docs/slh-dsa-b128s/acceptance.md).
 - [Check test coverage and open work](docs/slh-dsa-b128s/validation.md).
+- [Measure primitives and report saved benchmark data](docs/slh-dsa-b128s/benchmarking.md).
 
 Build from this checkout with the specified features.
 Upstream installers, packages, and releases do not contain this extension.

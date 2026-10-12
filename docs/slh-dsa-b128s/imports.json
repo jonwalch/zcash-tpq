@@ -148,19 +148,274 @@
       "disposition": "upstream-modification",
       "path": "Cargo.toml",
       "provenance": [
-        "tests/slh-dsa-b128s/dependencies/README.md"
+        "tests/slh-dsa-b128s/dependencies/README.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities.",
-      "sha256": "ed6deb2479e80bded93fee9efbfc706fc9c4cdf139b6605d9038c3de43c84f26"
+      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "44a6a63f34c0604e6fe3e2b87feb35fd22dcf44decc5231b0f6fe80226f340e5"
     },
     {
       "disposition": "upstream-modification",
       "path": "README.md",
       "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
+        "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases.",
-      "sha256": "61dd7708373a75a6fd60123d2163ca737fe52ac119ea21dd6cae67521a8873ce"
+      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "0f28f4ee0ef68205e52ddec32930a67595b2cef7d3400c09fcd2f1d3d567c603"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/ADAPTERS.md",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
+      "sha256": "65058497d0a61ade19e5150095365e701f78a7766744f7e944d0046a313a9a92"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/Cargo.lock",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Isolate the human-run primitive benchmark with locked product signer/verifier dependencies; exclude it from node graphs and publication.",
+      "sha256": "a1f9c67bcb2bd24cd6c971d02614c1fef0cc94fc218b811ecde1f1400982970c"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/Cargo.toml",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Isolate the human-run primitive benchmark with locked product signer/verifier dependencies; exclude it from node graphs and publication.",
+      "sha256": "314b6fc4f3a465b8c22e152f508ca96ea3b261af1782e7067b797b4d55a55321"
+    },
+    {
+      "disposition": "attribution",
+      "path": "benchmarks/slh-dsa-b128s/NOTICE",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
+      "sha256": "f17de42f846ddecd21b601c0e2d71f8169aade52e609f1210d086d79d54789f0"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/README.md",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
+      "sha256": "288bc89c1c18c08e2913c68c7c07deb9ffe4475d007b618dee884a80acdd3533"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/adapters.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use existing event/gauge meanings with strict process/node/apply-token/hash/height/class correlation, failure retention, explicit millisecond precision and checkpoint residence, and a throughput-probe-disabled assertion. Proposed propagation events are a new input contract because the required live node boundaries are not currently emitted.",
+      "sha256": "dfc8a2aa661fe324e05fb451e0955072e3d85ff62493dc663a5ae7a06430c67e"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/collectors.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Python standard-library Linux proc/cgroup/interface readers with explicit sampling boundaries and availability. No copied external collector implementation.",
+      "sha256": "51a68a3a5d4c8a81d43ade2983bfeef57b6e01517f8eda5f40f13c9c110f77c9"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/imports.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use.",
+      "sha256": "bc5dc971fe4409a1e21bb171be97b60ec7517825801b9e3f8efe0b0400080780"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/provenance.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling.",
+      "sha256": "cf433f587034713355e530039cd8f57ff91bc5c5dcecea706653a5d35ba65bc4"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/results.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use the empirical nearest-rank index ceil(n*p/100)-1 for p50/p95/p99. New Python validation and reporting preserve process/case boundaries, warmups, outcome populations, unavailable values, and censored observations. No research result rows are imported.",
+      "sha256": "6110faeb9be47a59e7ef480c9c01957dae49162b61b19ae25c5dfacd8113a103"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/run.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads.",
+      "sha256": "891622abb5badb711559d46d1ac4fa13d7c9eae444e7a4d21ffb431abe0fa57d"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/schema/README.md",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
+      "sha256": "2dbbb1da56123c1eea941f81e86bbf6a3ab4e2735a970aaa3d18e3841b0fa042"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/schema/metrics.json",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Declare units and measurement boundaries for primitive, process, transaction, node, and propagation observations; unavailable capabilities are not measurements.",
+      "sha256": "acfb993f51a848c58bbb609d2ef490de3b14a38c3753967e695b9de4d827e52a"
+    },
+    {
+      "disposition": "attribution",
+      "path": "benchmarks/slh-dsa-b128s/sources.json",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
+      "sha256": "5cb1ecde80d422e5350e1d0ee0664a74038966f83a2d65e8596c93ef5746764e"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/src/config.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Strict bounded argument parsing, explicit human execution switch, required input-reuse mode, and non-measuring inspection commands.",
+      "sha256": "600dc3e635754a09a1d04515c16f125815a4d4504a975807b30baa147ef9bac2"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/fixture.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Generate public deterministic seed/message inputs with the fixed 101-byte Regtest protocol frame. Prepare valid and same-length corrupt signature controls outside timing with product APIs. The unit test decodes the unchanged existing public fixture; no new independent crypto oracle or signature corpus is claimed.",
+      "sha256": "f907a2b48ef6b447b4b7ebcb272c0639443f78d6d41d6d2079ed085b2eeaffa4"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/main.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Time the complete product key root, public randomized signing including mandatory self-verification, and external Pure verification. Emit only public hashes/lengths and attempt records. Keep fixture preparation, hashes, corruption, and benchmark postconditions outside observation windows.",
+      "sha256": "e7b51e022eceabc13aaaaa9c68a43ed475499721250042f204aacc00f6522517"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/measurement.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Retain the getrusage/current-RSS observation order and nanosecond/byte units, plus the synthetic unit-conversion control. Add checked counters and explicit null/reason metrics. Emit one separate final process-lifetime peak snapshot per child; primitive observations retain endpoint RSS only. The final snapshot excludes later record allocation and teardown. Omit the global allocator, heap counters, and statistics.",
+      "sha256": "b25fd6a381aa9903ce3d9e1ed2bee1b69f221206eb8e01a3c1ea103cc87961b1"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_adapters.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Exercise strict saved trace, gauge, transaction, and propagation adapter contracts using public or synthetic input; no live network workload.",
+      "sha256": "697ded64318a2bbedf8d718f0529d56fe23c4a1eb258fd14ee908f4183ed65b4"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_collectors.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Exercise Linux resource snapshots and counter handling using synthetic file content, without profiling a live process.",
+      "sha256": "629cd8f300800d799f657ebd9ddfd2eec84c5043899c48e1abaf3304200d1895"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_imports.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed.",
+      "sha256": "0c6f4d595eeb42abfcf8e378e418b84c61a425df0ac63bbb5e8103c2927b4ad8"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_results.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Exercise percentile edge cases, strict record validation, failure and warmup populations, absent/censored observations, and compatibility reporting.",
+      "sha256": "7b6cb5923e7647c8a83d0a3a3fb65f7f0bbc961342035e593c89260232d9f3e4"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_runner.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution.",
+      "sha256": "c634e818287aa4565b96baca874e04e4d11af3552716f027005f4ad043171ecd"
     },
     {
       "disposition": "adapted",
@@ -2030,10 +2285,11 @@
       "disposition": "new",
       "path": "docs/slh-dsa-b128s/README.md",
       "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
+        "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "bef45fcf6c98ea95f5186f0b65e47a3774421063e996ef9a780360aa38696880"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "9067a3082b92445216dd4d9353b416f34bd871ca5a72df093bad1c23960ccf60"
     },
     {
       "disposition": "new",
@@ -2043,6 +2299,17 @@
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
       "sha256": "1c4a27f272e0df968beed28e8308f5e87915bb9331d0084eff267bc0fb8f02bb"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/benchmarking.md",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
+      "sha256": "5dc234bcde2217c8b44da0b5ea2dd1c801a35222d9909b0c2bc517adc3ba1071"
     },
     {
       "disposition": "new",
@@ -2288,7 +2555,7 @@
         "docs/slh-dsa-b128s/writing.md"
       ],
       "reason": "Track unresolved ecosystem choices for public SLH adoption. State existing Zcash rules as the baseline and distinguish SLH security, fee, signing, resource, receiver and migration decisions from prototype operation.",
-      "sha256": "480e8e3ab68aba319fccd4304c39a95598cfd359863857af939df83a824dcf6e"
+      "sha256": "5ab1b64164a033a7a9acb04f3f4cc80e05492f44482cefa3ff0e11e846ce8d2e"
     },
     {
       "disposition": "new",
@@ -2385,10 +2652,11 @@
       "path": "docs/slh-dsa-b128s/validation.md",
       "provenance": [
         "tests/slh-dsa-b128s/evidence/sources.json",
-        "docs/slh-dsa-b128s/validation.md"
+        "docs/slh-dsa-b128s/validation.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools. Document positive controls, per-signer and per-input checks, real fixture boundaries and the scope of external-boundary mocks.",
-      "sha256": "7487bf693559f9df6eb24a226cb407bbbce7045eb7eca4973330c5fe64e8b6c9"
+      "reason": "Public independent-artifact command and precise per-subcontrol validation scope; distinguish historical evidence, prepared cases and missing tools. Document positive controls, per-signer and per-input checks, real fixture boundaries and the scope of external-boundary mocks. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "7561f3f3acdc43efdeb0a6aaf73bfec294042bbcf175db5249478f9e6871301f"
     },
     {
       "disposition": "new",
@@ -2778,28 +3046,31 @@
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/README.md",
       "provenance": [
-        "tests/slh-dsa-b128s/dependencies/README.md"
+        "tests/slh-dsa-b128s/dependencies/README.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "5fdd5426559128d12b1fed3845a97ff60b6c9bf0dbac6c1731758bd3ff3792b3"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "457fc434597b8218447649b6aa41481acca66daaa6aebed320ef5885a82e6730"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/check.py",
       "provenance": [
-        "tests/slh-dsa-b128s/dependencies/README.md"
+        "tests/slh-dsa-b128s/dependencies/README.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "bee69e29942058e5ce455bd9aa75a411405af4563ff0b3404ddbed6e0a67cab5"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "75956ef66d66bb567e6502d55f748fdf95fdfb5e26ee6b067c7ad0441128eeef"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/test_check.py",
       "provenance": [
-        "tests/slh-dsa-b128s/dependencies/README.md"
+        "tests/slh-dsa-b128s/dependencies/README.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "3bfb6edcd7ef7b8f1f98a115257d150161322a3163fa79526c0fffe2bb3782ff"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "6a636502d7d649a173a1f776f7bcf4c625099e65c0466e652ad3f7aef2347ffc"
     },
     {
       "disposition": "new",
@@ -3514,10 +3785,11 @@
       "path": "tests/slh-dsa-b128s/release-content/check.py",
       "provenance": [
         "tests/slh-dsa-b128s/release-content/NOTICE",
-        "tests/slh-dsa-b128s/release-content/README.md"
+        "tests/slh-dsa-b128s/release-content/README.md",
+        "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "ee0d185114852a81498ca59a98043ea9690901b9d55491887ca633aee7a4602c"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
+      "sha256": "5a14ecc5b819e6bdd88ccf550a42a987fd3dd3522cab78602d6f8779d6ccd319"
     },
     {
       "disposition": "new",

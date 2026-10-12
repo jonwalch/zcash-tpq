@@ -97,6 +97,11 @@ class IsolationPolicyTests(unittest.TestCase):
             (c.VERIFY, (), "normal,build"): ((c.VERIFY, "blake3"),
                                              (c.SIGN, c.WALLET, c.CLI, c.NATIVE, c.CONTEXT, "rayon", "rand_core")),
         })
+        self.policy = {key: (required, (*forbidden, c.BENCH))
+                       for key, (required, forbidden) in self.policy.items()}
+        self.policy[(c.BENCH, (), "normal,build,dev")] = (
+            (c.BENCH, c.SIGN, c.VERIFY, "blake3"),
+            (c.WALLET, c.CLI, c.NATIVE, c.CONTEXT, "rayon", "zakura", "zakura-consensus"))
 
     def clean_trees(self):
         trees = {}
@@ -136,7 +141,7 @@ class IsolationPolicyTests(unittest.TestCase):
         self.assertEqual([row["case"] for row in results], [
             "zakura-default", "zakura-all-features", "zakura-consensus-default", "zakura-consensus-all-features",
             "zakura-rpc-default", "zakura-rpc-all-features", "consensus-slh", "wallet-default", "wallet-slh",
-            "cli-default", "cli-slh", "native-verifier-only", "primitive-verifier-only"])
+            "cli-default", "cli-slh", "native-verifier-only", "primitive-verifier-only", "isolated-benchmark"])
 
     def test_each_forbidden_package_is_rejected_in_its_graph(self):
         for key, (_, forbidden) in self.policy.items():

@@ -44,6 +44,12 @@ Each version and funding profile needs a separate artifact directory.
 No performance workload is registered here.
 Resource measurements require functional acceptance first.
 
+The [benchmark framework](benchmarking.md) adds isolated primitive measurements,
+offline result validation and resource/trace adapters. Synthetic tests check
+their reporting and failure boundaries. Wallet/node workloads, propagation
+instrumentation and all fresh performance evidence remain pending. A framework
+unit-test result does not extend any historical live acceptance receipt.
+
 ## Test boundaries
 
 Crypto and wallet tests use real signature verification, public retained vectors,

@@ -17,6 +17,7 @@ The guard checks each dependency graph separately:
 - Each node root with all features: normal, build, and development dependencies.
 - Explicit SLH consensus, native verifier, and primitive verifier graphs.
 - Default and enabled wallet and CLI graphs.
+- The separate benchmark workspace, including its development dependencies.
 
 Every graph uses `--target all`, including dependencies for other operating systems.
 This avoids hidden edges and misleading workspace-wide feature combinations.
@@ -26,7 +27,10 @@ graph's required and forbidden packages, local paths, and product packages.
 
 The guard rejects alternate PQ packages, including optional and test-only packages.
 Local dependency paths must stay inside the repository.
-The signer is allowed only in enabled wallet and CLI graphs.
+The signer is allowed in enabled wallet/CLI graphs and the separate benchmark.
+The benchmark package is forbidden in every node, wallet and verifier graph.
+Its graph must contain the real signer and verifier and must exclude the node,
+wallet, fixture tools and Rayon.
 The default CLI also excludes the wallet library.
 BLAKE3 stays pinned to 1.8.5 without its Rayon feature.
 Upstream node use of Rayon is unchanged.

@@ -13,6 +13,7 @@ SIGN = "zakura-pq-slh-dsa-b-sign"
 WALLET = "zakura-pq-wallet"
 CLI = "zakura-pq-cli"
 CONTEXT = "zakura-pq-tx-context"
+BENCH = "tpq-bench"
 PQ_BACKEND = re.compile(r"(?:ml[-_]?dsa|sqisign|falcon|slh[-_]?dsa|fips20[45])", re.IGNORECASE)
 ALLOWED_PQ = {VERIFY, NATIVE, SIGN, "slh-dsa-b128s-fixture-host"}
 PACKAGE = re.compile(r"^([\w-]+) v([^\s]+)(?: \([^\n]*\))?\|([^\n]*)$")
@@ -62,6 +63,8 @@ def validate_tree(packages, *, required=(), forbidden=()):
 def graph(package, features=(), edges="normal,build"):
     args = ["tree", "-p", package, "--prefix", "none", "--format", "{p}|{f}", "-e", edges,
             "--target", "all"]
+    if package == BENCH:
+        args += ["--manifest-path", str(ROOT / "benchmarks/slh-dsa-b128s/Cargo.toml")]
     if features:
         args += ["--features", ",".join(f"{package}/{feature}" for feature in features)]
     return parse_tree(cargo(*args))
@@ -80,7 +83,7 @@ def check():
 
     def record(label, package, features=(), required=(), forbidden=(), edges="normal,build"):
         tree = graph(package, features, edges)
-        validate_tree(tree, required=required, forbidden=forbidden)
+        validate_tree(tree, required=required, forbidden=(*forbidden, BENCH))
         results.append({"case": label, "package_count": len(tree), "edges": edges})
 
     # Check node roots separately to avoid workspace-wide feature unification.
@@ -97,8 +100,12 @@ def check():
            required=(WALLET, SIGN, VERIFY, NATIVE, CONTEXT))
     record("native-verifier-only", NATIVE, required=(VERIFY, CONTEXT), forbidden=(SIGN, WALLET, CLI))
     primitive = graph(VERIFY)
-    validate_tree(primitive, required=(VERIFY, "blake3"), forbidden=(SIGN, WALLET, CLI, NATIVE, CONTEXT, "rayon", "rand_core"))
+    validate_tree(primitive, required=(VERIFY, "blake3"), forbidden=(SIGN, WALLET, CLI, NATIVE, CONTEXT, "rayon", "rand_core", BENCH))
     results.append({"case": "primitive-verifier-only", "package_count": len(primitive), "edges": "normal,build"})
+    benchmark = graph(BENCH, edges="normal,build,dev")
+    validate_tree(benchmark, required=(BENCH, SIGN, VERIFY, "blake3"),
+                  forbidden=(WALLET, CLI, NATIVE, CONTEXT, "rayon", "zakura", "zakura-consensus"))
+    results.append({"case": "isolated-benchmark", "package_count": len(benchmark), "edges": "normal,build,dev"})
     return results
 
 

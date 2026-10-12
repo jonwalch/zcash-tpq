@@ -21,6 +21,7 @@ The [protocol](protocol.md) specifies the source revisions and the
 | Back up keys and payment history, then restore them | [Recovery](recovery.md) |
 | Understand finite address inventories and watch-only roles | [Wallet behavior](wallet.md#recovery-and-watch-only-behavior) |
 | Build matching binaries and run end-to-end scenarios | [Acceptance runbook](acceptance.md) |
+| Register measurements and report saved observations | [Benchmark framework](benchmarking.md) |
 
 The build requires Rust 1.97 or later, Git, and Python 3.11 or later.
 Each reference suite lists its Python dependencies.

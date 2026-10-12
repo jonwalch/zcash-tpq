@@ -273,6 +273,21 @@
       "sources": [],
       "classification": "new synthetic controls",
       "adaptation": "Exercise strict saved trace, gauge, transaction, and propagation adapter contracts using public or synthetic input; no live network workload."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/imports.py",
+      "sources": [
+        "product-acceptance-common",
+        "product-fixture-parser"
+      ],
+      "classification": "new saved-evidence adapter orchestration",
+      "adaptation": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use."
+    },
+    {
+      "path": "benchmarks/slh-dsa-b128s/tests/test_imports.py",
+      "sources": [],
+      "classification": "new synthetic integration controls",
+      "adaptation": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed."
     }
   ]
 }
