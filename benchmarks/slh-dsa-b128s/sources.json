@@ -411,7 +411,7 @@
         "product-wallet-payment-api"
       ],
       "classification": "product API orchestration and new measurement boundaries",
-      "adaptation": "Call unchanged WatchStore lifecycle APIs; name coupled durable stages, measure an enclosing foreground interval, retain public artifacts and verify durable reopen outside timing. Separate one-case check-payment path performs no measurements."
+      "adaptation": "Call unchanged WatchStore lifecycle APIs; name coupled durable stages, measure an enclosing foreground interval, retain public artifacts and verify durable reopen outside timing. Separate one-case check-payment path performs no measurements. Require an explicit existing wallet storage root for private stores and backups; preserve separation from public artifacts and test directory selection/permissions without timing."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/src/payment_fixture.rs",
@@ -429,7 +429,7 @@
         "product-transaction-recipes"
       ],
       "classification": "selective classical control adaptation",
-      "adaptation": "Match version, input count, threshold and payment intent with actual serialized fee actions. Use libsecp256k1 signing and script-aware checks. No classical wallet journal equivalence or full Script interpreter claim."
+      "adaptation": "Match version, input count, threshold and payment intent with actual serialized fee actions. Use libsecp256k1 signing and script-aware checks. No classical wallet journal equivalence or full Script interpreter claim. Retain prepared public keys and verify without secret keys so the verification timer excludes public-key generation; a secret-free verification/mutation regression covers this boundary."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/payment_checks.py",
@@ -451,7 +451,7 @@
         "product-acceptance-common"
       ],
       "classification": "bounded wallet runner integration",
-      "adaptation": "Register explicit case dimensions and limits; retain prepared reference snapshots, exact public artifacts, independent per-attempt verdicts and partial failures. Keep timing and checker subprocesses separate."
+      "adaptation": "Register explicit case dimensions and limits; retain prepared reference snapshots, exact public artifacts, independent per-attempt verdicts and partial failures. Keep timing and checker subprocesses separate. Bind an explicit wallet storage root, directory/device and filesystem attributes, and operator storage declarations to execution and comparison; reject changed storage with synthetic regression coverage."
     },
     {
       "path": "benchmarks/slh-dsa-b128s/schema/payment-metrics.json",

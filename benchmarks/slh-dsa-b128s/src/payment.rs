@@ -7,7 +7,7 @@
 use std::{
     fs::{self, OpenOptions},
     io::{self, Cursor, Write},
-    path::Path,
+    path::{Path, PathBuf},
     sync::Arc,
     time::Instant,
 };
@@ -90,6 +90,7 @@ pub fn metadata() -> Value {
         "artifact_boundary": "canonical signed/unsigned transaction, ordered fixture previous outputs and derived messages; no secrets or backup files; artifact encoding, negative controls, durable reopen checks and output excluded from foreground",
         "matched_workload": "each input 10000000 zat; recipient inputs*10000000-5000000 zat; each algorithm uses current 400-zat marginal fee and exact serialized actions; change therefore differs",
         "ephemeral_state": "fresh private temporary WatchStores each attempt, empty prior history; this is not long-lived journal growth or cold disk-cache behavior",
+        "storage_boundary": "private stores and disposable backups are created only beneath the explicit wallet-storage-root; registered runs bind that directory and its declared storage profile; TMPDIR is ignored",
     })
 }
 
@@ -109,6 +110,7 @@ pub fn cases() -> Vec<Value> {
                             samples: 1,
                             warmup: 0,
                             artifact_directory: "unused".into(),
+                            wallet_storage_root: "unused".into(),
                         };
                         cases.push(json!({ "case_id": config.case_id(), "phase": "wallet", "algorithm": algorithm.name(), "human_execution_required": true }));
                     }
@@ -420,15 +422,40 @@ fn publish(path: &Path, artifact: &Value) -> Result<(String, String), String> {
     ))
 }
 
+fn wallet_storage_root(config: &PaymentConfig) -> Result<PathBuf, String> {
+    let metadata = fs::symlink_metadata(&config.wallet_storage_root).map_err(error)?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err("wallet storage root must be an existing directory, not a symlink".into());
+    }
+    let root = config.wallet_storage_root.canonicalize().map_err(error)?;
+    let artifacts = config.artifact_directory.canonicalize().map_err(error)?;
+    if root.starts_with(artifacts) {
+        return Err("private wallet storage must be outside public artifacts".into());
+    }
+    Ok(root)
+}
+
+fn wallet_directory(root: &Path) -> Result<tempfile::TempDir, String> {
+    let mut builder = tempfile::Builder::new();
+    builder.prefix("tpq-wallet-");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        builder.permissions(fs::Permissions::from_mode(0o700));
+    }
+    builder.tempdir_in(root).map_err(error)
+}
+
 pub fn measure(config: PaymentConfig) -> Result<(), String> {
     artifact_directory(&config.artifact_directory)?;
-    let cached_directory = tempfile::tempdir().map_err(error)?;
+    let storage = wallet_storage_root(&config)?;
+    let cached_directory = wallet_directory(&storage)?;
     let cached = Cached::prepare(&config, cached_directory.path())?;
     let stdout = io::stdout();
     let mut output = stdout.lock();
     let mut failed = false;
     for attempt in 0..config.warmup + config.samples {
-        let directory = tempfile::tempdir().map_err(error)?;
+        let directory = wallet_directory(&storage)?;
         let mut stages = Stages::new(true);
         let (completed, mut observation) = observe("payment_total_ns", || {
             perform(&config, &cached, directory.path(), attempt, &mut stages)
@@ -489,9 +516,10 @@ pub fn measure(config: PaymentConfig) -> Result<(), String> {
 
 pub fn check(config: PaymentConfig) -> Result<(), String> {
     artifact_directory(&config.artifact_directory)?;
-    let cached_directory = tempfile::tempdir().map_err(error)?;
+    let storage = wallet_storage_root(&config)?;
+    let cached_directory = wallet_directory(&storage)?;
     let cached = Cached::prepare(&config, cached_directory.path())?;
-    let directory = tempfile::tempdir().map_err(error)?;
+    let directory = wallet_directory(&storage)?;
     let mut stages = Stages::new(false);
     let completed = perform(&config, &cached, directory.path(), 0, &mut stages)?;
     let artifact = completed.finish(&config, &cached, directory.path())?;
@@ -630,5 +658,50 @@ mod tests {
         publish(&path, &json!({"offline_fixture":true})).unwrap();
         assert!(publish(&path, &json!({"replacement":true})).is_err());
         assert!(artifact_directory(directory.path()).is_err());
+    }
+
+    #[test]
+    fn wallet_storage_is_explicit_private_and_outside_public_artifacts() {
+        let directory = tempfile::tempdir().unwrap();
+        let public = directory.path().join("public");
+        let storage = directory.path().join("storage");
+        fs::create_dir(&public).unwrap();
+        fs::create_dir(&storage).unwrap();
+        let mut config = PaymentConfig {
+            algorithm: Algorithm::Slh,
+            version: 5,
+            multisig: false,
+            inputs: 1,
+            generated: false,
+            samples: 1,
+            warmup: 0,
+            artifact_directory: public.clone(),
+            wallet_storage_root: storage.clone(),
+        };
+        let root = wallet_storage_root(&config).unwrap();
+        let private = wallet_directory(&root).unwrap();
+        assert_eq!(private.path().parent(), Some(root.as_path()));
+        assert_eq!(fs::read_dir(&public).unwrap().count(), 0);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(private.path()).unwrap().permissions().mode() & 0o777,
+                0o700
+            );
+            let alias = directory.path().join("storage-alias");
+            std::os::unix::fs::symlink(&storage, &alias).unwrap();
+            config.wallet_storage_root = alias;
+            assert!(wallet_storage_root(&config).is_err());
+        }
+        config.wallet_storage_root = public.clone();
+        assert!(wallet_storage_root(&config).is_err());
+        config.wallet_storage_root = public.join("nested");
+        fs::create_dir(&config.wallet_storage_root).unwrap();
+        assert!(wallet_storage_root(&config).is_err());
+        config.wallet_storage_root = directory.path().join("missing");
+        assert!(wallet_storage_root(&config).is_err());
+        fs::write(&config.wallet_storage_root, b"not a directory").unwrap();
+        assert!(wallet_storage_root(&config).is_err());
     }
 }

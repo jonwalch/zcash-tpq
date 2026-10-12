@@ -13,9 +13,10 @@ tpq-bench measure --case keygen|sign|verify|verify-invalid --samples N --warmup 
 --cache-mode repeated-input|varied-input --execute\n\
 tpq-bench payment --algorithm slh-dsa-b128s|ecdsa-secp256k1 --version v5|v6 \
 --policy single|multisig --inputs 1|2|5 --inventory cached|generated \
---samples N --warmup N --artifact-directory PATH --execute\n\n\
+--samples N --warmup N --artifact-directory PATH --wallet-storage-root PATH --execute\n\n\
 tpq-bench check-payment --algorithm slh-dsa-b128s|ecdsa-secp256k1 --version v5|v6 \
---policy single|multisig --inputs 1|2|5 --inventory cached|generated --artifact-directory PATH\n\n\
+--policy single|multisig --inputs 1|2|5 --inventory cached|generated \
+--artifact-directory PATH --wallet-storage-root PATH\n\n\
 Measurement is a human-run workload. No command measures by default.\n\
 samples: 1..10000; warmup: 0..1000. Warmups are recorded, excluded from summaries.\n\
 One additional final process record reports a lifetime peak through that snapshot.\n\
@@ -24,6 +25,7 @@ varied-input varies public keygen seeds or messages; signing/verification reuse 
 Neither mode flushes processor or OS caches. Verification fixtures are signed untimed.\n\
 Payments are disposable offline fixtures, never authenticated chain funding.\n\
 Payment bounds: samples 1..100, warmup 0..10; artifacts contain public bytes only.\n\
+Wallet storage uses an explicit existing directory; TMPDIR does not select its filesystem.\n\
 single means 1-of-1; multisig means 2-of-3. Inventory caching is not secret-key caching.\n\
 SLH foreground includes real wallet preparation, signing and assembly with durable journals.\n\
 Classical controls measure transaction assembly/signing/verification, not the SLH wallet.";
@@ -53,6 +55,7 @@ pub struct PaymentConfig {
     pub samples: u32,
     pub warmup: u32,
     pub artifact_directory: PathBuf,
+    pub wallet_storage_root: PathBuf,
 }
 
 impl PaymentConfig {
@@ -250,6 +253,7 @@ fn parse_payment(
     let (mut algorithm, mut version, mut multisig, mut inputs, mut generated) =
         (None, None, None, None, None);
     let (mut samples, mut warmup, mut artifact_directory) = (None, None, None);
+    let mut wallet_storage_root = None;
     let mut execute = false;
     while let Some(flag) = arguments.next() {
         if !measure && matches!(flag.as_str(), "--execute" | "--samples" | "--warmup") {
@@ -275,6 +279,7 @@ fn parse_payment(
                 | "--samples"
                 | "--warmup"
                 | "--artifact-directory"
+                | "--wallet-storage-root"
         ) {
             return Err(format!("unknown payment option: {flag}"));
         }
@@ -344,6 +349,12 @@ fn parse_payment(
                 }
                 set_once(&mut artifact_directory, PathBuf::from(value), &flag)?;
             }
+            "--wallet-storage-root" => {
+                if value.is_empty() {
+                    return Err("wallet storage root cannot be empty".into());
+                }
+                set_once(&mut wallet_storage_root, PathBuf::from(value), &flag)?;
+            }
             _ => unreachable!("unknown payment options are rejected above"),
         }
     }
@@ -367,6 +378,7 @@ fn parse_payment(
             0
         },
         artifact_directory: artifact_directory.ok_or("--artifact-directory is required")?,
+        wallet_storage_root: wallet_storage_root.ok_or("--wallet-storage-root is required")?,
     })
 }
 
@@ -459,7 +471,7 @@ mod tests {
         assert_eq!(CacheMode::VariedInput.input_index(10), 11);
     }
 
-    const PAYMENT: &str = "payment --algorithm slh-dsa-b128s --version v6 --policy multisig --inputs 2 --inventory generated --samples 2 --warmup 1 --artifact-directory /tmp/public --execute";
+    const PAYMENT: &str = "payment --algorithm slh-dsa-b128s --version v6 --policy multisig --inputs 2 --inventory generated --samples 2 --warmup 1 --artifact-directory /tmp/public --wallet-storage-root /tmp/wallet-storage --execute";
 
     #[test]
     fn payment_parser_requires_bounded_explicit_dimensions() {
@@ -479,6 +491,7 @@ mod tests {
             " --samples 2",
             " --warmup 1",
             " --artifact-directory /tmp/public",
+            " --wallet-storage-root /tmp/wallet-storage",
             " --execute",
         ] {
             assert!(args(&PAYMENT.replace(missing, "")).is_err(), "{missing}");
@@ -499,6 +512,7 @@ mod tests {
             "--execute",
             "--inputs 1",
             "--artifact-directory /tmp/other",
+            "--wallet-storage-root /tmp/other",
         ] {
             assert!(args(&format!("{PAYMENT} {duplicate}")).is_err());
         }

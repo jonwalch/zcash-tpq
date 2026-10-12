@@ -12,6 +12,11 @@ and actual SLH wallet storage. Their funding is a synthetic fixture; live chain
 acceptance, node flow and propagation instrumentation remain open. Synthetic
 tests do not establish performance results or production budgets.
 
+Payment commands require an explicit `--wallet-storage-root`. Registered runs
+also require a `wallet_storage` declaration in the host profile and record the
+directory/device identity for persistence comparisons. See the operating guide
+for the profile fields. Ambient `TMPDIR` does not redirect wallet writes.
+
 Install the [pinned wallet-format oracle dependency](../../tests/slh-dsa-b128s/wallet/formats/requirements.txt)
 in your Python environment, then run tests without starting any measurement workload:
 

@@ -163,7 +163,38 @@ mode includes the inventory work in the enclosing interval. Neither mode claims
 a cold or warm processor cache. Never add stage p50, p95 or p99 values to obtain
 a total; those quantiles can refer to different attempts.
 Classical cached controls reuse their prepared secp256k1 key pairs. Their key
-handling does not exercise the SLH wallet API.
+handling does not exercise the SLH wallet API. Classical verification uses the
+public keys prepared with the inventory and a verification-only context. It does
+not derive public keys from secret scalars inside the verification timer.
+
+Choose an existing directory on the filesystem whose wallet writes you intend
+to measure. Pass it as `--wallet-storage-root`. Both cached inventory backups
+and each attempt's fresh private stores are created below this root; `TMPDIR`
+does not choose their location. Keep this directory outside public artifacts.
+Temporary stores are removed on normal exit. Interrupted processes can leave
+disposable private stores here; do not archive them as public evidence.
+
+Add a `wallet_storage` object to the host profile for payment runs. Replace the
+example declarations with the actual device, filesystem, mount options and sync
+behavior. These are operator declarations, not a power-loss durability test:
+
+```json
+"wallet_storage": {
+  "description": "replace with device and storage isolation description",
+  "medium": "replace with local SSD, HDD, RAM disk, or other medium",
+  "filesystem": "replace with actual filesystem and version",
+  "mount_options": "replace with effective mount options",
+  "sync_policy": "replace with filesystem and device flush guarantees"
+}
+```
+
+Registration records the resolved root, directory/device identity, filesystem
+block sizes and flags, and these declarations. Execution rechecks the identity
+and passes the registered root to the child. Reports retain it in provenance and
+comparison metadata. A changed root, device, filesystem flags or storage profile
+cannot silently count as the same persistence workload. Historical payment runs
+without storage identity can be inspected, but cannot establish matched storage
+comparisons. Primitive reporting does not require this payment-specific field.
 
 Prepare the [pinned independent reference](../../tests/slh-dsa-b128s/reference/README.md)
 first. The payment checker also reuses the independent wallet-format oracle,
@@ -186,10 +217,12 @@ to select more cases; the runner registers their Cartesian product. The small
 sample count demonstrates commands and does not establish tail stability.
 
 ```sh
+mkdir -p .context/wallet-storage
 python3 benchmarks/slh-dsa-b128s/run.py plan-payment \
   --build .context/bench-build-01 --output .context/payment-run-01 \
   --host-profile .context/bench-host.json \
   --reference-inputs .context/slh-reference \
+  --wallet-storage-root .context/wallet-storage \
   --algorithm slh-dsa-b128s --algorithm ecdsa-secp256k1 \
   --version v5 --policy single --inputs 1 --inventory cached \
   --samples 3 --warmup 1 --repetitions 1 --timeout 1800 \
@@ -358,9 +391,11 @@ transaction evidence. Run the separate independent checker on that evidence:
 
 ```sh
 mkdir .context/payment-check-01
+mkdir -p .context/wallet-storage
 .context/bench-build-01/tpq-bench check-payment \
   --algorithm slh-dsa-b128s --version v5 --policy single --inputs 1 \
-  --inventory cached --artifact-directory .context/payment-check-01
+  --inventory cached --artifact-directory .context/payment-check-01 \
+  --wallet-storage-root .context/wallet-storage
 python3 -B benchmarks/slh-dsa-b128s/payment_checks.py \
   --repo-root . --reference-inputs .context/slh-reference \
   --artifact .context/payment-check-01/attempt-000000.json
