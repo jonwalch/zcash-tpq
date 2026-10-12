@@ -48,10 +48,10 @@ class ExecutionError(BenchmarkError):
         self.outcome = outcome
 
 
-def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_poll=None):
+def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_poll=None, max_line_bytes=MAX_LINE):
     """Bound both streams, wall time and a private process group; no shell."""
     require(os.name == "posix", "execution currently requires Linux or macOS")
-    require(timeout > 0 and max_bytes > 0, "positive execution bounds required")
+    require(timeout > 0 and max_bytes > 0 and 0 < max_line_bytes <= 2 * MAX_LINE, "positive execution bounds required")
     directory = fresh_directory(directory)
     started = time.monotonic_ns()
     with (directory / "stdout.log").open("xb") as stdout_log, \
@@ -85,9 +85,9 @@ def supervise(argv, *, root, directory, timeout, max_bytes, on_line=None, on_pol
                             while b"\n" in pending:
                                 line, _, remainder = pending.partition(b"\n")
                                 pending = bytearray(remainder)
-                                require(len(line) <= MAX_LINE and bool(line), "invalid output line")
+                                require(len(line) <= max_line_bytes and bool(line), "invalid output line")
                                 on_line(child.pid, bytes(line))
-                            require(len(pending) <= MAX_LINE, "unterminated output line limit")
+                            require(len(pending) <= max_line_bytes, "unterminated output line limit")
             require(not pending, "partial final output line")
             remaining = max(0.01, timeout - (time.monotonic_ns() - started) / 1e9)
             try:
@@ -255,6 +255,9 @@ def execute(args):
     if manifest.get("kind") == "payment":
         from payment_run import execute_payment
         return execute_payment(args, manifest)
+    if manifest.get("kind") == "node-collection":
+        from node_run import execute_node
+        return execute_node(args, manifest)
     require(manifest.get("kind") == "primitive" and manifest.get("schema_version") == 1, "unknown run plan")
     require(not (output / "receipt.json").exists(), "run already attempted; register a new directory")
     require(sha256(HERE / "schema/metrics.json") == manifest["metric_catalog_sha256"] and
@@ -383,6 +386,9 @@ def summarize_run(args):
     if manifest.get("kind") == "payment":
         summary["compatibility"]["independent_checker"] = manifest["independent_checker"]
         summary["compatibility"]["wallet_storage"] = manifest.get("wallet_storage")
+    if manifest.get("kind") == "node-collection":
+        from node_run import node_compatibility
+        summary["compatibility"]["node_collection"] = node_compatibility(manifest)
     summary["provenance"] = {"manifest_sha256": receipt["manifest_sha256"],
                              "source": manifest.get("build", {}).get("source", {}).get("commit"),
                              "html_renderer_sha256": sha256(HERE / "html_report.py"),
@@ -397,6 +403,11 @@ def summarize_run(args):
             summary["provenance"]["wallet_storage_unavailable"] = (
                 "This historical run did not register wallet storage; matched payment comparison is unavailable.")
         summary["provenance"]["independent_checks"] = receipt.get("independent_checks", [])
+    if manifest.get("kind") == "node-collection":
+        summary["provenance"].update(node_scope=manifest["scope"], node_profile=manifest["node_profile"],
+                                     node_identity=manifest["node_identity"],
+                                     node_execution=receipt.get("processes", [{}])[0],
+                                     source=manifest["build"]["source"]["source_commit"])
     require(not (receipt["complete"] and receipt["records"] != manifest["expected_records"]),
             "complete receipt missing expected records")
     require(not Path(args.output).resolve().is_relative_to(directory.resolve()), "reports must be outside immutable run artifacts")
@@ -436,6 +447,8 @@ def main(argv=None):
     planning.set_defaults(action=plan)
     from payment_run import add_payment_parser
     add_payment_parser(commands)
+    from node_run import add_node_parser
+    add_node_parser(commands)
     running = commands.add_parser("run", help="human: execute one registered run exactly once")
     running.add_argument("directory")
     running.add_argument("--execute", action="store_true")
