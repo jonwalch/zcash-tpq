@@ -288,6 +288,14 @@ class NodeRunnerTests(unittest.TestCase):
         self.assertFalse(receipt["artifact_inventory_complete"])
         self.assertTrue((self.root / "run/execution.claim").is_file())
 
+    def test_record_byte_bound_reserves_a_terminal_failure(self):
+        manifest = self.plan()
+        with patch.object(node_run, "MAX_INPUT_BYTES", node_run.MAX_RECORD_BYTES + 1), \
+                self.assertRaisesRegex(provenance.BenchmarkError, "normalized record byte limit"):
+            self.execute_fixture(manifest)
+        self.assertEqual(self.receipt()["records"], 1)
+        self.assertEqual(run.read_records(self.root / "run/attempts.jsonl")[0]["attempt_id"], "supervisor")
+
 
 if __name__ == "__main__":
     unittest.main()

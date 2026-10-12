@@ -33,6 +33,7 @@ SCOPE = {
     "association": "The operator associates the metrics endpoint with the node. Config, executable and process epoch are checked; listener ownership is not independently proved.",
     "resources": "Process interval CPU and current RSS; optional declared cgroup. Attached lifetime peaks cannot establish a case-local peak and remain unavailable.",
     "mempool": "Verified mempool gauges and their adjacent-scrape growth; policy accounting cost is not heap use or an admission queue.",
+    "timing": "The requested delay follows each observation. Actual rates use retained read-window midpoints and include collection time.",
     "limits": "This collector does not measure block validation, transaction propagation, peer bandwidth or chain acceptance.",
 }
 
@@ -238,9 +239,10 @@ def execute_node(args, manifest):
     disk_bound = 2 * settings["max_output_bytes"] + MAX_INPUT_BYTES + 2 * MAX_JSON + 1024 * 1024
     try:
         with (output / "attempts.jsonl").open("xb") as attempts, (output / "evidence.jsonl").open("xb") as evidence:
-            def write_record(record):
+            def write_record(record, *, terminal=False):
                 encoded = canonical(record) + b"\n"
-                require(len(encoded) <= MAX_RECORD_BYTES and attempts.tell() + len(encoded) <= MAX_INPUT_BYTES,
+                limit = MAX_INPUT_BYTES if terminal else MAX_INPUT_BYTES - MAX_RECORD_BYTES
+                require(len(encoded) <= MAX_RECORD_BYTES and attempts.tell() + len(encoded) <= limit,
                         "node normalized record byte limit")
                 attempts.write(encoded)
                 attempts.flush()
@@ -303,7 +305,7 @@ def execute_node(args, manifest):
                            "cache_mode": "not-applicable", "warmup": False, "outcome": outcome,
                            "metrics": {"attempt_elapsed_ns": elapsed}, "unavailable": {}, "censored": ["attempt_elapsed_ns"],
                            "details": {"failure": type(error).__name__, "scope": "private sampler including setup; attached node is never signalled"}}
-                write_record(validate_record(failure))
+                write_record(validate_record(failure), terminal=True)
                 raise
         checked = summarize(all_records, complete=True)
         receipt.update(complete=True, successful=checked["successful"], status="complete")
