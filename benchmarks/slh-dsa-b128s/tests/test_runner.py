@@ -192,7 +192,7 @@ class RegistrationTests(unittest.TestCase):
     def settings(self):
         return {"cases": ["verify"], "samples": 3, "warmup": 1, "repetitions": 2,
                 "cache_mode": "repeated-input", "timeout_seconds_per_process": 10,
-                "max_output_bytes_per_process": 4096}
+                "max_output_bytes_per_process": 64 * 1024}
 
     def test_bounds_rechecked_at_execution(self):
         self.assertEqual(run.validate_settings(self.settings()), 10)
@@ -229,6 +229,50 @@ class RegistrationTests(unittest.TestCase):
         with self.assertRaisesRegex(provenance.BenchmarkError, "reserves a failure"):
             run.validate_settings(settings)
 
+    def test_record_byte_budget_rejects_the_80808_record_plan(self):
+        settings = self.settings()
+        settings.update(cases=["sign"], samples=10000, warmup=100, repetitions=8,
+                        max_output_bytes_per_process=64 * 1024 * 1024)
+        with self.assertRaisesRegex(provenance.BenchmarkError, "run byte budget"):
+            run.validate_settings(settings)
+
+    def test_record_byte_budget_includes_peak_and_failure_reserve(self):
+        settings = self.settings()
+        settings.update(cases=["verify"], samples=2727, warmup=0, repetitions=6,
+                        max_output_bytes_per_process=64 * 1024 * 1024)
+        self.assertEqual(run.validate_settings(settings), 16368)
+        budget = run.primitive_output_budget(settings)
+        self.assertEqual(budget["run_records_bytes"] + budget["failure_record_reserve_bytes"],
+                         results.MAX_INPUT_BYTES)
+        settings["samples"] += 1
+        with self.assertRaisesRegex(provenance.BenchmarkError, "run byte budget"):
+            run.validate_settings(settings)
+
+    def test_process_output_budget_uses_all_stdout_records(self):
+        settings = self.settings()
+        settings.update(cases=["verify"], samples=1, warmup=1, repetitions=1,
+                        max_output_bytes_per_process=3 * run.PRIMITIVE_RECORD_BYTES)
+        self.assertEqual(run.validate_settings(settings), 3)
+        settings["max_output_bytes_per_process"] -= 1
+        with self.assertRaisesRegex(provenance.BenchmarkError, "stdout byte budget"):
+            run.validate_settings(settings)
+
+    def test_invalid_byte_plan_does_not_create_output_or_validate_build(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = root / "host.json"
+            provenance.atomic_json(profile, {"description": "mock", "cpu_model": "mock", "affinity": "mock",
+                                            "power_policy": "mock", "effective_cpu_cores": 1,
+                                            "memory_limit_bytes": 1024})
+            args = argparse.Namespace(case=["sign"], samples=10000, warmup=100, repetitions=8,
+                                      cache_mode="repeated-input", timeout=86400,
+                                      max_output_bytes=64 * 1024 * 1024, host_profile=profile,
+                                      build=root / "absent-build", output=root / "plan")
+            with patch.object(run, "validate_build", side_effect=AssertionError("validation must be early")):
+                with self.assertRaisesRegex(provenance.BenchmarkError, "run byte budget"):
+                    run.plan(args)
+            self.assertFalse(args.output.exists())
+
 
 class ExecutionTests(unittest.TestCase):
     """Exercise complete runner receipts with injected child output, no crypto."""
@@ -241,7 +285,7 @@ class ExecutionTests(unittest.TestCase):
         output.mkdir()
         settings = {"cases": [case], "samples": 1, "warmup": 0, "repetitions": 1,
                     "cache_mode": "repeated-input", "timeout_seconds_per_process": 10,
-                    "max_output_bytes_per_process": 4096}
+                    "max_output_bytes_per_process": 2 * run.PRIMITIVE_RECORD_BYTES}
         manifest = {"schema_version": 1, "kind": "primitive", "run_id": "synthetic",
                     "configuration_id": provenance.digest_value(settings), "settings": settings,
                     "build_directory": str(build), "build_receipt_sha256": provenance.sha256(build / "build.json"),
@@ -364,6 +408,141 @@ class ExecutionTests(unittest.TestCase):
             provenance.atomic_json(output / "manifest.json", manifest)
             with self.assertRaisesRegex(provenance.BenchmarkError, "metric catalog changed"):
                 run.summarize_run(argparse.Namespace(directory=output, output=root / "report", process_id=None))
+
+    def test_record_byte_contract_is_enforced_on_child_and_normalized_lines(self):
+        for kind in ("child", "normalized"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                output, manifest = self.prepare(Path(directory))
+                rows = self.child_rows("verify")
+                row = rows[0]
+                row["details"] = {"padding": ""}
+                # Fill a valid details string until the raw line is at the cap.
+                row["details"]["padding"] = "x" * (run.PRIMITIVE_RECORD_BYTES
+                    - len(provenance.canonical(row)) - 1 + (kind == "child"))
+                results.validate_record(run.normalized_child_record(row, manifest, "verify", 0, 0, 123))
+                with self.assertRaisesRegex(provenance.BenchmarkError, f"primitive {kind} record byte limit"):
+                    self.execute(output, rows)
+                receipt = provenance.read_json(output / "receipt.json")
+                self.assertEqual(receipt["status"], "failed")
+                failure = run.read_records(output / "attempts.jsonl")
+                self.assertEqual([item["outcome"] for item in failure], ["error"])
+                provenance.verify_artifacts(output, receipt["artifacts"])
+
+    def unfinalized(self, root, records=()):
+        output, manifest = self.prepare(root)
+        receipt = {"schema_version": 1, "complete": False, "successful": False, "status": "running",
+                   "manifest_sha256": provenance.sha256(output / "manifest.json"),
+                   "processes": [], "records": 0}
+        provenance.atomic_json(output / "receipt.json", receipt)
+        if records:
+            (output / "attempts.jsonl").write_bytes(b"".join(provenance.canonical(row) + b"\n" for row in records))
+        return output, manifest, receipt
+
+    def recovery_args(self, output, *, enabled=True):
+        return argparse.Namespace(directory=output, output=output.parent / "report", process_id=None,
+                                  recover_incomplete=enabled)
+
+    def test_recovery_requires_explicit_option_and_handles_initial_receipt(self):
+        for empty_file in (False, True):
+            with self.subTest(empty_file=empty_file), tempfile.TemporaryDirectory() as directory:
+                output, _, _ = self.unfinalized(Path(directory))
+                if empty_file:
+                    (output / "attempts.jsonl").write_bytes(b"")
+                before = {str(path.relative_to(output)): path.read_bytes() for path in output.rglob("*") if path.is_file()}
+                with self.assertRaisesRegex(provenance.BenchmarkError, "summarize --recover-incomplete"):
+                    run.summarize_run(self.recovery_args(output, enabled=False))
+                result = run.summarize_run(self.recovery_args(output))
+                self.assertFalse(result["complete"])
+                self.assertFalse(result["successful"])
+                summary = provenance.read_json(Path(result["output"]) / "summary.json")
+                self.assertEqual(summary["record_count"], 0)
+                self.assertIn("unverified", " ".join(summary["issues"]))
+                self.assertFalse(summary["provenance"]["recovery"]["original_artifact_integrity_verified"])
+                self.assertEqual(before, {str(path.relative_to(output)): path.read_bytes()
+                                          for path in output.rglob("*") if path.is_file()})
+                with self.assertRaisesRegex(results.ValidationError, "finalized summaries"):
+                    results.compare_summaries(summary, summary)
+
+    def test_recovery_keeps_observations_and_failures_beyond_stale_receipt_count(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, manifest, _ = self.unfinalized(Path(directory))
+            observed = run.normalized_child_record(self.child_rows("verify")[0], manifest, "verify", 0, 0, 123)
+            failure = {**observed, "attempt_id": "supervisor", "phase": "process", "outcome": "error",
+                       "metrics": {"attempt_elapsed_ns": 20}, "censored": ["attempt_elapsed_ns"]}
+            (output / "attempts.jsonl").write_bytes(b"".join(provenance.canonical(row) + b"\n" for row in (observed, failure)))
+            run.summarize_run(self.recovery_args(output))
+            report = output.parent / "report"
+            summary = provenance.read_json(report / "summary.json")
+            self.assertEqual(summary["record_count"], 2)
+            self.assertEqual(summary["outcome_counts"]["error"], 1)
+            self.assertEqual(summary["censored_count"], 1)
+            recovery = summary["provenance"]["recovery"]
+            self.assertEqual((recovery["receipt_records"], recovery["recovered_records"]), (0, 2))
+            self.assertEqual(recovery["recovery_inventory_sha256"],
+                             provenance.digest_value(provenance.read_json(report / "recovery-inventory.json")))
+            self.assertIn("unverified", (report / "report.html").read_text())
+            self.assertNotIn("artifacts", provenance.read_json(output / "receipt.json"))
+
+    def test_recovery_rejects_truncated_records_without_dropping_the_tail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, manifest, _ = self.unfinalized(Path(directory))
+            row = run.normalized_child_record(self.child_rows("verify")[0], manifest, "verify", 0, 0, 123)
+            data = provenance.canonical(row) + b'\n{"interrupted":'
+            (output / "attempts.jsonl").write_bytes(data)
+            with self.assertRaisesRegex(provenance.BenchmarkError, "recovery requires complete, valid JSONL"):
+                run.summarize_run(self.recovery_args(output))
+            self.assertEqual((output / "attempts.jsonl").read_bytes(), data)
+            self.assertFalse((output.parent / "report").exists())
+
+    def test_recovery_cannot_bypass_finalized_artifact_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, _ = self.prepare(Path(directory))
+            self.execute(output, self.child_rows("verify"))
+            with (output / "attempts.jsonl").open("ab") as stream:
+                stream.write(b"\n")
+            with self.assertRaisesRegex(provenance.BenchmarkError, "artifact bytes or inventory changed"):
+                run.summarize_run(self.recovery_args(output))
+
+    def test_recovery_rejects_changed_manifest_complete_receipt_or_missing_counted_records(self):
+        for change in ("manifest", "complete", "count"):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+                output, manifest, receipt = self.unfinalized(Path(directory))
+                if change == "manifest":
+                    manifest["run_id"] = "changed"
+                    provenance.atomic_json(output / "manifest.json", manifest)
+                elif change == "complete":
+                    receipt["complete"] = True
+                    provenance.atomic_json(output / "receipt.json", receipt)
+                else:
+                    receipt["records"] = 1
+                    provenance.atomic_json(output / "receipt.json", receipt)
+                with self.assertRaises(provenance.BenchmarkError):
+                    run.summarize_run(self.recovery_args(output))
+                self.assertFalse((output.parent / "report").exists())
+
+    def test_recovery_rejects_other_run_records_and_changing_evidence(self):
+        for change in ("identity", "attempts", "receipt"):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
+                output, manifest, receipt = self.unfinalized(Path(directory))
+                row = run.normalized_child_record(self.child_rows("verify")[0], manifest, "verify", 0, 0, 123)
+                if change == "identity":
+                    row["run_id"] = "other-run"
+                (output / "attempts.jsonl").write_bytes(provenance.canonical(row) + b"\n")
+                original = run.read_records
+
+                def read(path):
+                    records = original(path)
+                    if change == "attempts":
+                        path.write_bytes(b"")
+                    elif change == "receipt":
+                        receipt["records"] = 1
+                        provenance.atomic_json(output / "receipt.json", receipt)
+                    return records
+
+                with patch.object(run, "read_records", side_effect=read):
+                    with self.assertRaises(provenance.BenchmarkError):
+                        run.summarize_run(self.recovery_args(output))
+                self.assertFalse((output.parent / "report").exists())
 
 
 if __name__ == "__main__":
