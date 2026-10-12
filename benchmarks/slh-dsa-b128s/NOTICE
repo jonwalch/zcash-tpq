@@ -1,0 +1,53 @@
+SLH benchmark framework attribution
+
+Copyright (c) 2026 Zakura Contributors
+Copyright (c) 2019-2025 Zcash Foundation
+
+This framework contains adaptations of MIT OR Apache-2.0 code from
+jonwalch/zcash-transparent-pq at
+53a6e4bd1c11d90349fd3d989507f0e1a4995112 and existing product helpers from
+jonwalch/zcash-tpq at bda62408d8cb2dd9115d91a9b76b1f97f010e136.
+See sources.json for exact source paths, hashes, and adaptation boundaries.
+The retained license texts are ../../LICENSE-MIT and ../../LICENSE-APACHE.
+They are byte-identical to the research measurement directory's copies at
+the pinned research revision.
+
+The local Rust measurement module adapts the OS observation sequence and
+unit conversions from crates/pq-bench-support/src/lib.rs. It adds explicit
+unavailable results and checked conversions. It does not install the
+research allocator or import the support crate's statistics implementation.
+The Python reporter follows that source's nearest-rank percentile rule,
+with new record validation and separate treatment of failures, warmups,
+unavailable metrics, and censored observations.
+
+The research attribution files trace the earlier sampling, percentile,
+atomic-output, completion-state, and build-provenance design to
+jonwalch/zcash-pq-bench at 6424563c6be763047f737bc922e8980e28f0b834,
+specifically src/measurement.rs and build.rs, under MIT OR Apache-2.0.
+That is retained transitive attribution. Those original files are not
+direct imports into this framework. The research notices identify the
+OS observation code as originating in the research prototype.
+
+The Python build/run and provenance modules selectively adapt the research
+measurement driver and existing product acceptance helpers. They retain
+source and binary identities, bounded JSON handling, completion state,
+and raw evidence. The isolated primitive command flow, strict process
+supervision, run registration, and failure records are benchmark adaptations.
+
+Primitive cases call the existing product signer and verifier APIs.
+Their crypto code and source/license notices remain in their original
+crates. A focused test consumes the existing public v5-1of1 fixture
+without generating or modifying it. Benchmark fixture inputs and CLI
+validation are new glue; they are not independent cryptographic references.
+
+The offline node adapter uses event and metric meanings from the existing
+Zakura digest, trace emitter, block-application path, and mempool gauges.
+Its strict event correlation and import validation are new Python code.
+Linux process/cgroup/interface collection and the proposed propagation
+event adapter are new measurement code. No existing live propagation
+instrumentation is claimed by that adapter.
+
+No alternate cryptographic backend, research node overlay, historical
+result set, research checkout, or research Git history is a runtime
+dependency. Attribution does not establish benchmark acceptance or permit
+an agent to launch a human-only validation workload.
