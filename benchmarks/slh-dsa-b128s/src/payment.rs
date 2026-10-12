@@ -22,6 +22,7 @@ use zakura_chain::{
     transparent::{Input, Output, Script},
 };
 use zakura_pq_slh_dsa_b_exp::{Authorization, TransactionContext};
+use zakura_pq_test_support::inputs_mut;
 use zakura_pq_tx_context::NetworkDomain;
 use zakura_pq_wallet::{
     payment::{Partial, PaymentState, Proposal, Review},
@@ -657,7 +658,7 @@ fn negative_controls(artifact: &Value) -> Result<(), String> {
         return Err("changed fixture prevout value was accepted".into());
     }
     let mut changed = transaction.clone();
-    let Input::PrevOut { unlock_script, .. } = &mut changed.inputs_mut()[0] else {
+    let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut changed)[0] else {
         return Err("coinbase in payment".into());
     };
     let mut authorization = Authorization::decode(unlock_script.as_raw_bytes()).map_err(error)?;
@@ -667,7 +668,7 @@ fn negative_controls(artifact: &Value) -> Result<(), String> {
         return Err("corrupt signature was accepted".into());
     }
     let mut changed = transaction.clone();
-    let Input::PrevOut { unlock_script, .. } = &mut changed.inputs_mut()[0] else {
+    let Input::PrevOut { unlock_script, .. } = &mut inputs_mut(&mut changed)[0] else {
         return Err("coinbase in payment".into());
     };
     let mut bytes = unlock_script.as_raw_bytes().to_vec();

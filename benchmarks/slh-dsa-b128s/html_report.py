@@ -361,6 +361,12 @@ def render_report(summary, catalog):
         '<p class="caution">Wallet storage identity is unavailable. '
         'These records cannot establish matched persistence comparisons.</p>'
     )
+    fixture_scope = summary.get("provenance", {}).get("payment_scope", {}).get("fixture_preparation")
+    fixture_notice = (
+        f'<p><b>Fixture preparation:</b> {_escape(fixture_scope)}</p>' if fixture_scope else
+        '<p class="caution">Fixture preparation boundaries were not registered in this report. '
+        'Consult the original measurement source before treating wallet setup or total as isolated wallet cost.</p>'
+    )
     payment_notice = (
         '<div class="panel notice"><b>Wallet stages and classical controls have different boundaries.</b>'
         '<p>SLH preparation, signing and assembly include the actual durable wallet writes within each stage. '
@@ -375,7 +381,7 @@ def render_report(summary, catalog):
         'Registered payment runs verify artifacts after the measured process exits, outside its timing. '
         'Their funding is an offline synthetic fixture. Imported timing records remain operator-supplied evidence; '
         'their presence here does not establish independent checks or live chain acceptance.</p>'
-        + storage_notice + '</div>'
+        + fixture_notice + storage_notice + '</div>'
     ) if payment_count else ""
     node_notice = _node_scope(summary)
     outcomes = "".join(
