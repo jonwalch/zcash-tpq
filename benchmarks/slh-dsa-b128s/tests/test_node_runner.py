@@ -173,7 +173,8 @@ class NodeRunnerTests(unittest.TestCase):
         self.assertEqual(summary["provenance"]["node_scope"]["samples"], 1)
         self.assertEqual(summary["provenance"]["source"], "a" * 40)
         self.assertIn("node_collection", summary["compatibility"])
-        results.compare_summaries(summary, summary)
+        with self.assertRaisesRegex(results.ValidationError, "build-time toolchain provenance"):
+            results.compare_summaries(summary, summary)
         (self.root / "run/evidence.jsonl").write_bytes(b"tampered\n")
         with self.assertRaisesRegex(provenance.BenchmarkError, "artifact bytes"):
             self.receipt()

@@ -403,6 +403,12 @@ def compare_summaries(left, right):
         compatibility = summary.get("compatibility")
         if type(compatibility) is not dict or not compatibility:
             raise ValidationError("comparison requires nonempty compatibility metadata")
+        if compatibility.get("kind") == "node-collection" or "node_collection" in compatibility:
+            from node_build import validate_comparison_toolchain
+            try:
+                validate_comparison_toolchain(compatibility)
+            except ValueError as error:
+                raise ValidationError("node comparison requires complete recorded build-time toolchain provenance") from error
         if uses_payment:
             from payment_run import validate_wallet_storage
             try:

@@ -18,9 +18,9 @@ import run as runner
 from provenance import (MAX_JSON, artifact_inventory, atomic_json, canonical, claim_run,
                         digest_value, fresh_directory, host_state, read_json, require,
                         sha256, strict_json)
-from results import MAX_INPUT_BYTES, MAX_RECORD_BYTES, summarize, validate_record
+from results import MAX_INPUT_BYTES, MAX_RECORD_BYTES, _bounded_json, summarize, validate_record
 
-INSTRUMENTS = ("run.py", "node_run.py", "node_sampling.py", "collectors.py", "adapters.py", "provenance.py")
+INSTRUMENTS = ("run.py", "node_run.py", "node_build.py", "node_sampling.py", "collectors.py", "adapters.py", "provenance.py")
 MAX_FRAME_BYTES = 2 * 1024 * 1024
 PROFILE_FIELDS = {"schema_version", "network", "pid", "binary_path", "build_receipt_path",
                   "config_path", "metrics_url", "process_identity", "workload",
@@ -100,6 +100,20 @@ def node_build(profile):
         path = Path(profile[name])
         require(str(path.resolve(strict=True)) == str(path), "node registration path contains a symlink")
     receipt = read_json(profile["build_receipt_path"])
+    compiler = None
+    if type(receipt) is dict and receipt.get("kind") == "tpq-node-build":
+        from node_build import unwrap_build
+        receipt, compiler = unwrap_build(Path(profile["build_receipt_path"]), receipt)
+    validate_acceptance_build(receipt, profile["binary_path"])
+    if compiler is not None:
+        from node_build import validate_acceptance_toolchain
+        validate_acceptance_toolchain(receipt, compiler)
+        return {**receipt, "toolchain": compiler}
+    return receipt
+
+
+def validate_acceptance_build(receipt, binary):
+    """Validate the unchanged acceptance receipt and its compiled executable."""
     fields = {"schema_version", "contract", "kind", "complete", "source", "command", "features",
               "binary_sha256", "identity", "rustc", "cargo", "environment"}
     require(type(receipt) is dict and set(receipt) == fields and receipt["schema_version"] == 1
@@ -141,7 +155,7 @@ def node_build(profile):
             "CC", "CXX", "CFLAGS", "CXXFLAGS", "CARGO_BUILD_TARGET"}
             and all(value is None or (type(value) is str and len(value) <= 4096) for value in environment.values())
             and not environment["CARGO_BUILD_TARGET"], "node compiler environment schema")
-    require(receipt["binary_sha256"] == sha256(profile["binary_path"]), "node binary changed")
+    require(receipt["binary_sha256"] == sha256(binary), "node binary changed")
     return receipt
 
 
@@ -154,13 +168,19 @@ def node_identity(profile, build):
 def node_compatibility(manifest):
     """Ignore runtime PIDs and binary paths; retain the cgroup accounting scope."""
     profile, build = manifest["node_profile"], manifest["build"]
+    build_settings = {name: build[name] for name in ("kind", "features", "rustc", "cargo", "environment")}
+    # Preserve existing plan IDs for legacy receipts. Their missing build-time
+    # evidence is rejected at comparison, not replaced with current settings.
+    if "toolchain" in build:
+        from provenance import toolchain_compatibility
+        build_settings["toolchain"] = toolchain_compatibility(build["toolchain"])
     return {"network": profile["network"], "workload": profile["workload"],
             "config_sha256": manifest["node_identity"]["config_sha256"],
             "resources": {"process": "attached-node", "cgroup": profile["cgroup_path"] is not None,
                           "cgroup_path": profile["cgroup_path"],
                           "cgroup_boundary": profile["cgroup_boundary"]},
             "endpoint_association": "operator-declared-loopback-metrics-config",
-            "build": {name: build[name] for name in ("kind", "features", "rustc", "cargo", "environment")}}
+            "build": build_settings}
 
 
 def plan_node(args):
@@ -181,8 +201,7 @@ def plan_node(args):
                           "planned_interval_total_ms": settings["samples"] * settings["interval_ms"],
                           "timeout_seconds": settings["timeout_seconds"]}}
     compatibility = node_compatibility(manifest)
-    require(len(canonical({"node": compatibility, "host_profile": host_profile})) <= 12 * 1024,
-            "node comparison metadata byte limit")
+    _bounded_json({**runner.compatibility_metadata(manifest), "node_collection": compatibility})
     manifest["configuration_id"] = digest_value({"settings": settings, "node": compatibility})
     output = fresh_directory(args.output)
     atomic_json(output / "manifest.json", manifest)

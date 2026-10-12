@@ -348,6 +348,17 @@ def read_records(path):
     return list(checked_records(path))
 
 
+def compatibility_metadata(manifest):
+    """Common comparison identity, shared by registration bounds and reports."""
+    return {"kind": manifest["kind"], "settings": manifest.get("settings"),
+            "host": manifest.get("host"), "host_profile": manifest.get("host_profile"),
+            "metric_catalog_sha256": manifest["metric_catalog_sha256"],
+            "instrumentation": manifest.get("instrumentation"),
+            "reporter_sha256": sha256(HERE / "results.py"),
+            "toolchain": toolchain_compatibility(manifest.get("build", {}).get("toolchain")),
+            "adapter_compatibility": manifest.get("adapter_compatibility")}
+
+
 def summarize_run(args):
     from results import summarize, write_reports
     directory = Path(args.directory)
@@ -374,13 +385,7 @@ def summarize_run(args):
         records = [record for record in records if record["process_id"] == args.process_id]
         require(bool(records), "unknown process selection")
     summary = summarize(records, complete=receipt["complete"])
-    summary["compatibility"] = {"kind": manifest["kind"], "settings": manifest.get("settings"),
-                                "host": manifest.get("host"), "host_profile": manifest.get("host_profile"),
-                                "metric_catalog_sha256": manifest["metric_catalog_sha256"],
-                                "instrumentation": manifest.get("instrumentation"),
-                                "reporter_sha256": sha256(HERE / "results.py"),
-                                "toolchain": toolchain_compatibility(manifest.get("build", {}).get("toolchain")),
-                                "adapter_compatibility": manifest.get("adapter_compatibility")}
+    summary["compatibility"] = compatibility_metadata(manifest)
     if extensions:
         summary["compatibility"]["metric_catalog_extensions"] = extensions
     if manifest.get("kind") == "payment":
@@ -433,6 +438,8 @@ def main(argv=None):
     building.add_argument("--timeout", type=int, default=1800)
     building.add_argument("--execute", action="store_true")
     building.set_defaults(action=build)
+    from node_build import add_node_build_parser
+    add_node_build_parser(commands)
     planning = commands.add_parser("plan", help="register a bounded primitive run without executing it")
     planning.add_argument("--build", required=True)
     planning.add_argument("--output", required=True)

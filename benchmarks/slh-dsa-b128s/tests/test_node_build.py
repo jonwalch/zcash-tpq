@@ -1,0 +1,278 @@
+"""Build/compatibility regression fixtures; compiler and build execution are mocked."""
+
+import argparse
+import copy
+import os
+from pathlib import Path
+import sys
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(HERE))
+import node_build
+import node_run
+import provenance
+import results
+import run
+import test_node_reports as report_tests
+import test_node_runner as runner_tests
+
+
+class NodeBuildTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture = runner_tests.NodeRunnerTests()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.root = self.fixture.root
+
+    @staticmethod
+    def compiler_output(argv, root):
+        return "unit rustc" if argv[0] == "rustc" else "unit cargo"
+
+    def fake_build(self, argv, **kwargs):
+        self.assertEqual(kwargs["root"], self.root)
+        self.assertEqual(argv[:5], [sys.executable, str(self.root / "tests/slh-dsa-b128s/acceptance/build.py"),
+                                   "--human-run", "--kind", "node-default"])
+        directory = Path(argv[-1])
+        directory.mkdir()
+        (directory / "zakurad").write_bytes(self.fixture.binary.read_bytes())
+        acceptance = copy.deepcopy(self.fixture.build)
+        acceptance["command"][10] = str(directory / "target")
+        provenance.atomic_json(directory / "build.json", acceptance)
+        (directory / "build.log").write_text("mocked compiler output\n")
+        kwargs["on_poll"]()
+        return {"pid": 100, "exit_code": 0, "elapsed_ns": 1000, "output_bytes": 8}
+
+    def build(self, name="built", *, opt="3", operation=None):
+        environment = {"CARGO_HOME": str(self.root / "cargo-home"), "CARGO_PROFILE_RELEASE_OPT_LEVEL": opt}
+        with patch.dict(os.environ, environment, clear=True), patch.object(run, "ROOT", self.root), \
+                patch.object(provenance, "command_output", side_effect=self.compiler_output) as probes, \
+                patch.object(run, "supervise", side_effect=operation or self.fake_build):
+            receipt = node_build.build_node(argparse.Namespace(output=str(self.root / name), kind="node-default",
+                                                              timeout=30, execute=True))
+            self.assertEqual(len(probes.call_args_list), 4)
+            self.assertTrue(all(call.args[1] == self.root for call in probes.call_args_list))
+        return receipt
+
+    def registered(self, name="built"):
+        profile = {**self.fixture.profile, "binary_path": str(self.root / name / "acceptance/zakurad"),
+                   "build_receipt_path": str(self.root / name / "build.json")}
+        build = node_run.node_build(profile)
+        return {"node_profile": profile, "build": build, "node_identity": node_run.node_identity(profile, build)}
+
+    def summary(self, manifest):
+        summary = results.summarize([report_tests.record("1", {"rss_current_bytes": 1024})], complete=True)
+        summary["compatibility"] = {"kind": "node-collection", "node_collection": node_run.node_compatibility(manifest),
+                                    "toolchain": provenance.toolchain_compatibility(manifest["build"].get("toolchain"))}
+        return summary
+
+    def test_wrapper_reuses_helper_and_retains_unchanged_receipt(self):
+        receipt = self.build()
+        self.assertTrue(receipt["complete"])
+        inner = provenance.read_json(self.root / "built/acceptance/build.json")
+        self.assertEqual(set(inner), set(self.fixture.build))
+        self.assertEqual(receipt["acceptance_receipt_sha256"], provenance.sha256(self.root / "built/acceptance/build.json"))
+        self.assertEqual(receipt["toolchain"], receipt["toolchain_after"])
+        registered = self.registered()
+        self.assertEqual(registered["build"]["toolchain"], receipt["toolchain"])
+        # Offline registration must never infer historical settings from this host.
+        with patch.object(node_build, "_capture_toolchain", side_effect=AssertionError("must not probe")):
+            self.registered()
+        self.build("second")
+        results.compare_summaries(self.summary(registered), self.summary(self.registered("second")))
+
+    def test_optimization_levels_cannot_compare(self):
+        self.build("opt0", opt="0")
+        self.build("opt3", opt="3")
+        left, right = (self.summary(self.registered(name)) for name in ("opt0", "opt3"))
+        self.assertEqual(left["compatibility"]["toolchain"]["environment"]["CARGO_PROFILE_RELEASE_OPT_LEVEL"], "0")
+        with self.assertRaisesRegex(results.ValidationError, "incompatible"):
+            results.compare_summaries(left, right)
+
+    def test_cargo_configuration_hash_and_search_order_are_recorded(self):
+        (self.root / ".cargo").mkdir()
+        config = self.root / ".cargo/config.toml"
+        config.write_text('[profile.release]\nopt-level = 0\n')
+        self.build("config0")
+        config.write_text('[profile.release]\nopt-level = 3\n')
+        self.build("config3")
+        left, right = (self.summary(self.registered(name)) for name in ("config0", "config3"))
+        settings = left["compatibility"]["toolchain"]["cargo_configurations"][0]
+        self.assertEqual(settings["location"], {"checkout_relative": ".cargo/config.toml"})
+        self.assertEqual(settings["search_roles"], ["ancestor"])
+        self.assertNotEqual(left["compatibility"]["toolchain"], right["compatibility"]["toolchain"])
+        with self.assertRaisesRegex(results.ValidationError, "incompatible"):
+            results.compare_summaries(left, right)
+
+    def test_changed_configuration_during_build_preserves_failure(self):
+        (self.root / ".cargo").mkdir()
+        config = self.root / ".cargo/config.toml"
+        config.write_text('[profile.release]\nopt-level = 0\n')
+
+        def mutate(argv, **kwargs):
+            result = self.fake_build(argv, **kwargs)
+            config.write_text('[profile.release]\nopt-level = 3\n')
+            return result
+
+        with self.assertRaisesRegex(provenance.BenchmarkError, "changed during compilation"):
+            self.build(operation=mutate)
+        receipt = provenance.read_json(self.root / "built/build.json")
+        self.assertFalse(receipt["complete"])
+        self.assertNotEqual(receipt["toolchain"], receipt["toolchain_after"])
+        self.assertTrue((self.root / "built/acceptance/build.log").exists())
+        with self.assertRaisesRegex(provenance.BenchmarkError, "complete benchmark"):
+            self.registered()
+
+    def test_interrupted_build_retains_both_layers_and_cannot_resume(self):
+        def interrupt(argv, **kwargs):
+            self.fake_build(argv, **kwargs)
+            raise KeyboardInterrupt()
+
+        with self.assertRaises(KeyboardInterrupt):
+            self.build(operation=interrupt)
+        receipt = provenance.read_json(self.root / "built/build.json")
+        self.assertFalse(receipt["complete"])
+        self.assertEqual(receipt["failure"], "KeyboardInterrupt")
+        self.assertIsNotNone(receipt["toolchain"])
+        self.assertTrue((self.root / "built/acceptance/build.log").exists())
+        with self.assertRaises(FileExistsError):
+            self.build()
+
+    def test_supervisor_bounds_and_timeout_metadata(self):
+        def timeout(argv, **kwargs):
+            self.assertEqual(kwargs["timeout"], 30)
+            self.assertEqual(kwargs["max_bytes"], 64 * 1024 * 1024)
+            self.fake_build(argv, **kwargs)
+            error = run.ExecutionError("fixture deadline", "timeout")
+            error.process_id, error.elapsed_ns = 900, 1000
+            raise error
+
+        with self.assertRaises(run.ExecutionError):
+            self.build(operation=timeout)
+        receipt = provenance.read_json(self.root / "built/build.json")
+        self.assertEqual(receipt["execution"], {"pid": 900, "elapsed_ns": 1000, "outcome": "timeout"})
+        self.assertFalse(receipt["complete"])
+
+    def test_acceptance_build_log_is_bounded(self):
+        with patch.object(node_build, "MAX_BUILD_LOG_BYTES", 1), self.assertRaisesRegex(
+                provenance.BenchmarkError, "build log byte limit"):
+            self.build()
+        self.assertFalse(provenance.read_json(self.root / "built/build.json")["complete"])
+
+    def test_oversized_log_after_last_supervisor_poll_is_rejected(self):
+        def grow_after_poll(argv, **kwargs):
+            execution = self.fake_build(argv, **kwargs)
+            (Path(argv[-1]) / "build.log").write_bytes(b"x" * 100)
+            return execution
+
+        with patch.object(node_build, "MAX_BUILD_LOG_BYTES", 50), self.assertRaisesRegex(
+                provenance.BenchmarkError, "build log byte limit"):
+            self.build(operation=grow_after_poll)
+        self.assertFalse(provenance.read_json(self.root / "built/build.json")["complete"])
+
+    def test_plan_bounds_the_full_duplicated_comparison_identity(self):
+        self.build()
+        profile = self.registered()["node_profile"]
+        provenance.atomic_json(self.root / "profile.json", profile)
+        manifest = self.fixture.plan()
+        metadata = {**run.compatibility_metadata(manifest), "node_collection": node_run.node_compatibility(manifest)}
+        results._bounded_json(metadata)
+        receipt = provenance.read_json(self.root / "built/build.json")
+        for name in ("toolchain", "toolchain_after"):
+            receipt[name]["environment"]["CARGO_PROFILE_RELEASE_DEBUG"] = "a" * 4096
+            receipt[name]["environment"]["CARGO_PROFILE_RELEASE_OPT_LEVEL"] = "b" * 4096
+        provenance.atomic_json(self.root / "built/build.json", receipt)
+        with self.assertRaisesRegex(results.ValidationError, "byte limit"):
+            self.fixture.plan("oversized")
+        self.assertFalse((self.root / "oversized").exists())
+
+    def test_wrapper_environment_and_cargo_config_rejected_before_build(self):
+        variants = [({"RUSTC_WRAPPER": "cache-tool"}, None), ({"CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER": "cache-tool"}, None),
+                    ({}, '[build]\nrustc-wrapper = "cache-tool"\n'),
+                    ({}, '[env]\nRUSTC = "custom-rustc"\n')]
+        for index, (environment, config) in enumerate(variants):
+            with self.subTest(environment=environment, config=config):
+                config_path = self.root / ".cargo/config.toml"
+                config_path.parent.mkdir(exist_ok=True)
+                config_path.write_text(config or "")
+                with patch.dict(os.environ, {"CARGO_HOME": str(self.root / "cargo-home"), **environment}, clear=True), \
+                        patch.object(run, "ROOT", self.root), patch.object(run, "supervise") as child, \
+                        patch.object(provenance, "command_output", side_effect=AssertionError("must reject before probes")), \
+                        self.assertRaisesRegex(provenance.BenchmarkError, "custom Cargo"):
+                    node_build.build_node(argparse.Namespace(output=str(self.root / f"wrapper{index}"),
+                                                            kind="node-default", timeout=30, execute=True))
+                child.assert_not_called()
+                self.assertFalse(provenance.read_json(self.root / f"wrapper{index}/build.json")["complete"])
+
+    def test_missing_and_malformed_metadata_never_compare(self):
+        self.build()
+        original = self.summary(self.registered())
+        for change in (None, {}, {**original["compatibility"]["toolchain"], "cargo_configurations": None},
+                       {**original["compatibility"]["toolchain"], "cargo_configuration_identity_version": True},
+                       {**original["compatibility"]["toolchain"], "environment": {}}):
+            with self.subTest(change=change):
+                summary = copy.deepcopy(original)
+                summary["compatibility"]["toolchain"] = change
+                summary["compatibility"]["node_collection"]["build"]["toolchain"] = change
+                with self.assertRaisesRegex(results.ValidationError, "build-time toolchain provenance"):
+                    results.compare_summaries(summary, summary)
+        historical = copy.deepcopy(original)
+        del historical["compatibility"]["toolchain"]
+        del historical["compatibility"]["node_collection"]["build"]["toolchain"]
+        with self.assertRaisesRegex(results.ValidationError, "build-time toolchain provenance"):
+            results.compare_summaries(historical, historical)
+
+    def test_legacy_build_registration_still_works_with_unchanged_compatibility(self):
+        build = node_run.node_build(self.fixture.profile)
+        self.assertNotIn("toolchain", build)
+        manifest = {"node_profile": self.fixture.profile, "build": build,
+                    "node_identity": node_run.node_identity(self.fixture.profile, build)}
+        self.assertEqual(set(node_run.node_compatibility(manifest)["build"]),
+                         {"kind", "features", "rustc", "cargo", "environment"})
+        with self.assertRaisesRegex(results.ValidationError, "build-time toolchain provenance"):
+            results.compare_summaries(self.summary(manifest), self.summary(manifest))
+
+    def test_rejects_changed_inner_receipt_or_binary(self):
+        self.build()
+        inner = self.root / "built/acceptance/build.json"
+        inner.write_bytes(inner.read_bytes() + b"\n")
+        with self.assertRaisesRegex(provenance.BenchmarkError, "acceptance receipt changed"):
+            self.registered()
+        self.build("binary")
+        (self.root / "binary/acceptance/zakurad").write_bytes(b"changed")
+        with self.assertRaisesRegex(provenance.BenchmarkError, "binary changed"):
+            self.registered("binary")
+
+    def test_rejects_toolchain_that_disagrees_with_acceptance(self):
+        self.build()
+        for field in ("rustc", "cargo", "environment"):
+            with self.subTest(field=field):
+                receipt = provenance.read_json(self.root / "built/build.json")
+                for name in ("toolchain", "toolchain_after"):
+                    if field == "environment":
+                        receipt[name][field]["CFLAGS"] = "-O0"
+                    else:
+                        receipt[name][field] = "different version"
+                with self.assertRaisesRegex(provenance.BenchmarkError, "differs from recorded"):
+                    node_build.unwrap_build(self.root / "built/build.json", receipt)
+
+    def test_rejects_incomplete_wrapper_even_when_acceptance_finished(self):
+        self.build()
+        receipt = provenance.read_json(self.root / "built/build.json")
+        for changes in ({"complete": False}, {"toolchain_after": None}, {"toolchain": None},
+                        {"acceptance_receipt": "../build.json"}, {"execution": None}):
+            with self.subTest(changes=changes), self.assertRaises(provenance.BenchmarkError):
+                node_build.unwrap_build(self.root / "built/build.json", {**receipt, **changes})
+
+    def test_execute_required_before_any_directory_or_compiler_action(self):
+        with patch.object(node_build, "_capture_toolchain") as compiler, self.assertRaisesRegex(
+                provenance.BenchmarkError, "--execute"):
+            node_build.build_node(argparse.Namespace(output=str(self.root / "built"), kind="node-default",
+                                                     timeout=30, execute=False))
+        compiler.assert_not_called()
+        self.assertFalse((self.root / "built").exists())
+
+
+if __name__ == "__main__":
+    unittest.main()
