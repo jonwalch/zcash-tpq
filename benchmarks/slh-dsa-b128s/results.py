@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import html
 import json
 import math
 import re
 from collections import Counter
 from pathlib import Path
+
+from html_report import render_report
 
 SCHEMA_VERSION = 1
 MAX_RECORD_BYTES = 65_536
@@ -360,25 +361,7 @@ def write_reports(summary, output_dir):
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
-    escape = lambda value: html.escape(str(value), quote=True)
-    heading = "".join(f"<th>{escape(field)}</th>" for field in fields)
-    body = "".join("<tr>" + "".join(
-        f"<td>{escape('' if row.get(field) is None else row.get(field, ''))}</td>"
-        for field in fields) + "</tr>" for row in rows)
-    overview = {key: value for key, value in summary.items() if key != "groups"}
-    document = (
-        '<!doctype html><html lang="en"><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        '<title>SLH benchmark report</title>'
-        '<style>body{font-family:system-ui;margin:2rem}table{border-collapse:collapse}'
-        'th,td{border:1px solid #bbb;padding:.4rem;text-align:left}pre{white-space:pre-wrap}</style>'
-        '<h1>SLH benchmark report</h1>'
-        '<p>Empirical nearest-rank p50/p95/p99; warmups and censored lower bounds '
-        'are excluded from exact quantiles. Small samples do not establish tail stability. '
-        'See outcome, missing and censor counts beside every distribution.</p>'
-        f'<pre>{escape(json.dumps(overview, indent=2, sort_keys=True))}</pre>'
-        f'<table><thead><tr>{heading}</tr></thead><tbody>{body}</tbody></table></html>\n'
-    )
+    document = render_report(summary, METRIC_CATALOG)
     with (destination / "report.html").open("x", encoding="utf-8") as handle:
         handle.write(document)
     with (destination / "summary.json").open("x", encoding="utf-8") as handle:

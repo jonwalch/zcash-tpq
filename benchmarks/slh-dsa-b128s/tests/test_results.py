@@ -2,6 +2,7 @@
 
 import copy
 import csv
+from html.parser import HTMLParser
 import json
 from pathlib import Path
 import sys
@@ -275,6 +276,137 @@ class InputAndReportTests(unittest.TestCase):
             self.assertEqual(len(rows), 2)
             self.assertEqual(rows[0]["metric"], "")
             self.assertEqual(json.loads(rows[0]["outcome_counts"])["error"], 1)
+
+
+class ReportElements(HTMLParser):
+    """Extract user-visible structure without a browser or external dependency."""
+
+    def __init__(self, document):
+        super().__init__()
+        self.tags = []
+        self.table_headers = []
+        self._header = None
+        self.links = []
+        self.feed(document)
+
+    def handle_starttag(self, tag, attrs):
+        self.tags.append(tag)
+        attributes = dict(attrs)
+        if tag == "th":
+            self._header = ""
+        if tag == "a":
+            self.links.append(attributes.get("href"))
+
+    def handle_data(self, data):
+        if self._header is not None:
+            self._header += data
+
+    def handle_endtag(self, tag):
+        if tag == "th":
+            self.table_headers.append(self._header)
+            self._header = None
+
+
+class HtmlReportTests(unittest.TestCase):
+    def render(self, records, **metadata):
+        summary = results.summarize(records, complete=True)
+        summary.update(metadata)
+        with tempfile.TemporaryDirectory() as directory:
+            files = results.write_reports(summary, directory)
+            page = Path(files["report.html"]).read_text()
+            self.assertEqual(json.loads(Path(files["summary.json"]).read_text()), summary)
+            with Path(files["summary.csv"]).open(newline="") as handle:
+                csv_rows = list(csv.DictReader(handle))
+        return page, csv_rows
+
+    def test_overview_precedes_collapsed_metadata_and_tables_have_focused_columns(self):
+        page, _ = self.render([record("warm", warmup=True), record()],
+                              provenance={"marker": "large-provenance-follows-results"})
+        parsed = ReportElements(page)
+        self.assertEqual(parsed.table_headers[:6],
+                         ["Metric", "p50 · median", "p95", "p99", "Exact n", "Coverage and interpretation"])
+        self.assertEqual(len(parsed.table_headers), 12)  # outcome plus the explicit audit view
+        self.assertIn("summary.json", parsed.links)
+        self.assertIn("summary.csv", parsed.links)
+        self.assertLess(page.index("<table>"), page.index("large-provenance-follows-results"))
+        self.assertIn("1 warmup records excluded from quantiles", page)
+        self.assertIn("Producer finalized: yes · Evidence successful: yes", page)
+        self.assertIn("<details class=\"audit\"><summary>Provenance", page)
+        self.assertNotIn("script", parsed.tags)
+
+    def test_readable_values_preserve_exact_large_integers_units_and_csv(self):
+        exact_bytes = 2**63 + 1
+        page, rows = self.render([record(metrics={"signature_verify_ns": 1_234_567,
+                                                 "process_peak_rss_bytes": exact_bytes,
+                                                 "signature_bytes": 7856})])
+        self.assertIn("1.235 ms", page)
+        self.assertIn("7,856 B", page)
+        self.assertIn("GiB", page)
+        self.assertIn(f"Exact: {exact_bytes} bytes", page)
+        self.assertIn("Exact: 1234567 ns", page)
+        self.assertIn(f'&quot;p99&quot;: {exact_bytes}', page)
+        byte_rows = [row for row in rows if row["metric"] == "process_peak_rss_bytes"]
+        self.assertTrue(all(row["p99"] == str(exact_bytes) for row in byte_rows))
+        self.assertIn("Exact values and scope", page)
+        self.assertIn("Lifetime high-water mark includes setup; not an operation peak.", page)
+
+    def test_small_samples_and_one_peak_observation_have_nearby_caveats(self):
+        records = [record(str(index), metrics={"signature_verify_ns": index * 1000})
+                   for index in range(1, 11)]
+        records.append(record("peak", phase="process-lifetime",
+                              metrics={"process_peak_rss_bytes": 2**20}))
+        page, _ = self.render(records)
+        visible = page.split('<details class="audit">', 1)[0]
+        self.assertIn('class="number">10</td>', visible)
+        self.assertIn("Small sample: p95 and p99 are the observed maximum; tail stability is unproven.", visible)
+        self.assertIn("One sample; all three percentiles repeat this value.", visible)
+        self.assertIn("Process lifetime peak RSS", visible)
+        self.assertIn("Record totals can include a separate final process-peak record", visible)
+
+    def test_processes_and_failure_populations_remain_separate_and_visible(self):
+        page, _ = self.render([
+            record("success-1", metrics={"signature_verify_ns": 1_000_000}),
+            record("success-2", process_id="process-2", metrics={"signature_verify_ns": 9_000_000}),
+            record("rejection", outcome="expected_rejection", metrics={"signature_verify_ns": 2_000_000}),
+            record("failure", outcome="error", metrics={}),
+            record("timeout", outcome="timeout", metrics={"signature_verify_ns": 50_000_000},
+                   censored=["signature_verify_ns"]),
+        ])
+        visible = page.split('<details class="audit">', 1)[0]
+        self.assertEqual(visible.count('class="population"'), 5)
+        self.assertIn("process-1", visible)
+        self.assertIn("process-2", visible)
+        self.assertIn("expected rejection · expected result", visible)
+        self.assertIn("No metric values were recorded for this population.", visible)
+        self.assertIn("1 censored lower bounds (50000000–50000000 ns); excluded from quantiles.", visible)
+        self.assertIn("No exact samples; no quantiles.", visible)
+        self.assertIn("Complete with issues", visible)
+        self.assertIn("Combined outcome distributions (audit view)", page)
+        self.assertIn("They are not additional measurements", page)
+
+    def test_unavailable_missing_and_untrusted_reasons_are_not_hidden(self):
+        injected = '<img src="bad" onerror="alert(1)">'
+        page, _ = self.render([
+            record("first", metrics={"rss_current_bytes": None},
+                   unavailable={"rss_current_bytes": injected}),
+            record("second", metrics={"signature_verify_ns": 12}),
+        ])
+        visible = page.split('<details class="audit">', 1)[0]
+        self.assertIn("1 missing from recorded attempts.", visible)
+        self.assertIn("1 unavailable: &lt;img", visible)
+        self.assertIn("Incomplete tail", visible)
+        self.assertNotIn("img", ReportElements(page).tags)
+
+    def test_no_records_and_warmup_only_never_display_a_success_banner(self):
+        for records in ([], [record(warmup=True)]):
+            with self.subTest(records=records):
+                page, _ = self.render(records)
+                self.assertIn("Evidence successful: no", page)
+                self.assertIn("no non-warmup observations", page)
+                if records:
+                    self.assertIn("No exact samples; no quantiles.", page)
+                else:
+                    self.assertIn("No measured populations are available.", page)
 
 
 class ComparisonTests(unittest.TestCase):
