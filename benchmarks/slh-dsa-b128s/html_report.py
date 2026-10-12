@@ -277,6 +277,17 @@ def render_report(summary, catalog):
         payments = f" · {payment_count} wallet/payment records" if payment_count else ""
         record_note = (f'<p class="muted">{timing_count} primitive timing records · '
                        f'{peak_count} separate process-peak records{payments}{other}. Exact n varies per metric.</p>')
+    storage = summary.get("provenance", {}).get("wallet_storage")
+    storage_notice = (
+        '<details><summary>Registered wallet storage</summary>'
+        f'<p><b>Root:</b> <code>{_escape(storage["root"])}</code></p>'
+        f'<p><b>Device / directory:</b> {_escape(storage["st_dev"])} / {_escape(storage["st_ino"])}</p>'
+        '<p>Storage descriptions below are operator declarations; they do not establish power-loss durability.</p>'
+        f'<pre>{_json(storage["profile"])}</pre></details>'
+    ) if storage else (
+        '<p class="caution">Wallet storage identity is unavailable. '
+        'These records cannot establish matched persistence comparisons.</p>'
+    )
     payment_notice = (
         '<div class="panel notice"><b>Wallet stages and classical controls have different boundaries.</b>'
         '<p>SLH preparation, signing and assembly include the actual durable wallet writes within each stage. '
@@ -290,7 +301,8 @@ def render_report(summary, catalog):
         '<p>Foreground total is measured directly. Never add stage p50, p95 or p99 values to obtain a total. '
         'Registered payment runs verify artifacts after the measured process exits, outside its timing. '
         'Their funding is an offline synthetic fixture. Imported timing records remain operator-supplied evidence; '
-        'their presence here does not establish independent checks or live chain acceptance.</p></div>'
+        'their presence here does not establish independent checks or live chain acceptance.</p>'
+        + storage_notice + '</div>'
     ) if payment_count else ""
     outcomes = "".join(
         f'<span><b>{_escape(outcome.replace("_", " "))}:</b> {_escape(count)}</span>'
