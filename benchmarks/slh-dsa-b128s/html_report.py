@@ -16,10 +16,18 @@ _LABELS = {
     "process_cpu_core_equivalents": "Process CPU / wall time",
     "process_cpu_normalized_percent": "CPU share of declared entitlement",
     "effective_cpu_cores": "Effective CPU entitlement",
-    "rss_before_bytes": "RSS at operation start",
-    "rss_after_bytes": "RSS at operation end",
+    "rss_before_bytes": "RSS at interval start",
+    "rss_after_bytes": "RSS at interval end",
     "rss_current_bytes": "Current RSS",
     "process_peak_rss_bytes": "Process lifetime peak RSS",
+    "cgroup_cpu_core_equivalents": "Cgroup CPU / wall time",
+    "cgroup_memory_current_bytes": "Current cgroup memory",
+    "cgroup_memory_peak_bytes": "Cgroup lifetime peak memory",
+    "mempool_transactions": "Mempool transaction count · gauge",
+    "mempool_bytes": "Mempool encoded bytes · gauge",
+    "mempool_cost": "Mempool cost · gauge",
+    "mempool_growth_transactions_per_second": "Net transaction count growth",
+    "mempool_growth_bytes_per_second": "Net encoded byte growth",
     "public_key_bytes": "Public key size",
     "signature_bytes": "Signature size",
     "message_bytes": "Message size",
@@ -42,6 +50,10 @@ _PRIMARY_METRICS = ("keygen_ns", "sign_release_ns", "signature_verify_ns")
 _PAYMENT_METRICS = ("payment_total_ns", "payment_inventory_ns", "payment_wallet_setup_ns",
                     "payment_prepare_persist_ns", "payment_sign_persist_ns", "payment_assemble_persist_ns",
                     "payment_assembly_ns", "payment_sign_ns", "payment_verify_ns")
+_NODE_METRICS = ("process_cpu_core_equivalents", "rss_current_bytes",
+                 "cgroup_cpu_core_equivalents", "cgroup_memory_current_bytes",
+                 "mempool_transactions", "mempool_bytes", "mempool_cost",
+                 "mempool_growth_transactions_per_second", "mempool_growth_bytes_per_second")
 _STYLE = """
 :root{color-scheme:light;--ink:#172536;--muted:#516173;--line:#dbe2e9;--bg:#f4f7fa}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
@@ -144,7 +156,7 @@ def _metric_row(name, metric, catalog):
         cautions.append(f'{metric["censored_count"]} censored lower bounds ({bounds}); excluded from quantiles.')
     if metric["tail_incomplete"]:
         cautions.append("Incomplete tail: exact quantiles omit missing, unavailable or censored observations.")
-    if name == "process_peak_rss_bytes":
+    if name == "process_peak_rss_bytes" and samples:
         cautions.append("Lifetime high-water mark includes setup; not an operation peak.")
     note_html = "".join(f'<div class="caution">{_escape(note)}</div>' for note in cautions)
     exact = {"metric": name, "scope": description, **metric}
@@ -188,7 +200,8 @@ def _population(group, catalog, index):
     return f'<section class="population" id="population-{index}">{header}{content}</section>'
 
 
-def _timing_overview(groups, metrics=_PRIMARY_METRICS, *, title="Primitive timing overview", anchor="timing-overview"):
+def _timing_overview(groups, metrics=_PRIMARY_METRICS, *, title="Primitive timing overview",
+                     anchor="timing-overview", label_each_metric=False):
     timing_groups = [group for group in groups if group["outcome"] != "all_outcomes"
                      and any(name in group["metrics"] for name in metrics)]
     dimensions = (("Run", "run_id"), ("Configuration", "configuration_id"),
@@ -221,7 +234,7 @@ def _timing_overview(groups, metrics=_PRIMARY_METRICS, *, title="Primitive timin
                 notes.append("Incomplete tail")
             coverage = "".join(f'<div class="caution">{_escape(note)}</div>' for note in notes)
             scope = "".join(f'<code>{label}: {_escape(group[key])}</code>' for label, key in varying)
-            if sum(candidate in group["metrics"] for candidate in metrics) > 1:
+            if label_each_metric or sum(candidate in group["metrics"] for candidate in metrics) > 1:
                 scope += f'<code>{_escape(_LABELS.get(name, name))}</code>'
             values = "".join(f'<td class="number">{_value(metric[key], metric["unit"])}</td>'
                              for key in ("p50", "p95", "p99"))
@@ -246,6 +259,50 @@ def _timing_overview(groups, metrics=_PRIMARY_METRICS, *, title="Primitive timin
         '<th scope="col">p50 · median</th><th scope="col">p95</th><th scope="col">p99</th>'
         '<th scope="col">Exact n</th><th scope="col">Coverage / details</th></tr></thead><tbody>'
         + "".join(rows) + '</tbody></table></div></section>'
+    )
+
+
+def _node_scope(summary):
+    provenance = summary.get("provenance", {})
+    scope = provenance.get("node_scope")
+    if not scope:
+        return ""
+    profile = provenance.get("node_profile", {})
+    identity = provenance.get("node_identity", {})
+    workload = profile.get("workload", {})
+    elapsed = provenance.get("node_execution", {}).get("elapsed_ns")
+    schedule = (
+        f'{_escape(scope.get("samples", "Unavailable"))} intervals × '
+        f'{_escape(scope.get("interval_ms", "Unavailable"))} ms requested cadence; '
+        f'{_escape(scope.get("planned_interval_total_ms", "Unavailable"))} ms planned interval span.'
+    )
+    evidence = {"identity": identity, "profile": profile, "scope": scope,
+                "execution": provenance.get("node_execution")}
+    return (
+        '<section id="node-scope" class="panel notice"><h2>Attached node collection</h2>'
+        f'<p><b>Schedule:</b> {schedule}</p>'
+        f'<p><b>Sampler elapsed:</b> {_value(elapsed, "ns")} (includes collection overhead; '
+        'actual rate intervals use the recorded monotonic collection windows).</p>'
+        f'<p><b>Node:</b> {_escape(profile.get("network", "Unavailable"))} · '
+        f'PID {_escape(profile.get("pid", "Unavailable"))} · '
+        f'<code>{_escape(profile.get("binary_path", "Unavailable"))}</code></p>'
+        f'<p><b>Declared workload:</b> <code>{_escape(workload.get("id", "Unavailable"))}</code> · '
+        f'{_escape(workload.get("description", "Unavailable"))}</p>'
+        f'<p><b>Declared state / activity:</b> {_escape(workload.get("state", "Unavailable"))} / '
+        f'{_escape(workload.get("activity", "Unavailable"))}</p>'
+        '<p>Percentiles describe repeated resource intervals and mempool snapshots, '
+        'not transaction or block latency. Each interval produces separate process, mempool '
+        'and optional cgroup records. No isolated validation, admission, propagation or bandwidth measurement is made.</p>'
+        '<p>CPU / wall time is CPU use over each actual interval. RSS and cgroup memory are point samples. '
+        'Mempool count, encoded bytes and cost are gauges; growth is a signed net change per second, '
+        'not arrival or removal throughput. Attached process and cgroup lifetime peaks are unavailable. '
+        'An observed sample maximum does not establish peak memory.</p>'
+        '<details><summary>Node identity, source and collection evidence</summary>'
+        '<p>The operator declares the workload and associates the metrics endpoint with this process. '
+        'Collection does not launch a node, send transactions or mine blocks. '
+        'Hashes identify the retained binary, configuration, source receipt and declared fixture evidence; '
+        'they do not establish that the declared workload ran.</p>'
+        f'<pre>{_json(evidence)}</pre></details></section>'
     )
 
 
@@ -304,6 +361,7 @@ def render_report(summary, catalog):
         'their presence here does not establish independent checks or live chain acceptance.</p>'
         + storage_notice + '</div>'
     ) if payment_count else ""
+    node_notice = _node_scope(summary)
     outcomes = "".join(
         f'<span><b>{_escape(outcome.replace("_", " "))}:</b> {_escape(count)}</span>'
         for outcome, count in summary["measurement_outcome_counts"].items() if count
@@ -332,8 +390,11 @@ def render_report(summary, catalog):
         f'<div class="panel {style}"><div class="status">{_escape(status)}</div>'
         f'<p>Producer finalized: {"yes" if summary["complete"] else "no"} · Evidence successful: {"yes" if summary["successful"] else "no"}</p>'
         f'{status_detail}<div class="outcomes"><b>Non-warmup outcomes:</b>{outcomes}</div></div>'
-        f'<div class="cards">{cards}</div>{record_note}{payment_notice}{_timing_overview(groups)}'
+        f'<div class="cards">{cards}</div>{record_note}{payment_notice}{node_notice}{_timing_overview(groups)}'
         f'{_timing_overview(groups, _PAYMENT_METRICS, title="Wallet/payment stage overview", anchor="payment-overview")}'
+        + (_timing_overview(groups, _NODE_METRICS, title="Node resource and mempool overview",
+                            anchor="node-overview", label_each_metric=True)
+           if node_notice else "") +
         '<div class="panel notice"><b>Read exact n before interpreting tail percentiles.</b>'
         '<p>With 1–19 exact samples, p95 and p99 are the observed maximum. With one sample, all three percentiles repeat one value.</p>'
         '<details><summary>How to read these measurements</summary>'
