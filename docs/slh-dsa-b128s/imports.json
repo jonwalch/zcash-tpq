@@ -2210,7 +2210,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "3de1fcfaefa567cd9af725ae405d60f80efea8d5432ab2246b9295fd9f6e3b9a"
+      "sha256": "fb23ee4caf636761cd59565ea86c94f9777e63025bff67c538cb87c40d2962d9"
     },
     {
       "disposition": "upstream-modification",
@@ -2959,7 +2959,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "6fbf26aff6c341efd04c49996ddb986a7d30b9b267a91b71d199b8a15f4c2fdf"
+      "sha256": "1a20e9fc42aa025282255a32b97e682363600cd8e58f154744aca97144c0880b"
     },
     {
       "disposition": "new",

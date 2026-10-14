@@ -49,10 +49,16 @@ pub const BS_PER_BLOCK_WORST_CASE_BYTES: u64 = block::MAX_BLOCK_BYTES;
 /// stay serialized, this is (to close approximation) the byte ceiling of the
 /// speculative backlog itself, and total process RSS tracks it plus an
 /// era-independent overhead — so the default is chosen as a memory target, not
-/// derived from the wire budget. The checkpoint-range clamp raises this target
-/// to 8.02 GB with the fork's 20 MB blocks. Actual resident memory also includes
-/// decoded blocks and other node state.
-pub const DEFAULT_BS_MAX_REORDER_LOOKAHEAD_BYTES: u64 = 1536 * 1024 * 1024;
+/// derived from the wire budget. Keep the 1.5 GiB target or the checkpoint-range
+/// floor, whichever is larger, so defaults survive configuration round trips.
+/// The floor is 8.02 GB with the fork's 20 MB blocks. Actual resident memory also
+/// includes decoded blocks and other node state.
+pub const DEFAULT_BS_MAX_REORDER_LOOKAHEAD_BYTES: u64 =
+    if BS_CHECKPOINT_RANGE_BYTE_FLOOR > 1536 * 1024 * 1024 {
+        BS_CHECKPOINT_RANGE_BYTE_FLOOR
+    } else {
+        1536 * 1024 * 1024
+    };
 /// Minimum submitted block applies required to resolve one checkpoint range.
 ///
 /// The checkpoint verifier resolves a checkpoint window only after the whole
