@@ -1488,7 +1488,7 @@ fn slh_dsa_b128s_regtest(
 }
 
 #[test]
-fn experimental_slh_dsa_b128s_gate_is_regtest_only_and_strictly_after_nu7() {
+fn experimental_slh_dsa_b128s_regtest_gate_is_strictly_after_nu7() {
     let limits = Some(testnet::ExperimentalSlhDsaB128sLimits::new(10, 40).unwrap());
     // Disabled by default everywhere.
     for network in [
@@ -1573,4 +1573,186 @@ fn experimental_slh_dsa_b128s_gate_is_regtest_only_and_strictly_after_nu7() {
             valid
         );
     }
+}
+
+fn slh_dsa_b128s_custom_builder() -> testnet::ParametersBuilder {
+    testnet::Parameters::build()
+        .with_network_name("SlhDevnet")
+        .unwrap()
+        .with_network_magic(crate::parameters::Magic([0x53, 0x4c, 0x48, 0x31]))
+        .unwrap()
+        .with_genesis_hash(crate::block::Hash([42; 32]))
+        .unwrap()
+        .with_activation_heights(ConfiguredActivationHeights {
+            nu6_3: Some(1),
+            nu7: Some(5),
+            ..Default::default()
+        })
+        .unwrap()
+        .clear_funding_streams()
+        .with_lockbox_disbursements(vec![])
+        .clear_checkpoints()
+        .unwrap()
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_network_is_opt_in() {
+    let builder = slh_dsa_b128s_custom_builder();
+    let disabled = builder.clone().to_network().unwrap();
+    assert_eq!(
+        disabled.experimental_slh_dsa_b128s_activation_height(),
+        None
+    );
+    assert_eq!(disabled.experimental_slh_dsa_b128s_limits(), None);
+    assert_eq!(
+        disabled.experimental_slh_dsa_b128s_chain_fingerprint(),
+        None
+    );
+
+    let limits = testnet::ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    let builder = builder
+        .with_experimental_slh_dsa_b128s(Height(10), limits)
+        .unwrap();
+    assert!(!builder.is_compatible_with_default_parameters());
+    let network = builder.to_network().unwrap();
+    assert_eq!(network.kind(), NetworkKind::Testnet);
+    assert!(!network.is_default_testnet());
+    assert!(!network.is_regtest());
+    assert_eq!(
+        network.experimental_slh_dsa_b128s_activation_height(),
+        Some(Height(10))
+    );
+    assert_eq!(network.experimental_slh_dsa_b128s_limits(), Some(limits));
+    assert!(!network.is_experimental_slh_dsa_b128s_active(Height(9)));
+    assert!(network.is_experimental_slh_dsa_b128s_active(Height(10)));
+    assert!(network
+        .experimental_slh_dsa_b128s_chain_fingerprint()
+        .is_some());
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_network_requires_distinct_identity() {
+    let limits = testnet::ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    let enabled = || {
+        slh_dsa_b128s_custom_builder()
+            .with_experimental_slh_dsa_b128s(Height(10), limits)
+            .unwrap()
+    };
+    // Check identity at final construction, including changes made after the SLH setter.
+    for name in ["", "UnknownTestnet", "mainnet", "testnet", "regtest"] {
+        let result = enabled().with_network_name(name).unwrap().to_network();
+        assert_eq!(
+            result.unwrap_err(),
+            ParametersBuilderError::ExperimentalSlhDsaB128sCustomNetworkIdentity
+        );
+    }
+    let result = enabled()
+        .with_network_magic(crate::parameters::constants::magics::TESTNET)
+        .unwrap()
+        .to_network();
+    assert_eq!(
+        result.unwrap_err(),
+        ParametersBuilderError::ExperimentalSlhDsaB128sCustomNetworkIdentity
+    );
+    for magic in [
+        crate::parameters::constants::magics::MAINNET,
+        crate::parameters::constants::magics::REGTEST,
+    ] {
+        assert_eq!(
+            enabled().with_network_magic(magic).unwrap_err(),
+            ParametersBuilderError::ReservedNetworkMagic
+        );
+    }
+    for network in [
+        Network::Mainnet,
+        Network::new_default_testnet(),
+        Network::new_regtest(Default::default()),
+    ] {
+        let result = enabled()
+            .with_genesis_hash(network.genesis_hash())
+            .unwrap()
+            .clear_checkpoints()
+            .unwrap()
+            .to_network();
+        assert_eq!(
+            result.unwrap_err(),
+            ParametersBuilderError::ExperimentalSlhDsaB128sCustomNetworkIdentity
+        );
+    }
+    assert_eq!(
+        testnet::Parameters::build()
+            .with_experimental_slh_dsa_b128s(Height(10), limits)
+            .unwrap()
+            .to_network()
+            .unwrap_err(),
+        ParametersBuilderError::ExperimentalSlhDsaB128sCustomNetworkIdentity
+    );
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_network_validates_activation_after_all_changes() {
+    let limits = testnet::ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+    for height in [Height::MIN, Height(Height::MAX.0 + 1)] {
+        assert_eq!(
+            slh_dsa_b128s_custom_builder()
+                .with_experimental_slh_dsa_b128s(height, limits)
+                .unwrap_err(),
+            ParametersBuilderError::InvalidExperimentalSlhDsaB128sActivationHeight
+        );
+    }
+    for nu7 in [None, Some(10), Some(11)] {
+        let result = slh_dsa_b128s_custom_builder()
+            .with_experimental_slh_dsa_b128s(Height(10), limits)
+            .unwrap()
+            .with_activation_heights(ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7,
+                ..Default::default()
+            })
+            .unwrap()
+            .to_network();
+        assert!(matches!(
+            result,
+            Err(ParametersBuilderError::ExperimentalSlhDsaB128sBeforeNu7 { .. })
+        ));
+    }
+    for height in [Height(9), Height(10), Height(11)] {
+        let result = slh_dsa_b128s_custom_builder()
+            .with_experimental_slh_dsa_b128s(Height(10), limits)
+            .unwrap()
+            .with_checkpoints(testnet::ConfiguredCheckpoints::HeightsAndHashes(vec![
+                (Height(0), crate::block::Hash([42; 32])),
+                (height, crate::block::Hash([43; 32])),
+            ]))
+            .unwrap()
+            .to_network();
+        if height < Height(10) {
+            assert!(result.is_ok(), "{result:?}");
+        } else {
+            assert!(matches!(
+                result,
+                Err(ParametersBuilderError::ExperimentalSlhDsaB128sCheckpointConflict { .. })
+            ));
+        }
+    }
+    // The mandatory checkpoint also prevents activation, even with a genesis-only list.
+    let result = slh_dsa_b128s_custom_builder()
+        .with_experimental_slh_dsa_b128s(Height(10), limits)
+        .unwrap()
+        .with_activation_heights(ConfiguredActivationHeights {
+            canopy: Some(11),
+            nu7: Some(12),
+            ..Default::default()
+        })
+        .unwrap()
+        .to_network();
+    assert!(matches!(
+        result,
+        Err(
+            ParametersBuilderError::ExperimentalSlhDsaB128sCheckpointConflict {
+                checkpoint_height: Height(10),
+                ..
+            }
+        )
+    ));
 }

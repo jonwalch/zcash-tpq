@@ -964,7 +964,7 @@ struct DTestnetParameters {
     max_block_time_start_height: Option<u32>,
     genesis_hash: Option<String>,
     activation_heights: Option<ConfiguredActivationHeights>,
-    /// Regtest-only SLH-DSA-B-128s activation, independent of network upgrades.
+    /// Experimental SLH activation on Regtest or an isolated custom Testnet.
     #[serde(skip_serializing_if = "Option::is_none")]
     experimental_slh_dsa_b128s_activation_height: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1314,6 +1314,19 @@ impl<'de> Deserialize<'de> for Config {
         // Clamp too-small budgets rather than rejecting existing configurations.
         let mut zakura = zakura;
         zakura.apply_network_defaults(&network);
+        if network.kind() == NetworkKind::Testnet
+            && network
+                .experimental_slh_dsa_b128s_activation_height()
+                .is_some()
+            && [Network::Mainnet, Network::new_default_testnet()]
+                .iter()
+                .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
+                .any(|peer| zakura.bootstrap_peers.contains(&peer))
+        {
+            return Err(de::Error::custom(
+                "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
+            ));
+        }
         let default_zakura_bootstrap_peers =
             ZakuraConfig::default_bootstrap_peers_for_network(&network);
         if zakura.bootstrap_peers.is_empty() {
@@ -1431,16 +1444,19 @@ where
         initial_nsm_value_balance,
     } = params;
 
-    if experimental_slh_dsa_b128s_activation_height.is_some()
-        || experimental_slh_dsa_b128s_max_checks_per_transaction.is_some()
-        || experimental_slh_dsa_b128s_max_checks_per_block.is_some()
-    {
-        return Err(de::Error::custom(
-            "experimental_slh_dsa_b128s_activation_height is only supported on Regtest",
-        ));
-    }
+    let experimental_slh = experimental_slh_dsa_b128s_settings::<D>(
+        experimental_slh_dsa_b128s_activation_height,
+        experimental_slh_dsa_b128s_max_checks_per_transaction,
+        experimental_slh_dsa_b128s_max_checks_per_block,
+    )?;
 
     let mut params_builder = testnet::Parameters::build();
+
+    if let Some((activation_height, limits)) = experimental_slh {
+        params_builder = params_builder
+            .with_experimental_slh_dsa_b128s(activation_height, limits)
+            .map_err(de::Error::custom)?;
+    }
 
     if let Some(network_name) = network_name.clone() {
         params_builder = params_builder
@@ -1569,6 +1585,34 @@ where
     params_builder.to_network().map_err(de::Error::custom)
 }
 
+/// Parses the complete SLH setting triple for either supported network configuration form.
+fn experimental_slh_dsa_b128s_settings<'de, D>(
+    activation_height: Option<u32>,
+    transaction_limit: Option<u32>,
+    block_limit: Option<u32>,
+) -> Result<
+    Option<(
+        zakura_chain::block::Height,
+        testnet::ExperimentalSlhDsaB128sLimits,
+    )>,
+    D::Error,
+>
+where
+    D: Deserializer<'de>,
+{
+    match (activation_height, transaction_limit, block_limit) {
+        (None, None, None) => Ok(None),
+        (Some(height), Some(transaction), Some(block)) => Ok(Some((
+            zakura_chain::block::Height(height),
+            testnet::ExperimentalSlhDsaB128sLimits::new(transaction, block)
+                .map_err(de::Error::custom)?,
+        ))),
+        _ => Err(de::Error::custom(
+            "experimental_slh_dsa_b128s_activation_height and both explicit SLH-DSA-B-128s limits must be configured together",
+        )),
+    }
+}
+
 /// Builds Regtest parameters while reporting invalid settings as configuration errors.
 fn build_configured_regtest<'de, D>(params: DTestnetParameters) -> Result<Network, D::Error>
 where
@@ -1616,6 +1660,12 @@ where
         })
         .transpose()?;
 
+    let experimental_slh = experimental_slh_dsa_b128s_settings::<D>(
+        experimental_slh_dsa_b128s_activation_height,
+        experimental_slh_dsa_b128s_max_checks_per_transaction,
+        experimental_slh_dsa_b128s_max_checks_per_block,
+    )?;
+
     // The chain crate can have test-only fields enabled by another workspace crate.
     #[allow(
         clippy::needless_update,
@@ -1623,23 +1673,8 @@ where
     )]
     let params = RegtestParameters {
         activation_heights: activation_heights.unwrap_or_default(),
-        experimental_slh_dsa_b128s_activation_height: experimental_slh_dsa_b128s_activation_height
-            .map(zakura_chain::block::Height),
-        experimental_slh_dsa_b128s_limits: match (
-            experimental_slh_dsa_b128s_max_checks_per_transaction,
-            experimental_slh_dsa_b128s_max_checks_per_block,
-        ) {
-            (None, None) => None,
-            (Some(transaction), Some(block)) => Some(
-                testnet::ExperimentalSlhDsaB128sLimits::new(transaction, block)
-                    .map_err(de::Error::custom)?,
-            ),
-            _ => {
-                return Err(de::Error::custom(
-                    "both experimental SLH-DSA-B-128s limits must be configured together",
-                ))
-            }
-        },
+        experimental_slh_dsa_b128s_activation_height: experimental_slh.map(|(height, _)| height),
+        experimental_slh_dsa_b128s_limits: experimental_slh.map(|(_, limits)| limits),
         funding_streams: Some(funding_streams_vec),
         lockbox_disbursements,
         checkpoints: Some(checkpoints),

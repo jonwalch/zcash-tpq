@@ -59,6 +59,9 @@ pub enum ParametersBuilderError {
     )]
     MissingExperimentalSlhDsaB128sLimits,
 
+    #[error("experimental SLH-DSA-B-128s on a custom Testnet requires an explicit distinct network name, nonreserved network magic, and genesis hash distinct from all built-in networks")]
+    ExperimentalSlhDsaB128sCustomNetworkIdentity,
+
     #[error("experimental SLH-DSA-B-128s activation at {activation_height:?} must be after every configured and mandatory checkpoint (last: {checkpoint_height:?}); SLH-DSA-B-128s-active blocks require semantic validation")]
     ExperimentalSlhDsaB128sCheckpointConflict {
         activation_height: Height,

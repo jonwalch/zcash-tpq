@@ -220,28 +220,33 @@ impl Network {
         }
     }
 
-    /// Returns the experimental SLH-DSA-B-128s activation height on Regtest, or `None`.
+    /// Returns experimental SLH activation for Regtest or an isolated custom Testnet.
     ///
-    /// This local gate is independent of network upgrades. Mainnet and Testnet
-    /// cannot enable it.
+    /// Mainnet and the built-in public Testnet cannot enable it.
     pub fn experimental_slh_dsa_b128s_activation_height(&self) -> Option<Height> {
         match self {
-            Self::Testnet(params) if params.is_regtest() => {
-                params.experimental_slh_dsa_b128s_activation_height()
-            }
+            Self::Testnet(params) => params.experimental_slh_dsa_b128s_activation_height(),
             _ => None,
         }
     }
 
-    /// Explicit SLH-DSA-B-128s transaction/block limits for this experimental Regtest history.
+    /// Explicit SLH-DSA-B-128s transaction/block limits for this experimental history.
     pub fn experimental_slh_dsa_b128s_limits(
         &self,
     ) -> Option<testnet::ExperimentalSlhDsaB128sLimits> {
         match self {
-            Self::Testnet(params) if params.is_regtest() => {
-                params.experimental_slh_dsa_b128s_limits()
-            }
+            Self::Testnet(params) => params.experimental_slh_dsa_b128s_limits(),
             _ => None,
+        }
+    }
+
+    /// Identifies the exact consensus parameters of an SLH-enabled custom Testnet.
+    ///
+    /// Other networks retain their existing state namespaces and return `None`.
+    pub fn experimental_slh_dsa_b128s_chain_fingerprint(&self) -> Option<[u8; 32]> {
+        match self {
+            Self::Testnet(params) => params.experimental_slh_dsa_b128s_chain_fingerprint(),
+            Self::Mainnet => None,
         }
     }
 
