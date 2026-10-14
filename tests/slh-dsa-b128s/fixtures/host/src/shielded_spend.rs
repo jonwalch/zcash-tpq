@@ -1,7 +1,7 @@
 //! Genuine public-note spends with final native SLH effects. See SPEND_ATTRIBUTION.md.
 use super::shielded::{
-    action_slot, authorize, chain_action, chain_sapling, checks, converted, digest, needed, prover,
-    sapling_slot, wire,
+    action_slot, authorize, chain_action, chain_legacy_action, chain_sapling, checks, converted,
+    digest, needed, prover, sapling_slot, wire,
 };
 use super::*;
 use orchard::{
@@ -9,7 +9,6 @@ use orchard::{
     bundle::{BundleVersion, Flags},
     circuit::{OrchardCircuitVersion, ProvingKey, VerifyingKey},
     keys::{FullViewingKey, Scope, SpendAuthorizingKey, SpendingKey},
-    value::NoteValue,
 };
 use zakura_chain::{sapling::TransferData, transaction::HashType};
 use zcash_proofs::prover::LocalTxProver;
@@ -186,7 +185,7 @@ pub(super) fn prepare(recipe: &ShieldedSpendRecipe) -> Result<Value> {
     } = context(recipe)?;
     let sapling_prover = recipe.sapling_parameters.as_ref().map(prover).transpose()?;
     let mut rng = rand_10::rng();
-    let pk = ProvingKey::build(OrchardCircuitVersion::PostNu6_3);
+    let pk = converted(ProvingKey::build(OrchardCircuitVersion::PostNu6_3))?;
     let vk = pk.verifying_key();
     let key = action_key();
     let ask = SpendAuthorizingKey::from(&key);
@@ -571,39 +570,56 @@ fn funding_context(
     }
     .build())
 }
-/// The only nonzero Orchard deposit profile; mined at 102, before NU6.3 at 104.
-pub(super) fn funding(recipe: &ShieldedSpendFundingRecipe) -> Result<Value> {
-    let (mut tx, previous) = funding_context(recipe)?;
-    let mut rng = rand_10::rng();
-    let pk = ProvingKey::build(OrchardCircuitVersion::FixedPostNu6_2);
+/// Use the previous pinned builder for the historical funding circuit only.
+fn legacy_funding_builder() -> Result<orchard_legacy::builder::Builder> {
+    use orchard_legacy::{
+        builder::{Builder, BundleType},
+        bundle::{BundleVersion, Flags},
+        keys::{FullViewingKey, Scope, SpendingKey},
+        value::NoteValue,
+    };
     let mut builder = converted(Builder::new(
         BundleType::DEFAULT,
         BundleVersion::orchard_v2(),
         Flags::SPENDS_DISABLED,
-        orchard::Anchor::empty_tree(),
+        orchard_legacy::Anchor::empty_tree(),
     ))?;
-    converted(builder.add_output(
-        None,
-        FullViewingKey::from(&action_key()).address_at(0u32, Scope::External),
-        NoteValue::from_raw(NOTE_VALUE),
-        [0; 512],
-    ))?;
+    converted(
+        builder.add_output(
+            None,
+            FullViewingKey::from(&SpendingKey::from_bytes([42; 32]).expect("fixed public key"))
+                .address_at(0u32, Scope::External),
+            NoteValue::from_raw(NOTE_VALUE),
+            [0; 512],
+        ),
+    )?;
+    Ok(builder)
+}
+
+/// The only nonzero Orchard deposit profile; mined at 102, before NU6.3 at 104.
+pub(super) fn funding(recipe: &ShieldedSpendFundingRecipe) -> Result<Value> {
+    let (mut tx, previous) = funding_context(recipe)?;
+    let mut rng = rand_10::rng();
+    let pk = orchard_legacy::circuit::ProvingKey::build(
+        orchard_legacy::circuit::OrchardCircuitVersion::FixedPostNu6_2,
+    );
+    let builder = legacy_funding_builder()?;
     let unsigned = needed(converted(builder.build::<ZatBalance>(&mut rng))?)?.0;
     let proven = converted(unsigned.create_proof(&pk, &mut rng))?;
     let wrong = converted(proven.clone().apply_signatures(&mut rng, [0; 32], &[]))?;
-    *action_slot(&mut tx, "orchard") = Some(chain_action(&wrong)?);
+    *action_slot(&mut tx, "orchard") = Some(chain_legacy_action(&wrong)?);
     let final_digest = converted(tx.sighasher(NetworkUpgrade::Nu6_2, previous.clone()))?
         .sighash(HashType::ALL, None)
         .0;
     let authorized = converted(proven.apply_signatures(&mut rng, final_digest, &[]))?;
     let vk = pk.verifying_key();
-    let mut batch = orchard::bundle::BatchValidator::new(&vk);
+    let mut batch = orchard_legacy::bundle::BatchValidator::new(&vk);
     require(
         batch.add_bundle(&authorized, final_digest).is_ok() && batch.validate(rand_10::rng()),
         "shielded",
         "orchard_funding_proof",
     )?;
-    *action_slot(&mut tx, "orchard") = Some(chain_action(&authorized)?);
+    *action_slot(&mut tx, "orchard") = Some(chain_legacy_action(&authorized)?);
     let signature = classical::signature_at(
         &tx,
         previous.clone(),

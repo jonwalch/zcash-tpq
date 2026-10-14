@@ -183,8 +183,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
-      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum.",
-      "sha256": "fa7d8ab61a42d49ee86bd1ec824eaf651d0573a24720c634d764fa637a3a503c"
+      "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Restore only the previous pinned Orchard 2.2.0 dependency graph for optional historical fixture generation; preserve all upstream Common 3 identities and exclude legacy Orchard from nodes.",
+      "sha256": "6306e2b33aa64082d05201d317123351a7f01c66f41ad203406147d77d36c405"
     },
     {
       "disposition": "upstream-modification",
@@ -4000,7 +4000,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "da4cdf415f1d14468aed714a38549400ee5fd4bce540ef30aee8a7d97458e294"
+      "sha256": "a3a0a5aebc09c2e8c65c16a45c6033059d3ff26a84429016f76c922f4fd3f236"
     },
     {
       "disposition": "new",
@@ -4218,8 +4218,8 @@
         "docs/slh-dsa-b128s/benchmarking.md",
         "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Check resolved feature graphs for SLH dependency isolation. Require product wallet and transaction-context dependencies in the separate benchmark while excluding node services, the CLI and fixture tools and preserving the BLAKE3 pin without Rayon.",
-      "sha256": "cb495ca59f5e197f446e8d0e162216c2077fc5c17247d6c295eda84923756669"
+      "reason": "Check resolved feature graphs for SLH dependency isolation. Require product wallet and transaction-context dependencies in the separate benchmark while excluding node services, the CLI and fixture tools and preserving the BLAKE3 pin without Rayon. Reject the fixture-only historical Orchard 2.2.0 builder in every node graph.",
+      "sha256": "58eb6740a6d878d8533d45259185f7b4828dabf9b0094e3ff88b03c1e83da120"
     },
     {
       "disposition": "new",
@@ -4229,8 +4229,8 @@
         "docs/slh-dsa-b128s/benchmarking.md",
         "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Use mocked dependency graphs to test the updated wallet payment benchmark requirements and forbidden node-service edges, alongside existing signer, verifier and default-feature isolation controls.",
-      "sha256": "69730e0b11d6c4d2467774f1a496728d696e4be3b0fb5169e30a8d5b69c4956a"
+      "reason": "Use mocked dependency graphs to test the updated wallet payment benchmark requirements and forbidden node-service edges, alongside existing signer, verifier and default-feature isolation controls. Inject the historical builder alongside Common 3 in each default/SLH/all-feature node graph and require rejection.",
+      "sha256": "62fe6b0479bcaced6a221494b221e3f321494cd8ab51d66e11ab7a504c6d9312"
     },
     {
       "disposition": "new",
@@ -4590,8 +4590,8 @@
         "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Upstream refresh e33dc4308: Keep the optional local Sapling prover at Common 3.0 in the fixture package after upstream removed it from node dependencies. Do not enable bundled proving parameters.",
-      "sha256": "e8c7c4ab671e431c4f59f855a75fa2bf0d2d6af538412182d5db5c68f7e2ce6e"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Upstream refresh e33dc4308: Keep the optional local Sapling prover at Common 3.0 in the fixture package after upstream removed it from node dependencies. Do not enable bundled proving parameters. Retain the previously pinned Orchard 2.2.0 graph behind the optional shielded-fixtures feature only, because Common 3 removed historical proof construction. Node graphs must exclude this version.",
+      "sha256": "2c1d0764e4018a2bcdf362d9ea3471086ffa588cc15d4925c15385673ff4458e"
     },
     {
       "disposition": "new",
@@ -4618,8 +4618,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "8e3bb76173762ba7ebf6e0c9ef03553bf6f8d77faf2da550b5440b403762a140"
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change. Record the Common 3 historical proving restriction, isolated compatibility dependency and exact compile/no-proof regression scope.",
+      "sha256": "355da936599d50efddae670a4a24ac1f59238868ac36b77e0fbc832f66230fb1"
     },
     {
       "disposition": "new",
@@ -4676,8 +4676,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes.",
-      "sha256": "11318c1ca02981a8000e00c85c7c41954134d43ed5310ca8b1013d9169deb0e7"
+      "reason": "Selectively reuse attributable real shielded constructors and local pinned proof libraries for output-only human acceptance, exact native authorization and failure controls; no upstream rules, research workloads or independent-reference changes. Common 3 proving-key construction now returns Result. Reuse the canonical field conversion for both current bundles and fixture-only historical funding; no encoding changes.",
+      "sha256": "668f1b5b56b148e9c19bd91bdc28100d16bc0a763a8d84708027fa78007aac1d"
     },
     {
       "disposition": "adapted",
@@ -4685,8 +4685,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "2e04bcc48346cff0060b8890927f906f54d774695564723c8e43b00231ce7d72"
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change. Keep pre-NU6.3 funding on the previous pinned Orchard 2.2.0 builder; all current spend construction uses Common 3. A shared canonical adapter bridges historical bundles into current node types.",
+      "sha256": "a4503310d5f5450b987325dd6e0f9016c00104cd1f7606e9f063bc473babdb6a"
     },
     {
       "disposition": "adapted",
@@ -4694,8 +4694,8 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change.",
-      "sha256": "ad1d42327f368eab03bf846ba52f0b713e9c5bd23db85c00b62716a50a7e956b"
+      "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change. Preserve the existing no-proof regression with the historical funding builder: decrypt its public ciphertext using Common 3 and retain exact history/root/finalization assertions.",
+      "sha256": "7be97484e91b25b7329810fe815755af61d9aafc1c535a24fab0caae44d19637"
     },
     {
       "disposition": "new",
