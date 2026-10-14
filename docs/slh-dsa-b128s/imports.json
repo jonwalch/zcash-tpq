@@ -176,8 +176,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "2b09cc90e588bbdf7db36ffd57f61c8a3104cdad13324d8f4877d00aa4722f89"
+      "reason": "Document saved-evidence adapters, payment metrics and attached-node collection, including required evidence and limits on live acceptance claims.",
+      "sha256": "3e52eecf5d5a96cf367af0884124f20d54785653a42382661fc8a4cb4227499b"
     },
     {
       "disposition": "new",
@@ -187,8 +187,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Isolate the human-run primitive benchmark with locked product signer/verifier dependencies; exclude it from node graphs and publication.",
-      "sha256": "a1f9c67bcb2bd24cd6c971d02614c1fef0cc94fc218b811ecde1f1400982970c"
+      "reason": "Lock the isolated primitive and wallet payment benchmark dependencies, including classical controls and disposable storage; keep the executable outside node graphs and publication.",
+      "sha256": "f3e0a0193f1b4b11b220a92b73473c7cd10f5c722fe69f5fc77a6e664bc3c2fa"
     },
     {
       "disposition": "new",
@@ -198,8 +198,19 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Isolate the human-run primitive benchmark with locked product signer/verifier dependencies; exclude it from node graphs and publication.",
-      "sha256": "314b6fc4f3a465b8c22e152f508ca96ea3b261af1782e7067b797b4d55a55321"
+      "reason": "Declare the separate, non-publishable primitive and wallet payment benchmark workspace with product wallet, transaction-context and classical-control dependencies.",
+      "sha256": "b626b95405c93a253ae92f618655a689546b984ebe5103cb6487e123b290633f"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/NODE_COLLECTION.md",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Document registration and bounded collection of an existing Regtest node, node-build provenance, raw-evidence replay and matched comparison limits. Separate static planning from execution that needs approval.",
+      "sha256": "9f6a25cb015f0ee8d98ae4d7b62427653e4490419234e2956d549fd01d3650e3"
     },
     {
       "disposition": "attribution",
@@ -209,8 +220,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
-      "sha256": "f17de42f846ddecd21b601c0e2d71f8169aade52e609f1210d086d79d54789f0"
+      "reason": "Preserve pinned benchmark source identities, licenses and adaptation boundaries for primitive measurements, wallet payments, independent checks and node collection.",
+      "sha256": "b0159205f6d3561a267c60f88820b6b6863da21ec72e4b39566e29da27819be0"
     },
     {
       "disposition": "new",
@@ -220,8 +231,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "288bc89c1c18c08e2913c68c7c07deb9ffe4475d007b618dee884a80acdd3533"
+      "reason": "Describe the isolated primitive, wallet payment and node collection commands, with explicit execution approval and links to evidence and reporting contracts.",
+      "sha256": "7a514607b729396ce8739f80a4dc9d22d9a98843afc4a9828ad2df0d6b6a27d3"
     },
     {
       "disposition": "adapted",
@@ -231,8 +242,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Use existing event/gauge meanings with strict process/node/apply-token/hash/height/class correlation, failure retention, explicit millisecond precision and checkpoint residence, and a throughput-probe-disabled assertion. Proposed propagation events are a new input contract because the required live node boundaries are not currently emitted.",
-      "sha256": "dfc8a2aa661fe324e05fb451e0955072e3d85ff62493dc663a5ae7a06430c67e"
+      "reason": "Reuse attributed event and gauge meanings for strict saved-evidence correlation. Permit an unknown queued block height only when later boundaries supply a consistent height; retain probe-disablement and failure checks.",
+      "sha256": "8c4a537f9adccfb533c7e13cef6843c5ba580dfc49ce72371144250fc72a7000"
     },
     {
       "disposition": "new",
@@ -242,8 +253,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Python standard-library Linux proc/cgroup/interface readers with explicit sampling boundaries and availability. No copied external collector implementation.",
-      "sha256": "2c0614f2bf1d34f657d5ea0ae8284a64fd072900337245c84a4385c20cc6488d"
+      "reason": "Read bounded Linux process, cgroup and interface counters with explicit availability and sampling scope. Keep declared process CPU entitlement separate from leader affinity; derive cgroup entitlement only from matching observed constraints.",
+      "sha256": "e3b19c4eb38a6d70f6dd1acd676449e15a5edc1f76650561dc134fdd00396532"
     },
     {
       "disposition": "new",
@@ -253,8 +264,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies.",
-      "sha256": "78230657b5c0e4ecda63ce99c0c92e5afa020521c8066489f49fee9d8694d52c"
+      "reason": "Present saved primitive, payment and node statistics with exact values, separate populations and coverage limits. Show wallet fixture boundaries, node sampling scope and escaped operator declarations without recalculating statistics.",
+      "sha256": "ed2488c8316f00a26a998bb90da41981651d50acc983f152052230dbd28b043b"
     },
     {
       "disposition": "adapted",
@@ -264,8 +275,63 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use.",
-      "sha256": "8febb85d5f88e28d43de78551521e4ff55841f7d52cdd47076ae7b21fd21b3e4"
+      "reason": "Adapt local bounded-file and canonical-JSON helpers to retain saved evidence and failure state. Bind payment metric extensions, effective node configuration and the observed or declared CPU entitlement used in comparisons.",
+      "sha256": "063f6df84f70e60c733013450ef367419a2a183f631b9f20bee341f01bc97641"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/node_build.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt the existing acceptance build helper and attributed benchmark supervisor to retain original build receipts and compiler settings. Validate portable artifacts and require complete build-time metadata for matched node comparisons.",
+      "sha256": "0644ff41b087d05a8666b4efce30d8a90e1f70d6ca17ebd7e8a0bafeffd11ba7"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/node_run.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse attributed supervision and acceptance receipt checks for static node registration and bounded collection. Keep compiled node and sampler identities separate, replay raw observations and distinguish build variants from matched conditions.",
+      "sha256": "4f5cec40c2a15bef27700ba9992f3277023786813b6bd961db17b391ccbdc774"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/node_sampling.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse local resource readers and mempool parsers in an attached-node sampler. Bind process, configuration and cgroup identity; bound loopback HTTP reads with one deadline and retain raw evidence for replay without owning the node lifecycle.",
+      "sha256": "2ff1a463d9fe4e13244586abdfdfb0aedae590ebe51d2a82b39d8cb884ddbf0e"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/payment_checks.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse pinned independent transaction, authorization and wallet-format oracles with the separate SLH reference. Check public payment artifacts and mutations, and add bounded independent secp256k1 verification without production crypto or a general Script claim.",
+      "sha256": "f0c99a850c42869e9533e0a84106a18509bbc4d978ff6e68db15aaa508b4feef"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/payment_run.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt the attributed runner and acceptance helpers to register bounded wallet payment cases, storage identities and reference snapshots. Keep measurements and independent artifact checks in separate processes and retain partial failures.",
+      "sha256": "9dc795c3fd6ab67021f177a8ac8ad2748ef108ccf8e106b63bea29106f078d06"
     },
     {
       "disposition": "adapted",
@@ -275,8 +341,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling.",
-      "sha256": "7ca3b455a373102ec3b2b2da67ecf296918eb8ca9f2a2cbc37d253be973e2701"
+      "reason": "Adapt pinned source, file-hash and receipt helpers for benchmark identities. Retain only bounded, verified payment reference sources, licenses and prepared libraries without executing them; preserve compiler configuration identity across worktrees.",
+      "sha256": "512ad5514c55c8b36db465d82468f515af1d7b2e798810569e64d94c16c2cc61"
     },
     {
       "disposition": "adapted",
@@ -286,8 +352,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Use the empirical nearest-rank index ceil(n*p/100)-1 for p50/p95/p99. New Python validation and reporting preserve process/case boundaries, warmups, outcome populations, unavailable values, and censored observations. No research result rows are imported.",
-      "sha256": "d34a2c59e33e3b32a8c2ff7ddf2b4568d47b7811f7541f44dea5912f91fe1955"
+      "reason": "Reuse the attributed nearest-rank rule with separate process, outcome and availability populations. Add payment metrics and require matching metric catalogs, wallet storage and recorded node build settings for comparisons.",
+      "sha256": "d9d1309c6d902ff395d015067c8e6b77210d10e6b5e461432cd51557d24979d7"
     },
     {
       "disposition": "adapted",
@@ -297,8 +363,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads.",
-      "sha256": "84520276fc5ed98982170276b268a98cfe20b9117187a3e62b57d36731eaf607"
+      "reason": "Adapt the pinned build and evidence driver with bounded supervision, explicit execution and primitive record limits. Register payment, node-build and attached-node commands through their modules; retain interrupted observations with an explicit unverified status.",
+      "sha256": "b66e3add08b11a112c4f1204d5f28bb4bf30be05d588492b7ae528a674134063"
     },
     {
       "disposition": "new",
@@ -308,8 +374,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "6feec9e27ef67c99c3edcf2717c8a882ba252335c49a9eda7f238641fca9ff3b"
+      "reason": "Specify benchmark record fields, separate primitive and payment metric catalogs, durable wallet stage boundaries and limits on comparisons with classical transaction controls.",
+      "sha256": "1494241feb81cea03812c4bf035fc08cba9493b3a76a118297ed7e8dd3828c21"
     },
     {
       "disposition": "new",
@@ -323,6 +389,17 @@
       "sha256": "c08dbc9c859f5c71f6bb23a8c0345a16583e7173778bee0ff595c39ec47b8357"
     },
     {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/schema/payment-metrics.json",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Define an additive payment metric catalog with durable wallet stages, separate classical transaction stages and an observed foreground total. Preserve the original primitive catalog and its historical receipts.",
+      "sha256": "8ac01ddc77057aa468ea1f0157fc2e7695be2c56305510aa410d21e6e0ec92d7"
+    },
+    {
       "disposition": "attribution",
       "path": "benchmarks/slh-dsa-b128s/sources.json",
       "provenance": [
@@ -330,8 +407,19 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
-      "sha256": "d5f45ab2e47e102fe2096bb9ca96b5b719bdc6563a7c946a124dbd633ae3c83f"
+      "reason": "Record pinned source files, hashes, licenses and adaptation boundaries for primitive measurements, wallet payment controls, independent checking and node collection, without importing research history or results.",
+      "sha256": "f20928d195d5d7cf3d9d892a48a39be8e66d3509a9a1d3980e5df555bc792b3c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/classical.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt pinned product P2SH fixtures and transaction recipes into bounded v5/v6 classical payment controls with actual serialized fee actions. Verify with prepared public keys outside secret-key generation; claim neither a durable wallet workflow nor full Script validation.",
+      "sha256": "e4b8266a0246feccdf6df92ddf94f3a2360b7b50d55b92a8d3497b8539150dd6"
     },
     {
       "disposition": "new",
@@ -341,8 +429,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Strict bounded argument parsing, explicit human execution switch, required input-reuse mode, and non-measuring inspection commands.",
-      "sha256": "600dc3e635754a09a1d04515c16f125815a4d4504a975807b30baa147ef9bac2"
+      "reason": "Parse bounded, explicit primitive and payment case dimensions, storage paths and execution flags. Keep the single-case untimed payment check separate from measurement commands.",
+      "sha256": "ff748561d7a23b39d356041c91042423683d4afa9d058f5af97f0964728a3498"
     },
     {
       "disposition": "adapted",
@@ -363,8 +451,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Time the complete product key root, public randomized signing including mandatory self-verification, and external Pure verification. Emit only public hashes/lengths and attempt records. Keep fixture preparation, hashes, corruption, and benchmark postconditions outside observation windows.",
-      "sha256": "e7b51e022eceabc13aaaaa9c68a43ed475499721250042f204aacc00f6522517"
+      "reason": "Call existing product primitive APIs with public measurement records and dispatch wallet payment measurements or untimed checks to the payment module. Expose both case catalogs without emitting secret material.",
+      "sha256": "33c18a6c11998ff9e83de89ab8ca9cc7b6fc8dc54aac938f5695ce879269fc16"
     },
     {
       "disposition": "adapted",
@@ -378,6 +466,28 @@
       "sha256": "b25fd6a381aa9903ce3d9e1ed2bee1b69f221206eb8e01a3c1ea103cc87961b1"
     },
     {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/payment.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse product WatchStore lifecycle APIs and attributed measurement boundaries for bounded offline payments. Separate public artifacts from private disposable storage, disclose fixture preparation scope and keep independent checks outside timing.",
+      "sha256": "e4c453f9bf180af6c89f055fc48b5f73e8165fce3f52daacc81426c67a06a05a"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/payment_fixture.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt pinned wallet payment and watch tests into a bounded synthetic chain at the trusted-node interface. Use existing enrollment and backup APIs with private disposable keys and indexed prepared responses, without claiming consensus-valid funding or live acceptance.",
+      "sha256": "d64833da3d748851f83c71d49c9ad6aa5f52c18b0d93c15dff9483cb6fe0a5eb"
+    },
+    {
       "disposition": "new",
       "path": "benchmarks/slh-dsa-b128s/tests/test_adapters.py",
       "provenance": [
@@ -385,8 +495,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Exercise strict saved trace, gauge, transaction, and propagation adapter contracts using public or synthetic input; no live network workload.",
-      "sha256": "697ded64318a2bbedf8d718f0529d56fe23c4a1eb258fd14ee908f4183ed65b4"
+      "reason": "Test strict saved trace, gauge and propagation contracts with public or synthetic inputs. Cover unknown queued heights, required later heights and conflicting block identities without a live workload.",
+      "sha256": "37be56eabe81a53e9a5306fcd46414ad09f2aae096f64e88d3f59096cb3e1afd"
     },
     {
       "disposition": "new",
@@ -396,8 +506,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Exercise Linux resource snapshots and counter handling using synthetic file content, without profiling a live process.",
-      "sha256": "5057808b9684bcca870d79d214299288232c897a5b34a4722dc3d928b4ec838f"
+      "reason": "Test Linux resource accounting with synthetic counters. Cover declared process entitlement, leader-affinity limits and rejection of caller-supplied cgroup entitlement without profiling a process.",
+      "sha256": "7b5f694cbc3715308b470574be8f07bc62fbab36983efed48232a236c45d787a"
     },
     {
       "disposition": "new",
@@ -407,8 +517,96 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed.",
-      "sha256": "147d77e7bc6b15ffe494b876892fc07f2b2535d440ef8046add77eeb380cb190"
+      "reason": "Test bounded saved-evidence imports, failure receipts and source identity. Cover payment metric extensions, effective configuration and observed cgroup entitlement in report comparisons without a live workload.",
+      "sha256": "38b219e6c23e0949abae2fe2b9ca2170242f5dd7ccf09180a0bb0870226a364a"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_build.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use mocked compiler and build children to test flags, configuration changes, wrapper rejection, portable receipt binding and failure retention. Reject comparisons with incomplete historical build metadata without compiling or running a node.",
+      "sha256": "bb7c19b03a7d2f41e2c7d0c921600902f98398e44b867ce0bbcba9ad1f32bac4"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_comparison.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use mocked build and observation fixtures to test default/SLH comparisons through planning and reports. Require complete matching compiler and observation settings while retaining per-side build identities and historical configuration IDs.",
+      "sha256": "45585fa372165097f090ce9004ecb20271d6a34a3ddda44b152efa9828991041"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_reports.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test visible node collection scope, schedules, missing capabilities, separate gauges and net growth, and escaped operator declarations using saved synthetic observations.",
+      "sha256": "6430f5e485e3c04d19b80cc1ba5beea7c2a6d0bccf9f7134c40cc9b6f3af452e"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_runner.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test static node planning, retained-evidence replay, exact record accounting, timeout and cancellation, and substituted inputs with mocked children and bounded fixture streams.",
+      "sha256": "41a79c539691fdc77b18acea57d7a8b5649c95341e21f33dab3d0bd29095e5ee"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_sampling.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test process, endpoint and cgroup binding, interval arithmetic, gauge recovery and absolute HTTP deadlines with synthetic counters and bounded HTTP responses, without a live node.",
+      "sha256": "02ef9b00fe48993bc712408bf92eb48fa436abfe82e03fb7527f0c8de7028aaf"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_payment_checks.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test independent public payment checks across transaction versions, input counts and policies. Reject altered effects, signatures, noncanonical encodings and invalid mutation verdicts with bounded public fixtures.",
+      "sha256": "388e7848acc2ae3369af8e4b92d4cbd3ed6aefbf37f620443a98f94ef5851ff0"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_payment_runner.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test wallet payment registration, storage identity, separate checker receipts, failures, timeouts and artifact substitution with synthetic children. Cover stage reports and comparisons without a payment or performance workload.",
+      "sha256": "bced98459ac57a6995d2e5c0993196efc1f12c790e2f3d756c1e486231659057"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_reference_snapshot.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test exact pinned reference retention and reject source or library substitutions, symlinks, unexpected Python modules, overwrites and excessive copy sizes without executing foreign code.",
+      "sha256": "b4d58c7861297e537e7847125aa63d665317ec89e52453e35a7193f093c45883"
     },
     {
       "disposition": "new",
@@ -429,8 +627,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution.",
-      "sha256": "d7960ab16f71ea343649801f66477e53962541379bdf7f4b6af9420f281b9a55"
+      "reason": "Test fake child supervision, source and compiler identities, primitive record bounds and interrupted-run recovery. Keep incomplete evidence explicit and reject changed finalized inventories without running a signer, node or benchmark.",
+      "sha256": "3d353ad27139f4e44b66931e361c50ec49a554d67cf8c792f8f815c8ac9b9273"
     },
     {
       "disposition": "adapted",
@@ -3012,6 +3210,26 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/7.md",
+      "provenance": [
+        "docs/changelog/unreleased/README.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
+      ],
+      "reason": "Record the required no-changelog fragment for the isolated offline wallet benchmark, reports and regression tests in PR #7.",
+      "sha256": "d1bbad2820d0113bbc18c5f67dfa2c5ecdb17abe75adb98fa94e1bf43a948485"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/8.md",
+      "provenance": [
+        "docs/changelog/unreleased/README.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
+      ],
+      "reason": "Record the required no-changelog fragment for node collection and benchmark workflow fixes in PR #8.",
+      "sha256": "1a0819c9dd0a8e44131eb0bd8d5215c72749a06ddcf5de7673b25338d6687532"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/9.md",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
@@ -3047,8 +3265,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "03f08ddb1d3fa4a396a31192af2d2a1cd2fd81878ccbbb7ff624eb570686cfd8"
+      "reason": "Document primitive, offline wallet payment and attached-node benchmark workflows, independent evidence checks, comparison requirements and commands that need explicit execution approval.",
+      "sha256": "fb86556a697ef1189736c50286f2c3cdfa18e6e85ef2ca7c9a126c10ff181289"
     },
     {
       "disposition": "new",
@@ -3791,30 +4009,33 @@
       "path": "tests/slh-dsa-b128s/dependencies/README.md",
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "457fc434597b8218447649b6aa41481acca66daaa6aebed320ef5885a82e6730"
+      "reason": "Document allowed dependency graphs for the isolated primitive and wallet payment benchmark, including product transaction context, while keeping benchmark code out of node, wallet and verifier graphs.",
+      "sha256": "c548b24af019441c7ca151d26dbfdfb0c59079d501133b81f815369046d3dd6b"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/check.py",
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "75956ef66d66bb567e6502d55f748fdf95fdfb5e26ee6b067c7ad0441128eeef"
+      "reason": "Check resolved feature graphs for SLH dependency isolation. Require product wallet and transaction-context dependencies in the separate benchmark while excluding node services, the CLI and fixture tools and preserving the BLAKE3 pin without Rayon.",
+      "sha256": "cb495ca59f5e197f446e8d0e162216c2077fc5c17247d6c295eda84923756669"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/test_check.py",
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "6a636502d7d649a173a1f776f7bcf4c625099e65c0466e652ad3f7aef2347ffc"
+      "reason": "Use mocked dependency graphs to test the updated wallet payment benchmark requirements and forbidden node-service edges, alongside existing signer, verifier and default-feature isolation controls.",
+      "sha256": "69730e0b11d6c4d2467774f1a496728d696e4be3b0fb5169e30a8d5b69c4956a"
     },
     {
       "disposition": "new",
