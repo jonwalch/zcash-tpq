@@ -228,11 +228,11 @@ pub struct ZakuraHandshakeConfig {
     pub network_id: ZakuraNetworkId,
     /// Zakura peer-matching chain id.
     ///
-    /// Normally the local genesis block hash, so peers on the same chain match
-    /// and peers on a different chain reject (`WrongChain`). For a private dev
-    /// cohort it is instead derived from the genesis hash and the cohort tag
-    /// (see [`derive_dev_chain_id`]), which isolates the Zakura overlay without
-    /// touching real block-validation consensus.
+    /// The full consensus fingerprint for SLH-enabled custom testnets, or the
+    /// local genesis block hash for other networks. Peers with different chain
+    /// identities reject with `WrongChain`. A private dev cohort derives its id
+    /// from this base identity and the cohort tag (see [`derive_dev_chain_id`]).
+    /// The cohort scopes peer matching without changing block validation.
     pub chain_id: [u8; 32],
     /// Required peer capabilities.
     pub required_capabilities: u64,
@@ -260,7 +260,9 @@ impl ZakuraHandshakeConfig {
             zakura_protocol_min: ZAKURA_PROTOCOL_VERSION_MIN_NATIVE,
             zakura_protocol_max: ZAKURA_PROTOCOL_VERSION_CURRENT,
             network_id: ZakuraNetworkId::from_network(network),
-            chain_id: network.genesis_hash().0,
+            chain_id: network
+                .experimental_slh_dsa_b128s_chain_fingerprint()
+                .unwrap_or_else(|| network.genesis_hash().0),
             required_capabilities: 0,
             supported_capabilities: 0,
             supported_channels: 0,
@@ -279,14 +281,15 @@ impl ZakuraHandshakeConfig {
     /// [`for_network`](Self::for_network). With a non-empty tag the node joins a
     /// private overlay: its [`network_id`](Self::network_id) becomes
     /// [`ZakuraNetworkId::Configured`] and its [`chain_id`](Self::chain_id) is
-    /// derived from the real genesis hash and the tag, so only same-tag peers
-    /// match. Consensus is unchanged; this only scopes the Zakura v2 overlay.
+    /// derived from the base chain identity and the tag, so peers must match
+    /// both. This retains SLH custom-testnet rule isolation within each cohort.
+    /// Consensus is unchanged; this only scopes the Zakura v2 overlay.
     pub fn for_network_with_dev_cohort(network: &Network, dev_network: Option<&str>) -> Self {
         let mut config = Self::for_network(network);
 
         if let Some(tag) = dev_network.filter(|tag| !tag.is_empty()) {
             config.network_id = ZakuraNetworkId::Configured;
-            config.chain_id = derive_dev_chain_id(network.genesis_hash().0, tag);
+            config.chain_id = derive_dev_chain_id(config.chain_id, tag);
         }
 
         config
@@ -305,22 +308,21 @@ impl ZakuraHandshakeConfig {
 
 /// Derives the Zakura peer-matching chain id for a private dev cohort.
 ///
-/// The result binds the real `genesis_hash` and the cohort `tag` under a fixed
-/// personalization, so:
-/// - two nodes with the same tag on the same network produce the same id and match;
-/// - different tags, or a public node using the bare genesis hash, never match
-///   (`WrongChain`).
+/// The result binds the `base_chain_id` and the cohort `tag` under a fixed
+/// personalization. The base is the SLH custom-testnet consensus fingerprint or
+/// the genesis hash selected by [`ZakuraHandshakeConfig::for_network`]. Two nodes
+/// with the same base identity and tag produce the same id and match. Different
+/// base identities or tags produce different ids and reject with `WrongChain`.
 ///
-/// Domain separation via the personalization guarantees a derived cohort id can
-/// never collide with any real chain's genesis hash, so a dev node can never be
-/// mistaken for a public peer. This id only gates Zakura peer matching; block
-/// validation continues to use the unchanged network parameters.
-pub fn derive_dev_chain_id(genesis_hash: [u8; 32], tag: &str) -> [u8; 32] {
+/// The personalization separates cohort derivation from the base identity. This
+/// id only gates Zakura peer matching; block validation continues to use the
+/// unchanged network parameters.
+pub fn derive_dev_chain_id(base_chain_id: [u8; 32], tag: &str) -> [u8; 32] {
     let hash = Blake2bParams::new()
         .hash_length(32)
         .personal(b"zebra-zk-cohort1")
         .to_state()
-        .update(&genesis_hash)
+        .update(&base_chain_id)
         .update(tag.as_bytes())
         .finalize();
 
@@ -547,7 +549,7 @@ pub struct P2pV2UpgradeInit {
     pub zakura_protocol_max: u16,
     /// Local network id.
     pub network_id: ZakuraNetworkId,
-    /// Local genesis block hash.
+    /// Local peer-matching identity from [`ZakuraHandshakeConfig::chain_id`].
     pub chain_id: [u8; 32],
     /// High-level Zakura capabilities.
     pub capabilities: u64,
@@ -685,7 +687,7 @@ pub struct P2pV2UpgradeAccept {
     pub selected_zakura_protocol: u16,
     /// Local network id.
     pub network_id: ZakuraNetworkId,
-    /// Local genesis block hash.
+    /// Local peer-matching identity from [`ZakuraHandshakeConfig::chain_id`].
     pub chain_id: [u8; 32],
     /// High-level Zakura capabilities.
     pub capabilities: u64,
@@ -944,7 +946,7 @@ pub struct ZakuraControlHello {
     pub role: ZakuraControlRole,
     /// Local network id.
     pub network_id: ZakuraNetworkId,
-    /// Local genesis block hash.
+    /// Local peer-matching identity from [`ZakuraHandshakeConfig::chain_id`].
     pub chain_id: [u8; 32],
     /// Authenticated Iroh node id this peer claims.
     pub iroh_node_id: Vec<u8>,
@@ -1900,7 +1902,11 @@ mod tests {
     use proptest::prelude::*;
     use tokio_util::codec::{FramedRead, FramedWrite};
 
-    use crate::protocol::external::{types::*, AddrInVersion, Codec, Message};
+    use crate::{
+        config::tests::{custom_slh_config, CUSTOM_SLH_FIELDS},
+        protocol::external::{types::*, AddrInVersion, Codec, Message},
+        Config,
+    };
 
     fn local_config() -> ZakuraHandshakeConfig {
         ZakuraHandshakeConfig::for_network(&Network::Mainnet)
@@ -2146,6 +2152,129 @@ mod tests {
             cohort_init("alpha").validate(&local_config(), nonces()),
             Err(ZakuraRejectReason::WrongNetwork)
         );
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_handshake_binds_consensus_rules() {
+        let original = custom_slh_config(CUSTOM_SLH_FIELDS);
+        let local_network = toml::from_str::<Config>(&original).unwrap().network;
+        assert_eq!(
+            ZakuraHandshakeConfig::for_network(&local_network).chain_id,
+            local_network
+                .experimental_slh_dsa_b128s_chain_fingerprint()
+                .unwrap()
+        );
+
+        for (peer_config, same_rules) in [
+            (original.clone(), true),
+            (
+                original.replace("activation_height = 110", "activation_height = 111"),
+                false,
+            ),
+            (
+                original.replace("per_transaction = 16", "per_transaction = 15"),
+                false,
+            ),
+            (original.replace("per_block = 64", "per_block = 65"), false),
+            (custom_slh_config(""), false),
+        ] {
+            let peer_network = toml::from_str::<Config>(&peer_config).unwrap().network;
+            assert_eq!(peer_network.genesis_hash(), local_network.genesis_hash());
+            assert_eq!(peer_network.magic(), local_network.magic());
+
+            // A shared cohort must retain the SLH rule binding. No tag and an
+            // empty tag use the same consensus identity as the native network.
+            for tag in [None, Some(""), Some("shared")] {
+                let local = ZakuraHandshakeConfig::for_network_with_dev_cohort(&local_network, tag);
+                let peer = ZakuraHandshakeConfig::for_network_with_dev_cohort(&peer_network, tag);
+                let expected_prelude = if same_rules {
+                    Ok(ZAKURA_PROTOCOL_VERSION_CURRENT)
+                } else {
+                    Err(ZakuraRejectReason::WrongChain)
+                };
+                let expected_validation = if same_rules {
+                    Ok(())
+                } else {
+                    Err(ZakuraValidationError::WrongChain)
+                };
+
+                let mut peer_init = init();
+                peer_init.network_id = peer.network_id;
+                peer_init.chain_id = peer.chain_id;
+                assert_eq!(peer_init.validate(&local, nonces()), expected_prelude);
+
+                let mut peer_accept = accept(&peer_init);
+                peer_accept.network_id = peer.network_id;
+                peer_accept.chain_id = peer.chain_id;
+                assert_eq!(
+                    peer_accept.validate(&local, nonces(), &peer_init),
+                    expected_validation
+                );
+
+                for path in [ZakuraHandshakePath::Native, ZakuraHandshakePath::Upgraded] {
+                    let mut hello = control_hello();
+                    hello.network_id = peer.network_id;
+                    hello.chain_id = peer.chain_id;
+                    hello.handshake_path = path;
+                    if path == ZakuraHandshakePath::Native {
+                        hello.initiator_upgrade_nonce = [0; 32];
+                        hello.responder_upgrade_nonce = [0; 32];
+                        hello.legacy_upgrade_transcript = [0; 32];
+                    }
+                    let expected = ZakuraControlValidation {
+                        local: &local,
+                        authenticated_remote_id: &[7; 32],
+                        selected_zakura_protocol: ZAKURA_PROTOCOL_VERSION_CURRENT,
+                        handshake_path: path,
+                        remote_role: ZakuraControlRole::Initiator,
+                        initiator_upgrade_nonce: hello.initiator_upgrade_nonce,
+                        responder_upgrade_nonce: hello.responder_upgrade_nonce,
+                        legacy_upgrade_transcript: hello.legacy_upgrade_transcript,
+                    };
+                    assert_eq!(hello.validate(&expected), expected_validation);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_handshake_preserves_other_network_ids() {
+        let custom = toml::from_str::<Config>(&custom_slh_config(""))
+            .unwrap()
+            .network;
+        let slh_regtest = toml::from_str::<Config>(&format!(
+            "network = {{ params = {{ activation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}, {CUSTOM_SLH_FIELDS} }} }}"
+        ))
+        .unwrap()
+        .network;
+
+        for (network, network_id) in [
+            (Network::Mainnet, ZakuraNetworkId::Mainnet),
+            (Network::new_default_testnet(), ZakuraNetworkId::Testnet),
+            (
+                Network::new_regtest(Default::default()),
+                ZakuraNetworkId::Regtest,
+            ),
+            (slh_regtest, ZakuraNetworkId::Regtest),
+            (custom, ZakuraNetworkId::Configured),
+        ] {
+            let plain = ZakuraHandshakeConfig::for_network(&network);
+            assert_eq!(plain.network_id, network_id);
+            assert_eq!(plain.chain_id, network.genesis_hash().0);
+            for tag in [None, Some("")] {
+                assert_eq!(
+                    ZakuraHandshakeConfig::for_network_with_dev_cohort(&network, tag),
+                    plain
+                );
+            }
+            let cohort =
+                ZakuraHandshakeConfig::for_network_with_dev_cohort(&network, Some("shared"));
+            assert_eq!(cohort.network_id, ZakuraNetworkId::Configured);
+            assert_eq!(
+                cohort.chain_id,
+                derive_dev_chain_id(network.genesis_hash().0, "shared")
+            );
+        }
     }
 
     #[test]
