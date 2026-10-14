@@ -367,6 +367,13 @@ fn peer_action(error: &TransactionError) -> PeerAction {
         | RedJubjub(_)
         | RedPallas(_) => BanV5AndLater,
 
+        // SLH verification follows the version and branch-ID checks. Preserve
+        // penalties for invalid authorization, transaction context and limits.
+        ExperimentalSlhDsaB128s { .. }
+        | ExperimentalSlhDsaB128sContext { .. }
+        | ExperimentalSlhDsaB128sMixedInputs
+        | ExperimentalSlhDsaB128sTransactionBudget { .. } => BanV5AndLater,
+
         // Only v5 and later transactions contain Orchard actions.
         DisabledAddToOrchardPool => BanV5AndLater,
 
@@ -407,7 +414,16 @@ fn peer_action(error: &TransactionError) -> PeerAction {
         Zip317(_)
         | NonStandardScriptSigSize { .. }
         | NonStandardScriptSigNotPushOnly { .. }
-        | NonStandardInputs => Ignore,
+        | NonStandardInputs
+        | NonStandardSlhDsaB128sOutput { .. }
+        | NonStandardSlhDsaB128sDust { .. } => Ignore,
+
+        // Missing local SLH capabilities/context and a block-scoped budget
+        // failure do not establish that this transaction or peer is invalid.
+        ExperimentalSlhDsaB128sInputContext
+        | ExperimentalSlhDsaB128sBackendUnavailable
+        | ExperimentalSlhDsaB128sBudgetContext
+        | ExperimentalSlhDsaB128sBlockBudget { .. } => Ignore,
 
         // Only block verification returns these. The mempool rejects coinbase
         // transactions before their coinbase checks.

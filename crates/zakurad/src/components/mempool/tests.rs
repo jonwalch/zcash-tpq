@@ -63,6 +63,66 @@ fn transaction_error_peer_log_labels_require_explicit_opt_in() {
 }
 
 #[test]
+fn slh_peer_penalties_distinguish_invalid_transactions_from_local_failures() {
+    use zakura_chain::parameters::NetworkUpgrade;
+    use zakura_consensus::error::TransactionError::*;
+
+    let peer = "192.0.2.1:8233".parse().expect("valid test socket");
+    let tip_height = Some(zakura_chain::block::Height(111));
+    let invalid =
+        |error, transaction_version, advertiser_addr| TransactionDownloadVerifyError::Invalid {
+            error,
+            advertiser_addr,
+            tip_height,
+            transaction_version,
+            transaction_network_upgrade: Some(NetworkUpgrade::Nu7),
+            retried_after_tip_reset: false,
+        };
+
+    for error in [
+        ExperimentalSlhDsaB128s {
+            input_index: 0,
+            reason: "signature".to_owned(),
+        },
+        ExperimentalSlhDsaB128sContext {
+            reason: "consensus_branch".to_owned(),
+        },
+        ExperimentalSlhDsaB128sMixedInputs,
+        ExperimentalSlhDsaB128sTransactionBudget { limit: 16 },
+    ] {
+        for version in [5, 6] {
+            let failure = invalid(error.clone(), version, Some(peer));
+            assert_eq!(transaction_ban_peer(&failure), Some(peer), "{error:?}");
+            assert_eq!(
+                transaction_cooldown_peer(&failure, tip_height, NetworkUpgrade::Nu7, None),
+                None
+            );
+            assert_eq!(
+                transaction_ban_peer(&invalid(error.clone(), version, None)),
+                None
+            );
+        }
+    }
+
+    for error in [
+        ExperimentalSlhDsaB128sInputContext,
+        ExperimentalSlhDsaB128sBackendUnavailable,
+        ExperimentalSlhDsaB128sBudgetContext,
+        ExperimentalSlhDsaB128sBlockBudget { limit: 64 },
+        NonStandardSlhDsaB128sOutput { output_index: 0 },
+        NonStandardSlhDsaB128sDust { output_index: 0 },
+    ] {
+        let failure = invalid(error.clone(), 5, Some(peer));
+        assert_eq!(transaction_ban_peer(&failure), None, "{error:?}");
+        assert_eq!(
+            transaction_cooldown_peer(&failure, tip_height, NetworkUpgrade::Nu7, None),
+            None,
+            "{error:?}"
+        );
+    }
+}
+
+#[test]
 fn lock_time_and_maturity_failures_start_no_cooldown() {
     use std::{collections::HashMap, sync::Arc};
 

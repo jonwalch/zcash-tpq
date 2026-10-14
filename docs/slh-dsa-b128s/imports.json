@@ -3268,8 +3268,8 @@
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Reuse existing network-aware storage construction pattern through chain_tip_change.network(); no new state or reset path.",
-      "sha256": "960db719dfd25e510c0af094269735c49e715a48e5f325e3f69b34b3b3d0fe28"
+      "reason": "Reuse existing network-aware storage construction pattern through chain_tip_change.network(); no new state or reset path. Adapt upstream exhaustive peer-action classification to SLH errors: preserve penalties for invalid v5/v6 authorization/context/transaction budgets, and no penalties for local capability/context failures, block budgets or output policy.",
+      "sha256": "4ae3daec700348f29372732b8cac675fa4366b756c3dea05470e1ca272fde46d"
     },
     {
       "disposition": "upstream-modification",
@@ -3300,6 +3300,16 @@
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
       "sha256": "bb43ac2855b238022a8a330540025a63ba3c76e66423ae5f029737b744e2e59e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/mempool/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Exercise SLH peer penalties through actual download-error wrappers for v5/v6, absent advertiser addresses and local/policy failures. Regression for the upstream exhaustive peer-action match added during this update.",
+      "sha256": "184f25ac239c0db82e5cface19ab403eed8b9c8d0d59c5d42e5a5de791cae49a"
     },
     {
       "disposition": "upstream-modification",
