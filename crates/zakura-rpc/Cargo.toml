@@ -23,7 +23,7 @@ categories = [
 exclude = ["*.proto"]
 
 [features]
-# Experimental SLH mining accounting, off by default and Regtest-only.
+# Experimental SLH mining accounting, off by default on explicitly configured test networks.
 experimental-slh-dsa-b128s = ["zakura-consensus/experimental-slh-dsa-b128s"]
 
 # Production features that activate extra dependencies, or extra features in

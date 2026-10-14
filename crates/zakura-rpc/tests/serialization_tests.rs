@@ -248,6 +248,61 @@ fn test_get_blockchain_info_accepts_legacy_value_pools() -> Result<(), Box<dyn s
 }
 
 #[test]
+fn test_slh_blockchain_info_preserves_legacy_json_and_exposes_diagnostics(
+) -> Result<(), Box<dyn std::error::Error>> {
+    use zakura_rpc::client::{zakura_chain::block::Height, ExperimentalSlhDsaB128sInfo};
+
+    let legacy: GetBlockchainInfoResponse = serde_json::from_str(GET_BLOCKCHAIN_INFO_RESPONSE)?;
+    assert!(legacy.experimental_slh_dsa_b128s().is_none());
+    assert!(serde_json::to_value(&legacy)?
+        .get("experimental_slh_dsa_b128s")
+        .is_none());
+
+    let diagnostic = serde_json::json!({
+        "schema_version": 1,
+        "contract": "slh-dsa-b-128s-exp-v1",
+        "verifier_compiled": true,
+        "runtime_supported": true,
+        "genesis_hash": "12".repeat(32),
+        "chain_fingerprint": "34".repeat(32),
+        "activation_height": 110,
+        "max_checks_per_transaction": 16,
+        "max_checks_per_block": 64,
+        "tip_height": 109,
+        "next_block_height": 110,
+        "active_for_next_block": true
+    });
+    let mut json = serde_json::to_value(&legacy)?;
+    json["experimental_slh_dsa_b128s"] = diagnostic.clone();
+    let response: GetBlockchainInfoResponse = serde_json::from_value(json)?;
+    let info: &ExperimentalSlhDsaB128sInfo =
+        response.experimental_slh_dsa_b128s().as_ref().unwrap();
+    assert_eq!(info.schema_version(), 1);
+    assert_eq!(info.contract(), "slh-dsa-b-128s-exp-v1");
+    assert!(info.verifier_compiled());
+    assert!(info.runtime_supported());
+    assert_eq!(info.genesis_hash().0, [0x12; 32]);
+    assert_eq!(info.chain_fingerprint(), &Some("34".repeat(32)));
+    assert_eq!(info.activation_height(), Height(110));
+    assert_eq!(info.max_checks_per_transaction(), 16);
+    assert_eq!(info.max_checks_per_block(), 64);
+    assert_eq!(info.tip_height(), Some(Height(109)));
+    assert_eq!(info.next_block_height(), Some(Height(110)));
+    assert_eq!(info.active_for_next_block(), Some(true));
+    assert_eq!(serde_json::to_value(info)?, diagnostic);
+
+    let mut unavailable = diagnostic;
+    for key in ["tip_height", "next_block_height", "active_for_next_block"] {
+        unavailable[key] = serde_json::Value::Null;
+    }
+    let info: ExperimentalSlhDsaB128sInfo = serde_json::from_value(unavailable)?;
+    assert_eq!(info.tip_height(), None);
+    assert_eq!(info.next_block_height(), None);
+    assert_eq!(info.active_for_next_block(), None);
+    Ok(())
+}
+
+#[test]
 fn test_get_block_0() -> Result<(), Box<dyn std::error::Error>> {
     let json = r#""00000000007bacdb373ca240dc6f044f0a816a407bc1924f82a2d84ebfa6103f""#;
     let obj: GetBlockResponse = serde_json::from_str(json)?;

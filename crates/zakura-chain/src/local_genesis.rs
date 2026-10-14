@@ -20,7 +20,7 @@ use crate::{
     parameters::{
         testnet::{
             ConfiguredActivationHeights, ConfiguredCheckpoints, ConfiguredLockboxDisbursement,
-            Parameters as TestnetParams,
+            ExperimentalSlhDsaB128sLimits, Parameters as TestnetParams,
         },
         Magic, Network, NetworkKind, NetworkUpgrade,
     },
@@ -111,7 +111,8 @@ impl GeneratedLocalTestnet {
 /// premine block per miner name, each paying 10 ZEC to a freshly generated
 /// P2PKH address, plus optional extra empty blocks. Network upgrades activate
 /// after all generated seed blocks so they can use the simpler pre-Overwinter
-/// commitment format.
+/// commitment format. Invalid seed counts and activation heights return an error
+/// before key or block generation, for both ordinary and SLH custom testnets.
 ///
 /// When `disable_pow` is false and the `internal-miner` feature is enabled,
 /// each block header is solved with Equihash before inclusion.
@@ -119,14 +120,50 @@ pub fn generate_local_testnet_with_funded_keys(
     miner_names: Vec<String>,
     options: LocalTestnetGenesisOptions,
 ) -> Result<GeneratedLocalTestnet, crate::BoxError> {
+    generate_local_testnet(miner_names, options, None)
+}
+
+/// Generate an isolated testnet with experimental SLH rules after its seed chain.
+///
+/// The caller must explicitly select [`NetworkUpgrade::Nu7`] in `options` and
+/// supply signature-check limits. NU7 activates immediately after the seed tip;
+/// SLH activates in the following block. Save the resulting network and seed
+/// blocks once, then reuse them for every node and restart. The generated keys
+/// fund classical outputs; this function does not generate SLH keys or signatures.
+///
+/// `disable_pow` retains its explicit value from `options`. A public devnet that
+/// requires proof of work must set it to false.
+pub fn generate_local_testnet_with_slh_dsa_b128s(
+    miner_names: Vec<String>,
+    options: LocalTestnetGenesisOptions,
+    limits: ExperimentalSlhDsaB128sLimits,
+) -> Result<GeneratedLocalTestnet, crate::BoxError> {
+    if options.latest_network_upgrade != NetworkUpgrade::Nu7 {
+        return Err(
+            "an SLH testnet must explicitly select NU7 as its latest network upgrade".into(),
+        );
+    }
+
+    generate_local_testnet(miner_names, options, Some(limits))
+}
+
+fn generate_local_testnet(
+    miner_names: Vec<String>,
+    options: LocalTestnetGenesisOptions,
+    slh_limits: Option<ExperimentalSlhDsaB128sLimits>,
+) -> Result<GeneratedLocalTestnet, crate::BoxError> {
     if options.target_spacing_secs == 0 {
         return Err("target_spacing_secs must be non-zero".into());
     }
 
     let num_miners = u32::try_from(miner_names.len())?;
-    let activation_height = num_miners
-        .saturating_add(options.maturity_padding_blocks)
-        .saturating_add(1);
+    let seeded_block_count = num_miners
+        .checked_add(options.maturity_padding_blocks)
+        .ok_or("seeded block count overflow")?;
+    let activation_height = Height::try_from(seeded_block_count)?.next()?;
+    let slh_activation = slh_limits
+        .map(|limits| activation_height.next().map(|height| (height, limits)))
+        .transpose()?;
 
     // Generate funded keys.
     let mut rng = OsRng;
@@ -161,7 +198,6 @@ pub fn generate_local_testnet_with_funded_keys(
     ));
     let compact_difficulty = target_difficulty.to_compact();
 
-    let seeded_block_count = num_miners.saturating_add(options.maturity_padding_blocks);
     let target_spacing_secs = i64::from(options.target_spacing_secs);
     let seeded_tip_time = match options.seeded_tip_time {
         Some(time) => time,
@@ -243,11 +279,12 @@ pub fn generate_local_testnet_with_funded_keys(
         network_name: &options.network_name,
         genesis_hash,
         latest_network_upgrade: options.latest_network_upgrade,
-        activation_height,
+        activation_height: activation_height.0,
         disable_pow: options.disable_pow,
         checkpoints: &checkpoints,
         magic_bytes,
         target_difficulty,
+        slh_activation,
     })?;
 
     Ok(GeneratedLocalTestnet {
@@ -370,6 +407,7 @@ struct BuildNetworkOptions<'a> {
     checkpoints: &'a [(Height, block::Hash)],
     magic_bytes: [u8; 4],
     target_difficulty: ExpandedDifficulty,
+    slh_activation: Option<(Height, ExperimentalSlhDsaB128sLimits)>,
 }
 
 /// Build a zakura-chain [`Network`] from the generated parameters.
@@ -383,6 +421,7 @@ fn build_network(options: BuildNetworkOptions<'_>) -> Result<Network, crate::Box
         checkpoints,
         magic_bytes,
         target_difficulty,
+        slh_activation,
     } = options;
 
     let activation_heights =
@@ -407,6 +446,10 @@ fn build_network(options: BuildNetworkOptions<'_>) -> Result<Network, crate::Box
             checkpoints.to_vec(),
         ))?;
 
+    let builder = match slh_activation {
+        Some((height, limits)) => builder.with_experimental_slh_dsa_b128s(height, limits)?,
+        None => builder,
+    };
     let network = builder.to_network()?;
     Ok(network)
 }
@@ -543,6 +586,9 @@ mod tests {
 
         let activation_height = Height(3);
         let network = &generated.network;
+
+        assert_eq!(network.experimental_slh_dsa_b128s_activation_height(), None);
+        assert_eq!(network.experimental_slh_dsa_b128s_limits(), None);
 
         assert_eq!(
             NetworkUpgrade::Nu6_3.activation_height(network),
@@ -727,5 +773,92 @@ mod tests {
         let times = block_times(&generated);
         assert_eq!(times.first().copied(), Some(9_875));
         assert_eq!(times.last().copied(), Some(10_000));
+    }
+
+    #[test]
+    fn slh_generator_preserves_seed_chain_and_sets_rules() {
+        let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+        let generated = generate_local_testnet_with_slh_dsa_b128s(
+            vec!["alice".to_string()],
+            LocalTestnetGenesisOptions {
+                latest_network_upgrade: NetworkUpgrade::Nu7,
+                maturity_padding_blocks: 2,
+                seeded_tip_time: Some(10_000),
+                ..Default::default()
+            },
+            limits,
+        )
+        .expect("explicit NU7 permits the SLH test profile");
+        let network = &generated.network;
+
+        assert_eq!(generated.blocks.len(), 4);
+        assert_eq!(network.genesis_hash(), generated.blocks[0].hash());
+        assert_eq!(network.checkpoint_list().max_height(), Height(3));
+        assert_eq!(
+            NetworkUpgrade::Nu7.activation_height(network),
+            Some(Height(4))
+        );
+        assert_eq!(
+            network.experimental_slh_dsa_b128s_activation_height(),
+            Some(Height(5))
+        );
+        assert_eq!(network.experimental_slh_dsa_b128s_limits(), Some(limits));
+        assert!(!network.is_experimental_slh_dsa_b128s_active(Height(4)));
+        assert!(network.is_experimental_slh_dsa_b128s_active(Height(5)));
+        assert_eq!(network.lockbox_disbursements(Height(4)).len(), 1);
+        assert_eq!(generated.funded_keys.len(), 1);
+        assert_eq!(
+            generated.blocks[1].transactions[0].outputs()[0].address(network),
+            Some(generated.funded_keys[0].address)
+        );
+
+        assert!(network
+            .experimental_slh_dsa_b128s_chain_fingerprint()
+            .is_some());
+    }
+
+    #[test]
+    fn slh_generator_requires_explicit_nu7() {
+        let result = generate_local_testnet_with_slh_dsa_b128s(
+            Vec::new(),
+            LocalTestnetGenesisOptions::default(),
+            ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+        );
+        let Err(error) = result else {
+            panic!("the non-SLH generator default must not enable SLH implicitly");
+        };
+        assert!(error.to_string().contains("explicitly select NU7"));
+    }
+
+    #[test]
+    fn slh_shared_generator_rejects_classical_height_overflow_before_generating_blocks() {
+        for miner_names in [Vec::new(), vec!["miner".to_string()]] {
+            for maturity_padding_blocks in [Height::MAX.0, u32::MAX] {
+                assert!(generate_local_testnet_with_funded_keys(
+                    miner_names.clone(),
+                    LocalTestnetGenesisOptions {
+                        maturity_padding_blocks,
+                        ..Default::default()
+                    },
+                )
+                .is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn slh_generator_rejects_height_overflow_before_generating_blocks() {
+        for maturity_padding_blocks in [Height::MAX.0 - 1, Height::MAX.0, u32::MAX] {
+            assert!(generate_local_testnet_with_slh_dsa_b128s(
+                Vec::new(),
+                LocalTestnetGenesisOptions {
+                    latest_network_upgrade: NetworkUpgrade::Nu7,
+                    maturity_padding_blocks,
+                    ..Default::default()
+                },
+                ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+            )
+            .is_err());
+        }
     }
 }

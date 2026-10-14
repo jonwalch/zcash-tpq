@@ -234,11 +234,15 @@ impl StartCmd {
             .consensus
             .validate()
             .map_err(|error| eyre!("invalid consensus configuration: {error}"))?;
+        config
+            .network
+            .validate_experimental_slh_dsa_b128s_peers()
+            .map_err(|error| eyre!("invalid SLH network configuration: {error}"))?;
         Self::validate_experimental_slh_dsa_b128s_support(config)
     }
 
     /// A node without the SLH-DSA-B-128s verifier would reject SLH-DSA-B-128s spends that other
-    /// nodes on the same experimental Regtest chain accept, so it must not start.
+    /// nodes on the same experimental chain accept, so it must not start.
     fn validate_experimental_slh_dsa_b128s_support(config: &ZakuradConfig) -> Result<(), Report> {
         if config
             .network
@@ -1508,6 +1512,137 @@ mod tests {
             zakura_consensus::supports_experimental_slh_dsa_b128s(),
             "{result:?}"
         );
+    }
+
+    #[test]
+    fn custom_testnet_slh_config_requires_complete_runtime_support() {
+        use zakura_chain::{
+            local_genesis::{
+                generate_local_testnet_with_slh_dsa_b128s, LocalTestnetGenesisOptions,
+            },
+            parameters::{testnet::ExperimentalSlhDsaB128sLimits, NetworkUpgrade},
+        };
+
+        let mut config = ZakuradConfig::default();
+        config.network.network = generate_local_testnet_with_slh_dsa_b128s(
+            Vec::new(),
+            LocalTestnetGenesisOptions {
+                latest_network_upgrade: NetworkUpgrade::Nu7,
+                ..Default::default()
+            },
+            ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+        )
+        .expect("explicit NU7 permits the custom SLH testnet")
+        .network;
+        config.network.initial_testnet_peers.clear();
+        config.network.zakura.bootstrap_peers.clear();
+        assert!(!config.network.network.is_regtest());
+        let result = StartCmd::validate_consensus_config(&config);
+        assert_eq!(
+            result.is_ok(),
+            zakura_consensus::supports_experimental_slh_dsa_b128s(),
+            "{result:?}"
+        );
+        let result = StartCmd::default().override_config(config);
+        assert_eq!(
+            result.is_ok(),
+            zakura_consensus::supports_experimental_slh_dsa_b128s(),
+            "CLI and embedded startup both apply the same configuration override: {result:?}"
+        );
+    }
+
+    #[test]
+    fn custom_testnet_slh_config_rejects_builtin_peers_before_runtime_support_check() {
+        use zakura_chain::{
+            local_genesis::{
+                generate_local_testnet_with_slh_dsa_b128s, LocalTestnetGenesisOptions,
+            },
+            parameters::{testnet::ExperimentalSlhDsaB128sLimits, Network, NetworkUpgrade},
+        };
+
+        let mut config = ZakuradConfig::default();
+        config.network.network = generate_local_testnet_with_slh_dsa_b128s(
+            Vec::new(),
+            LocalTestnetGenesisOptions {
+                latest_network_upgrade: NetworkUpgrade::Nu7,
+                ..Default::default()
+            },
+            ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+        )
+        .expect("explicit NU7 permits the custom SLH testnet")
+        .network;
+
+        // Direct Rust configuration must reject both public legacy seed sets.
+        let defaults = zakura_network::Config::default();
+        config.network.zakura.bootstrap_peers.clear();
+        for peers in [
+            defaults.initial_mainnet_peers,
+            defaults.initial_testnet_peers,
+        ] {
+            config.network.initial_testnet_peers = peers;
+            let error = StartCmd::default()
+                .override_config(config.clone())
+                .unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("require explicit initial_testnet_peers"));
+        }
+
+        // Check native bootstrap peers independently of the selected P2P stack.
+        config.network.initial_testnet_peers.clear();
+        for network in [Network::Mainnet, Network::new_default_testnet()] {
+            config.network.zakura.bootstrap_peers =
+                zakura_network::zakura::ZakuraConfig::default_bootstrap_peers_for_network(&network);
+            let error = StartCmd::default()
+                .override_config(config.clone())
+                .unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("require explicit zakura.bootstrap_peers"));
+        }
+
+        config.network.zakura.bootstrap_peers = vec!["127.0.0.1:19934".to_string()];
+        let error = StartCmd::default()
+            .override_config(config.clone())
+            .unwrap_err();
+        assert!(error.to_string().contains("NodeId@IP:port"));
+        config.network.zakura.bootstrap_peers.clear();
+        for stack in [
+            zakura_network::P2pStack::Legacy,
+            zakura_network::P2pStack::Dual,
+        ] {
+            config.network.p2p_stack = stack;
+            let error = StartCmd::default()
+                .override_config(config.clone())
+                .unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("legacy peers cannot verify the chain fingerprint"));
+        }
+        config.network.p2p_stack = zakura_network::P2pStack::Default;
+
+        for use_custom_peers in [false, true] {
+            config.network.zakura.bootstrap_peers.clear();
+            if use_custom_peers {
+                config
+                    .network
+                    .initial_testnet_peers
+                    .insert("127.0.0.1:19933".to_string());
+                config
+                    .network
+                    .zakura
+                    .bootstrap_peers
+                    .push("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a@127.0.0.1:19934".to_string());
+            }
+            assert!(config
+                .network
+                .validate_experimental_slh_dsa_b128s_peers()
+                .is_ok());
+            assert_eq!(
+                StartCmd::default().override_config(config.clone()).is_ok(),
+                zakura_consensus::supports_experimental_slh_dsa_b128s()
+            );
+        }
     }
 
     #[test]

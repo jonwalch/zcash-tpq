@@ -11,7 +11,7 @@
 //! Endpoints
 //!
 //! - `GET /healthy` — returns `200 OK` if the process is up and the node has at least
-//!   `min_connected_peers` recently live peers (default: 1). Otherwise `503 Service Unavailable`.
+//!   `min_connected_peers` active peers (default: 1). Otherwise `503 Service Unavailable`.
 //! - `GET /ready` — returns `200 OK` if the node is near the chain tip, the estimated block lag is
 //!   within `ready_max_blocks_behind`, and the latest committed block is recent. On regtest/testnet,
 //!   readiness returns `200` unless `enforce_on_test_networks` is set.
@@ -194,9 +194,8 @@ where
     Ok(response)
 }
 
-// Liveness: ensure we still have the configured minimum of recently live peers,
-// matching historical behaviour but fed from the cached snapshot to avoid
-// mutex contention.
+// Liveness: require the configured minimum of active peers, using the cached
+// snapshot to avoid mutex contention.
 async fn healthy<SyncStatus>(ctx: &HealthCtx<SyncStatus>) -> Response<Full<Bytes>>
 where
     SyncStatus: ChainSyncStatus + Clone + Send + Sync + 'static,
@@ -264,7 +263,7 @@ where
     A: AddressBookPeers + Clone + Send + Sync + 'static,
 {
     let address_book = address_book.clone();
-    tokio::task::spawn_blocking(move || address_book.recently_live_peers(Utc::now()).len())
+    tokio::task::spawn_blocking(move || address_book.connected_peer_count(Utc::now()))
         .await
         .inspect_err(|err| warn!(?err, "failed to refresh peer metrics"))
         .ok()

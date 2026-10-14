@@ -51,6 +51,9 @@ pub async fn run_with_services(
 ///
 /// The receiver closes without a value if startup fails or is cancelled. Dropping
 /// the receiver does not stop the node; use `shutdown` to request cleanup.
+/// Receiving service handles does not establish synchronization or mempool
+/// readiness. Custom testnets still need their configured seed chain. SLH rule
+/// status is available from `getblockchaininfo`; a missing tip is not active.
 pub async fn run_with_services_ready(
     config: ZakuradConfig,
     custom_services: Vec<CustomService>,
@@ -106,6 +109,43 @@ mod tests {
     use super::*;
     use tokio::time::timeout;
     use zakura_network::zakura::{Peer, Service, Stream, ZakuraConnId, ZakuraPeerId};
+
+    #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
+    #[tokio::test]
+    async fn embedded_slh_devnet_refuses_startup_before_services_are_ready() {
+        use zakura_chain::{
+            local_genesis::{
+                generate_local_testnet_with_slh_dsa_b128s, LocalTestnetGenesisOptions,
+            },
+            parameters::{testnet::ExperimentalSlhDsaB128sLimits, NetworkUpgrade},
+        };
+
+        let mut config = ZakuradConfig::default();
+        config.network.network = generate_local_testnet_with_slh_dsa_b128s(
+            Vec::new(),
+            LocalTestnetGenesisOptions {
+                latest_network_upgrade: NetworkUpgrade::Nu7,
+                ..Default::default()
+            },
+            ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+        )
+        .expect("explicit NU7 permits the custom SLH testnet")
+        .network;
+        config.network.initial_testnet_peers.clear();
+        config.network.zakura.bootstrap_peers.clear();
+        let (ready, received) = tokio::sync::oneshot::channel();
+        let result = timeout(
+            Duration::from_secs(1),
+            run_with_services_ready(config, Vec::new(), CancellationToken::new(), ready),
+        )
+        .await
+        .expect("unsupported SLH configuration fails before node services start");
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("complete SLH-DSA-B-128s runtime support"));
+        assert!(received.await.is_err());
+    }
 
     #[derive(Debug)]
     struct RegistrationProbe(Arc<AtomicBool>);

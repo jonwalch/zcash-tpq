@@ -70,7 +70,7 @@ features = [
 ]
 
 [features]
-# Experimental Regtest verifier and matching relay/mining resource accounting.
+# Experimental test-network verifier and matching relay/mining resource accounting.
 # Configured startup is additionally gated by the complete runtime support signal.
 experimental-slh-dsa-b128s = [
     "zakura-consensus/experimental-slh-dsa-b128s",

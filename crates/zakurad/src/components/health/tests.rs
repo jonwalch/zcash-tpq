@@ -10,7 +10,7 @@ use tokio::{
     time::timeout,
 };
 use zakura_chain::{chain_sync_status::mock::MockSyncStatus, parameters::Network};
-use zakura_network::{address_book_peers::MockAddressBookPeers, PeerSocketAddr};
+use zakura_network::{address_book_peers::MockAddressBookPeers, ConnectedPeer, PeerSocketAddr};
 
 // Build a config tailored for tests: enable the listener and disable the
 // built-in rate limiter so assertions don't race the cooldown unless a test
@@ -66,6 +66,67 @@ async fn http_get(addr: SocketAddr, path: &str) -> Option<(u16, String)> {
         .unwrap_or(0);
 
     Some((status, text))
+}
+
+#[tokio::test]
+async fn native_peer_health_uses_active_registry_without_listener() {
+    let native_peers = vec![
+        ConnectedPeer::from_native(
+            "192.0.2.1:19934".parse().expect("test address parses"),
+            false,
+        ),
+        ConnectedPeer::from_native(
+            "[2001:db8::2]:34567".parse().expect("test address parses"),
+            true,
+        ),
+    ];
+    // The recently live address is unrelated to the two native connections.
+    let peers = peers_with_count(1).with_connected_peers(native_peers);
+    let count = timeout(Duration::from_secs(2), num_live_peers(&peers))
+        .await
+        .expect("peer snapshot completes")
+        .expect("snapshot succeeds");
+    assert_eq!(count, 2);
+    let (num_live_peer_sender, num_live_peer_receiver) = watch::channel(count);
+    let (tip_sender, chain_tip_metrics_receiver) = ChainTipMetrics::channel();
+    tip_sender
+        .send(ChainTipMetrics::new(Instant::now(), Some(0)))
+        .expect("tip receiver is live");
+    let mut sync_status = MockSyncStatus::default();
+    sync_status.set_is_close_to_tip(true);
+    let mut ctx = HealthCtx {
+        config: Config {
+            enforce_on_test_networks: true,
+            ..Default::default()
+        },
+        network: Network::new_default_testnet(),
+        chain_tip_metrics_receiver,
+        sync_status,
+        num_live_peer_receiver,
+    };
+    assert_eq!(healthy(&ctx).await.status(), StatusCode::OK);
+    assert_eq!(ready(&ctx).await.status(), StatusCode::OK);
+
+    ctx.sync_status.set_is_close_to_tip(false);
+    assert_eq!(healthy(&ctx).await.status(), StatusCode::OK);
+    assert_eq!(ready(&ctx).await.status(), StatusCode::SERVICE_UNAVAILABLE);
+    ctx.sync_status.set_is_close_to_tip(true);
+
+    // An empty live registry means disconnected, even with a recently live address.
+    let peers = peers.with_connected_peers(Vec::new());
+    let count = timeout(Duration::from_secs(2), num_live_peers(&peers))
+        .await
+        .expect("peer snapshot completes")
+        .expect("snapshot succeeds");
+    assert_eq!(count, 0);
+    num_live_peer_sender
+        .send(count)
+        .expect("peer receiver is live");
+    assert_eq!(
+        healthy(&ctx).await.status(),
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+    assert_eq!(ready(&ctx).await.status(), StatusCode::SERVICE_UNAVAILABLE);
 }
 
 #[tokio::test]

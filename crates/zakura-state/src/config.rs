@@ -228,6 +228,9 @@ fn gen_temp_path(prefix: &str) -> PathBuf {
 /// Keep experimental consensus histories separate, including their restart backups.
 fn state_network_directory(network: &Network) -> String {
     let base = network.lowercase_name();
+    if let Some(fingerprint) = network.experimental_slh_dsa_b128s_chain_fingerprint() {
+        return format!("{base}-slh-dsa-b128s-v1-{}", hex::encode(fingerprint));
+    }
     match network.experimental_slh_dsa_b128s_activation_height() {
         Some(height) => {
             let limits = network
@@ -511,6 +514,125 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn slh_devnet_builder() -> zakura_chain::parameters::testnet::ParametersBuilder {
+        use zakura_chain::{
+            block::{Hash, Height},
+            parameters::{
+                testnet::{ConfiguredActivationHeights, Parameters},
+                Magic,
+            },
+        };
+
+        Parameters::build()
+            .with_network_name("SlhDevnet")
+            .unwrap()
+            .with_network_magic(Magic([0x53, 0x4c, 0x48, 0x31]))
+            .unwrap()
+            .with_genesis_hash(Hash([42; 32]))
+            .unwrap()
+            .with_activation_heights(ConfiguredActivationHeights {
+                nu6_3: Some(1),
+                nu7: Some(5),
+                ..Default::default()
+            })
+            .unwrap()
+            .with_slow_start_interval(Height(0))
+            .clear_funding_streams()
+            .with_lockbox_disbursements(vec![])
+            .clear_checkpoints()
+            .unwrap()
+    }
+
+    #[test]
+    fn experimental_slh_dsa_b128s_devnet_state_and_backups_bind_full_identity() {
+        use zakura_chain::{
+            block::{Hash, Height},
+            parameters::testnet::{ConfiguredActivationHeights, ExperimentalSlhDsaB128sLimits},
+        };
+
+        let directory = tempfile::tempdir().unwrap();
+        let config = Config {
+            cache_dir: directory.path().to_owned(),
+            ephemeral: false,
+            should_backup_non_finalized_state: true,
+            ..Default::default()
+        };
+        let plain = slh_devnet_builder().to_network().unwrap();
+        let builders = [
+            slh_devnet_builder(),
+            slh_devnet_builder()
+                .with_genesis_hash(Hash([43; 32]))
+                .unwrap()
+                .clear_checkpoints()
+                .unwrap(),
+            slh_devnet_builder()
+                .with_activation_heights(ConfiguredActivationHeights {
+                    nu6_3: Some(1),
+                    nu7: Some(6),
+                    ..Default::default()
+                })
+                .unwrap(),
+            slh_devnet_builder().with_disable_pow(true),
+        ];
+        let plain_paths = [
+            config.db_path("state", 1, &plain),
+            config.non_finalized_state_backup_dir(&plain).unwrap(),
+        ];
+        let mut paths = std::collections::HashSet::new();
+        for path in &plain_paths {
+            assert_eq!(path.file_name().unwrap(), "slhdevnet");
+            fs::create_dir_all(path).unwrap();
+            fs::write(path.join("marker"), b"plain devnet state").unwrap();
+            paths.insert(path.clone());
+        }
+        for builder in builders {
+            let builder = builder
+                .with_experimental_slh_dsa_b128s(
+                    Height(10),
+                    ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+                )
+                .unwrap();
+            let network = builder.clone().to_network().unwrap();
+            let fingerprint = network
+                .experimental_slh_dsa_b128s_chain_fingerprint()
+                .unwrap();
+            let expected = format!("slhdevnet-slh-dsa-b128s-v1-{}", hex::encode(fingerprint));
+            for path in [
+                config.db_path("state", 1, &network),
+                config.non_finalized_state_backup_dir(&network).unwrap(),
+            ] {
+                assert_eq!(path.file_name().unwrap(), expected.as_str());
+                assert!(
+                    paths.insert(path.clone()),
+                    "same-name devnets must not share state"
+                );
+                assert!(!path.exists(), "changed consensus needs fresh state");
+                fs::create_dir_all(&path).unwrap();
+                fs::write(path.join("marker"), b"SLH devnet state").unwrap();
+            }
+            let restart = builder.to_network().unwrap();
+            for path in [
+                config.db_path("state", 1, &restart),
+                config.non_finalized_state_backup_dir(&restart).unwrap(),
+            ] {
+                assert_eq!(fs::read(path.join("marker")).unwrap(), b"SLH devnet state");
+            }
+            assert_eq!(
+                config
+                    .version_file_path("state", 1, &network)
+                    .parent()
+                    .unwrap(),
+                config.db_path("state", 1, &network)
+            );
+        }
+        for path in plain_paths {
+            assert_eq!(
+                fs::read(path.join("marker")).unwrap(),
+                b"plain devnet state"
+            );
+        }
+    }
 
     #[test]
     fn wide_index_version_queries_require_a_full_marker() {

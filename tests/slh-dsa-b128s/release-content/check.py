@@ -25,6 +25,16 @@ FOUNDATION = "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
 FOUNDATION_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
 UPSTREAM = "e33dc43089acca2fe2c6516927932f2b7618b8bc"
 UPSTREAM_TREE = "88637ce09b0bbd5669b664e47b20b37b35523323"
+# GitHub squashed PR #12, so its exact upstream entries have no upstream parent
+# at this historical commit. Its exact record also survives later feature squashes.
+RECORDED_SQUASH_IMPORTS = {
+    "de7880372c50bbb285a622bcc4e577df7b35ca7d": {
+        "upstream": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+        "upstream_tree": "88637ce09b0bbd5669b664e47b20b37b35523323",
+        "tree": "bc284612ef8b367a9c364019b89f8bd366d2318f",
+        "parent": "91d2e2132fe9e9cacdde20362489c8462cf94baf",
+    },
+}
 LEDGER = "docs/slh-dsa-b128s/imports.json"
 KINDS = {"adapted", "new", "upstream-modification", "public-fixture", "attribution"}
 PRODUCT_PACKAGES = {"zakura-pq-cli", "zakura-pq-wallet", "zakura-pq-slh-dsa-b-sign",
@@ -219,12 +229,35 @@ def ancestor(root, earlier, later):
                           env=dict(os.environ, GIT_NO_LAZY_FETCH="1"), timeout=120).returncode == 0
 
 
+def authenticated_squash_imports(root):
+    """Authenticate only explicitly recorded squash commits in selected history."""
+    imports = {}
+    for revision, record in RECORDED_SQUASH_IMPORTS.items():
+        if not ancestor(root, revision, "HEAD"):
+            continue
+        require(record["upstream"] == UPSTREAM and record["upstream_tree"] == UPSTREAM_TREE,
+                "squash upstream pin mismatch")
+        require(git(root, "rev-parse", record["upstream"] + "^{tree}").decode().strip()
+                == record["upstream_tree"], "squash upstream tree mismatch")
+        require(git(root, "rev-parse", revision + "^{tree}").decode().strip() == record["tree"],
+                "squash tree mismatch")
+        require(git(root, "rev-list", "--parents", "-n", "1", revision).decode().split()
+                == [revision, record["parent"]], "squash parent mismatch")
+        require(ancestor(root, FOUNDATION, revision), "foreign ancestry in squash import")
+        imports[revision] = record["upstream"]
+    return imports
+
+
 def history(root, base, allowed):
     # The current baseline defines the final delta, but old product commits
     # descend from the original foundation, not later upstream releases.
     revisions = git(root, "rev-list", "HEAD", "^" + UPSTREAM).decode().splitlines()
+    selected_revisions = set(revisions)
+    squash_imports = authenticated_squash_imports(root)
     paths = set()
     upstream_entries = 0
+    squash_entries = 0
+    reused_product_entries = 0
     for revision in revisions:
         require(ancestor(root, FOUNDATION, revision),
                 "foreign ancestry in selected history")
@@ -233,12 +266,22 @@ def history(root, base, allowed):
         previous = tree(root, parents[0])
         state = tree(root, revision)
         touched = changed_paths(previous, state)
-        # Only exact entries from a merged, pinned upstream ancestor are
-        # inherited. A merge resolution with different bytes is product work.
+        # Only exact entries from an upstream parent or this exact recorded
+        # squash are inherited. Different modes, kinds or bytes are product work.
         inherited = [tree(root, parent) for parent in parents[1:] if ancestor(root, parent, UPSTREAM)]
+        squashed = tree(root, squash_imports[revision]) if revision in squash_imports else None
+        # These parents and every selected ancestor remain in the audit above.
+        # Reusing their exact entries does not authenticate their original import.
+        product_parents = [tree(root, parent) for parent in parents[1:] if parent in selected_revisions]
         for path in touched:
             if any(state.get(path) == upstream.get(path) for upstream in inherited):
                 upstream_entries += 1
+                continue
+            if squashed is not None and state.get(path) == squashed.get(path):
+                squash_entries += 1
+                continue
+            if any(state.get(path) == parent.get(path) for parent in product_parents):
+                reused_product_entries += 1
                 continue
             require(path in allowed, "unreviewed historical path: " + path)
             product_path(path)
@@ -253,7 +296,9 @@ def history(root, base, allowed):
             paths.add(path)
     return {"commits": len(revisions), "changed_paths": len(paths),
             "commits_sha256": sha(canonical(sorted(revisions))), "foundation": FOUNDATION,
-            "upstream": UPSTREAM, "inherited_merge_entries": upstream_entries}
+            "upstream": UPSTREAM, "inherited_merge_entries": upstream_entries,
+            "inherited_squash_entries": squash_entries, "authenticated_squash_imports": squash_imports,
+            "reused_product_entries": reused_product_entries}
 
 
 def refs(root):
@@ -365,7 +410,8 @@ def validate_baselines(root):
             "foundation tree mismatch")
     require(git(root, "rev-parse", UPSTREAM + "^{tree}").decode().strip() == UPSTREAM_TREE, "upstream tree mismatch")
     require(ancestor(root, FOUNDATION, UPSTREAM), "upstream does not descend from foundation")
-    require(ancestor(root, UPSTREAM, "HEAD"), "current upstream is not integrated")
+    require(ancestor(root, UPSTREAM, "HEAD") or bool(authenticated_squash_imports(root)),
+            "current upstream is not integrated by ancestry or an authenticated squash import")
 
 
 def check(root, *, packages=False):

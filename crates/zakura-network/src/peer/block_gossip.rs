@@ -585,8 +585,8 @@ mod tests {
                 let (mut peer, _receiver) = peer();
                 let (guard, updater) = registry.register_legacy(ConnectedPeer {
                     addr: format!("127.0.0.1:{}", i + 1).parse().unwrap(),
-                    user_agent: "test".into(),
-                    version: crate::constants::CURRENT_NETWORK_PROTOCOL_VERSION,
+                    user_agent: Some("test".into()),
+                    version: Some(crate::constants::CURRENT_NETWORK_PROTOCOL_VERSION),
                     is_inbound: false,
                     rtt: millis.map(Duration::from_millis),
                     ping_sent_at: None,

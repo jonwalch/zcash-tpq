@@ -148,6 +148,207 @@ class GitTests(unittest.TestCase):
         fixture.run("checkout", "-q", main)
         return fixture, upstream
 
+    def squashed_fixture(self, root, change=None):
+        fixture, upstream = self.refreshed_fixture(root)
+        parent = fixture.run("rev-parse", "HEAD")
+        fixture.run("merge", "-q", "--squash", upstream)
+        if change is not None:
+            change(fixture)
+        revision = fixture.commit("recorded upstream squash")
+        record = {"upstream": upstream, "upstream_tree": fixture.run("rev-parse", upstream + "^{tree}"),
+                  "tree": fixture.run("rev-parse", revision + "^{tree}"), "parent": parent}
+        pins = {"UPSTREAM": upstream, "UPSTREAM_TREE": record["upstream_tree"],
+                "FOUNDATION": fixture.base, "FOUNDATION_TREE": fixture.run("rev-parse", fixture.base + "^{tree}"),
+                "RECORDED_SQUASH_IMPORTS": {revision: record}}
+        return fixture, upstream, revision, pins
+
+    def merge_into_feature(self, fixture, revision, parent, change=None):
+        fixture.run("checkout", "-qb", "feature", parent)
+        fixture.write("feature.txt", "attributable feature work\n")
+        fixture.commit("feature work before main merge")
+        fixture.run("merge", "-q", "--no-ff", "--no-commit", revision)
+        if change is not None:
+            change(fixture)
+        return fixture.commit("merge main into feature")
+
+    def test_recorded_squash_authenticates_baseline_without_upstream_parent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            self.assertFalse(audit.ancestor(fixture.root, upstream, "HEAD"))
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(fixture.root)
+            with patch.multiple(audit, **(pins | {"RECORDED_SQUASH_IMPORTS": {}})), \
+                    self.assertRaisesRegex(ValueError, "not integrated"):
+                audit.validate_baselines(fixture.root)
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(fixture.root)
+                result = audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+            self.assertEqual(result["commits"], 3)
+            self.assertEqual(result["changed_paths"], 1)
+            self.assertEqual(result["inherited_merge_entries"], 0)
+            self.assertEqual(result["inherited_squash_entries"], 1)
+            self.assertEqual(result["authenticated_squash_imports"], {revision: upstream})
+
+    def test_clean_clone_of_later_feature_and_fix_squashes_accepts_supplied_upstream_input(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "source"
+            source.mkdir()
+            fixture, upstream, revision, pins = self.squashed_fixture(source)
+            main = fixture.run("branch", "--show-current")
+            for branch in ("later-feature", "later-fix"):
+                fixture.run("checkout", "-qb", branch)
+                fixture.write("feature.txt", branch + "\n")
+                fixture.commit(branch + " work")
+                fixture.run("checkout", "-q", main)
+                fixture.run("merge", "-q", "--squash", branch)
+                fixture.commit(branch + " squash")
+
+            clone = Path(temporary) / "clone"
+            subprocess.run(["git", "clone", "--no-local", "--single-branch", "--no-tags", "--branch", main,
+                            str(source), str(clone)], check=True, capture_output=True)
+            missing = subprocess.run(["git", "-C", str(clone), "cat-file", "-e", upstream + "^{commit}"],
+                                     capture_output=True)
+            self.assertNotEqual(missing.returncode, 0, "a branch clone must not rely on unselected upstream objects")
+            # Supply the exact input from a local fixture; this test performs no network fetch.
+            subprocess.run(["git", "-C", str(clone), "fetch", "--no-tags", str(source), upstream],
+                           check=True, capture_output=True)
+            self.assertFalse(audit.ancestor(clone, upstream, "HEAD"))
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(clone)
+                result = audit.history(clone, audit.tree(clone, fixture.base), {"product.txt", "feature.txt"})
+            self.assertEqual(result["commits"], 4)
+            self.assertEqual(result["changed_paths"], 2)
+            self.assertEqual(result["inherited_squash_entries"], 1)
+            self.assertEqual(result["authenticated_squash_imports"], {revision: upstream})
+            with patch.multiple(audit, **(pins | {"RECORDED_SQUASH_IMPORTS": {}})), \
+                    self.assertRaisesRegex(ValueError, "not integrated"):
+                audit.validate_baselines(clone)
+
+    def test_recorded_squash_entries_reused_by_feature_merge_still_audit_the_original_import(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            self.merge_into_feature(fixture, revision, pins["RECORDED_SQUASH_IMPORTS"][revision]["parent"])
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(fixture.root)
+                result = audit.history(fixture.root, audit.tree(fixture.root, fixture.base),
+                                       {"product.txt", "feature.txt"})
+            self.assertEqual(result["commits"], 5)
+            self.assertEqual(result["changed_paths"], 2)
+            self.assertEqual(result["inherited_squash_entries"], 1)
+            self.assertEqual(result["reused_product_entries"], 1)
+            self.assertEqual(result["authenticated_squash_imports"], {revision: upstream})
+            # The same feature merge cannot authorize an unrecorded original import.
+            with patch.multiple(audit, **(pins | {"RECORDED_SQUASH_IMPORTS": {}})), \
+                    self.assertRaisesRegex(ValueError, "unreviewed historical path: upstream.txt"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base),
+                              {"product.txt", "feature.txt"})
+
+    def test_feature_merge_cannot_exempt_a_changed_resolution_from_recorded_squash(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            self.merge_into_feature(fixture, revision, pins["RECORDED_SQUASH_IMPORTS"][revision]["parent"],
+                                    lambda fixture: fixture.write("upstream.txt", "unreviewed merge resolution\n"))
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+            with patch.multiple(audit, **pins), \
+                    self.assertRaisesRegex(ValueError, "unreviewed historical path: upstream.txt"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base),
+                              {"product.txt", "feature.txt"})
+
+    def test_same_tree_under_unrecorded_squash_cannot_use_an_unselected_record(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            record = pins["RECORDED_SQUASH_IMPORTS"][revision]
+            fixture.run("checkout", "-qb", "unrecorded-squash", record["parent"])
+            fixture.run("merge", "-q", "--squash", upstream)
+            other = fixture.commit("different unrecorded squash")
+            self.assertNotEqual(other, revision)
+            self.assertEqual(fixture.run("rev-parse", other + "^{tree}"), record["tree"])
+            self.merge_into_feature(fixture, other, record["parent"])
+            with patch.multiple(audit, **pins), self.assertRaisesRegex(ValueError, "not integrated"):
+                audit.validate_baselines(fixture.root)
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(fixture.root)
+                self.assertEqual(audit.authenticated_squash_imports(fixture.root), {})
+                with self.assertRaisesRegex(ValueError, "unreviewed historical path: upstream.txt"):
+                    audit.history(fixture.root, audit.tree(fixture.root, fixture.base),
+                                  {"product.txt", "feature.txt"})
+
+    def test_recorded_squash_rejects_wrong_upstream_tree_or_parent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            for field, value, reason in (("upstream", fixture.base, "upstream pin mismatch"),
+                                         ("upstream_tree", "00" * 20, "upstream pin mismatch"),
+                                         ("tree", "00" * 20, "squash tree mismatch"),
+                                         ("parent", fixture.base, "squash parent mismatch")):
+                modified = copy.deepcopy(pins)
+                modified["RECORDED_SQUASH_IMPORTS"][revision][field] = value
+                with self.subTest(field=field), patch.multiple(audit, **modified):
+                    with self.assertRaisesRegex(ValueError, reason):
+                        audit.validate_baselines(fixture.root)
+                    with self.assertRaisesRegex(ValueError, reason):
+                        audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+            modified = copy.deepcopy(pins)
+            modified["UPSTREAM_TREE"] = "00" * 20
+            modified["RECORDED_SQUASH_IMPORTS"][revision]["upstream_tree"] = "00" * 20
+            with patch.multiple(audit, **modified), \
+                    self.assertRaisesRegex(ValueError, "squash upstream tree mismatch"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+
+    def test_recorded_squash_does_not_exempt_changed_bytes_modes_or_symlinks(self):
+        def change(fixture, kind):
+            path = fixture.root / "upstream.txt"
+            if kind == "bytes":
+                fixture.write("upstream.txt", "unreviewed changed source\n")
+            elif kind == "mode":
+                path.chmod(0o755)
+            else:
+                path.unlink()
+                path.symlink_to("README.md")
+
+        for kind in ("bytes", "mode", "symlink"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as temporary:
+                fixture, upstream, _, pins = self.squashed_fixture(Path(temporary),
+                                                                  lambda fixture: change(fixture, kind))
+                fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+                with patch.multiple(audit, **pins), \
+                        self.assertRaisesRegex(ValueError, "unreviewed historical path: upstream.txt"):
+                    audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+
+    def test_recorded_squash_does_not_exempt_later_upstream_looking_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, _, pins = self.squashed_fixture(Path(temporary))
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+            fixture.write("upstream.txt", "unreviewed later change\n")
+            fixture.commit("unreviewed change after recorded import")
+            fixture.write("upstream.txt", "authenticated upstream addition\n")
+            fixture.commit("restore original upstream bytes")
+            self.assertEqual(audit.tree(fixture.root, "HEAD")["upstream.txt"],
+                             audit.tree(fixture.root, upstream)["upstream.txt"])
+            with patch.multiple(audit, **pins), \
+                    self.assertRaisesRegex(ValueError, "unreviewed historical path: upstream.txt"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+
+    def test_recorded_squash_keeps_deleted_private_side_branch_history_visible(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            self.merge_into_feature(fixture, revision, pins["RECORDED_SQUASH_IMPORTS"][revision]["parent"])
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", upstream, "-m", "retain upstream ancestry")
+            main = fixture.run("branch", "--show-current")
+            fixture.run("checkout", "-qb", "private-import")
+            fixture.write("experiments/notes.txt", "must never ship\n")
+            fixture.commit("private import on side branch")
+            (fixture.root / "experiments/notes.txt").unlink()
+            fixture.commit("delete private import")
+            fixture.run("checkout", "-q", main)
+            fixture.run("merge", "-q", "--no-ff", "private-import", "-m", "merge clean-looking side branch")
+            with patch.multiple(audit, **pins), \
+                    self.assertRaisesRegex(ValueError, "private/generated path: experiments/notes.txt"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base),
+                              {"product.txt", "feature.txt", "experiments/notes.txt"})
+
     def test_normal_upstream_merge_keeps_original_product_ancestry(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixture, upstream = self.refreshed_fixture(Path(temporary))

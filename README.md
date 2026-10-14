@@ -5,8 +5,9 @@ This repository adds SLH-DSA-B-128s signatures for transparent funds to
 It includes a command-line wallet, multisig policies through 15-of-15,
 encrypted backups, recovery, and watch-only monitoring.
 
-**SLH support is off by default and works only on Regtest**, a local test network.
-The node and wallet include the implementation. Live tests and performance tests
+**SLH support is off by default.** The node supports Regtest and explicitly
+configured custom testnets for devnet launchers. The wallet CLI still uses Regtest.
+Live tests and performance tests
 remain pending. Agents must obtain user approval before running them under
 [AGENTS.md](AGENTS.md). The BLAKE3 construction is experimental.
 It is not a FIPS 205 profile or a production release.
@@ -18,13 +19,14 @@ All devnet nodes must use compatible rules. The state database format is now
 caches under upstream's `state` directory require a fresh sync.
 Use this binary only on the devnet. It is not consensus-compatible with public
 Mainnet or Testnet.
-SLH activation remains off by default and Regtest-only.
+SLH activation remains off by default and rejects built-in Mainnet and public Testnet.
 
 ## Start here
 
 The [SLH guide](docs/slh-dsa-b128s/README.md) contains these instructions:
 
 - [Configure a node](docs/slh-dsa-b128s/runtime.md).
+- [Configure a launcher-created devnet](docs/slh-dsa-b128s/devnets.md).
 - [Use the wallet](docs/slh-dsa-b128s/cli.md).
 - [Save and restore backups](docs/slh-dsa-b128s/recovery.md).
 - [Build the software and run acceptance tests](docs/slh-dsa-b128s/acceptance.md).
@@ -55,7 +57,7 @@ contains the upstream project information.
 ## Security and licenses
 
 Use disposable test funds and keys. The fixture keys are public.
-Independent security review and public-network activation remain open work.
+Independent security review and live devnet acceptance remain open work.
 The [validation guide](docs/slh-dsa-b128s/validation.md) states the limits of the existing tests.
 The inherited [security policy](docs/security.md) applies to upstream Zakura.
 The SLH extension has no designated contact for security disclosures.

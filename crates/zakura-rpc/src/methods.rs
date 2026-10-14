@@ -106,10 +106,12 @@ use crate::{
 };
 
 pub(crate) mod hex_data;
+mod slh_dsa_b128s;
 pub(crate) mod trees;
 pub(crate) mod types;
 
 use hex_data::HexData;
+pub use slh_dsa_b128s::ExperimentalSlhDsaB128sInfo;
 use trees::{GetSubtreesByIndexResponse, GetTreestateResponse, SubtreeRpcData};
 use types::get_block_template::prepared_candidates::ResolvePreparedCandidateError;
 
@@ -2012,7 +2014,7 @@ where
         let version = GetInfoResponse::version_from_string(&self.build_version)
             .expect("invalid version string");
 
-        let connections = self.address_book.recently_live_peers(Utc::now()).len();
+        let connections = self.address_book.connected_peer_count(Utc::now());
 
         let last_error_recorded = self.last_warn_error_log_rx.borrow().clone();
         let (last_error_log, _level, last_error_log_time) = last_error_recorded.unwrap_or((
@@ -2115,6 +2117,7 @@ where
             )
         };
 
+        let tip_available = matches!(&tip_pool_values_rsp, Ok(ReadResponse::TipPoolValues { .. }));
         let (
             size_on_disk,
             is_pruned,
@@ -2276,6 +2279,10 @@ where
             // TODO: Investigate whether this needs to be implemented (it's sprout-only in zcashd)
             commitments: 0,
             header_chain,
+            experimental_slh_dsa_b128s: ExperimentalSlhDsaB128sInfo::for_network(
+                network,
+                tip_available.then_some(tip_height),
+            ),
         };
 
         Ok(response)
@@ -3980,7 +3987,7 @@ where
         // Deprecated: zcashd always returns 0.
         let timeoffset = 0;
 
-        let connections = self.address_book.recently_live_peers(Utc::now()).len();
+        let connections = self.address_book.connected_peer_count(Utc::now());
 
         // TODO: make `limited`, `reachable`, and `proxy` dynamic if Zebra supports network filtering
         let networks = vec![
@@ -4867,6 +4874,11 @@ pub struct GetBlockchainInfoResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[getset(get = "pub")]
     header_chain: Option<HeaderChainInfo>,
+
+    /// Effective experimental SLH rules, omitted when SLH is not configured.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[getset(get = "pub")]
+    experimental_slh_dsa_b128s: Option<ExperimentalSlhDsaB128sInfo>,
 }
 
 /// One hash-qualified frontier in the authoritative header-chain state.
@@ -5032,6 +5044,7 @@ impl Default for GetBlockchainInfoResponse {
             size_on_disk: 0,
             commitments: 0,
             header_chain: None,
+            experimental_slh_dsa_b128s: None,
         }
     }
 }
@@ -5080,6 +5093,7 @@ impl GetBlockchainInfoResponse {
             size_on_disk,
             commitments,
             header_chain: None,
+            experimental_slh_dsa_b128s: None,
         }
     }
 

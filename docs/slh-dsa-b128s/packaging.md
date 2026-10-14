@@ -43,12 +43,41 @@ Hashes permit comparison but cannot replace manual review for secrets and licens
 The ledger records two exact upstream commits and trees.
 `foundation` is the original Zakura base for product history.
 `upstream` is the current Zakura base for the final file comparison.
-The current upstream must descend from the foundation and must be merged into the product.
+The current upstream must descend from the foundation. Integration requires
+upstream ancestry or the exact authenticated squash record below.
 The guard checks all product commits outside the pinned upstream history.
 At an upstream merge, it exempts only entries with the same mode and bytes as a merged upstream parent.
 It still checks product merge resolutions and both sides of product merges.
+At a product merge, it can reuse an exact entry from a non-first product parent.
+It still audits every commit on that parent's history, including the entry's
+original introduction. It reports reused product entries separately from
+authenticated upstream entries.
 Deleted private files and unrelated repository history remain forbidden.
 Use `history_only` for former product changes that now match upstream.
+
+PR #12 imported the current upstream through a GitHub squash merge. Its commit
+has no upstream parent. The guard records this exact historical association:
+
+| Item | Pinned value |
+| --- | --- |
+| Product squash commit | `de7880372c50bbb285a622bcc4e577df7b35ca7d` |
+| Product squash tree | `bc284612ef8b367a9c364019b89f8bd366d2318f` |
+| Sole product parent | `91d2e2132fe9e9cacdde20362489c8462cf94baf` |
+| Imported upstream commit | `e33dc43089acca2fe2c6516927932f2b7618b8bc` |
+| Imported upstream tree | `88637ce09b0bbd5669b664e47b20b37b35523323` |
+
+The record applies only when that exact product commit is in the selected
+history. The guard checks its tree, sole parent, and upstream pins. At that
+commit only, it exempts entries with the same mode, object kind, and bytes as
+the pinned upstream tree. Other entries still need a product disposition.
+An unrecorded commit cannot use this exception, even if its tree is identical.
+The record also establishes integration when later feature PRs are squashed
+onto this imported base and no upstream parent remains in the selected branch.
+Without that authenticated record, the upstream must be a real ancestor.
+Both paths require the exact upstream commit and tree as local audit inputs.
+Local Git tests cover changed entries, invalid records, unselected and later
+commits, later feature and fix squashes, and deleted private files on merged
+side branches.
 
 Publish only the selected branch.
 Do not publish all refs, all tags, or a mirror of a developer clone.
@@ -75,6 +104,17 @@ After integration, check the merged result.
 
 Create an independent clone with `git clone --no-local --single-branch --no-tags`.
 Select the committed product branch.
+Squash merges can leave the pinned upstream object outside product ancestry.
+Before the offline audit, retrieve that exact public input:
+
+```sh
+git fetch --no-tags https://github.com/zakura-core/zakura.git e33dc43089acca2fe2c6516927932f2b7618b8bc
+```
+
+The content CI uses the same explicit input step. This adds no upstream branch
+or tags to the product. The audit checks the commit, tree, and foundation
+relationship; it never fetches missing objects itself.
+
 Check for Git object alternates, external source links, and Cargo paths outside the clone.
 Start with empty Cargo home and target directories.
 Run the guard tests and archive audit.

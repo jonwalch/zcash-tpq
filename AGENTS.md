@@ -24,9 +24,10 @@ completion gates; record them separately. Make a minimal upstream change only
 when this integration exposes a failure or it directly blocks the requested SLH
 implementation.
 
-Keep experimental SLH support off by default and Regtest-only. The 20 MB block
-limit applies to all network configurations in this devnet fork. This exception
-does not enable SLH on public networks. Node dependencies
+Keep experimental support off by default. Allow activation only on Regtest and
+explicit custom testnets with separate network identities. Built-in Mainnet and
+public Testnet must reject activation. The 20 MB block limit applies to all
+network configurations in this devnet fork. Node dependencies
 must not include key generation, signing, alternate PQ backends, fixture tools
 or a dependency on an external research checkout. Never add research notes,
 experiments, raw results, real secrets or research Git history to this repository.

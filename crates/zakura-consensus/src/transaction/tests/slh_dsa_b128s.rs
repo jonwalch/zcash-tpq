@@ -3,6 +3,7 @@
 //! No signing, live node, proof generation or performance workload is used.
 //! Tests that need the verifier use its feature. The other tests run in the default build.
 
+mod devnet;
 mod policy;
 
 use super::*;

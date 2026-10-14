@@ -109,8 +109,8 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Read-only bounded source/content/archive regression CI without live or build workloads.",
-      "sha256": "6bd26ce4631af62849748d65777e9a50f4f5d0b5b5ef934e35200b59d63ba07e"
+      "reason": "Read-only bounded source/content/archive regression CI without live or build workloads. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "e8acc8adc7489ad23a530ccc648a999dbfe5c05cd27d69add0c8617c652d8feb"
     },
     {
       "disposition": "upstream-modification",
@@ -171,11 +171,12 @@
       "path": "AGENTS.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style. PR #9: Document the fork-wide 20 MB devnet exception while retaining the default-off, Regtest-only SLH activation rule.",
-      "sha256": "585fac6c00ba3293afd4458af28416765c89a0640d574d260750b7f743ad9104"
+      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Document the fork-wide 20 MB devnet exception while retaining the default-off, Regtest-only SLH activation rule.",
+      "sha256": "a1173eae357a402d14d7617a66e289028f949084d849024d2295fe86dffcead3"
     },
     {
       "disposition": "upstream-modification",
@@ -202,11 +203,12 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
         "docs/slh-dsa-b128s/benchmarking.md",
+        "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: State the user-approved fork-wide 20 MB devnet scope, public-network incompatibility, and the separate state-tpq cache with a fresh sync requirement.",
-      "sha256": "c6ae5f41b4fa095e1f0b009ee66aa1f994db9598548d7392d15b8f2e2b216ebe"
+      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: State the user-approved fork-wide 20 MB devnet scope, public-network incompatibility, and the separate state-tpq cache with a fresh sync requirement.",
+      "sha256": "da5ce79df73debcb82152148e891e7080a55495e55b62a1f8b0cf99bea5c1afd"
     },
     {
       "disposition": "new",
@@ -2073,6 +2075,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/local_genesis.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 peer-isolation review: The SLH shared generator intentionally replaces saturating seed-count arithmetic with checked addition and rejects invalid upgrade/SLH heights before generation. This also changes overflowing ordinary-generator requests to early errors; bounded ordinary and SLH regression tests cover height and count overflow without generating blocks.",
+      "sha256": "e39f1eb93275c2ff64e94caf3d5a514b058193bf48aa931a9768aecacc61434d"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-chain/src/parallel/tree.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
@@ -2086,40 +2098,54 @@
       "path": "crates/zakura-chain/src/parameters/network.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "f0dd1dc862ab48b14dfa7cf1841671429f521af1cb76d97d08c2499542f7cb37"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
+      "sha256": "d318e77056a68d9e440b69a9497ee7cb38cf853d8b02c65464aef1dab7385dd0"
     },
     {
       "disposition": "upstream-modification",
       "path": "crates/zakura-chain/src/parameters/network/error.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "204e719a92e763b781ca6439e350f8185e3a1116771b34126822670e5d47b978"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
+      "sha256": "1d1a1ea0f9a079bf6127518be4d356903f7b2596c90e26d1265e39dad35032ba"
     },
     {
       "disposition": "upstream-modification",
       "path": "crates/zakura-chain/src/parameters/network/testnet.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "43af0fe9e2c644e0547292c215dea7c3eeb072afc914d2f212f1d0008919251e"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
+      "sha256": "1b1894a30bb651d2b24e265c54cd935b47cd0fbf5634a2ae7db9d106fc299a95"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-chain/src/parameters/network/testnet/slh_identity.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
+      "sha256": "9ecb2fc03f371c09498f6a72e0275d2f0788457b0ec75266a7512ce6a1949d95"
     },
     {
       "disposition": "upstream-modification",
       "path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "a6c04001533ef713fafd05397c5cd346b29458eb9fd4d82236fbb98f78bbcfdc"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
+      "sha256": "9d21f8703e087ca6d2fa833581ad2df7d5362fc0fd68bd6cc8bf761359143bbe"
     },
     {
       "disposition": "upstream-modification",
@@ -2365,10 +2391,21 @@
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md"
       ],
-      "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls. Require real parallel-worker rejection for each separately corrupted signer in every input of the retained v5/v6 15-of-15 and 16-check fixtures, after accepting the unchanged fixtures; preserve complete reservation and no-refund checks.",
-      "sha256": "41829b780d840b9d785600dfb386d4156ed4714ff6954a697b8fe1354c45dd75"
+      "reason": "Reuse async success-publication/cancellation and mock trusted-state service patterns; replace runtime test signing with immutable public SLH corpus and add mixed-input prohibition controls. Require real parallel-worker rejection for each separately corrupted signer in every input of the retained v5/v6 15-of-15 and 16-check fixtures, after accepting the unchanged fixtures; preserve complete reservation and no-refund checks. Reuse trusted-service block/mempool controls with separately signed Testnet vectors to check custom-network activation, budgets, authorization, metadata and classical funding without adding signer dependencies.",
+      "sha256": "33cc71877e14d77e0b97014adead3e01826ed9e5865ae81b010980f3bdd53a77"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/devnet.rs",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Reuse trusted-service block/mempool controls with separately signed Testnet vectors to check custom-network activation, budgets, authorization, metadata and classical funding without adding signer dependencies.",
+      "sha256": "bbb0ac6b34d675d2c24bd438fe758c7989caf69e4e0d68eaee568a49103aff93"
     },
     {
       "disposition": "new",
@@ -2382,23 +2419,95 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/address_book_peers.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "fa8cb8dddd1086606a176b5015ed3841c8ec466284e905d19f9c6c2506ef74eb"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-network/src/config.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "99d1972ea9af665744579341ef90b7bdf62a4a9611b871bcef06cd5168b27528"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. Reject ambiguous numeric IP forms before DNS and recognize IPv4-compatible IPv6; initialize the known peer inventory once. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Require native-only peering for SLH custom chains so a failed fingerprint check cannot fall back to the legacy magic-only handshake. Reuse the native parser strictly, rejecting malformed entries instead of silently skipping them. TOML, direct-config, and startup tests cover both restrictions.",
+      "sha256": "683fa97e791899782ceae6e6f751a49bd3a71c173109f9b155aa46f625ceff4c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/config/cache_dir.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "PR #11: Scope peer-cache files to the existing SLH custom-chain fingerprint; preserve disabled caches and paths for other networks. Regression tests separate same-name chains with different genesis or rules and retain paths after TOML round trips. Also isolate automatic native identity-key files, preserve explicit overrides and other networks, and check identity persistence across config reloads. PR #11 peer-isolation review: Share one identity filename helper between current and former name-only paths so the upgrade warning cannot drift from key persistence; filenames and existing persistence controls stay unchanged.",
+      "sha256": "63afd98a1720b40478b65f066d242a19e2c31a14fe376c633e5de3d98ebe5389"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/config/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Move the existing product custom-SLH TOML fixture into this test-only parent module for shared use by configuration and native-handshake tests; no runtime API or dependency changes.",
+      "sha256": "9e40c34627a582be44d3d865ad6cc2664627aaf64c1926fe58139ccb57de21c9"
     },
     {
       "disposition": "upstream-modification",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "53e7e9a195d2ab59712946b56d602695f06db6ff2965b22c2dbca976c63ce561"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Share the custom-network fixture with handshake tests. Check native-only defaults and explicit-stack rejection, valid and malformed native peers, and public network initialization refusal before I/O.",
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/peer/block_gossip.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "5fd468cfc85a59c3fb245742f9961e288c9bed3f69f720b17eb922190f4b06db"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/peer/handshake/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "06840e90d774cb0a6a824d66007aec16a99a5d735746c02dd59e64a84d1f7339"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/peer_registry.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "d0cf7bb38fd20af68ba76997126dd6a74bee68c826140c5149a0caa5abd87840"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/peer_set/initialize.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Apply the existing SLH configuration guard at the public initializer before listeners, native keys, or services start. This closes a direct-library bypass of CLI and embedded-node checks; mocked focused tests reject legacy/dual stacks and malformed bootstrap entries without network I/O.",
+      "sha256": "17fb026d271857f8fbb87607d52c751dfaacac60b25c89b085f8d94d505fb58a"
     },
     {
       "disposition": "upstream-modification",
@@ -2419,6 +2528,16 @@
       ],
       "reason": "PR #9: Cover a full 20 MB block round trip, reject oversized control and unknown message headers before body reservation, and preserve the pre-handshake limit for blocks and transactions. PR #9 follow-up: Cover header-only and partial-body announcements without growth, and verify a full 20 MB block through incremental FramedRead buffering on the decoder-supported multithreaded runtime. PR #9 follow-up: Extend the full-size incremental block test to verify buffer release and preservation of a following ping.",
       "sha256": "12b90afe1e902e98a0ecde83a6575980b190ea7936330819f4fdf10784b2375f"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/README.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Correct the retained native-network guide for SLH custom-testnet fingerprint chain IDs, cohort derivation, native-only peering and scoped fallback. The runtime behavior is covered by native handshake and config tests; clarify existing native-only smoke instructions without executing live nodes.",
+      "sha256": "7fe0a9d2b57dd0c3ec13dcfdc60213ad8048a55eed27b4ae69cd938ff85fb559"
     },
     {
       "disposition": "upstream-modification",
@@ -2515,20 +2634,24 @@
       "path": "crates/zakura-network/src/zakura/handler.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
-        "docs/changelog/unreleased/9.md"
+        "docs/changelog/unreleased/9.md",
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
       ],
-      "reason": "PR #9 follow-up: Grow native frame payloads only after bounded chunks arrive, preserving total payload deadlines and reset/FIN handling; regress header-only and partial-body allocations and transfer a full 20 MB frame followed by another frame over loopback QUIC. Upstream refresh e33dc4308: Adapt the existing incremental 64 KiB frame reader and its allocation/body-boundary regression to zakura-quic; retain reset and timeout behavior.",
-      "sha256": "eeb58e5175fc4a8870e45f10e28c49284cd1fd11691141d63fa406d58bdd490d"
+      "reason": "PR #9 follow-up: Grow native frame payloads only after bounded chunks arrive, preserving total payload deadlines and reset/FIN handling; regress header-only and partial-body allocations and transfer a full 20 MB frame followed by another frame over loopback QUIC. Upstream refresh e33dc4308: Adapt the existing incremental 64 KiB frame reader and its allocation/body-boundary regression to zakura-quic; retain reset and timeout behavior. Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "dae14e33e0de14e88fbe005992b08a5d3746f799bbc140257d20b3417614005e"
     },
     {
       "disposition": "upstream-modification",
       "path": "crates/zakura-network/src/zakura/handshake.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
-        "docs/changelog/unreleased/9.md"
+        "docs/changelog/unreleased/9.md",
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "15fc4daac50f4e1193b6ffdd4395c8387620bfa30b99731ce15d11965ee78232"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #11 peer-isolation review: Extend the retained native chain-ID validators with the existing product SLH rules fingerprint; derive cohorts from the selected chain ID. Preserve the native encoding, cohort algorithm, non-SLH and Regtest identities, and the existing 20 MB fork frame allowance. Same-genesis rule mutations, matching rules, and cohort controls exercise prelude and native/upgraded control validators. The pinned research activation mechanism supplies the SLH gate; this newer upstream native handshake is retained instead of importing another transport.",
+      "sha256": "ffe85829927c233b47b450fdffbfc8a36caf626ca8dbf7b86430ffa987b640f0"
     },
     {
       "disposition": "upstream-modification",
@@ -2555,10 +2678,21 @@
       "path": "crates/zakura-rpc/Cargo.toml",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "0e346f273cc4e70bc566f1c3545a4786a8a74782b69ae1694c47e1cb23a382de"
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior. Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
+      "sha256": "cf34ad71b4ddcb0ff451e708e5e9785d7ccf0de0913ec2e63174c73627f589bb"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/client.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
+      "sha256": "41475b55caf35f7689340ed9924cf44c2ca6edf914639bd1973886f2f6c81480"
     },
     {
       "disposition": "upstream-modification",
@@ -2569,6 +2703,26 @@
       ],
       "reason": "Scale the default RPC response budget for verbose JSON from 20 MB blocks while retaining explicit operator limits; cover a response above the former 50 MiB cap over HTTP.",
       "sha256": "71311eaff7c037697a0c7244e1c650e47db696d6521f9bbc0ca4fbe3fad6e40c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls. Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "086403c08ba8deb794f8fd1fa7f65a96fb188b45bad53d54240f684e4d79f8e5"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-rpc/src/methods/slh_dsa_b128s.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
+      "sha256": "fb595d62637a151f2cead8e5c70ebd53eccca2e00ccc96d5b7233ff7095bab7c"
     },
     {
       "disposition": "upstream-modification",
@@ -2615,10 +2769,11 @@
       "path": "crates/zakura-rpc/src/methods/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "9bd442c6c09a3fe2daacfd88c62e3910a93456c1c92cb0ffc0a32946e2e8311d"
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior. Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "0f2b098e069f82dd949007386e39e9ad1b01c651f263d8a23affd5f268e06295"
     },
     {
       "disposition": "upstream-modification",
@@ -2652,6 +2807,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/types/peer_info.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "bbcfc65d1cefc74a9bc3ae7006eb88f7bfc0571de5a405cff4369dff1db5300c"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-rpc/src/methods/types/transaction.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
@@ -2682,6 +2847,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/tests/serialization_tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
+      "sha256": "964fa65d7ada860c6dee67c9e67c6156e403b34060c9e834d93ce2cd61443221"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-script/src/lib.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
@@ -2706,10 +2881,11 @@
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Separate fork state paths under state-tpq and share version-file parsing between historical migration discovery and strict startup layout checks; preserve legacy parsing only when the caller supplies the old major version. PR #9 follow-up: Require explicit major.minor.patch markers in wide-index format queries as well as startup; retain historical minor.patch parsing for pre-wide-index formats and test both paths.",
-      "sha256": "8b9adc5f3ba705b46572f30afc97249d105d2bec0d52975ca650ee39cbcd0bb6"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #9: Separate fork state paths under state-tpq and share version-file parsing between historical migration discovery and strict startup layout checks; preserve legacy parsing only when the caller supplies the old major version. PR #9 follow-up: Require explicit major.minor.patch markers in wide-index format queries as well as startup; retain historical minor.patch parsing for pre-wide-index formats and test both paths.",
+      "sha256": "d434e8b4c83ab7fbf286403a355256e55e456fe220a754e37dec886b8d992f97"
     },
     {
       "disposition": "upstream-modification",
@@ -2746,10 +2922,11 @@
       "path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "44fc5e52fdad495cd5b66e4cb2fd1f17f7a7c49f586f8282d55fc499a10f8b9d"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Reuse the existing reset event sequence on an explicitly configured custom SLH Testnet as well as Regtest, to cover activation and rollback without live services.",
+      "sha256": "cb641f52993db8af9ce09d565abc9a15e05daca4994594932603c7a73d8364b6"
     },
     {
       "disposition": "upstream-modification",
@@ -3216,10 +3393,11 @@
       "path": "crates/zakurad/Cargo.toml",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "0f412737b5f10791ce9db426345bb11fd99a6a65a6a48548f03c65f434cdf31e"
+      "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior. Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
+      "sha256": "b72968d6b4f8cf22b79e5291445415e83fdac027dae1f5803adda79a4e8278b3"
     },
     {
       "disposition": "upstream-modification",
@@ -3246,10 +3424,11 @@
       "path": "crates/zakurad/src/commands/start.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "da0f678adead845f07a95b466efc5e617dbeff85e8d7665ac68edff540a73e03"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls. PR #11 peer-isolation review: Startup regressions reject malformed native bootstrap entries and explicit legacy/dual stacks before checking SLH verifier availability; valid native fixture entries include a public test node ID.",
+      "sha256": "b6f2a46bbd975ce0af9af7957f4a7ac1b3d3ee0a198575559e7412ccbbe12954"
     },
     {
       "disposition": "upstream-modification",
@@ -3260,6 +3439,36 @@
       ],
       "reason": "PR #9: Derive the malformed body-size-hint test from the active block limit instead of treating a now-valid 2 MB hint as oversized.",
       "sha256": "8e3b575d44a3413929509e7883c6fd65f71c4eb003bf62fc649fbd6ca26583ea"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/health.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "616b9fd185258fd57abee87b9dc3466280fd907c56cb872fa76f31ad81fa9dc3"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/health/config.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "474b2cc7861dce4749817032b868c8dca35f0586166a833be2d9a585efaa23bf"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/components/health/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "sha256": "d6614fc746fdd37936b54d011a07f6d194f1892385cef0ec5774f062d5d50b0a"
     },
     {
       "disposition": "upstream-modification",
@@ -3322,6 +3531,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/node.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
+      "sha256": "c14479c58b592e35ad4e3193b0442b3e6db80a99c53dad3b2d0fea3f901afcce"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "deploy/nu7-fork/fork.py",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
@@ -3369,6 +3588,16 @@
       ],
       "reason": "PR #9: Record block, native transport, RPC and wallet limits, the retained speculative default, and the legacy per-command buffer ceiling. PR #9 follow-up: Clarify that larger data-message limits do not cause full-body reservations from headers alone.",
       "sha256": "992cb98dc02b2320848bd932c953b4916b23eef4aff13873625b33cc5e76542d"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/11.md",
+      "provenance": [
+        "docs/changelog/guidelines.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Record PR #11 custom devnet SLH configuration, state isolation, genesis generation and rule diagnostics in its required user-visible changelog fragment.",
+      "sha256": "11df717ed9168c8ff5c7b0f1619838150aecb4062ac436399c0ba2b269b426ea"
     },
     {
       "disposition": "new",
@@ -3424,10 +3653,12 @@
       "path": "docs/slh-dsa-b128s/README.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "9067a3082b92445216dd4d9353b416f34bd871ca5a72df093bad1c23960ccf60"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
+      "sha256": "db0f3b6e40b667584dc7c238719736d95c418a679e834548f68d44169908510d"
     },
     {
       "disposition": "new",
@@ -3475,6 +3706,16 @@
       ],
       "reason": "Reuse inherited node lifecycle, ordinary backup observations and saved block/transaction replay for bounded isolated process-crash checkpoints, with separate classical and SLH controls. No disk-write failpoint, power-loss, finalized database or performance framework.",
       "sha256": "ff7b2d5b604e8e8478b123d2ddc457837598837a0cbda4e7c37b65b8a5d0ab5b"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/devnets.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/protocol.md"
+      ],
+      "reason": "Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
+      "sha256": "e05c1d73c4f150f32eb5234adb0c25953ff0af2242895dda46f351c4bd65b95e"
     },
     {
       "disposition": "new",
@@ -3661,11 +3902,12 @@
       "path": "docs/slh-dsa-b128s/node-reuse.json",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "b7b3bffdf57d1a8ee0267daf7100e3cd150005473563b08931a165e5c96f0ad2"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "d5accf81d8082023f2528e7f9bcd5004d298e7b8a1dc7e0d7fd0898f7369533a"
     },
     {
       "disposition": "new",
@@ -3704,19 +3946,20 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "39a815c51550b98592a854354cc08f38c22d7772f4e1931b23070770613c1b06"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "6e56b7807971b27366ef1aae2b3b2f0cefdb288b166b2e3f86105870e5e8722e"
     },
     {
       "disposition": "new",
       "path": "docs/slh-dsa-b128s/protocol.md",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata. PR #9 follow-up: Describe early target/baseline source or release layout checks and a shared startup-cache guard that runs after normal database reuse, without a separate read-only network override.",
-      "sha256": "6fc72da14d6ffbc3ec7afed7a75a34523c07cc7f8b9629e6666aa403265f6c7c"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata. PR #9 follow-up: Describe early target/baseline source or release layout checks and a shared startup-cache guard that runs after normal database reuse, without a separate read-only network override.",
+      "sha256": "ebd1d71ddf0893a2ce60b68f0063d8d1da51e36e34b1fa5b714453b213dd6e5f"
     },
     {
       "disposition": "new",
@@ -3749,10 +3992,12 @@
       "disposition": "new",
       "path": "docs/slh-dsa-b128s/runtime.md",
       "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
+        "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "2b278781c3318ed477704c44ef1e64946bad4fea934fcd4d52afa54b5667c55b"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
+      "sha256": "1a1489387ae04a220e0bbe0d687ead92ba4da414545e72d35eccb63144538f1d"
     },
     {
       "disposition": "new",
@@ -4277,10 +4522,12 @@
       "path": "tests/slh-dsa-b128s/evidence/node-matrix.json",
       "provenance": [
         "tests/slh-dsa-b128s/evidence/sources.json",
-        "docs/slh-dsa-b128s/validation.md"
+        "docs/slh-dsa-b128s/validation.md",
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/protocol.md"
       ],
-      "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps.",
-      "sha256": "a33fe0c75f2712810cb62e7e1715395319b4cd46a8e94babada1633c830495c3"
+      "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
+      "sha256": "23cabdcfb2a8e10713451b1e9984bd94d569ca85ab5209a298848dc5072e1fa7"
     },
     {
       "disposition": "new",
@@ -4392,6 +4639,16 @@
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
       "sha256": "1cfb24a2b3f0c44185301a94e63074fba94336412ac16138fdb9d022663ac478"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/check_devnet_transactions.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
+      "sha256": "9ea63f22c4c8c53152334a9e5ae056e3dbfd404336d6764e701a4a1642867c02"
     },
     {
       "disposition": "new",
@@ -4585,6 +4842,46 @@
     },
     {
       "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
+      "sha256": "1304f3ada4182e6205a125553e080dfd91b7e18ff5fdb7327f411d3383a149c8"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/devnet/v5-testnet-1of1.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures.",
+      "sha256": "fcd06b78da9654cb36acc1a7012d4d10f9029a7fe2717c8e85c5f2dd9f4cdfc6"
+    },
+    {
+      "disposition": "public-fixture",
+      "path": "tests/slh-dsa-b128s/fixtures/devnet/v6-testnet-1of1.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures.",
+      "sha256": "86450b127452ee996434ece74bcf438eb63452ba07be553eb43dba057b2c8348"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/generate_devnet_transactions.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
+      "sha256": "9d98a3c647066d6eeb37d6370e6aaa7b4cca70ab3b5c04ca813884bf5960037d"
+    },
+    {
+      "disposition": "new",
       "path": "tests/slh-dsa-b128s/fixtures/generate_transactions.py",
       "provenance": [
         "tests/slh-dsa-b128s/fixtures/data/README.md",
@@ -4675,10 +4972,12 @@
       "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
       "provenance": [
         "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
-        "tests/slh-dsa-b128s/acceptance/sources.json"
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
-      "sha256": "34d97a19aa271e38e7fe586b7921fa1097e54dcffee6de7f0a8b08b0db9df232"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged. Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
+      "sha256": "d40ed556b13652ffb51f8b27f9f9d2c772817027b84acd107c8a26b2cd8bf1e9"
     },
     {
       "disposition": "new",
@@ -4735,6 +5034,26 @@
       ],
       "reason": "Prepare genuine classical quorum/family/unsupported mixing, policy and lifecycle controls using existing public fixture and node helpers; strict bounded operations preserve old defaults and upstream retry behavior.",
       "sha256": "13ec09eb705b5fd3e165e57de72f540e8921d288d3320b72280fded6a3c960c8"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/test_check_devnet_transactions.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
+      "sha256": "dc7ea180c2bc0908956aa0a524c5cfca3ec4bbc6a1177f0e6afaaf59db780565"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/fixtures/test_generate_devnet_transactions.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
+      "sha256": "96b36cad7c6e37b3e91a93422eacb4aad010d67444a394a71b05c9bd064a74c0"
     },
     {
       "disposition": "new",
@@ -4966,20 +5285,22 @@
       "provenance": [
         "tests/slh-dsa-b128s/release-content/NOTICE",
         "tests/slh-dsa-b128s/release-content/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "714a0f638b40d4223fa0649204d2cbc2a02e03e5e0ddb328adfbdd9324e15e86"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "1799a2bab9f5b926921580fe604b1107476b24e4c77928282d417239bd2e0d29"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/release-content/test_content.py",
       "provenance": [
         "tests/slh-dsa-b128s/release-content/NOTICE",
-        "tests/slh-dsa-b128s/release-content/README.md"
+        "tests/slh-dsa-b128s/release-content/README.md",
+        "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "541f587bf9235dffc8d591ddd12fa2f5054b05e3568c041813fd8e1a54e6daba"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "9755285bb67c88f5923bc55d6349878a6e4cbaec151b80bbe1685d69f3226604"
     },
     {
       "disposition": "new",
@@ -5121,10 +5442,12 @@
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/transactions/oracle.py",
       "provenance": [
-        "tests/slh-dsa-b128s/transactions/README.md"
+        "tests/slh-dsa-b128s/transactions/README.md",
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "cdf3f2b0991b8f3fed5991192bb57f807449685b452135ba71c89600fe337ac3"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
+      "sha256": "79f32cbc918eaaee2b2900290c8040ac6ff5be606ad7294693ee3c6a6fea068e"
     },
     {
       "disposition": "public-fixture",
@@ -5166,10 +5489,12 @@
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
       "provenance": [
-        "tests/slh-dsa-b128s/transactions/README.md"
+        "tests/slh-dsa-b128s/transactions/README.md",
+        "tests/slh-dsa-b128s/fixtures/devnet/README.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "1b5afa0d9f7ebe4d13fe8c3419fbfa35b99604dede6eb23cea2d077ba255614c"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
+      "sha256": "3672e82436bde7ccb7ff291d508c88d7159a550e09ce6ec2761d64931128c9c2"
     },
     {
       "disposition": "new",

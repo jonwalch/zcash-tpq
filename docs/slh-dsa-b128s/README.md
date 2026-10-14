@@ -1,13 +1,15 @@
 # SLH node and wallet guide
 
-This extension lets a local Zakura test network hold and spend transparent funds
+This extension lets a Zakura test network hold and spend transparent funds
 with SLH-DSA-B-128s. It includes a node verifier, wallet, command-line interface
 (CLI), multisig, backups, recovery, and public address inventories.
 SLH is the only added post-quantum (PQ) signature scheme.
 Node builds do not include the wallet signer.
 
 Support requires the `experimental-slh-dsa-b128s` feature.
-The Regtest configuration must set SLH activation after NU7.
+Regtest and isolated custom testnets must set SLH activation after NU7.
+The [devnet guide](devnets.md) describes the node APIs for launchers.
+The wallet CLI and its operational guides still use Regtest.
 The BLAKE3 construction is experimental. It is not a FIPS 205 profile.
 The [protocol](protocol.md) specifies the source revisions and the
 `slh-dsa-b-128s-exp-v1` contract.
@@ -17,6 +19,7 @@ The [protocol](protocol.md) specifies the source revisions and the
 | Task | Guide |
 | --- | --- |
 | Configure a test node and identify its verifier | [Runtime](runtime.md) |
+| Integrate a public or private devnet launcher | [Custom devnets](devnets.md) |
 | Create a wallet, enroll cosigners, and make payments | [CLI commands](cli.md) |
 | Back up keys and payment history, then restore them | [Recovery](recovery.md) |
 | Understand finite address inventories and watch-only roles | [Wallet behavior](wallet.md#recovery-and-watch-only-behavior) |

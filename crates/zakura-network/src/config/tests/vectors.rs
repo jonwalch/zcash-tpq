@@ -24,7 +24,7 @@ use crate::{
     CacheDir, Config, P2pStack,
 };
 
-use super::super::load_or_generate_zakura_secret_key;
+use super::{super::load_or_generate_zakura_secret_key, custom_slh_config, CUSTOM_SLH_FIELDS};
 
 fn default_zakura_bootstrap_peers() -> Vec<String> {
     DEFAULT_ZAKURA_BOOTSTRAP_PEERS
@@ -1376,13 +1376,13 @@ fn experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest() {
                 "{error}"
             );
         }
-        // Configured Testnets reject the fields, including with the activation overlay.
+        // Custom Testnets also reject incomplete fields, including with the activation overlay.
         for text in [
             format!("initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, {field} }}"),
             format!("initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhTestnet', checkpoints = true, inherit_activation_heights = true, activation_heights = {{ NU7 = 4420652 }}, {field} }}"),
         ] {
             let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
-            assert!(error.contains("is only supported on Regtest"), "{error}");
+            assert!(error.contains("must be configured together"), "{error}");
         }
         // The untagged inline Regtest form must not swallow misplaced fields.
         let text = format!("network = {{ params = {{}}, {field} }}");
@@ -1643,4 +1643,697 @@ fn activation_height_overlay_is_only_for_configured_testnets() {
             "unexpected configuration error: {error}"
         );
     }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_config_roundtrips() {
+    let config: Config = toml::from_str(&custom_slh_config(CUSTOM_SLH_FIELDS)).unwrap();
+    assert!(!config.network.is_regtest());
+    assert!(!config.network.is_default_testnet());
+    assert_eq!(
+        config.network.kind(),
+        zakura_chain::parameters::NetworkKind::Testnet
+    );
+    assert_eq!(
+        config
+            .network
+            .experimental_slh_dsa_b128s_activation_height(),
+        Some(Height(110))
+    );
+    assert!(!config
+        .network
+        .is_experimental_slh_dsa_b128s_active(Height(109)));
+    assert!(config
+        .network
+        .is_experimental_slh_dsa_b128s_active(Height(110)));
+    let limits = config.network.experimental_slh_dsa_b128s_limits().unwrap();
+    assert_eq!((limits.transaction(), limits.block()), (16, 64));
+    let fingerprint = config
+        .network
+        .experimental_slh_dsa_b128s_chain_fingerprint();
+    assert!(fingerprint.is_some());
+    let encoded = toml::to_string(&config).unwrap();
+    let restored: Config = toml::from_str(&encoded).unwrap();
+    assert_eq!(restored, config);
+    assert_eq!(
+        restored
+            .network
+            .experimental_slh_dsa_b128s_chain_fingerprint(),
+        fingerprint
+    );
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_generator_config_roundtrips() {
+    use zakura_chain::local_genesis::{
+        generate_local_testnet_with_slh_dsa_b128s, LocalTestnetGenesisOptions,
+    };
+
+    let generated = generate_local_testnet_with_slh_dsa_b128s(
+        vec!["miner".to_string()],
+        LocalTestnetGenesisOptions {
+            latest_network_upgrade: NetworkUpgrade::Nu7,
+            maturity_padding_blocks: 2,
+            seeded_tip_time: Some(10_000),
+            ..Default::default()
+        },
+        testnet::ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+    )
+    .unwrap();
+    let mut config = Config {
+        network: generated.network,
+        initial_testnet_peers: [].into(),
+        ..Config::for_test(P2pStack::Zakura)
+    };
+    config.zakura.bootstrap_peers.clear();
+    let fingerprint = config
+        .network
+        .experimental_slh_dsa_b128s_chain_fingerprint();
+    assert!(fingerprint.is_some());
+
+    let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+    assert_eq!(restored, config);
+    assert_eq!(restored.network.genesis_hash(), generated.blocks[0].hash());
+    assert_eq!(
+        restored
+            .network
+            .experimental_slh_dsa_b128s_chain_fingerprint(),
+        fingerprint
+    );
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_consensus_options_roundtrip() {
+    for allow_unshielded in [false, true] {
+        for disable_orchard_fork in [false, true] {
+            let mut builder = testnet::Parameters::build()
+                .with_network_name("SlhDevnet".to_string())
+                .unwrap()
+                .with_network_magic(zakura_chain::parameters::Magic(*b"SLH1"))
+                .unwrap()
+                .with_genesis_hash(zakura_chain::block::Hash([42; 32]))
+                .unwrap()
+                .with_activation_heights(ConfiguredActivationHeights {
+                    nu6_3: Some(1),
+                    nu7: Some(105),
+                    ..Default::default()
+                })
+                .unwrap()
+                .clear_funding_streams()
+                .with_lockbox_disbursements(vec![])
+                .clear_checkpoints()
+                .unwrap()
+                .with_unshielded_coinbase_spends(allow_unshielded)
+                .with_experimental_slh_dsa_b128s(
+                    Height(110),
+                    testnet::ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+                )
+                .unwrap();
+            if disable_orchard_fork {
+                builder = builder.disable_temporary_orchard_disabling_soft_fork();
+            }
+            let mut config: Config = toml::from_str(&custom_slh_config(CUSTOM_SLH_FIELDS)).unwrap();
+            config.network = builder.to_network().unwrap();
+            let fingerprint = config
+                .network
+                .experimental_slh_dsa_b128s_chain_fingerprint();
+            let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+            assert_eq!(restored, config);
+            assert_eq!(
+                restored
+                    .network
+                    .experimental_slh_dsa_b128s_chain_fingerprint(),
+                fingerprint
+            );
+            assert_eq!(
+                restored.network.should_allow_unshielded_coinbase_spends(),
+                allow_unshielded
+            );
+            let Network::Testnet(params) = restored.network else {
+                unreachable!()
+            };
+            assert_eq!(
+                params
+                    .temporary_orchard_disabling_soft_fork_height()
+                    .is_none(),
+                disable_orchard_fork
+            );
+        }
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_consensus_options_reject_conflicts() {
+    let conflicting = custom_slh_config(&format!(
+        "{CUSTOM_SLH_FIELDS}, disable_temporary_orchard_disabling_soft_fork = true, temporary_orchard_disabling_soft_fork_height = 200"
+    ));
+    let error = toml::from_str::<Config>(&conflicting)
+        .unwrap_err()
+        .to_string();
+    assert!(
+        error.contains("cannot be combined with an explicit soft-fork height"),
+        "{error}"
+    );
+    for field in [
+        "should_allow_unshielded_coinbase_spends",
+        "disable_temporary_orchard_disabling_soft_fork",
+    ] {
+        let error = toml::from_str::<Config>(&format!(
+            "network = 'Regtest'\n[testnet_parameters]\n{field} = false"
+        ))
+        .unwrap_err()
+        .to_string();
+        assert!(
+            error.contains("only apply to configured Testnets"),
+            "{error}"
+        );
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_peer_cache_binds_chain_rules() {
+    let cache = CacheDir::custom_path("test-cache");
+    let original = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let mut paths = HashSet::new();
+    for text in [
+        original.clone(),
+        original.replace("per_block = 64", "per_block = 65"),
+        original.replace(
+            &zakura_chain::block::Hash([42; 32]).to_string(),
+            &zakura_chain::block::Hash([43; 32]).to_string(),
+        ),
+        custom_slh_config(""),
+    ] {
+        let config: Config = toml::from_str(&text).unwrap();
+        let path = cache.peer_cache_file_path(&config.network).unwrap();
+        assert!(
+            paths.insert(path.clone()),
+            "different chains must use different peer caches"
+        );
+        if let Some(fingerprint) = config
+            .network
+            .experimental_slh_dsa_b128s_chain_fingerprint()
+        {
+            assert!(path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .contains(&hex::encode(fingerprint)));
+        } else {
+            assert_eq!(path.file_name().unwrap(), "slhdevnet.peers");
+        }
+        let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+        assert_eq!(cache.peer_cache_file_path(&restored.network), Some(path));
+        assert_eq!(
+            CacheDir::disabled().peer_cache_file_path(&config.network),
+            None
+        );
+    }
+    for network in [
+        Network::Mainnet,
+        Network::new_default_testnet(),
+        Network::new_regtest(Default::default()),
+    ] {
+        assert_eq!(
+            cache.peer_cache_file_path(&network).unwrap(),
+            std::path::Path::new("test-cache/network")
+                .join(format!("{}.peers", network.lowercase_name()))
+        );
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
+    let _init_guard = zakura_test::init();
+    let directory = tempfile::tempdir().unwrap();
+    let log_path = directory.path().join("identity-upgrade.log");
+    let resolve_key = |config: &Config| {
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_ansi(false)
+            .with_writer(fs::File::create(&log_path).unwrap())
+            .finish();
+        // This synchronous call emits no spans and cannot migrate between threads.
+        // A local subscriber captures warnings hidden by the shared test filter.
+        let identity = tracing::subscriber::with_default(subscriber, || {
+            config.zakura_secret_key().unwrap().public()
+        });
+        (identity, fs::read_to_string(&log_path).unwrap())
+    };
+    let original = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let mut identities = HashSet::new();
+    for text in [
+        custom_slh_config(""),
+        original.clone(),
+        original.replace("per_block = 64", "per_block = 65"),
+        original.replace(
+            &zakura_chain::block::Hash([42; 32]).to_string(),
+            &zakura_chain::block::Hash([43; 32]).to_string(),
+        ),
+    ] {
+        let mut config: Config = toml::from_str(&text).unwrap();
+        config.identity_dir = directory.path().to_owned();
+        // Persistent identities must remain available with the peer cache disabled.
+        config.cache_dir = CacheDir::disabled();
+        let key_path = zakura_secret_key_file_path(&config.identity_dir, &config.network);
+        if let Some(fingerprint) = config
+            .network
+            .experimental_slh_dsa_b128s_chain_fingerprint()
+        {
+            assert!(key_path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .contains(&hex::encode(fingerprint)));
+        } else {
+            assert_eq!(
+                key_path.file_name().unwrap(),
+                "slhdevnet.zakura-iroh-secret-key"
+            );
+        }
+        let (identity, log) = resolve_key(&config);
+        assert_eq!(
+            log.contains("SLH custom-testnet identity path changed"),
+            config
+                .network
+                .experimental_slh_dsa_b128s_chain_fingerprint()
+                .is_some(),
+            "only replacing the old name-only identity needs an upgrade warning"
+        );
+        assert!(
+            identities.insert(identity),
+            "different chains must not reuse an identity key"
+        );
+        assert!(key_path.is_file());
+        let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+        let (restored_identity, log) = resolve_key(&restored);
+        assert_eq!(restored_identity, identity);
+        assert!(!log.contains("SLH custom-testnet identity path changed"));
+    }
+    for network in [
+        Network::Mainnet,
+        Network::new_default_testnet(),
+        Network::new_regtest(Default::default()),
+    ] {
+        assert_eq!(
+            zakura_secret_key_file_path(directory.path(), &network),
+            directory.path().join(format!(
+                "{}.zakura-iroh-secret-key",
+                network.lowercase_name()
+            ))
+        );
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_config_requires_complete_settings_and_identity() {
+    let fields: Vec<_> = CUSTOM_SLH_FIELDS.split(", ").collect();
+    for mask in 1..7 {
+        let selected: Vec<_> = fields
+            .iter()
+            .enumerate()
+            .filter_map(|(index, field)| (mask & (1 << index) != 0).then_some(*field))
+            .collect();
+        let error = toml::from_str::<Config>(&custom_slh_config(&selected.join(", ")))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("must be configured together"),
+            "mask {mask}: {error}"
+        );
+    }
+    let config = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let custom_genesis = format!("genesis_hash = '{}', ", zakura_chain::block::Hash([42; 32]));
+    for omitted in [
+        "network_name = 'SlhDevnet', ",
+        "network_magic = [83, 76, 72, 49], ",
+        custom_genesis.as_str(),
+    ] {
+        let error = toml::from_str::<Config>(&config.replace(omitted, ""))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("explicit distinct network name"),
+            "{omitted}: {error}"
+        );
+    }
+    for network in [
+        Network::Mainnet,
+        Network::new_default_testnet(),
+        Network::new_regtest(Default::default()),
+    ] {
+        let text = config.replace(
+            &custom_genesis,
+            &format!("genesis_hash = '{}', ", network.genesis_hash()),
+        );
+        let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+        assert!(
+            error.contains("genesis hash distinct from all built-in networks"),
+            "{error}"
+        );
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_config_checks_boundaries() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    for (from, to, expected) in [
+        ("NU7 = 105", "NU7 = 110", "strictly after NU7"),
+        ("NU7 = 105", "NU7 = 111", "strictly after NU7"),
+        (", NU7 = 105", "", "strictly after NU7"),
+        (
+            "activation_height = 110",
+            "activation_height = 0",
+            "Height::MAX",
+        ),
+        (
+            "activation_height = 110",
+            "activation_height = 2147483648",
+            "Height::MAX",
+        ),
+        (
+            "per_transaction = 16",
+            "per_transaction = 0",
+            "0 < transaction <= block",
+        ),
+        (
+            "per_transaction = 16",
+            "per_transaction = 65",
+            "0 < transaction <= block",
+        ),
+        (
+            "per_block = 64",
+            "per_block = 0",
+            "0 < transaction <= block",
+        ),
+    ] {
+        let error = toml::from_str::<Config>(&valid.replace(from, to))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains(expected), "{from} => {to}: {error}");
+    }
+    for field in [
+        "activation_height = 110",
+        "per_transaction = 16",
+        "per_block = 64",
+    ] {
+        for invalid in ["-1", "4294967296"] {
+            let (name, _) = field.split_once(" = ").unwrap();
+            assert!(toml::from_str::<Config>(
+                &valid.replace(field, &format!("{name} = {invalid}"))
+            )
+            .is_err());
+        }
+    }
+    for height in [109, 110, 111] {
+        let checkpoints = format!(
+            "checkpoints = [[0, {:?}], [{height}, {:?}]]",
+            [42u8; 32], [43u8; 32]
+        );
+        let result = toml::from_str::<Config>(&valid.replace("checkpoints = false", &checkpoints));
+        if height < 110 {
+            assert!(result.is_ok(), "{result:?}");
+        } else {
+            let error = result.unwrap_err().to_string();
+            assert!(
+                error.contains("after every configured and mandatory checkpoint"),
+                "{error}"
+            );
+        }
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_custom_config_rejects_builtin_bootstrap_peers() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let custom_id = zakura_quic::NodeSecretKey::from_bytes(&[42; 32]).public();
+    let error = toml::from_str::<Config>(&valid.replace("initial_testnet_peers = []\n", ""))
+        .unwrap_err()
+        .to_string();
+    assert!(
+        error.contains("cannot use default initials peers"),
+        "{error}"
+    );
+    let error = toml::from_str::<Config>(&valid.replace("[zakura]\nbootstrap_peers = []", ""))
+        .unwrap_err()
+        .to_string();
+    assert!(
+        error.contains("require explicit zakura.bootstrap_peers"),
+        "{error}"
+    );
+    for mut peers in [
+        default_zakura_bootstrap_peers(),
+        default_testnet_zakura_bootstrap_peers(),
+    ] {
+        peers.push(format!("{custom_id}@127.0.0.1:19934"));
+        let text = valid.replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = {peers:?}"),
+        );
+        let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
+        assert!(
+            error.contains("without built-in Mainnet or Testnet peers"),
+            "{error}"
+        );
+    }
+    let custom = valid
+        .replace(
+            "initial_testnet_peers = []",
+            "initial_testnet_peers = ['127.0.0.1:19933']",
+        )
+        .replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = ['{custom_id}@127.0.0.1:19934']"),
+        );
+    assert!(toml::from_str::<Config>(&custom).is_ok());
+    // Existing custom networks keep their native bootstrap behavior until SLH is enabled.
+    let non_slh = custom_slh_config("").replace("[zakura]\nbootstrap_peers = []", "");
+    assert!(toml::from_str::<Config>(&non_slh).is_ok());
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_requires_native_p2p() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    for (mode, accepted) in [
+        ("default", true),
+        ("zakura", true),
+        ("legacy", false),
+        ("dual", false),
+    ] {
+        let text = format!("p2p_stack = '{mode}'\n{valid}");
+        let parsed = toml::from_str::<Config>(&text);
+        assert_eq!(parsed.is_ok(), accepted, "{mode}: {parsed:?}");
+        if let Err(error) = parsed {
+            assert!(error
+                .to_string()
+                .contains("legacy peers cannot verify the chain fingerprint"));
+        }
+        let mut direct: Config = toml::from_str(&valid).unwrap();
+        direct.p2p_stack = match mode {
+            "default" => P2pStack::Default,
+            "zakura" => P2pStack::Zakura,
+            "legacy" => P2pStack::Legacy,
+            "dual" => P2pStack::Dual,
+            _ => unreachable!(),
+        };
+        assert_eq!(
+            direct.validate_experimental_slh_dsa_b128s_peers().is_ok(),
+            accepted
+        );
+        if accepted {
+            assert!(direct.v2_p2p());
+            assert!(!direct.legacy_p2p());
+        }
+        // This restriction does not change the available stacks on other custom networks.
+        let ordinary = format!("p2p_stack = '{mode}'\n{}", custom_slh_config(""));
+        assert!(toml::from_str::<Config>(&ordinary).is_ok());
+    }
+    let ordinary: Config = toml::from_str(&custom_slh_config("")).unwrap();
+    assert_eq!(
+        ordinary.p2p_stack.resolve(&ordinary.network),
+        P2pStack::Dual
+    );
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_requires_valid_native_bootstrap_peers() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let custom_id = zakura_quic::NodeSecretKey::from_bytes(&[42; 32]).public();
+    for address in ["127.0.0.1:19934", "[::1]:19934"] {
+        let peer = format!("{custom_id}@{address}");
+        let text = valid.replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = {:#?}", [peer]),
+        );
+        let config: Config = toml::from_str(&text).unwrap();
+        assert!(config.validate_experimental_slh_dsa_b128s_peers().is_ok());
+    }
+    for peer in [
+        "127.0.0.1:19934".to_string(),
+        "invalid-id@127.0.0.1:19934".to_string(),
+        format!("{custom_id}@localhost:19934"),
+        format!("{custom_id}@127.0.0.1:65536"),
+        format!("{custom_id}@::1:19934"),
+        format!("{custom_id}@127.0.0.1"),
+        format!(" {custom_id}@127.0.0.1:19934"),
+        format!("{custom_id}@127.0.0.1:19934 "),
+    ] {
+        let mut direct: Config = toml::from_str(&valid).unwrap();
+        direct.zakura.bootstrap_peers = vec![peer.clone()];
+        assert!(
+            direct
+                .validate_experimental_slh_dsa_b128s_peers()
+                .unwrap_err()
+                .contains("NodeId@IP:port"),
+            "{peer}"
+        );
+        let text = valid.replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = {:#?}", [peer]),
+        );
+        assert!(toml::from_str::<Config>(&text)
+            .unwrap_err()
+            .to_string()
+            .contains("NodeId@IP:port"));
+    }
+}
+
+#[tokio::test]
+async fn experimental_slh_dsa_b128s_network_init_rejects_invalid_peering_before_io() {
+    let valid: Config = toml::from_str(&custom_slh_config(CUSTOM_SLH_FIELDS)).unwrap();
+    let mut invalid = Vec::new();
+    for stack in [P2pStack::Legacy, P2pStack::Dual] {
+        let mut config = valid.clone();
+        config.p2p_stack = stack;
+        invalid.push((config, "legacy peers cannot verify the chain fingerprint"));
+    }
+    let mut malformed = valid;
+    malformed.zakura.bootstrap_peers = vec!["127.0.0.1:19934".to_string()];
+    invalid.push((malformed, "NodeId@IP:port"));
+    for (config, expected) in invalid {
+        let inbound = tower::service_fn(|_: crate::Request| async {
+            std::future::pending::<Result<crate::Response, crate::BoxError>>().await
+        });
+        let result = tokio::time::timeout(
+            Duration::from_secs(5),
+            crate::init_with_zakura(
+                config,
+                inbound,
+                zakura_chain::chain_tip::NoChainTip,
+                String::new(),
+                crate::protocol::external::types::PeerServices::empty(),
+                Vec::new(),
+                None,
+                Vec::new(),
+            ),
+        )
+        .await
+        .expect("invalid configuration fails without waiting for a network operation");
+        let Err(error) = result else {
+            panic!("invalid SLH configuration must not open a network endpoint");
+        };
+        assert!(error.to_string().contains(expected), "{error}");
+    }
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_rejects_public_peer_aliases() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let defaults = Config::default();
+    let mut legacy_aliases = Vec::new();
+    let mut native_aliases = Vec::new();
+    for seed in defaults
+        .initial_mainnet_peers
+        .iter()
+        .chain(&defaults.initial_testnet_peers)
+    {
+        let (host, _) = seed.rsplit_once(':').unwrap();
+        legacy_aliases.extend([
+            host.to_string(),
+            format!("{host}:19933"),
+            format!("{}.:19933", host.to_ascii_uppercase()),
+        ]);
+    }
+    let custom_id = zakura_quic::NodeSecretKey::from_bytes(&[42; 32]).public();
+    for seed in default_zakura_bootstrap_peers()
+        .into_iter()
+        .chain(default_testnet_zakura_bootstrap_peers())
+    {
+        let (id, address) = seed.split_once('@').unwrap();
+        let address: SocketAddr = address.parse().unwrap();
+        let std::net::IpAddr::V4(ip) = address.ip() else {
+            panic!("these built-in peer fixtures use IPv4");
+        };
+        let [a, b, c, d] = ip.octets();
+        legacy_aliases.extend([
+            address.ip().to_string(),
+            format!("{}:19933", address.ip()),
+            format!("[::ffff:{}]:19933", address.ip()),
+            format!("[::{}]:19933", address.ip()),
+            format!("[64:ff9b::{}]:19933", address.ip()),
+            format!(" {}:19933", address.ip()),
+            format!("{} :19933", address.ip()),
+            format!("{}\t:19933", address.ip()),
+            format!("{}:19933 ", address.ip()),
+            format!("{}:19933", u32::from(ip)),
+            format!("0x{:08x}:19933", u32::from(ip)),
+            format!("{a}.{b}.{}:19933", (u16::from(c) << 8) | u16::from(d)),
+            format!(
+                "{a}.{}:19933",
+                (u32::from(b) << 16) | (u32::from(c) << 8) | u32::from(d)
+            ),
+            format!("0{a:o}.0{b:o}.0{c:o}.0{d:o}:19933"),
+            format!("0x{a:x}.{b}.{c}.{d}:19933"),
+        ]);
+        native_aliases.extend([
+            format!("{id}@127.0.0.1:19934"),
+            format!("{custom_id}@{}:19934", address.ip()),
+            format!("{custom_id}@[::ffff:{}]:19934", address.ip()),
+            format!("{custom_id}@[::{}]:19934", address.ip()),
+            format!("{custom_id}@[64:ff9b::{}]:19934", address.ip()),
+        ]);
+    }
+    for (field, aliases) in [
+        ("initial_testnet_peers", legacy_aliases),
+        ("bootstrap_peers", native_aliases),
+    ] {
+        for alias in aliases {
+            let mut config: Config = toml::from_str(&valid).unwrap();
+            if field == "initial_testnet_peers" {
+                config.initial_testnet_peers = [alias.clone()].into();
+            } else {
+                assert!(crate::zakura::parse_bootstrap_peer(&alias).is_ok());
+                config.zakura.bootstrap_peers = vec![alias.clone()];
+            }
+            assert!(
+                config.validate_experimental_slh_dsa_b128s_peers().is_err(),
+                "embedded config: {field} = {alias}"
+            );
+            let text = valid.replace(&format!("{field} = []"), &format!("{field} = ['{alias}']"));
+            assert!(
+                toml::from_str::<Config>(&text).is_err(),
+                "TOML config: {field} = {alias}"
+            );
+        }
+    }
+    let custom_peers = [
+        "seed.devnet.example:19933",
+        "123.devnet.example:19933",
+        "[::1]:19933",
+        "127.0.0.1:19933",
+        "[64:ff9b::192.0.2.1]:19933",
+        "[2001:db8::165.22.54.66]:19933",
+    ];
+    let custom = valid
+        .replace(
+            "initial_testnet_peers = []",
+            &format!("initial_testnet_peers = {custom_peers:?}"),
+        )
+        .replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = ['{custom_id}@127.0.0.1:19934']"),
+        );
+    assert!(toml::from_str::<Config>(&custom).is_ok());
 }

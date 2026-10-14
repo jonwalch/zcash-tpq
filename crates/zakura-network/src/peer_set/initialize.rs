@@ -236,6 +236,8 @@ where
     S::Future: Send + 'static,
     C: ChainTip + Clone + Send + Sync + 'static,
 {
+    config.validate_experimental_slh_dsa_b128s_peers()?;
+
     let (tcp_listener, listen_addr) = if config.legacy_p2p() {
         let (tcp_listener, listen_addr) = open_listener(&config.clone()).await;
         (Some(tcp_listener), listen_addr)

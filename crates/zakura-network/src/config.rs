@@ -7,14 +7,14 @@ use std::{
     net::{IpAddr, SocketAddr},
     path::{Path, PathBuf},
     str::FromStr,
-    sync::Arc,
+    sync::{Arc, LazyLock},
     time::Duration,
 };
 
 use indexmap::IndexSet;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use tokio::fs;
-use zakura_quic::NodeSecretKey;
+use zakura_quic::{NodeId, NodeSecretKey};
 
 use tracing::Span;
 use zakura_chain::{
@@ -44,12 +44,13 @@ use crate::{
 mod cache_dir;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use cache_dir::CacheDir;
 
 pub(crate) use cache_dir::{
-    default_network_identity_dir, zakura_node_secret_key_file_path as zakura_secret_key_file_path,
+    default_network_identity_dir, legacy_zakura_node_secret_key_file_path,
+    zakura_node_secret_key_file_path as zakura_secret_key_file_path,
 };
 
 /// A sensitive secret-key override for Zakura P2P node identity.
@@ -127,12 +128,20 @@ impl P2pStack {
     /// Resolves [`P2pStack::Default`] to the binary default for `network`, and returns every
     /// other stack unchanged.
     ///
-    /// Mainnet defaults to [`P2pStack::Legacy`] until Zakura P2P v2 is proven there. Every other
-    /// network defaults to [`P2pStack::Dual`], so Zakura P2P v2 gets exercised while legacy
-    /// peers stay reachable.
+    /// Mainnet defaults to [`P2pStack::Legacy`] until Zakura P2P v2 is proven there.
+    /// SLH custom testnets require [`P2pStack::Zakura`] to verify their chain fingerprint.
+    /// Other networks default to [`P2pStack::Dual`] to keep legacy peers reachable.
     pub fn resolve(self, network: &Network) -> P2pStack {
         match self {
             P2pStack::Default if matches!(network, Network::Mainnet) => P2pStack::Legacy,
+            P2pStack::Default
+                if network.kind() == NetworkKind::Testnet
+                    && network
+                        .experimental_slh_dsa_b128s_activation_height()
+                        .is_some() =>
+            {
+                P2pStack::Zakura
+            }
             P2pStack::Default => P2pStack::Dual,
             resolved => resolved,
         }
@@ -256,10 +265,12 @@ pub struct Config {
 
     /// The directory for long-term network identity secrets.
     ///
-    /// The auto-generated Zakura iroh identity key is stored under this
-    /// directory as `<network>.zakura-iroh-secret-key`. Keep this directory
-    /// outside state or cache snapshot paths, or snapshots can clone the node's
-    /// long-term P2P identity.
+    /// The auto-generated Zakura native identity key is stored under this
+    /// directory as `<network>.zakura-iroh-secret-key`. SLH custom testnets use
+    /// `<network>-slh-dsa-b128s-v1-<fingerprint>.zakura-iroh-secret-key` instead.
+    /// Back up this directory, including the fingerprinted files. Keep it outside
+    /// state or cache snapshot paths, or snapshots can clone the node's long-term
+    /// P2P identity.
     ///
     /// The default is `~/.zakura`.
     pub identity_dir: PathBuf,
@@ -354,6 +365,84 @@ pub struct Config {
 }
 
 impl Config {
+    /// Require native peering and valid non-public bootstrap peers for an SLH custom testnet.
+    ///
+    /// This check also applies to configurations constructed directly by an
+    /// embedding application. Empty peer lists permit an inbound-only node.
+    /// Regtest and networks without SLH retain their existing peer behavior.
+    pub fn validate_experimental_slh_dsa_b128s_peers(&self) -> Result<(), &'static str> {
+        if self.network.kind() != NetworkKind::Testnet
+            || self
+                .network
+                .experimental_slh_dsa_b128s_activation_height()
+                .is_none()
+        {
+            return Ok(());
+        }
+
+        if self.p2p_stack.resolve(&self.network) != P2pStack::Zakura {
+            return Err(
+                "custom SLH Testnets require network.p2p_stack = 'zakura'; legacy peers cannot verify the chain fingerprint",
+            );
+        }
+
+        static PUBLIC_PEERS: LazyLock<(HashSet<String>, HashSet<NodeId>)> = LazyLock::new(|| {
+            let defaults = Config::default();
+            let public_networks = [Network::Mainnet, Network::new_default_testnet()];
+            let public_native_peers: Vec<_> = public_networks
+                .iter()
+                .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
+                .map(|peer| {
+                    crate::zakura::parse_bootstrap_peer(&peer)
+                        .expect("built-in native peers have valid identities and addresses")
+                })
+                .collect();
+            let public_hosts = defaults
+                .initial_mainnet_peers
+                .iter()
+                .chain(&defaults.initial_testnet_peers)
+                .map(|peer| {
+                    normalized_peer_host(peer).expect("built-in seed hosts use canonical names")
+                })
+                .chain(public_native_peers.iter().flat_map(|peer| {
+                    peer.direct
+                        .iter()
+                        .map(|addr| slh_peer_ip(addr.ip()).to_string())
+                }))
+                .collect();
+            let public_ids = public_native_peers
+                .into_iter()
+                .map(|peer| peer.id)
+                .collect();
+            (public_hosts, public_ids)
+        });
+        let (public_hosts, public_ids) = &*PUBLIC_PEERS;
+
+        for peer in &self.initial_testnet_peers {
+            if public_hosts.contains(&normalized_peer_host(peer)?) {
+                return Err(
+                    "custom SLH Testnets require explicit initial_testnet_peers without built-in Mainnet or Testnet peers",
+                );
+            }
+        }
+        for entry in &self.zakura.bootstrap_peers {
+            let peer = crate::zakura::parse_bootstrap_peer(entry).map_err(|_| {
+                "custom SLH Testnets require valid zakura.bootstrap_peers in NodeId@IP:port format"
+            })?;
+            if public_ids.contains(&peer.id)
+                || peer
+                    .direct
+                    .iter()
+                    .any(|addr| public_hosts.contains(&slh_peer_ip(addr.ip()).to_string()))
+            {
+                return Err(
+                    "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
+                );
+            }
+        }
+        Ok(())
+    }
+
     /// The maximum number of outbound connections that Zakura will open at the same time.
     /// When this limit is reached, Zakura stops opening outbound connections.
     ///
@@ -760,6 +849,15 @@ impl Config {
         }
 
         let key_file = zakura_secret_key_file_path(&self.identity_dir, &self.network);
+        let legacy_key_file =
+            legacy_zakura_node_secret_key_file_path(&self.identity_dir, &self.network);
+        if key_file != legacy_key_file && !key_file.exists() && legacy_key_file.is_file() {
+            warn!(
+                old_key_file = %legacy_key_file.display(),
+                new_key_file = %key_file.display(),
+                "SLH custom-testnet identity path changed; creating a new node identity; update bootstrap peer IDs. The old key is not reused because its path does not identify the chain"
+            );
+        }
 
         Ok(load_or_generate_zakura_secret_key(&key_file))
     }
@@ -969,11 +1067,14 @@ struct DTestnetParameters {
     slow_start_interval: Option<u32>,
     target_difficulty_limit: Option<String>,
     disable_pow: Option<bool>,
+    /// Permit transparent spends of coinbase outputs on a configured Testnet.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    should_allow_unshielded_coinbase_spends: Option<bool>,
     /// Height at which the MTP-plus-90-minutes rule activates.
     max_block_time_start_height: Option<u32>,
     genesis_hash: Option<String>,
     activation_heights: Option<ConfiguredActivationHeights>,
-    /// Regtest-only SLH-DSA-B-128s activation, independent of network upgrades.
+    /// Experimental SLH activation on Regtest or an isolated custom Testnet.
     #[serde(skip_serializing_if = "Option::is_none")]
     experimental_slh_dsa_b128s_activation_height: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -998,9 +1099,12 @@ struct DTestnetParameters {
     extend_funding_stream_addresses_as_required: Option<bool>,
     /// Height at which the soft fork that temporarily disables Orchard actions activates.
     ///
-    /// If unset, the default activation height for the network is used; the soft fork
-    /// cannot be disabled via configuration.
+    /// If unset, the default activation height for the network is used unless disabled.
     temporary_orchard_disabling_soft_fork_height: Option<u32>,
+    /// Disable the temporary Orchard soft fork on a configured Testnet.
+    /// Cannot be combined with an explicit soft-fork height.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    disable_temporary_orchard_disabling_soft_fork: Option<bool>,
     /// The NSM value balance in zatoshi immediately before NU7 activates.
     ///
     /// If unset on a configured network, state derives the balance from its historical
@@ -1099,6 +1203,9 @@ impl From<Arc<testnet::Parameters>> for DTestnetParameters {
             slow_start_interval: Some(params.slow_start_interval().0),
             target_difficulty_limit: Some(params.target_difficulty_limit().to_string()),
             disable_pow: Some(params.disable_pow()),
+            should_allow_unshielded_coinbase_spends: (!params.is_regtest()
+                && params.should_allow_unshielded_coinbase_spends())
+            .then_some(true),
             max_block_time_start_height: Some(params.max_block_time_start_height().0),
             genesis_hash: Some(params.genesis_hash().to_string()),
             activation_heights: Some(params.activation_heights().into()),
@@ -1137,6 +1244,11 @@ impl From<Arc<testnet::Parameters>> for DTestnetParameters {
             temporary_orchard_disabling_soft_fork_height: params
                 .temporary_orchard_disabling_soft_fork_height()
                 .map(|height| height.0),
+            disable_temporary_orchard_disabling_soft_fork: (!params.is_regtest()
+                && params
+                    .temporary_orchard_disabling_soft_fork_height()
+                    .is_none())
+            .then_some(true),
             initial_nsm_value_balance: params.configured_initial_nsm_value_balance().map(
                 |balance| {
                     u64::try_from(i64::from(balance)).expect("configured seeds are nonnegative")
@@ -1365,7 +1477,7 @@ impl<'de> Deserialize<'de> for Config {
         }
         zakura.quic.validate().map_err(de::Error::custom)?;
 
-        Ok(Config {
+        let config = Config {
             listen_addr: canonical_socket_addr(listen_addr),
             external_addr: external_socket_addr,
             network,
@@ -1380,7 +1492,11 @@ impl<'de> Deserialize<'de> for Config {
             crawl_new_peer_interval,
             max_connections_per_ip,
             expose_peer_addresses,
-        })
+        };
+        config
+            .validate_experimental_slh_dsa_b128s_peers()
+            .map_err(de::Error::custom)?;
+        Ok(config)
     }
 }
 
@@ -1415,6 +1531,57 @@ fn contains_default_initial_peers(initial_peers: &IndexSet<String>) -> bool {
         .is_some()
 }
 
+/// Compare known public hosts independent of ports, DNS case, or a final DNS dot.
+/// This is a configuration guard, not a DNS ownership or network-egress check.
+fn normalized_peer_host(peer: &str) -> Result<String, &'static str> {
+    if peer.bytes().any(|byte| byte.is_ascii_whitespace()) {
+        return Err("custom SLH Testnet peer addresses must not contain whitespace");
+    }
+    if let Ok(addr) = peer.parse::<SocketAddr>() {
+        return Ok(slh_peer_ip(addr.ip()).to_string());
+    }
+    if let Ok(ip) = peer.trim_matches(['[', ']']).parse::<IpAddr>() {
+        return Ok(slh_peer_ip(ip).to_string());
+    }
+    let host = peer
+        .rsplit_once(':')
+        .map_or(peer, |(host, _)| host)
+        .trim_end_matches('.')
+        .to_ascii_lowercase();
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        return Ok(slh_peer_ip(ip).to_string());
+    }
+
+    // OS resolvers accept integer, short, octal, and hexadecimal IPv4 forms that
+    // Rust's IP parser rejects. Do not pass ambiguous numeric hosts to DNS.
+    if host.contains([':', '[', ']'])
+        || host.split('.').all(|part| {
+            if let Some(hex) = part.strip_prefix("0x") {
+                !hex.is_empty() && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+            } else {
+                !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())
+            }
+        })
+    {
+        return Err("custom SLH Testnet peers require canonical IP addresses or DNS names, not ambiguous numeric address forms");
+    }
+    Ok(host)
+}
+
+/// Compare IPv4-mapped, IPv4-compatible, and well-known NAT64 forms with public IPs.
+fn slh_peer_ip(ip: IpAddr) -> IpAddr {
+    match ip {
+        // RFC 6052's well-known prefix translates the final 32 bits to IPv4.
+        // Network-specific NAT64 prefixes require external routing information.
+        IpAddr::V6(ipv6) if ipv6.segments()[..6] == [0x64, 0xff9b, 0, 0, 0, 0] => {
+            let [.., a, b, c, d] = ipv6.octets();
+            IpAddr::V4([a, b, c, d].into())
+        }
+        IpAddr::V6(ipv6) => ipv6.to_ipv4().map_or(ip, IpAddr::V4),
+        IpAddr::V4(_) => ip,
+    }
+}
+
 fn build_configured_testnet<'de, D>(
     params: DTestnetParameters,
     initial_testnet_peers: &IndexSet<String>,
@@ -1428,6 +1595,7 @@ where
         slow_start_interval,
         target_difficulty_limit,
         disable_pow,
+        should_allow_unshielded_coinbase_spends,
         max_block_time_start_height,
         genesis_hash,
         activation_heights,
@@ -1443,19 +1611,23 @@ where
         checkpoints,
         extend_funding_stream_addresses_as_required,
         temporary_orchard_disabling_soft_fork_height,
+        disable_temporary_orchard_disabling_soft_fork,
         initial_nsm_value_balance,
     } = params;
 
-    if experimental_slh_dsa_b128s_activation_height.is_some()
-        || experimental_slh_dsa_b128s_max_checks_per_transaction.is_some()
-        || experimental_slh_dsa_b128s_max_checks_per_block.is_some()
-    {
-        return Err(de::Error::custom(
-            "experimental_slh_dsa_b128s_activation_height is only supported on Regtest",
-        ));
-    }
+    let experimental_slh = experimental_slh_dsa_b128s_settings::<D>(
+        experimental_slh_dsa_b128s_activation_height,
+        experimental_slh_dsa_b128s_max_checks_per_transaction,
+        experimental_slh_dsa_b128s_max_checks_per_block,
+    )?;
 
     let mut params_builder = testnet::Parameters::build();
+
+    if let Some((activation_height, limits)) = experimental_slh {
+        params_builder = params_builder
+            .with_experimental_slh_dsa_b128s(activation_height, limits)
+            .map_err(de::Error::custom)?;
+    }
 
     if let Some(network_name) = network_name.clone() {
         params_builder = params_builder
@@ -1492,6 +1664,10 @@ where
 
     if let Some(disable_pow) = disable_pow {
         params_builder = params_builder.with_disable_pow(disable_pow);
+    }
+
+    if let Some(allow) = should_allow_unshielded_coinbase_spends {
+        params_builder = params_builder.with_unshielded_coinbase_spends(allow);
     }
 
     if let Some(height) = max_block_time_start_height {
@@ -1547,8 +1723,14 @@ where
         params_builder = params_builder.extend_funding_streams();
     }
 
-    // Retain the default soft-fork activation height unless one is configured.
-    if let Some(height) = temporary_orchard_disabling_soft_fork_height {
+    if disable_temporary_orchard_disabling_soft_fork == Some(true) {
+        if temporary_orchard_disabling_soft_fork_height.is_some() {
+            return Err(de::Error::custom(
+                "disable_temporary_orchard_disabling_soft_fork cannot be combined with an explicit soft-fork height",
+            ));
+        }
+        params_builder = params_builder.disable_temporary_orchard_disabling_soft_fork();
+    } else if let Some(height) = temporary_orchard_disabling_soft_fork_height {
         params_builder = params_builder.with_temporary_orchard_disabling_soft_fork_height(
             height.try_into().map_err(de::Error::custom)?,
         );
@@ -1584,11 +1766,48 @@ where
     params_builder.to_network().map_err(de::Error::custom)
 }
 
+/// Parses the complete SLH setting triple for either supported network configuration form.
+fn experimental_slh_dsa_b128s_settings<'de, D>(
+    activation_height: Option<u32>,
+    transaction_limit: Option<u32>,
+    block_limit: Option<u32>,
+) -> Result<
+    Option<(
+        zakura_chain::block::Height,
+        testnet::ExperimentalSlhDsaB128sLimits,
+    )>,
+    D::Error,
+>
+where
+    D: Deserializer<'de>,
+{
+    match (activation_height, transaction_limit, block_limit) {
+        (None, None, None) => Ok(None),
+        (Some(height), Some(transaction), Some(block)) => Ok(Some((
+            zakura_chain::block::Height(height),
+            testnet::ExperimentalSlhDsaB128sLimits::new(transaction, block)
+                .map_err(de::Error::custom)?,
+        ))),
+        _ => Err(de::Error::custom(
+            "experimental_slh_dsa_b128s_activation_height and both explicit SLH-DSA-B-128s limits must be configured together",
+        )),
+    }
+}
+
 /// Builds Regtest parameters while reporting invalid settings as configuration errors.
 fn build_configured_regtest<'de, D>(params: DTestnetParameters) -> Result<Network, D::Error>
 where
     D: Deserializer<'de>,
 {
+    if params.should_allow_unshielded_coinbase_spends.is_some()
+        || params
+            .disable_temporary_orchard_disabling_soft_fork
+            .is_some()
+    {
+        return Err(de::Error::custom(
+            "should_allow_unshielded_coinbase_spends and disable_temporary_orchard_disabling_soft_fork only apply to configured Testnets; Regtest already allows unshielded coinbase spends and disables this soft fork",
+        ));
+    }
     let DTestnetParameters {
         activation_heights,
         experimental_slh_dsa_b128s_activation_height,
@@ -1631,6 +1850,12 @@ where
         })
         .transpose()?;
 
+    let experimental_slh = experimental_slh_dsa_b128s_settings::<D>(
+        experimental_slh_dsa_b128s_activation_height,
+        experimental_slh_dsa_b128s_max_checks_per_transaction,
+        experimental_slh_dsa_b128s_max_checks_per_block,
+    )?;
+
     // The chain crate can have test-only fields enabled by another workspace crate.
     #[allow(
         clippy::needless_update,
@@ -1638,23 +1863,8 @@ where
     )]
     let params = RegtestParameters {
         activation_heights: activation_heights.unwrap_or_default(),
-        experimental_slh_dsa_b128s_activation_height: experimental_slh_dsa_b128s_activation_height
-            .map(zakura_chain::block::Height),
-        experimental_slh_dsa_b128s_limits: match (
-            experimental_slh_dsa_b128s_max_checks_per_transaction,
-            experimental_slh_dsa_b128s_max_checks_per_block,
-        ) {
-            (None, None) => None,
-            (Some(transaction), Some(block)) => Some(
-                testnet::ExperimentalSlhDsaB128sLimits::new(transaction, block)
-                    .map_err(de::Error::custom)?,
-            ),
-            _ => {
-                return Err(de::Error::custom(
-                    "both experimental SLH-DSA-B-128s limits must be configured together",
-                ))
-            }
-        },
+        experimental_slh_dsa_b128s_activation_height: experimental_slh.map(|(height, _)| height),
+        experimental_slh_dsa_b128s_limits: experimental_slh.map(|(_, limits)| limits),
         funding_streams: Some(funding_streams_vec),
         lockbox_disbursements,
         checkpoints: Some(checkpoints),

@@ -39,11 +39,11 @@ pub use crate::methods::{
         validate_address::ValidateAddressResponse,
         z_validate_address::{ZValidateAddressResponse, ZValidateAddressType},
     },
-    BlockHeaderObject, BlockObject, EndOfService, GetAddressBalanceRequest,
-    GetAddressBalanceResponse, GetAddressTxIdsRequest, GetAddressUtxosResponse,
-    GetAddressUtxosResponseObject, GetBlockHashResponse, GetBlockHeaderResponse,
-    GetBlockHeightAndHashResponse, GetBlockResponse, GetBlockTransaction, GetBlockTrees,
-    GetBlockchainInfoResponse, GetDeprecationInfoResponse, GetInfoResponse,
+    BlockHeaderObject, BlockObject, EndOfService, ExperimentalSlhDsaB128sInfo,
+    GetAddressBalanceRequest, GetAddressBalanceResponse, GetAddressTxIdsRequest,
+    GetAddressUtxosResponse, GetAddressUtxosResponseObject, GetBlockHashResponse,
+    GetBlockHeaderResponse, GetBlockHeightAndHashResponse, GetBlockResponse, GetBlockTransaction,
+    GetBlockTrees, GetBlockchainInfoResponse, GetDeprecationInfoResponse, GetInfoResponse,
     GetRawTransactionResponse, Hash, SendRawTransactionResponse, Utxo,
 };
 
