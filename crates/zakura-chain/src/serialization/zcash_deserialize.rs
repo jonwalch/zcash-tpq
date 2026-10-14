@@ -319,7 +319,7 @@ where
 
 /// The length of the longest valid `Vec<u8>` that can be received over the network
 ///
-/// It takes 5 bytes to encode a CompactSize representing any number netween 2^16 and (2^32 - 1)
-/// MAX_PROTOCOL_MESSAGE_LEN is ~2^21, so the largest `Vec<u8>` that can be received from an honest peer is
-/// (MAX_PROTOCOL_MESSAGE_LEN - 5);
+/// It takes 5 bytes to encode a CompactSize between 2^16 and (2^32 - 1).
+/// The 20 MiB message cap is in that range, so the largest `Vec<u8>` that can
+/// be received from an honest peer has `MAX_PROTOCOL_MESSAGE_LEN - 5` bytes.
 pub(crate) const MAX_U8_ALLOCATION: usize = MAX_PROTOCOL_MESSAGE_LEN - 5;

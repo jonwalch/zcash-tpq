@@ -130,6 +130,14 @@ The native crate does not depend on a signer.
 
 ## Network and state rules
 
+This fork sets the block limit to 20 MB (20,000,000 bytes) on every network for
+devnet use. Transaction decoding uses the same byte limit. Block headers and the
+transaction count also consume block space. This change does not activate SLH
+on public networks or change SLH signature-check budgets.
+The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
+The state database format is 30.0.0 because transaction indexes now use four
+bytes. Existing version 29 databases require a fresh sync.
+
 The configuration uses these fields:
 
 - `experimental_slh_dsa_b128s_activation_height`

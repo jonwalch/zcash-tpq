@@ -34,18 +34,18 @@ pub const OUTPUT_INDEX_DISK_BYTES: usize = 3;
 /// The maximum value of an on-disk serialized [`OutputIndex`].
 ///
 /// This allows us to store [`OutputLocation`]s in
-/// 8 bytes, which makes database searches more efficient.
+/// 10 bytes with a compact height and output index.
 ///
 /// # Consensus
 ///
-/// This output index is impossible with the current 2 MB block size limit.
+/// This output index is impossible with the current 20 MB block size limit.
 ///
 /// Since Zebra only stores fully verified blocks on disk, blocks with larger indexes
 /// are rejected before reaching the database.
 pub const MAX_ON_DISK_OUTPUT_INDEX: OutputIndex =
     OutputIndex::from_index((1 << (OUTPUT_INDEX_DISK_BYTES * 8)) - 1);
 
-/// [`OutputLocation`]s are stored as a 3 byte height, 2 byte transaction index,
+/// [`OutputLocation`]s are stored as a 3 byte height, 4 byte transaction index,
 /// and 3 byte output index on disk.
 ///
 /// This reduces database size and increases lookup performance.
@@ -550,7 +550,7 @@ impl AddressTransaction {
 
         // Iterating from the start height to the end height filters out transactions that aren't needed.
         let query_start_location = TransactionLocation::from_index(*query.start(), 0);
-        let query_end_location = TransactionLocation::from_index(*query.end(), u16::MAX);
+        let query_end_location = TransactionLocation::max_for_height(*query.end());
 
         let addr_tx = |tx_loc| AddressTransaction::new(address_location, tx_loc);
 

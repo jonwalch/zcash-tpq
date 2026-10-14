@@ -17,7 +17,7 @@ use std::{
 /// oversized or incompatible block-sync payloads in the codec instead of
 /// dropping them at the raw transport gate.
 pub const MAX_BS_FRAME_BYTES: u32 = {
-    // This cast is safe: MAX_BS_MESSAGE_BYTES is asserted below 4 MiB.
+    // This cast is safe: MAX_BS_MESSAGE_BYTES is asserted below 32 MiB.
     (MAX_BS_MESSAGE_BYTES + FRAME_HEADER_BYTES) as u32
 };
 

@@ -595,7 +595,7 @@ impl Codec {
                 // Limit peer set memory usage, Zebra stores an `Arc<VersionMessage>` per
                 // connected peer.
                 //
-                // Without this check, we can use `200 peers * 2 MB message size limit = 400 MB`.
+                // Without this check, we can use `200 peers * 20 MiB message size limit = 4,000 MiB`.
                 if byte_count > MAX_USER_AGENT_LENGTH {
                     return Err(Error::Parse(
                         "user agent too long: must be 256 bytes or less",

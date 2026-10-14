@@ -38,7 +38,8 @@ pub const MSG_HS_HEADERS: u8 = 3;
 pub const MSG_HS_HEADERS_OUTCOME: u8 = 4;
 
 const MAX_LOCATOR_HASHES: usize = 13;
-const MAX_BODY_SIZE_HINT: u32 = 2_000_000;
+// The cast is safe: the 20 MB block limit fits in u32.
+const MAX_BODY_SIZE_HINT: u32 = block::MAX_BLOCK_BYTES as u32;
 pub(super) const KNOWN_TREE_AUX_SCHEMA_MASK: u32 = 1;
 const HEADERS_RESPONSE_FIXED_BYTES: usize = 1 + 8 + 32 + 4 + 32 + 4 + 1 + 1;
 /// Exact encoded length of one immutable tree-aux schema-1 record.

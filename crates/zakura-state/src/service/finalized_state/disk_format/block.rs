@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 /// The maximum value of an on-disk serialized [`Height`].
 ///
 /// This allows us to store [`OutputLocation`](crate::OutputLocation)s in
-/// 8 bytes, which makes database searches more efficient.
+/// 10 bytes with a compact height and output index.
 ///
 /// # Consensus
 ///
@@ -39,12 +39,12 @@ pub const MAX_ON_DISK_HEIGHT: Height = Height((1 << (HEIGHT_DISK_BYTES * 8)) - 1
 /// This reduces database size and increases lookup performance.
 pub const HEIGHT_DISK_BYTES: usize = 3;
 
-/// [`TransactionIndex`]es are stored as 2 bytes on disk.
+/// [`TransactionIndex`]es are stored as 4 bytes on disk.
 ///
 /// This reduces database size and increases lookup performance.
-pub const TX_INDEX_DISK_BYTES: usize = 2;
+pub const TX_INDEX_DISK_BYTES: usize = 4;
 
-/// [`TransactionLocation`]s are stored as a 3 byte height and a 2 byte transaction index.
+/// [`TransactionLocation`]s are stored as a 3 byte height and a 4 byte transaction index.
 ///
 /// This reduces database size and increases lookup performance.
 pub const TRANSACTION_LOCATION_DISK_BYTES: usize = HEIGHT_DISK_BYTES + TX_INDEX_DISK_BYTES;
@@ -55,11 +55,8 @@ pub const TRANSACTION_LOCATION_DISK_BYTES: usize = HEIGHT_DISK_BYTES + TX_INDEX_
 ///
 /// # Consensus
 ///
-/// A 2-byte index supports on-disk storage of transactions in blocks up to ~5 MB.
-/// (The current maximum block size is 2 MB.)
-///
-/// Since Zebra only stores fully verified blocks on disk,
-/// blocks larger than this size are rejected before reaching the database.
+/// A 4-byte index can store every transaction in a 20 MB block.
+/// The previous 2-byte index could overflow for blocks with many small transactions.
 ///
 /// (The maximum transaction count is tested by the large generated block serialization tests.)
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -67,16 +64,16 @@ pub const TRANSACTION_LOCATION_DISK_BYTES: usize = HEIGHT_DISK_BYTES + TX_INDEX_
     any(test, feature = "proptest-impl"),
     derive(Arbitrary, Default, Serialize, Deserialize)
 )]
-pub struct TransactionIndex(pub(super) u16);
+pub struct TransactionIndex(pub(super) u32);
 
 impl TransactionIndex {
     /// Creates a transaction index from the inner type.
-    pub fn from_index(transaction_index: u16) -> TransactionIndex {
+    pub fn from_index(transaction_index: u32) -> TransactionIndex {
         TransactionIndex(transaction_index)
     }
 
     /// Returns this index as the inner type.
-    pub fn index(&self) -> u16 {
+    pub fn index(&self) -> u32 {
         self.0
     }
 
@@ -91,7 +88,7 @@ impl TransactionIndex {
 
     /// Returns this index as a `usize`.
     pub fn as_usize(&self) -> usize {
-        self.0.into()
+        usize::try_from(self.0).expect("transaction indexes fit in usize on supported targets")
     }
 
     /// Creates a transaction index from a `u64`.
@@ -112,12 +109,12 @@ impl TransactionIndex {
     /// The minimum value of a transaction index.
     ///
     /// This value corresponds to the coinbase transaction.
-    pub const MIN: Self = Self(u16::MIN);
+    pub const MIN: Self = Self(u32::MIN);
 
     /// The maximum value of a transaction index.
     ///
     /// This value corresponds to the highest possible transaction index.
-    pub const MAX: Self = Self(u16::MAX);
+    pub const MAX: Self = Self(u32::MAX);
 }
 
 /// A transaction's location in the chain, by block height and transaction index.
@@ -143,7 +140,7 @@ impl TransactionLocation {
     }
 
     /// Creates a transaction location from a block height and transaction index.
-    pub fn from_index(height: Height, transaction_index: u16) -> TransactionLocation {
+    pub fn from_index(height: Height, transaction_index: u32) -> TransactionLocation {
         TransactionLocation {
             height,
             index: TransactionIndex::from_index(transaction_index),
@@ -194,7 +191,7 @@ impl TransactionLocation {
 
     /// The maximum value of a transaction location for `height`.
     ///
-    /// This value can be a valid entry, but it won't fit in a 2MB block.
+    /// This value can be a valid entry, but it won't fit in a 20 MB block.
     pub const fn max_for_height(height: Height) -> Self {
         Self {
             height,
@@ -314,7 +311,7 @@ impl FromDisk for TransactionIndex {
     fn from_bytes(disk_bytes: impl AsRef<[u8]>) -> Self {
         let disk_bytes = disk_bytes.as_ref().try_into().unwrap();
 
-        TransactionIndex::from_index(u16::from_be_bytes(disk_bytes))
+        TransactionIndex::from_index(u32::from_be_bytes(disk_bytes))
     }
 }
 

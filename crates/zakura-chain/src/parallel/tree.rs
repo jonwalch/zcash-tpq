@@ -203,6 +203,7 @@ impl NoteCommitmentTrees {
         // > The size of a block MUST be less than or equal to 2000000 bytes.
         // <https://zips.z.cash/protocol/protocol.pdf#blockheader>
         // <https://zips.z.cash/protocol/protocol.pdf#txnencoding>
+        // This fork's 20 MB cap still permits fewer than 2^16 Sapling outputs.
         //
         // The note commitments are appended as a single parallel batch, which
         // returns the (at most one) subtree completed within this block, matching

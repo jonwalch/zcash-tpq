@@ -8,6 +8,26 @@ use lazy_static::lazy_static;
 
 use super::*;
 
+#[test]
+fn block_message_round_trip_at_twenty_mb() {
+    let _init_guard = zakura_test::init();
+    let block = std::sync::Arc::new(zakura_chain::block::tests::generate::block_with_size(
+        20_000_000,
+    ));
+    let mut codec = Codec::builder().finish();
+    codec.reconfigure_full_body_len();
+    let mut bytes = BytesMut::new();
+    codec
+        .encode(Message::Block(block.clone()), &mut bytes)
+        .unwrap();
+    assert_eq!(bytes.len(), 20_000_000 + HEADER_LEN);
+    let Some(Message::Block(decoded)) = codec.decode(&mut bytes).unwrap() else {
+        panic!("a complete block message should decode");
+    };
+    assert_eq!(decoded, block);
+    assert!(bytes.is_empty());
+}
+
 lazy_static! {
     static ref VERSION_TEST_VECTOR: Message = {
         let services = PeerServices::NODE_NETWORK;

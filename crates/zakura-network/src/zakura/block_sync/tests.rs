@@ -1771,6 +1771,19 @@ fn codec_round_trips_every_message_variant() {
 }
 
 #[test]
+fn codec_round_trips_twenty_mb_block_through_negotiated_frame() {
+    let block = Arc::new(zakura_chain::block::tests::generate::block_with_size(
+        20_000_000,
+    ));
+    let message = BlockSyncMessage::Block(block);
+    let frame = message.encode_frame().expect("20 MB block fits in a frame");
+    assert!(MAX_BS_FRAME_BYTES <= super::super::handshake::LOCAL_MAX_MESSAGE_BYTES);
+    let bytes = frame.encode(MAX_BS_FRAME_BYTES).unwrap();
+    let frame = Frame::decode(&bytes, MAX_BS_FRAME_BYTES).unwrap();
+    assert_eq!(BlockSyncMessage::decode_frame(frame).unwrap(), message);
+}
+
+#[test]
 fn codec_round_trips_block_near_max_block_bytes() {
     let block = Arc::new(zakura_chain::block::tests::generate::large_multi_transaction_block());
     let serialized_len = block
