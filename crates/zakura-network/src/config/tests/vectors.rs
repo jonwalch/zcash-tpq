@@ -1703,7 +1703,7 @@ fn experimental_slh_dsa_b128s_generator_config_roundtrips() {
     let mut config = Config {
         network: generated.network,
         initial_testnet_peers: [].into(),
-        ..Config::for_test(P2pStack::Dual)
+        ..Config::for_test(P2pStack::Zakura)
     };
     config.zakura.bootstrap_peers.clear();
     let fingerprint = config

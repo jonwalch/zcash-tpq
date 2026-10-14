@@ -71,21 +71,21 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
     },
     "config-invalid": {
       "anchor": "experimental_slh_dsa_b128s_config_rejects_invalid_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
     },
     "config-required": {
       "anchor": "experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
     },
     "consensus-receipt": {
       "anchor": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
@@ -106,7 +106,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
     },
     "devnet-consensus": {
       "anchor": "slh_devnet_block_dispatch_accepts_testnet_signatures_and_rejects_wrong_domains",
@@ -169,7 +169,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
     },
     "devnet-rpc": {
       "anchor": "slh_info_reports_rules_without_claiming_tip_readiness",

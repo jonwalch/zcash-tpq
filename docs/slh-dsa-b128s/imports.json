@@ -2457,7 +2457,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Share the custom-network fixture with handshake tests. Check native-only defaults and explicit-stack rejection, valid and malformed native peers, and public network initialization refusal before I/O.",
-      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+      "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
     },
     {
       "disposition": "upstream-modification",
@@ -4434,7 +4434,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "2e5db6369d6727db89ad56ddf6c3f57c21b7e0aa22361fa7b90b7835a9884195"
+      "sha256": "f8209a5a7489d33135b0cdc811db3a9a1f1930ae6a006f46283dc1b1e2689ee1"
     },
     {
       "disposition": "new",
