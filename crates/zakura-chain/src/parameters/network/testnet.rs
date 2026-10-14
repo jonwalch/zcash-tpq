@@ -36,6 +36,9 @@ use super::magic::Magic;
 
 mod slh_identity;
 
+/// Placeholder used until a configured Testnet receives an explicit name.
+const DEFAULT_NETWORK_NAME: &str = "UnknownTestnet";
+
 /// Reserved network names that should not be allowed for configured Testnets.
 pub const RESERVED_NETWORK_NAMES: [&str; 6] = [
     "Mainnet",
@@ -762,7 +765,7 @@ impl Default for ParametersBuilder {
     /// Creates a [`ParametersBuilder`] with all of the default Testnet parameters except `network_name`.
     fn default() -> Self {
         Self {
-            network_name: "UnknownTestnet".to_string(),
+            network_name: DEFAULT_NETWORK_NAME.to_string(),
             network_magic: magics::TESTNET,
             // # Correctness
             //
@@ -1419,7 +1422,9 @@ fn check_experimental_slh_dsa_b128s_network(
     if let Network::Testnet(params) = network {
         if !params.is_regtest() {
             let invalid_name = params.network_name.is_empty()
-                || params.network_name.eq_ignore_ascii_case("UnknownTestnet")
+                || params
+                    .network_name
+                    .eq_ignore_ascii_case(DEFAULT_NETWORK_NAME)
                 || RESERVED_NETWORK_NAMES
                     .iter()
                     .any(|name| params.network_name.eq_ignore_ascii_case(name));

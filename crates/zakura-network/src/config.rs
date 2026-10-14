@@ -370,15 +370,48 @@ impl Config {
             return Ok(());
         }
 
-        if contains_default_initial_peers(&self.initial_testnet_peers) {
+        let defaults = Config::default();
+        let public_native_peers: Vec<_> = [Network::Mainnet, Network::new_default_testnet()]
+            .iter()
+            .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
+            .map(|peer| {
+                crate::zakura::parse_bootstrap_peer(&peer)
+                    .expect("built-in native bootstrap peers have valid identities and addresses")
+            })
+            .collect();
+        let public_hosts: HashSet<_> = defaults
+            .initial_mainnet_peers
+            .iter()
+            .chain(&defaults.initial_testnet_peers)
+            .map(|peer| normalized_peer_host(peer))
+            .chain(public_native_peers.iter().flat_map(|peer| {
+                peer.ip_addrs()
+                    .map(|addr| canonical_socket_addr(*addr).ip().to_string())
+            }))
+            .collect();
+
+        if self
+            .initial_testnet_peers
+            .iter()
+            .any(|peer| public_hosts.contains(&normalized_peer_host(peer)))
+        {
             return Err(
                 "custom SLH Testnets require explicit initial_testnet_peers without built-in Mainnet or Testnet peers",
             );
         }
-        if [Network::Mainnet, Network::new_default_testnet()]
+        if self
+            .zakura
+            .bootstrap_peers
             .iter()
-            .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
-            .any(|peer| self.zakura.bootstrap_peers.contains(&peer))
+            .filter_map(|peer| crate::zakura::parse_bootstrap_peer(peer).ok())
+            .any(|peer| {
+                public_native_peers
+                    .iter()
+                    .any(|public| public.id == peer.id)
+                    || peer.ip_addrs().any(|addr| {
+                        public_hosts.contains(&canonical_socket_addr(*addr).ip().to_string())
+                    })
+            })
         {
             return Err(
                 "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
@@ -992,6 +1025,9 @@ struct DTestnetParameters {
     slow_start_interval: Option<u32>,
     target_difficulty_limit: Option<String>,
     disable_pow: Option<bool>,
+    /// Permit transparent spends of coinbase outputs on a configured Testnet.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    should_allow_unshielded_coinbase_spends: Option<bool>,
     /// Height at which the MTP-plus-90-minutes rule activates.
     max_block_time_start_height: Option<u32>,
     genesis_hash: Option<String>,
@@ -1021,9 +1057,12 @@ struct DTestnetParameters {
     extend_funding_stream_addresses_as_required: Option<bool>,
     /// Height at which the soft fork that temporarily disables Orchard actions activates.
     ///
-    /// If unset, the default activation height for the network is used; the soft fork
-    /// cannot be disabled via configuration.
+    /// If unset, the default activation height for the network is used unless disabled.
     temporary_orchard_disabling_soft_fork_height: Option<u32>,
+    /// Disable the temporary Orchard soft fork on a configured Testnet.
+    /// Cannot be combined with an explicit soft-fork height.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    disable_temporary_orchard_disabling_soft_fork: Option<bool>,
     /// The NSM value balance in zatoshi immediately before NU7 activates.
     ///
     /// If unset on a configured network, state derives the balance from its historical
@@ -1122,6 +1161,9 @@ impl From<Arc<testnet::Parameters>> for DTestnetParameters {
             slow_start_interval: Some(params.slow_start_interval().0),
             target_difficulty_limit: Some(params.target_difficulty_limit().to_string()),
             disable_pow: Some(params.disable_pow()),
+            should_allow_unshielded_coinbase_spends: (!params.is_regtest()
+                && params.should_allow_unshielded_coinbase_spends())
+            .then_some(true),
             max_block_time_start_height: Some(params.max_block_time_start_height().0),
             genesis_hash: Some(params.genesis_hash().to_string()),
             activation_heights: Some(params.activation_heights().into()),
@@ -1160,6 +1202,11 @@ impl From<Arc<testnet::Parameters>> for DTestnetParameters {
             temporary_orchard_disabling_soft_fork_height: params
                 .temporary_orchard_disabling_soft_fork_height()
                 .map(|height| height.0),
+            disable_temporary_orchard_disabling_soft_fork: (!params.is_regtest()
+                && params
+                    .temporary_orchard_disabling_soft_fork_height()
+                    .is_none())
+            .then_some(true),
             initial_nsm_value_balance: params.configured_initial_nsm_value_balance().map(
                 |balance| {
                     u64::try_from(i64::from(balance)).expect("configured seeds are nonnegative")
@@ -1436,6 +1483,23 @@ fn contains_default_initial_peers(initial_peers: &IndexSet<String>) -> bool {
         .is_some()
 }
 
+/// Compare known public hosts independent of ports, DNS case, or a final DNS dot.
+/// This is a configuration guard, not a DNS ownership or network-egress check.
+fn normalized_peer_host(peer: &str) -> String {
+    if let Ok(addr) = peer.parse::<SocketAddr>() {
+        return canonical_socket_addr(addr).ip().to_string();
+    }
+    if let Ok(ip) = peer.trim_matches(['[', ']']).parse::<IpAddr>() {
+        return canonical_socket_addr(SocketAddr::new(ip, 0))
+            .ip()
+            .to_string();
+    }
+    peer.split_once(':')
+        .map_or(peer, |(host, _)| host)
+        .trim_end_matches('.')
+        .to_ascii_lowercase()
+}
+
 fn build_configured_testnet<'de, D>(
     params: DTestnetParameters,
     initial_testnet_peers: &IndexSet<String>,
@@ -1449,6 +1513,7 @@ where
         slow_start_interval,
         target_difficulty_limit,
         disable_pow,
+        should_allow_unshielded_coinbase_spends,
         max_block_time_start_height,
         genesis_hash,
         activation_heights,
@@ -1464,6 +1529,7 @@ where
         checkpoints,
         extend_funding_stream_addresses_as_required,
         temporary_orchard_disabling_soft_fork_height,
+        disable_temporary_orchard_disabling_soft_fork,
         initial_nsm_value_balance,
     } = params;
 
@@ -1516,6 +1582,10 @@ where
 
     if let Some(disable_pow) = disable_pow {
         params_builder = params_builder.with_disable_pow(disable_pow);
+    }
+
+    if let Some(allow) = should_allow_unshielded_coinbase_spends {
+        params_builder = params_builder.with_unshielded_coinbase_spends(allow);
     }
 
     if let Some(height) = max_block_time_start_height {
@@ -1571,8 +1641,14 @@ where
         params_builder = params_builder.extend_funding_streams();
     }
 
-    // Retain the default soft-fork activation height unless one is configured.
-    if let Some(height) = temporary_orchard_disabling_soft_fork_height {
+    if disable_temporary_orchard_disabling_soft_fork == Some(true) {
+        if temporary_orchard_disabling_soft_fork_height.is_some() {
+            return Err(de::Error::custom(
+                "disable_temporary_orchard_disabling_soft_fork cannot be combined with an explicit soft-fork height",
+            ));
+        }
+        params_builder = params_builder.disable_temporary_orchard_disabling_soft_fork();
+    } else if let Some(height) = temporary_orchard_disabling_soft_fork_height {
         params_builder = params_builder.with_temporary_orchard_disabling_soft_fork_height(
             height.try_into().map_err(de::Error::custom)?,
         );
@@ -1641,6 +1717,15 @@ fn build_configured_regtest<'de, D>(params: DTestnetParameters) -> Result<Networ
 where
     D: Deserializer<'de>,
 {
+    if params.should_allow_unshielded_coinbase_spends.is_some()
+        || params
+            .disable_temporary_orchard_disabling_soft_fork
+            .is_some()
+    {
+        return Err(de::Error::custom(
+            "should_allow_unshielded_coinbase_spends and disable_temporary_orchard_disabling_soft_fork only apply to configured Testnets; Regtest already allows unshielded coinbase spends and disables this soft fork",
+        ));
+    }
     let DTestnetParameters {
         activation_heights,
         experimental_slh_dsa_b128s_activation_height,

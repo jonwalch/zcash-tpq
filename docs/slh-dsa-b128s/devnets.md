@@ -69,13 +69,22 @@ name and magic and a genesis different from the built-in networks. A renamed
 public Testnet does not qualify.
 
 Set the launcher's own legacy and Zakura bootstrap peers. Clear unused peer lists.
-Configuration loading and startup reject built-in bootstrap peers for SLH devnets. Use separate listening
-ports, peer identities, cache paths, and data roots for nodes and devnets.
+Configuration loading and startup reject known public seed host names regardless
+of port, letter case, or a final DNS dot. They also reject built-in native peer
+identities and IP addresses, including IPv4-mapped IPv6 addresses.
+This check does not resolve DNS aliases or identify every public-network node.
+Use the launcher's own peer inventory. For a private devnet, enforce its network
+access rules outside the node. Use separate listening ports, peer identity
+directories, cache paths, and data roots for each node.
 Serialize through the node network configuration type so the complete custom
 parameters are retained; `NetworkKind::Testnet` alone is not a chain definition.
-This covers the settings returned by the generator. Existing custom builder
-options for unshielded coinbase spends and disabling the temporary Orchard fork
-do not round-trip through the upstream configuration format.
+This preserves the generated network and its fingerprint. Custom Testnet TOML
+also preserves `should_allow_unshielded_coinbase_spends` and
+`disable_temporary_orchard_disabling_soft_fork`. Both default to false.
+The disable flag cannot be true alongside an explicit
+`temporary_orchard_disabling_soft_fork_height`. These two flags are for custom
+testnets; Regtest already permits unshielded coinbase spends and disables this
+soft fork. Built-in Mainnet and public Testnet keep their fixed parameters.
 
 For an embedded launcher, assign the generated network to `ZakuradConfig` and
 enable the SLH feature on its `zakura` dependency. Reuse `node::run_with_services_ready`
@@ -104,7 +113,9 @@ The exact encoding and reference vector are in
 
 The database and nonfinalized backup namespace is
 `<name>-slh-dsa-b128s-v1-<fingerprint>`. Two devnets with the same name and different
-genesis or rules use different state. Regtest retains its existing namespace.
+genesis or rules use different state. The legacy peer cache uses the same
+namespace with a `.peers` suffix. Existing caches keyed only by name are not
+loaded for SLH custom testnets. Regtest retains its existing namespaces.
 Keep the saved chain definition with backups. Changing consensus settings starts
 a different devnet; it does not update an existing chain in place.
 
@@ -112,6 +123,10 @@ The fingerprint identifies settings. It does not authenticate a remote node or
 prove its execution. It also does not change signatures: custom testnets use the
 existing Testnet byte 01. Cloned histories do not gain separate signature domains
 from different network magic or fingerprints.
+Generate separate seed chains and funding outputs for independent devnets.
+Do not copy funded seed blocks between devnets that need separate spends.
+Signature-level separation of cloned histories needs a new protocol contract;
+the v1 fingerprint is not a replay-protection mechanism.
 
 ## Check effective rules
 
@@ -193,3 +208,14 @@ The genesis helper and embedded lifecycle reuse pinned upstream Zakura
 `24a17b3f0e7d88513688d607054f018ab6f15af2`.
 The fingerprint and optional rule diagnostics are product adaptations needed to
 identify separately configured SLH chains. They add no research runtime dependency.
+
+The launcher also exposes two upstream TOML gaps: unshielded coinbase spending
+and a disabled temporary Orchard soft fork were not retained. The configuration
+adapter now preserves both settings. Tests compare all four combinations and
+the actual generated network before and after TOML, including their fingerprints.
+The peer guard reuses the native bootstrap parser. Tests cover known host, port,
+IP, and native identity aliases through TOML and embedded configuration.
+The peer cache extends the upstream path with the existing SLH fingerprint.
+Tests separate same-name chains with different genesis or rules and retain the
+old paths for other networks. These changes support the launcher boundary;
+they do not revise the signature contract.

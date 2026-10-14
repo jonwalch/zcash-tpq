@@ -65,10 +65,18 @@ impl CacheDir {
 
     /// Returns the peer cache file path for `network`, if enabled.
     pub fn peer_cache_file_path(&self, network: &Network) -> Option<PathBuf> {
+        let name = match network.experimental_slh_dsa_b128s_chain_fingerprint() {
+            Some(fingerprint) => format!(
+                "{}-slh-dsa-b128s-v1-{}",
+                network.lowercase_name(),
+                hex::encode(fingerprint)
+            ),
+            None => network.lowercase_name(),
+        };
         Some(
             self.cache_dir()?
                 .join("network")
-                .join(format!("{}.peers", network.lowercase_name())),
+                .join(format!("{name}.peers")),
         )
     }
 

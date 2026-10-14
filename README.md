@@ -18,7 +18,7 @@ All devnet nodes must use compatible rules. The state database format is now
 30.0.0 under `state-tpq`; existing caches under `state` require a fresh sync.
 Use this binary only on the devnet. It is not consensus-compatible with public
 Mainnet or Testnet.
-SLH activation remains off by default and Regtest-only.
+SLH activation remains off by default and rejects built-in Mainnet and public Testnet.
 
 ## Start here
 

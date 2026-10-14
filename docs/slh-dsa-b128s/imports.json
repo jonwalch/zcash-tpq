@@ -208,7 +208,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: State the user-approved fork-wide 20 MB devnet scope, public-network incompatibility, and the separate state-tpq cache with a fresh sync requirement.",
-      "sha256": "008ab86d2111b6bc030ca825f125500ee933108f46859f909b78285fc5e0fca3"
+      "sha256": "2dc5f70d171b3b7cbae30f0d67a139f20a4282ed422b6857a8ac1ba131e496bf"
     },
     {
       "disposition": "new",
@@ -2124,7 +2124,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
-      "sha256": "7cb7d14f4251177258a623cfa970ee2f2ace5186eab4b8bd6af62e2a041a7f9b"
+      "sha256": "1b1894a30bb651d2b24e265c54cd935b47cd0fbf5634a2ae7db9d106fc299a95"
     },
     {
       "disposition": "new",
@@ -2425,8 +2425,18 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
-      "sha256": "d2509d2725cf56c7489f6a509fcbdeb58837e2948b5bc39fe19eda67645c2ae9"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths.",
+      "sha256": "2d2bbaaaafb7d0286fa7cdf96081df3f4d57ea7e152f55baea688317de4c1aa7"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/config/cache_dir.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "PR #11: Scope peer-cache files to the existing SLH custom-chain fingerprint; preserve disabled caches and paths for other networks. Regression tests separate same-name chains with different genesis or rules and retain paths after TOML round trips.",
+      "sha256": "ec317254504c013f482ce4e4c0ad978ba6bd8dd34c642820713264de522a2139"
     },
     {
       "disposition": "upstream-modification",
@@ -2436,8 +2446,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
-      "sha256": "13f743788c0970b6ff5a274ca192cf3a59f0a0cbf9a222cda92a3ade363377ec"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths.",
+      "sha256": "230c3e262ae4f8ced8401810ce8102cf3063e029020428ec08ff1052120a69fe"
     },
     {
       "disposition": "upstream-modification",
@@ -3452,7 +3462,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Record PR #11 custom devnet SLH configuration, state isolation, genesis generation and rule diagnostics in its required user-visible changelog fragment.",
-      "sha256": "569f06d7e1a5c3128f555f070e40ad50fd3273038740e54caabc01e19d8cd7aa"
+      "sha256": "01e9d7b67d62ad1c8fce2fa6ace79787ee019c33720b65ee25e3a59ff77feff9"
     },
     {
       "disposition": "new",
@@ -3560,7 +3570,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "bdf55118ce5b96035eb0f6b2f0c135251498afcbab04e09c192c2b97be21f739"
+      "sha256": "ff7287d4dfb5608586904719fd285f33eab75a7847ac158707a84ac700dd417d"
     },
     {
       "disposition": "new",
@@ -3752,7 +3762,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "178f84dcead01959308f70fe434a6af9976aa37d7c0eaa020db7512b774c717c"
+      "sha256": "122c03f959e1652efb8dd76c5e6c3d77589e02dbce0d2bd5b9b3f28ec2e0e1f1"
     },
     {
       "disposition": "new",
@@ -4372,7 +4382,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "97672dc6b87278078bb438af486e019d61f9f203b55a0d3dce220e6d66eb3385"
+      "sha256": "d33ea42833b799350fafb2038b8219bdaab4dd78b627ee866445523d55e54d3e"
     },
     {
       "disposition": "new",
