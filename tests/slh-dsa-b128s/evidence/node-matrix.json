@@ -778,7 +778,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "44fc5e52fdad495cd5b66e4cb2fd1f17f7a7c49f586f8282d55fc499a10f8b9d"
+      "sha256": "cb641f52993db8af9ce09d565abc9a15e05daca4994594932603c7a73d8364b6"
     },
     "worker": {
       "anchor": "slh_worker_real_signatures_and_exact_transaction_block_boundaries",

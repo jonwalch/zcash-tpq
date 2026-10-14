@@ -75,7 +75,7 @@
       "target_path": "crates/zakura-state/src/service/chain_tip.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Run the retained activation, rollback, reactivation and coalesced-notification sequence on both Regtest and a validated custom SLH Testnet.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-state/src/service/chain_tip/tests/vectors.rs",

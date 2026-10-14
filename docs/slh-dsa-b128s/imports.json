@@ -2272,10 +2272,11 @@
       "path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "44fc5e52fdad495cd5b66e4cb2fd1f17f7a7c49f586f8282d55fc499a10f8b9d"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Reuse the existing reset event sequence on an explicitly configured custom SLH Testnet as well as Regtest, to cover activation and rollback without live services.",
+      "sha256": "cb641f52993db8af9ce09d565abc9a15e05daca4994594932603c7a73d8364b6"
     },
     {
       "disposition": "upstream-modification",
@@ -2645,7 +2646,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "12f853634e4ea64fcc6be8efc728b519d211ff75884d0abc6372445281e1eae6"
+      "sha256": "a20297debb487ff62aa98a2c1710aa1769542b525b0dca2e1d08b4d2f1039e2d"
     },
     {
       "disposition": "new",
@@ -3226,7 +3227,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "d8f3498f3c459834190e5904ba1aefa87e58006d836a35b6f15d7bfbe36f606e"
+      "sha256": "185403b1fdc708622399b70feb8d8371b44faaa00691fd26cf55b59cb424e7cc"
     },
     {
       "disposition": "new",
