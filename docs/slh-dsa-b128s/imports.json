@@ -3831,8 +3831,8 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "39a815c51550b98592a854354cc08f38c22d7772f4e1931b23070770613c1b06"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain real upstream ancestry, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history.",
+      "sha256": "40f61577d9dca4f5ddd65c69ea487e96dddd370df10dc8fad49d8d50c96f60a0"
     },
     {
       "disposition": "new",
@@ -5170,20 +5170,22 @@
       "provenance": [
         "tests/slh-dsa-b128s/release-content/NOTICE",
         "tests/slh-dsa-b128s/release-content/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "714a0f638b40d4223fa0649204d2cbc2a02e03e5e0ddb328adfbdd9324e15e86"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain real upstream ancestry, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history.",
+      "sha256": "dd096058fdc377b919f1030843ccce5619d3f884c98264e12e742bc8df8e4c23"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/release-content/test_content.py",
       "provenance": [
         "tests/slh-dsa-b128s/release-content/NOTICE",
-        "tests/slh-dsa-b128s/release-content/README.md"
+        "tests/slh-dsa-b128s/release-content/README.md",
+        "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "541f587bf9235dffc8d591ddd12fa2f5054b05e3568c041813fd8e1a54e6daba"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain real upstream ancestry, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history.",
+      "sha256": "9070cc7a5d42f4d294b82434698732cb937cd617a875978d02555bf191da5eff"
     },
     {
       "disposition": "new",
