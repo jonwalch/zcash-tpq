@@ -3,7 +3,7 @@
   "schema_version": 1,
   "sources": [
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-chain/src/parameters/network.rs",
@@ -12,7 +12,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-chain/src/parameters/network/error.rs",
@@ -21,7 +21,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network/error.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-chain/src/parameters/network/testnet.rs",
@@ -30,7 +30,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network/testnet.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-chain/src/parameters/network/tests/vectors.rs",
@@ -39,7 +39,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config.rs",
@@ -48,7 +48,7 @@
       "target_path": "crates/zakura-network/src/config.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config/tests/vectors.rs",
@@ -57,7 +57,7 @@
       "target_path": "crates/zakura-network/src/config/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-state/src/config.rs",
@@ -84,7 +84,7 @@
       "target_path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakurad/src/commands/start.rs",
@@ -235,6 +235,51 @@
       "source_repository": "https://github.com/jonwalch/zcash-transparent-pq",
       "source_sha256": "0858e916115264c6aa6b8a28f6271a64fa71738daf25755c8070a43115e49630",
       "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
+    },
+    {
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
+      "source_path": "crates/zakura-chain/src/local_genesis.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "9a60710863fb9a38ae3a3247cbc42f0eab78f138748433ca0cab35905ccd5a79",
+      "target_path": "crates/zakura-chain/src/local_genesis.rs"
+    },
+    {
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
+      "source_path": "crates/zakurad/src/node.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "101cfac7aa5774175de3700e543bcbe2719136eb9dce458866af9c0c82086bac",
+      "target_path": "crates/zakurad/src/node.rs"
+    },
+    {
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
+      "source_path": "crates/zakura-rpc/src/methods.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "4f5642e7fd897a6a2d32cb37afaaf636981eda4f0d5bdce7cdf29cc8c747021f",
+      "target_path": "crates/zakura-rpc/src/methods.rs"
+    },
+    {
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
+      "source_path": "crates/zakura-rpc/src/client.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "d76b280c9f46e8e0ec5fc76adae0c18c24e346f4c6e6c4593c2918e3e3e0a6f8",
+      "target_path": "crates/zakura-rpc/src/client.rs"
+    },
+    {
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
+      "source_path": "crates/zakura-rpc/tests/serialization_tests.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "c625971c0eae721a0363cf782a731258c119b17346ee743cd01c9b4202d306bb",
+      "target_path": "crates/zakura-rpc/tests/serialization_tests.rs"
     }
   ],
   "upstream_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2"

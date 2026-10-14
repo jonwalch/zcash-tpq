@@ -57,7 +57,9 @@ experimental_slh_dsa_b128s_max_checks_per_block = 64
 All three SLH fields are required together.
 Activation must be nonzero and after NU7 and every checkpoint.
 Limits must satisfy `0 < transaction <= block <= u32::MAX`.
-Public networks, including custom public networks, reject SLH fields.
+Built-in Mainnet and public Testnet reject SLH fields.
+Explicit custom testnets can enable them through the separate inline network
+configuration described in the [devnet guide](devnets.md).
 A build without the feature refuses configured startup.
 These limits are not production recommendations.
 
@@ -67,6 +69,13 @@ Database and non-finalized backup paths use `regtest-slh-dsa-b128s-v1-hH-tT-bB`.
 A change to activation or either limit selects a new namespace.
 The node does not reuse plain Regtest state or state from different rule settings.
 An incompatible future contract needs a different namespace.
+Custom SLH testnets use a fingerprint of their normalized consensus settings
+in both paths. Regtest keeps the namespace above.
+
+`getblockchaininfo` includes `experimental_slh_dsa_b128s` when SLH is configured.
+It reports the effective rules, build support, chain fingerprint, and activation
+at the next candidate height. It does not establish sync or mempool readiness.
+The object is absent on unconfigured networks. See the [field description](devnets.md#check-effective-rules).
 
 Mempool admission uses the next candidate block height.
 Chain-tip notifications reset the mempool at activation, forks, and rollbacks.

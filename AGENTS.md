@@ -23,7 +23,9 @@ completion gates; record them separately. Make a minimal upstream change only
 when this integration exposes a failure or it directly blocks the requested SLH
 implementation.
 
-Keep experimental support off by default and Regtest-only. Node dependencies
+Keep experimental support off by default. Allow activation only on Regtest and
+explicit custom testnets with separate network identities. Built-in Mainnet and
+public Testnet must reject activation. Node dependencies
 must not include key generation, signing, alternate PQ backends, fixture tools
 or a dependency on an external research checkout. Never add research notes,
 experiments, raw results, real secrets or research Git history to this repository.

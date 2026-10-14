@@ -1,7 +1,9 @@
 # SLH-DSA-B-128s protocol
 
 This document specifies `slh-dsa-b-128s-exp-v1`.
-Support is off by default and works only on Regtest.
+Support is off by default. The node permits Regtest and explicitly configured
+custom testnets with separate identities. Built-in Mainnet and public Testnet
+cannot activate it. The wallet CLI still supports Regtest only.
 SLH-DSA-B-128s uses BLAKE3. It is not a FIPS 205 profile.
 The node includes consensus, relay, mining, and state support behind the feature.
 Live acceptance and independent security review remain open.
@@ -65,7 +67,8 @@ context = empty
 
 The message domain has 58 bytes. `M_i` has 101 bytes.
 Network bytes 00, 01, and 02 denote Mainnet, Testnet, and Regtest for domain checks.
-Only Regtest permits activation.
+Regtest and isolated custom testnets permit activation. Custom testnets use byte 01.
+This byte separates network kinds; it does not separate cloned custom-testnet histories.
 Transaction versions are 05 and 06. The NU7 branch ID is `0x77190ad9`.
 The message includes the input index. The primitive adds `00 00` once.
 
@@ -137,7 +140,9 @@ The configuration uses these fields:
 - `experimental_slh_dsa_b128s_max_checks_per_block`
 
 The configuration requires all three fields or none.
-It rejects public networks, invalid limits, and integer overflow.
+It rejects built-in public networks, invalid limits, and integer overflow.
+Custom testnets require a separate name, network magic, and genesis hash, and
+must not use the built-in bootstrap peers.
 Activation must follow NU7 and every checkpoint.
 `ExperimentalSlhDsaB128sLimits::{new,transaction,block}` supplies typed limits.
 `Network::{experimental_slh_dsa_b128s_activation_height,experimental_slh_dsa_b128s_limits,is_experimental_slh_dsa_b128s_active}`
@@ -148,6 +153,9 @@ These are functional test settings, not production recommendations.
 History checks use the containing block height.
 Mempool admission uses the next candidate block height.
 Database and backup paths use `regtest-slh-dsa-b128s-v1-hH-tT-bB`.
+Custom testnets instead use `<name>-slh-dsa-b128s-v1-<fingerprint>`.
+The versioned SHA-256 fingerprint binds the normalized network and consensus
+settings. The [devnet guide](devnets.md) describes its scope and launcher use.
 Activation, rollback, and reactivation reset pending, completed, and stored work.
 
 Startup checks `zakura_consensus::supports_experimental_slh_dsa_b128s()`.
