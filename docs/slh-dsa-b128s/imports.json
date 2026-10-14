@@ -2447,7 +2447,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls.",
-      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
+      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
     },
     {
       "disposition": "upstream-modification",
@@ -4412,7 +4412,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "7e18b3d635e852917baeed4dc69d99aa5a1ed4dc50d15f6e9a5f3e04bb71d1e5"
+      "sha256": "df155beaae831a8043a3ffdd4d02b623f9dadd00f7aa497e902f52d337d79c1f"
     },
     {
       "disposition": "new",

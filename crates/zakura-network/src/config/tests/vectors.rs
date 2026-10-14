@@ -1881,6 +1881,20 @@ fn experimental_slh_dsa_b128s_peer_cache_binds_chain_rules() {
 fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
     let _init_guard = zakura_test::init();
     let directory = tempfile::tempdir().unwrap();
+    let log_path = directory.path().join("identity-upgrade.log");
+    let resolve_key = |config: &Config| {
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_ansi(false)
+            .with_writer(fs::File::create(&log_path).unwrap())
+            .finish();
+        // This synchronous call emits no spans and cannot migrate between threads.
+        // A local subscriber captures warnings hidden by the shared test filter.
+        let identity = tracing::subscriber::with_default(subscriber, || {
+            config.zakura_secret_key().unwrap().public()
+        });
+        (identity, fs::read_to_string(&log_path).unwrap())
+    };
     let original = custom_slh_config(CUSTOM_SLH_FIELDS);
     let mut identities = HashSet::new();
     for text in [
@@ -1913,10 +1927,9 @@ fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
                 "slhdevnet.zakura-iroh-secret-key"
             );
         }
-        let capture = zakura_test::log_capture::LogCapture::new();
-        let identity = config.zakura_secret_key().unwrap().public();
+        let (identity, log) = resolve_key(&config);
         assert_eq!(
-            capture.contains("SLH custom-testnet identity path changed"),
+            log.contains("SLH custom-testnet identity path changed"),
             config
                 .network
                 .experimental_slh_dsa_b128s_chain_fingerprint()
@@ -1929,9 +1942,9 @@ fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
         );
         assert!(key_path.is_file());
         let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
-        let capture = zakura_test::log_capture::LogCapture::new();
-        assert_eq!(restored.zakura_secret_key().unwrap().public(), identity);
-        assert!(!capture.contains("SLH custom-testnet identity path changed"));
+        let (restored_identity, log) = resolve_key(&restored);
+        assert_eq!(restored_identity, identity);
+        assert!(!log.contains("SLH custom-testnet identity path changed"));
     }
     for network in [
         Network::Mainnet,

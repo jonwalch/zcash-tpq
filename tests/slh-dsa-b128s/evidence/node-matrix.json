@@ -71,21 +71,21 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
+      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
     },
     "config-invalid": {
       "anchor": "experimental_slh_dsa_b128s_config_rejects_invalid_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
+      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
     },
     "config-required": {
       "anchor": "experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
+      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
     },
     "consensus-receipt": {
       "anchor": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
@@ -106,7 +106,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
+      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
     },
     "devnet-consensus": {
       "anchor": "slh_devnet_block_dispatch_accepts_testnet_signatures_and_rejects_wrong_domains",
