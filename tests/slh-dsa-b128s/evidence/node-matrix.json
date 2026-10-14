@@ -164,12 +164,47 @@
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
       "sha256": "d434e8b4c83ab7fbf286403a355256e55e456fe220a754e37dec886b8d992f97"
     },
+    "devnet-native-health": {
+      "anchor": "native_peer_health_uses_active_registry_without_listener",
+      "kind": "bounded_test_source",
+      "path": "crates/zakurad/src/components/health/tests.rs",
+      "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
+      "sha256": "d6614fc746fdd37936b54d011a07f6d194f1892385cef0ec5774f062d5d50b0a"
+    },
     "devnet-native-only": {
       "anchor": "experimental_slh_dsa_b128s_network_init_rejects_invalid_peering_before_io",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
       "sha256": "92ac4bea79071f9f7ae1d0bf46d8aa7b41d632145ee81bad5492d66678468852"
+    },
+    "devnet-native-registration": {
+      "anchor": "native_peer_registration_populates_diagnostics",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/zakura/handler.rs",
+      "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
+      "sha256": "dae14e33e0de14e88fbe005992b08a5d3746f799bbc140257d20b3417614005e"
+    },
+    "devnet-native-registry": {
+      "anchor": "fresh_native_peers_are_visible_and_generation_guarded",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/peer_registry.rs",
+      "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
+      "sha256": "d0cf7bb38fd20af68ba76997126dd6a74bee68c826140c5149a0caa5abd87840"
+    },
+    "devnet-native-rpc": {
+      "anchor": "async fn rpc_getinfo()",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-rpc/src/methods/tests/vectors.rs",
+      "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
+      "sha256": "0f2b098e069f82dd949007386e39e9ad1b01c651f263d8a23affd5f268e06295"
+    },
+    "devnet-producer-pin": {
+      "anchor": "test_pin_drift_fails_before_any_production",
+      "kind": "bounded_test_source",
+      "path": "tests/slh-dsa-b128s/fixtures/test_generate_devnet_transactions.py",
+      "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
+      "sha256": "96b36cad7c6e37b3e91a93422eacb4aad010d67444a394a71b05c9bd064a74c0"
     },
     "devnet-rpc": {
       "anchor": "slh_info_reports_rules_without_claiming_tip_readiness",
@@ -533,14 +568,14 @@
       "kind": "bounded_test_source",
       "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "a754003d6336f26bb9f1431542a9fa706b373cec436129defe67bc588d4a9091"
+      "sha256": "3672e82436bde7ccb7ff291d508c88d7159a550e09ce6ec2761d64931128c9c2"
     },
     "oracle-mutants": {
       "anchor": "test_typed_mutations_precede_crypto_where_required",
       "kind": "bounded_test_source",
       "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "a754003d6336f26bb9f1431542a9fa706b373cec436129defe67bc588d4a9091"
+      "sha256": "3672e82436bde7ccb7ff291d508c88d7159a550e09ce6ec2761d64931128c9c2"
     },
     "ordering": {
       "anchor": "descriptors_and_signer_order_are_rejected_without_normalizing",
@@ -1335,7 +1370,12 @@
             "devnet-genesis",
             "devnet-rpc",
             "devnet-handshake",
-            "devnet-native-only"
+            "devnet-native-only",
+            "devnet-native-registry",
+            "devnet-native-registration",
+            "devnet-native-rpc",
+            "devnet-native-health",
+            "devnet-producer-pin"
           ],
           "id": "config",
           "remaining_preparation": "Custom Testnet launcher bootstrap/readiness and live multi-node acceptance still need preparation and approved execution.",

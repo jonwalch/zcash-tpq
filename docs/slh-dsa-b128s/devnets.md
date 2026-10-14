@@ -33,8 +33,8 @@ funded keys, and checkpoints. If the seed tip is S, NU7 activates at S+1 and SLH
 at S+2. Both generators check seed-count and activation-height arithmetic before
 they generate keys or blocks. The shared helper rejects overflow instead of
 saturating the seed count, which could otherwise start an excessive generation
-loop before an invalid SLH schedule is detected. Ordinary generation retains
-this early error as well. It does not generate SLH keys or signatures.
+loop before an invalid SLH schedule is detected. The ordinary generator now
+returns the same early error. It does not generate SLH keys or signatures.
 
 Generate these values once. Save the network and seed blocks, and reuse them
 for every node and restart. Keep generated keys in the launcher's private storage.
@@ -197,6 +197,15 @@ Compare the response with the launcher's saved network parameters. Then check
 the expected seed tip, peer synchronization, mempool, and mining readiness.
 Rule activation alone does not establish those conditions.
 
+`getinfo`, `getnetworkinfo`, and the health service count active legacy and native
+connections from the connection registry. Recently seen but disconnected peers
+do not count. Providers without a live registry retain the older address-book
+fallback. `getpeerinfo` reports fresh native peers with the address and direction
+of their admitted connection. It omits the Zcash version and user agent because
+native handshakes do not advertise those fields. Peers upgraded from legacy keep
+their existing legacy metadata. The health service still applies its configured
+peer threshold, sync, and tip-age checks; a peer count alone is not readiness.
+
 ## Bootstrap and funding boundaries
 
 Regtest automatically seeds its built-in genesis and enables its mempool early.
@@ -278,5 +287,13 @@ old paths for other networks. Identity tests also check persistence through
 config reloads with the peer cache disabled. Peer tests reject ambiguous numeric
 addresses before system resolution and cover IPv4-compatible IPv6 aliases.
 The built-in peer inventory is initialized once and reused by later checks.
+Mandatory native peering also exposed an upstream reporting gap: fresh native
+connections were absent from the registry, while RPC and health counts used
+only the legacy address book. The fix extends the retained upstream registry
+and supervisor with native connection metadata and reuses the active snapshot
+for counts. Focused tests cover inbound and outbound peers, disconnects, stale
+connection generations, retained upgrade metadata, RPC serialization, and health
+checks with mocked peers and no listener. This adaptation adds no transport or
+wire-format change.
 These changes support the launcher boundary;
 they do not revise the signature contract.

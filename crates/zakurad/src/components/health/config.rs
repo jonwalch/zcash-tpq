@@ -10,7 +10,7 @@ pub struct Config {
     ///
     /// The server is disabled when this is `None`.
     pub listen_addr: Option<SocketAddr>,
-    /// Minimum number of recently live peers to consider the node healthy.
+    /// Minimum number of active legacy or native peers to consider the node healthy.
     ///
     /// Used by `/healthy`.
     pub min_connected_peers: usize,

@@ -255,7 +255,7 @@
       "target_path": "crates/zakurad/src/node.rs"
     },
     {
-      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md. Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
       "source_path": "crates/zakura-rpc/src/methods.rs",
@@ -316,6 +316,105 @@
       "source_repository": "https://github.com/zakura-core/zakura",
       "source_sha256": "820223944f066a8c9371e97cb07eb968ae29328db567c85cacc944e41e49c997",
       "target_path": "crates/zakura-network/src/config/tests.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/address_book_peers.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "b877f56232d6ce003cd27071c7a3756667fdb4bae3c15766ac83452b39e7a67b",
+      "target_path": "crates/zakura-network/src/address_book_peers.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/peer/block_gossip.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "ae17b38bbee10c4c3ed6592d5b4bfe91382c72281fece17a9c7af44eb02d73af",
+      "target_path": "crates/zakura-network/src/peer/block_gossip.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/peer/handshake/tests.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "544e778af7384473a8c0a09ec27076b22199cb9946d61c2b07e089d47d1aee28",
+      "target_path": "crates/zakura-network/src/peer/handshake/tests.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/peer_registry.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "e4964da79d9cf798c5ceba6091e51fb15e3f2d6a6e067b17af2c861579eaa40c",
+      "target_path": "crates/zakura-network/src/peer_registry.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/zakura/handler.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "b2c9e89c931ade4928d464a81d7c0bef773fdc4655ddc705a38bce3a0b2d053f",
+      "target_path": "crates/zakura-network/src/zakura/handler.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-rpc/src/methods/tests/vectors.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "4eb51b5d22c8b45641f5f1bf1a02d515c069e64e522da5543a619d268c95ceb6",
+      "target_path": "crates/zakura-rpc/src/methods/tests/vectors.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-rpc/src/methods/types/peer_info.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "56895c12f217e5420e6638a3f93f4bcc244c7b276ed61e71fdec98d64509f9f1",
+      "target_path": "crates/zakura-rpc/src/methods/types/peer_info.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakurad/src/components/health.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "c1a75bacf2a62e597f6ac025ea082cd86991c2cb329cf57b233a7f7301837467",
+      "target_path": "crates/zakurad/src/components/health.rs"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakurad/src/components/health/tests.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "67be9d2690ff077cebdbc492ba661c36e8b0b6fd5a7e3676c40cba5cdd3b1343",
+      "target_path": "crates/zakurad/src/components/health/tests.rs"
+    },
+    {
+      "adaptation": "Correct the retained native-network guide for SLH custom-testnet fingerprint chain IDs, cohort derivation, native-only peering and scoped fallback. The runtime behavior is covered by native handshake and config tests; clarify existing native-only smoke instructions without executing live nodes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/zakura/README.md",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "b96129c8f4f2637b40336c78136d8b4f3e6b99ef90c4e24e6c4b8e9385148f15",
+      "target_path": "crates/zakura-network/src/zakura/README.md"
+    },
+    {
+      "adaptation": "Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakurad/src/components/health/config.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "62afb2558c1e9b00f7f23536ebf9f354942ba77554a6dbba6939d1c019bf3b51",
+      "target_path": "crates/zakurad/src/components/health/config.rs"
     }
   ],
   "upstream_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc"
