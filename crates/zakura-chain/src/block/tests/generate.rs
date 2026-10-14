@@ -76,7 +76,7 @@ pub fn block_with_size(size: usize) -> Block {
     let mut transaction = Transaction::V1 {
         inputs: vec![input().0],
         outputs: vec![output],
-        lock_time: LockTime::Time(DateTime::from_timestamp(61, 0).unwrap()),
+        lock_time: LockTime::Height(crate::block::Height(61)),
     };
     let header = Arc::new(block_header().0);
     let overhead =

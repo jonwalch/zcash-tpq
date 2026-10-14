@@ -554,7 +554,15 @@ fn body_hints_completion_and_aux_defaults_are_enforced() {
     let bytes = codec()
         .encode(&HeaderSyncMessage::Headers(response.clone()))
         .expect("a full 20 MB block hint encodes");
-    assert!(codec().decode(&bytes, None).is_ok());
+    assert!(codec()
+        .decode(
+            &bytes,
+            Some(HeaderSyncDecodeContext {
+                max_header_count: 1,
+                requested_tree_aux_schema: AuxSchema::None,
+            })
+        )
+        .is_ok());
     response.entries[0].body_size = 0;
     assert!(codec()
         .encode(&HeaderSyncMessage::Headers(response.clone()))

@@ -10,7 +10,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-const MAX_RESPONSE: usize = 4_100_000;
+// The cast is safe: a 20 MB block and its hex encoding fit in usize on supported targets.
+const MAX_RESPONSE: usize = 2 * zakura_chain::block::MAX_BLOCK_BYTES as usize + 100_000;
 const MAX_HEADER: usize = 16_384;
 
 /// Bounded transport to an independently authenticated numeric loopback node.
@@ -331,6 +332,19 @@ mod tests {
     mod discovery;
     mod payment;
     use super::*;
+    #[test]
+    fn twenty_mb_block_response_fits_but_oversized_response_is_rejected() {
+        let mut response = b"HTTP/1.0 200 OK\r\n\r\n{\"id\":1,\"result\":\"".to_vec();
+        response.resize(response.len() + 2 * 20_000_000, b'0');
+        response.extend_from_slice(b"\"}");
+        assert_eq!(
+            parse_response(&response).unwrap().as_str().unwrap().len(),
+            40_000_000
+        );
+        response.resize(b"HTTP/1.0 200 OK\r\n\r\n".len() + MAX_RESPONSE + 1, b' ');
+        assert!(matches!(parse_response(&response), Err(Error::Limits)));
+    }
+
     #[test]
     fn nullable_rpc_results_do_not_hide_transport_or_server_failures() {
         let response = |body: Value| {

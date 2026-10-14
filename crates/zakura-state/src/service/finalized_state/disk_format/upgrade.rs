@@ -1114,8 +1114,6 @@ fn fast_sync_metadata_cf_upgrade_is_no_migration() {
 
 #[test]
 fn vct_format_changes_include_root_auth_metadata_updates() {
-    use crate::constants::state_database_format_version_in_code;
-
     let upgrades: Vec<_> = format_upgrades(Some(Version::new(27, 3, 0))).collect();
 
     assert_eq!(upgrades.len(), 8);
@@ -1135,13 +1133,41 @@ fn vct_format_changes_include_root_auth_metadata_updates() {
         !upgrades[7].needs_migration(),
         "the sparse body size correction column family is created on open"
     );
-    let mut current_schema_version = state_database_format_version_in_code();
-    current_schema_version.build = semver::BuildMetadata::EMPTY;
+    // Version 30 requires a fresh database, so it has no in-place upgrade.
     assert_eq!(
         upgrades
             .last()
-            .expect("latest format upgrade is registered")
+            .expect("latest in-place format upgrade is registered")
             .version(),
-        current_schema_version
+        Version::new(29, 1, 0)
     );
+}
+
+#[test]
+fn twenty_mb_database_does_not_reuse_u16_transaction_indexes() {
+    use crate::service::finalized_state::disk_db::DiskDb;
+    use crate::{constants::state_database_format_version_in_code, Config};
+
+    let directory = tempfile::tempdir().unwrap();
+    let config = Config {
+        cache_dir: directory.path().to_owned(),
+        ephemeral: false,
+        ..Default::default()
+    };
+    let network = zakura_chain::parameters::Network::Mainnet;
+    let old_path = config.db_path("state", 29, &network);
+    std::fs::create_dir_all(&old_path).unwrap();
+    std::fs::write(old_path.join("old-index-format"), b"u16").unwrap();
+    let version = state_database_format_version_in_code();
+    assert_eq!(version.major, 30);
+    assert!(DiskDb::try_reusing_previous_db_after_major_upgrade(
+        &restorable_db_versions(),
+        &version,
+        &config,
+        "state",
+        &network,
+    )
+    .is_none());
+    assert!(old_path.join("old-index-format").exists());
+    assert!(!config.db_path("state", 30, &network).exists());
 }

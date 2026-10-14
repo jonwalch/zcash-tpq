@@ -280,7 +280,7 @@ mod tests {
                 reopened
                     .format_version_on_disk()
                     .expect("the migrated version is readable"),
-                Some(state_database_format_version_in_code())
+                Some(Version::new(29, 1, 0))
             );
         }
     }

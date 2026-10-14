@@ -243,6 +243,8 @@ impl RpcServer {
         // The largest RPC request is submitblock, which sends a full block
         // as a hex string (2x MAX_BLOCK_BYTES) plus a small JSON-RPC wrapper.
         let max_request_body_size = (MAX_BLOCK_BYTES as usize) * 2 + 1024;
+        let max_request_body_size_u32 = u32::try_from(max_request_body_size)
+            .expect("a hex-encoded maximum block and RPC wrapper fit in u32");
 
         let http_middleware_layer = if conf.enable_cookie_auth {
             let cookie = Cookie::default();
@@ -268,6 +270,7 @@ impl RpcServer {
             let acceptor = TlsAcceptor::from(tls_config);
             let service_builder = Server::builder()
                 .http_only()
+                .max_request_body_size(max_request_body_size_u32)
                 .set_http_middleware(http_middleware)
                 .set_rpc_middleware(rpc_middleware)
                 .max_response_body_size(
@@ -318,6 +321,7 @@ impl RpcServer {
 
         let server = Server::builder()
             .http_only()
+            .max_request_body_size(max_request_body_size_u32)
             .set_http_middleware(http_middleware)
             .set_rpc_middleware(rpc_middleware)
             .max_response_body_size(

@@ -1459,7 +1459,11 @@ mod database_tests {
         upgrade
             .apply_format_upgrade(&db, Some(Height(4)), &rx)
             .unwrap();
-        assert_eq!(db.format_version_on_disk().unwrap(), Some(running_version));
+        // These historical in-place upgrades end at 29.1; version 30 requires a fresh database.
+        assert_eq!(
+            db.format_version_on_disk().unwrap(),
+            Some(Version::new(29, 1, 0))
+        );
         assert!(Upgrade.validate(&db, &rx).unwrap().is_ok());
     }
 
@@ -1503,9 +1507,11 @@ mod database_tests {
         DbFormatChange::open_database(&running_version, Some(old_version))
             .apply_format_upgrade(&db, Some(Height(10)), &rx)
             .unwrap();
+        // These historical in-place upgrades end at 29.1; version 30 requires a fresh database.
+        let upgraded_version = Version::new(29, 1, 0);
         assert_eq!(
             db.format_version_on_disk().unwrap(),
-            Some(running_version.clone())
+            Some(upgraded_version.clone())
         );
         let network = db.network();
         drop(db);
@@ -1524,7 +1530,7 @@ mod database_tests {
         )
         .unwrap();
         assert!(matches!(
-            DbFormatChange::open_database(&running_version, db.format_version_on_disk().unwrap()),
+            DbFormatChange::open_database(&upgraded_version, db.format_version_on_disk().unwrap()),
             DbFormatChange::CheckOpenCurrent { .. }
         ));
         assert!(Upgrade.validate(&db, &rx).unwrap().is_ok());

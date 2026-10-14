@@ -89,9 +89,9 @@ async fn rpc_server_spawn_unallocated_port() {
     rpc_spawn_unallocated_port(false).await
 }
 
-/// Test that the JSON-RPC server spawns and shuts down on an OS-assigned unallocated port.
+/// A full block-sized hex request reaches RPC dispatch before the server shuts down.
 #[tokio::test]
-async fn rpc_server_spawn_unallocated_port_shutdown() {
+async fn rpc_server_accepts_twenty_mb_block_request_and_shuts_down() {
     rpc_spawn_unallocated_port(true).await
 }
 
@@ -115,7 +115,7 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
         cookie_dir: Default::default(),
         cookie_file_name: ".cookie".to_string(),
         enable_cookie_auth: false,
-        max_response_body_size: Default::default(),
+        max_response_body_size: Config::default().max_response_body_size,
         tls: None,
     };
 
@@ -159,6 +159,23 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
     );
 
     if do_shutdown {
+        let response: serde_json::Value = reqwest::Client::builder()
+            .timeout(Duration::from_secs(30))
+            .build()
+            .unwrap()
+            .post(format!("http://127.0.0.1:{port}"))
+            .json(&serde_json::json!({
+                "jsonrpc": "2.0", "id": 1, "method": "block_size_probe",
+                "params": ["00".repeat(20_000_000)],
+            }))
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        // Method-not-found proves the request passed both HTTP byte limits.
+        assert_eq!(response["error"]["code"], -32601);
         rpc.abort();
     }
 }
