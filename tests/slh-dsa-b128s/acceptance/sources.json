@@ -906,10 +906,10 @@
       "sources": []
     },
     {
-      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input. Retain classical-spend default; explicit control-funding allows only two additional exact unsupported templates. Expose feature-gated explicit NU6.2 v5 fixture signing for pre-NU6.3 Orchard deposits while retaining existing NU7 signing behavior.",
+      "adaptation": "Extract only legacy_scripts and legacy_signature mechanisms: fixed public ECDSA scalars, actual parent values/scripts, native SIGHASH_ALL; add explicit2of3 control with dummy/minimal PUSHDATA1, and selected input index for mixed control. No operational private-key input. Retain classical-spend default; explicit control-funding allows only two additional exact unsupported templates. Expose feature-gated explicit NU6.2 v5 fixture signing for pre-NU6.3 Orchard deposits while retaining existing NU7 signing behavior. Upstream refresh e33dc4308: reuse the upstream secp256k1 0.33 free-function signing and verification API with unchanged public scalars, signature encoding and sighash-mutation controls.",
       "classification": "adapted classical helper",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/classical.rs",
-      "sha256": "cb34c9ee6e154e0a899e70ef7fbedcc25f3a22f604747cbaa555f538feb9548e",
+      "sha256": "b16e901200fcbedd82003347018bfe806cbf9ab633cfe1f3679aada70e7bdd28",
       "sources": [
         "nu7",
         "classical_sign"

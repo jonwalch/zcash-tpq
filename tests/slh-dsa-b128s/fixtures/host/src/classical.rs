@@ -2,7 +2,7 @@
 //! Never pass real funds: the keys below are public and deliberately fixed.
 use super::*;
 use ripemd::Ripemd160;
-use secp256k1::{Message, PublicKey, Secp256k1, SecretKey};
+use secp256k1::{Message, PublicKey, SecretKey};
 use sha2::{Digest, Sha256};
 use zakura_chain::{parameters::NetworkKind, transaction::HashType, transparent::Address};
 
@@ -15,14 +15,13 @@ fn keys(kind: &str) -> Result<Vec<SecretKey>> {
     Ok(seeds
         .iter()
         .map(|seed| {
-            SecretKey::from_slice(&[*seed; 32])
+            SecretKey::from_secret_bytes([*seed; 32])
                 .expect("fixed public test scalar is nonzero and in range")
         })
         .collect())
 }
 
 pub(super) fn scripts(kind: &str) -> Result<(Script, Vec<u8>, Address)> {
-    let secp = Secp256k1::new();
     let keys = keys(kind)?;
     let mut redeem = Vec::new();
     if kind == "multisig" {
@@ -30,7 +29,7 @@ pub(super) fn scripts(kind: &str) -> Result<(Script, Vec<u8>, Address)> {
     }
     for key in keys {
         redeem.push(33);
-        redeem.extend(PublicKey::from_secret_key(&secp, &key).serialize());
+        redeem.extend(PublicKey::from_secret_key(&key).serialize());
     }
     if kind == "multisig" {
         redeem.extend([0x53, 0xae]);
@@ -111,7 +110,6 @@ fn signature_inner(
         })?
         .sighash(HashType::ALL, Some((input_index, redeem.clone())))
         .0;
-    let secp = Secp256k1::new();
     let message = Message::from_digest(digest);
     let mut script = Vec::new();
     if kind == "multisig" {
@@ -121,14 +119,10 @@ fn signature_inner(
         .into_iter()
         .take(if kind == "multisig" { 2 } else { 1 })
     {
-        let signature = secp.sign_ecdsa(&message, &key);
+        let signature = secp256k1::ecdsa::sign(message, &key);
         require(
-            secp.verify_ecdsa(
-                &message,
-                &signature,
-                &PublicKey::from_secret_key(&secp, &key),
-            )
-            .is_ok(),
+            secp256k1::ecdsa::verify(&signature, message, &PublicKey::from_secret_key(&key))
+                .is_ok(),
             "generation",
             "classical_signature",
         )?;
@@ -337,13 +331,19 @@ mod tests {
                     let signature =
                         secp256k1::ecdsa::Signature::from_der(&script[cursor..cursor + length - 1])
                             .unwrap();
-                    let public = PublicKey::from_secret_key(&Secp256k1::new(), &key);
-                    assert!(Secp256k1::new()
-                        .verify_ecdsa(&Message::from_digest(digest), &signature, &public)
-                        .is_ok());
-                    assert!(Secp256k1::new()
-                        .verify_ecdsa(&Message::from_digest(changed_digest), &signature, &public)
-                        .is_err());
+                    let public = PublicKey::from_secret_key(&key);
+                    assert!(secp256k1::ecdsa::verify(
+                        &signature,
+                        Message::from_digest(digest),
+                        &public
+                    )
+                    .is_ok());
+                    assert!(secp256k1::ecdsa::verify(
+                        &signature,
+                        Message::from_digest(changed_digest),
+                        &public
+                    )
+                    .is_err());
                     cursor += length;
                 }
                 if kind == "multisig" {

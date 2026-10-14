@@ -3139,7 +3139,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "PR #9: Keep the incompatible wide-index format out of reusable in-place upgrades; use named format versions and verify that historical fork caches are preserved instead of reused. Upstream refresh e33dc4308: Map upstream transparent-index cache reuse to fork v31 without allowing legacy pre-v30 index reuse; preserve the current-schema and legacy-boundary regressions.",
-      "sha256": "beb2ae269df8daf42bde65be051727bc30f2f6ed562ce2aec1bc84bf7d9b8ff4"
+      "sha256": "8ca9a94a31c4c96074938457955cbae59dc81b24898657dd7a63ae9a8cdd84a5"
     },
     {
       "disposition": "upstream-modification",
@@ -4000,7 +4000,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "c49379cfd6523794c89a2968e95f427eb9201985081823774760d44038bb403e"
+      "sha256": "da4cdf415f1d14468aed714a38549400ee5fd4bce540ef30aee8a7d97458e294"
     },
     {
       "disposition": "new",
@@ -4637,8 +4637,8 @@
         "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged.",
-      "sha256": "cb34c9ee6e154e0a899e70ef7fbedcc25f3a22f604747cbaa555f538feb9548e"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged. Upstream refresh e33dc4308: adapt the public classical fixture and its digest-mutation tests to secp256k1 0.33 using the upstream script test API; preserve fixture keys and encodings.",
+      "sha256": "b16e901200fcbedd82003347018bfe806cbf9ab633cfe1f3679aada70e7bdd28"
     },
     {
       "disposition": "new",

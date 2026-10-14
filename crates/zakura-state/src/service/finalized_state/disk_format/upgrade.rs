@@ -1147,12 +1147,14 @@ fn vct_format_changes_include_root_auth_metadata_updates() {
     // The v30 wider-index boundary cannot reuse a legacy cache. Version 31
     // reuses only the already compatible v30 cache within state-tpq.
     assert!(!restorable_db_versions().contains(&30));
+    let mut current_schema_version = crate::constants::state_database_format_version_in_code();
+    current_schema_version.build = semver::BuildMetadata::EMPTY;
     assert_eq!(
         upgrades
             .last()
             .expect("latest in-place format upgrade is registered")
             .version(),
-        crate::constants::state_database_format_version_in_code()
+        current_schema_version
     );
 }
 
