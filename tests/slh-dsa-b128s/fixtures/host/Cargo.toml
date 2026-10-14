@@ -10,7 +10,7 @@ description = "Bounded public SLH transaction conformance adapter"
 [features]
 default = []
 # Human-only real proof construction; never enabled by a node dependency.
-shielded-fixtures = ["dep:orchard", "dep:sapling-crypto", "dep:zcash_proofs", "dep:zcash_protocol", "dep:rand_10", "dep:incrementalmerkletree"]
+shielded-fixtures = ["dep:orchard", "dep:orchard_legacy", "dep:sapling-crypto", "dep:zcash_proofs", "dep:zcash_protocol", "dep:rand_10", "dep:incrementalmerkletree"]
 
 [dependencies]
 hex = "0.4.3"
@@ -20,8 +20,11 @@ sha2 = "0.10"
 secp256k1 = { workspace = true }
 ripemd = { workspace = true }
 orchard = { workspace = true, optional = true }
+# Common 3 supports historical verification but no longer constructs pre-NU6.3 proofs.
+# Retain the previous pinned builder only for explicit historical funding fixtures.
+orchard_legacy = { version = "=2.2.0", package = "zakura-orchard", default-features = false, features = ["circuit", "multicore", "std"], optional = true }
 sapling-crypto = { workspace = true, features = ["circuit"], optional = true }
-zcash_proofs = { workspace = true, features = ["local-prover"], optional = true }
+zcash_proofs = { version = "=3.0.0", package = "zakura-proofs", default-features = false, features = ["local-prover"], optional = true }
 zcash_protocol = { workspace = true, optional = true }
 rand_10 = { workspace = true, optional = true }
 incrementalmerkletree = { workspace = true, optional = true }

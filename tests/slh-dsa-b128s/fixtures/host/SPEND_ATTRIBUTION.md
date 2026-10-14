@@ -36,6 +36,16 @@ finalizers; no signing implementation or operational-key interface is added.
 Sapling spends extend the existing canonical output adapter with the node's
 `SpendPrefixInTransactionV5` parser and `Spend::from_v5_parts`.
 
+With upstream Zakura at `e33dc43089acca2fe2c6516927932f2b7618b8bc`, Common 3
+can verify historical Orchard circuits but cannot build their proofs. The optional
+fixture host therefore retains `zakura-orchard =2.2.0` as `orchard_legacy` only for
+pre-NU6.3 funding. Current output and spend builders use Common 3 and propagate
+its proving-key errors. Both Orchard versions use the existing canonical bundle
+conversion. The history regression builds ciphertext with invalid proof and
+signature placeholders, then checks decoding, public-note recovery and finalization
+with current node types. It does not generate or verify a real proof. The dependency
+guard rejects the historical builder in default and SLH-enabled node graphs.
+
 New narrow glue uses pinned `zakura-sapling-crypto =2.2.0` builders, note decryption,
 `CommitmentSum` binding verification and LocalTxProver, and
 `zakura-orchard =2.2.0` builders/note decryption/verifiers. No cryptography is

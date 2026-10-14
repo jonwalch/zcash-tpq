@@ -43,7 +43,7 @@
       "kind": "bounded_tool_source",
       "path": "tests/slh-dsa-b128s/dependencies/check.py",
       "scope": "Dependency/feature isolation source guard; does not replace default/enabled daemon builds.",
-      "sha256": "cb495ca59f5e197f446e8d0e162216c2077fc5c17247d6c295eda84923756669"
+      "sha256": "58eb6740a6d878d8533d45259185f7b4828dabf9b0094e3ff88b03c1e83da120"
     },
     "cancel": {
       "anchor": "slh_cancelled_inflight_worker_keeps_reservation_and_discards_result",
@@ -71,21 +71,21 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "bd11459b4ed91cdbd417126faa92d454fba5b4349b4c058e8e6ab83a9d47a222"
+      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
     },
     "config-invalid": {
       "anchor": "experimental_slh_dsa_b128s_config_rejects_invalid_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "bd11459b4ed91cdbd417126faa92d454fba5b4349b4c058e8e6ab83a9d47a222"
+      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
     },
     "config-required": {
       "anchor": "experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "bd11459b4ed91cdbd417126faa92d454fba5b4349b4c058e8e6ab83a9d47a222"
+      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
     },
     "consensus-receipt": {
       "anchor": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
@@ -106,7 +106,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "bd11459b4ed91cdbd417126faa92d454fba5b4349b4c058e8e6ab83a9d47a222"
+      "sha256": "edcf91a25dd7b18016a0ee8f28e0d87aa27090269b49a4c25ee060d2681d8b45"
     },
     "devnet-consensus": {
       "anchor": "slh_devnet_block_dispatch_accepts_testnet_signatures_and_rejects_wrong_domains",
@@ -141,7 +141,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-chain/src/local_genesis.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "45257b8c1fa16b870a07e53cfa2249473d683580ec63ad6732b9380fc7e6cc17"
+      "sha256": "361e148fdf087893791e2858cf43f4de26bc3973cad4dc91dda6c6aa6fafa438"
     },
     "devnet-independent": {
       "anchor": "def controls(",
@@ -155,7 +155,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-state/src/config.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "2c9cf2d3de7f9642d766c7f808c2d9a437697c1223a4ffd22f19e2d6bf33795b"
+      "sha256": "d434e8b4c83ab7fbf286403a355256e55e456fe220a754e37dec886b8d992f97"
     },
     "devnet-rpc": {
       "anchor": "slh_info_reports_rules_without_claiming_tip_readiness",
@@ -169,7 +169,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakurad/src/commands/start.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "759eadccc3e7ed5266f3838ce9d5ecebea6b88f6043f73fde8b0fe15cce068d5"
+      "sha256": "a2fb0ac5edb789b05a84d50e37688d04cf0c1ba00b33ede0624edd2e50a1ebf7"
     },
     "domains": {
       "anchor": "commitment_known_answers_and_exact_template_are_domain_separated",
@@ -477,7 +477,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-state/src/config.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "2c9cf2d3de7f9642d766c7f808c2d9a437697c1223a4ffd22f19e2d6bf33795b"
+      "sha256": "d434e8b4c83ab7fbf286403a355256e55e456fe220a754e37dec886b8d992f97"
     },
     "observation-consensus": {
       "anchor": "slh_diagnostics_match_actual_primitive_entries_and_authorization_identity",
@@ -729,49 +729,49 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "template-all-parents": {
       "anchor": "slh_child_waits_for_every_parent",
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "template-atomic": {
       "anchor": "slh_rejection_and_other_limits_leave_every_allowance_unchanged",
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "template-child": {
       "anchor": "slh_budget_applies_to_descendants_and_requires_selected_parents",
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "template-payload": {
       "anchor": "slh_templates_require_current_rules_and_exact_verification_payloads",
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "template-shielded": {
       "anchor": "slh_accounting_preserves_shielded_limits_and_atomic_rejection",
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "template-small": {
       "anchor": "slh_templates_enforce_configured_limit_and_keep_zero_cost_candidates",
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/types/get_block_template/zip317/tests/slh_dsa_b128s.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+      "sha256": "2de72c45e497f8606f538d7d731f4501ae7f8412b55f84b3a63e7cbe044852c1"
     },
     "tip-reset": {
       "anchor": "experimental_slh_dsa_b128s_resets_at_its_own_next_block_activation",

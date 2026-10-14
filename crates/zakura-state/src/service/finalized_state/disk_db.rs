@@ -1491,14 +1491,36 @@ impl DiskDb {
         {
             let db_kind = db_kind.as_ref();
 
-            let old_major_db_ver = major_db_ver - 1;
-            let old_path = config.db_path(db_kind, old_major_db_ver, network);
-            // Exit early if the path doesn't exist or there's an error checking it.
-            if !fs::exists(&old_path).unwrap_or(false) {
-                return None;
-            }
+            // A node may have skipped releases. Reuse the newest existing cache only while
+            // every intervening major upgrade explicitly permits reuse. The ordered format
+            // upgrades still run after the move, including any skipped intermediate migrations.
+            let mut old_major_db_ver = major_db_ver.checked_sub(1)?;
+            let old_path = loop {
+                let candidate = config.db_path(db_kind, old_major_db_ver, network);
+                if fs::exists(&candidate).ok()? {
+                    break candidate;
+                }
+                if !restorable_db_versions.contains(&old_major_db_ver) {
+                    return None;
+                }
+                old_major_db_ver = old_major_db_ver.checked_sub(1)?;
+            };
 
             let new_path = config.db_path(db_kind, major_db_ver, network);
+
+            // The fork's wider indexes require an explicit version marker even
+            // during cache reuse. Do not move or relabel an unidentified cache.
+            if major_db_ver >= crate::constants::WIDE_TRANSACTION_INDEX_FORMAT_VERSION {
+                let version_path = config.version_file_path(db_kind, old_major_db_ver, network);
+                let version = crate::config::read_database_format_version_file(&version_path, None)
+                    .ok()
+                    .flatten()?;
+                if version.major != old_major_db_ver
+                    || version.major < crate::constants::WIDE_TRANSACTION_INDEX_FORMAT_VERSION
+                {
+                    return None;
+                }
+            }
 
             let old_path = match fs::canonicalize(&old_path) {
                 Ok(canonicalized_old_path) => canonicalized_old_path,

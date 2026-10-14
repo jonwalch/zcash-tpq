@@ -225,7 +225,9 @@ fn slh_templates_enforce_16_per_transaction_and_64_per_block() {
 }
 
 fn miner() -> MinerParams {
-    MinerParams::from(Address::from(TransparentAddress::PublicKeyHash([0x7e; 20])))
+    MinerParams::from(MinerAddress::from(TransparentAddress::PublicKeyHash(
+        [0x7e; 20],
+    )))
 }
 
 fn limits(network: &Network) -> BlockTemplateLimits {

@@ -15,7 +15,8 @@ It is not a FIPS 205 profile or a production release.
 This fork permits blocks up to **20 MB (20,000,000 bytes)** on all networks for
 use on a separate devnet. This is a consensus change from upstream's 2 MB limit.
 All devnet nodes must use compatible rules. The state database format is now
-30.0.0 under `state-tpq`; existing caches under `state` require a fresh sync.
+31.0.0 under `state-tpq`. Valid fork v30 caches upgrade in place; existing
+caches under upstream's `state` directory require a fresh sync.
 Use this binary only on the devnet. It is not consensus-compatible with public
 Mainnet or Testnet.
 SLH activation remains off by default and rejects built-in Mainnet and public Testnet.
@@ -46,11 +47,11 @@ The [packaging guide](docs/slh-dsa-b128s/packaging.md) describes source attribut
 and checks before publication.
 The [writing guide](docs/slh-dsa-b128s/writing.md) describes the plain-English style and technical terms.
 
-The upstream base is Zakura commit `24a17b3f0e7d88513688d607054f018ab6f15af2`.
+The upstream base is Zakura commit `e33dc43089acca2fe2c6516927932f2b7618b8bc`.
 Zakura derives from [Zebra](https://github.com/ZcashFoundation/zebra).
 The inherited documents remain in this repository.
 Their installation instructions and performance results apply to upstream releases.
-The [pinned upstream README](https://github.com/zakura-core/zakura/blob/24a17b3f0e7d88513688d607054f018ab6f15af2/README.md)
+The [pinned upstream README](https://github.com/zakura-core/zakura/blob/e33dc43089acca2fe2c6516927932f2b7618b8bc/README.md)
 contains the upstream project information.
 
 ## Security and licenses
