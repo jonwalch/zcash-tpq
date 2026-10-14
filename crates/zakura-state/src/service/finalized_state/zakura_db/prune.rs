@@ -10,7 +10,7 @@ use crate::{
         disk_db::DiskWriteBatch, disk_format::TransactionLocation, zakura_db::ZakuraDb,
         STATE_COLUMN_FAMILIES_IN_CODE,
     },
-    BoxError, Config,
+    BoxError, Config, StateInitError,
 };
 
 /// Options for pruning finalized raw transaction data.
@@ -48,6 +48,10 @@ pub struct PruneFinalizedStateSummary {
 /// Errors returned by finalized-state pruning.
 #[derive(Debug, thiserror::Error)]
 pub enum PruneFinalizedStateError {
+    /// The database could not be opened safely.
+    #[error("could not open the state database: {0}")]
+    DatabaseOpen(#[from] StateInitError),
+
     /// The configured pruning retention is invalid.
     #[error("invalid pruning configuration")]
     InvalidConfig(#[source] BoxError),
@@ -99,7 +103,7 @@ pub fn preview_prune_finalized_state(
     let config = pruning_config(config, network, options.tx_retention)?;
     check_format_version(&config, network)?;
 
-    let db = open_pruning_db(&config, network, true);
+    let db = open_pruning_db(&config, network, true)?;
     pruning_summary(&db, &options)
 }
 
@@ -112,7 +116,7 @@ pub fn prune_finalized_state(
     let config = pruning_config(config, network, options.tx_retention)?;
     check_format_version(&config, network)?;
 
-    let db = open_pruning_db(&config, network, false);
+    let db = open_pruning_db(&config, network, false)?;
     let summary = pruning_summary(&db, &options)?;
 
     let needs_marker_update =
@@ -167,7 +171,11 @@ fn check_format_version(
     Ok(())
 }
 
-fn open_pruning_db(config: &Config, network: &Network, read_only: bool) -> ZakuraDb {
+fn open_pruning_db(
+    config: &Config,
+    network: &Network,
+    read_only: bool,
+) -> Result<ZakuraDb, StateInitError> {
     ZakuraDb::new(
         config,
         STATE_DATABASE_KIND,
@@ -179,7 +187,7 @@ fn open_pruning_db(config: &Config, network: &Network, read_only: bool) -> Zakur
             .iter()
             .map(ToString::to_string),
         read_only,
-    ).expect("opening the finalized state database failed; the configured cache directory must contain a readable Zakura database")
+    )
 }
 
 fn pruning_summary(

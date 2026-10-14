@@ -5,10 +5,14 @@ use std::{io, net::Ipv6Addr};
 
 use super::{AtLeastOne, CompactSizeMessage};
 
-/// The maximum length of a Zcash message, in bytes.
+/// The maximum length of a peer message in this fork, in bytes.
 ///
-/// This value is used to calculate safe preallocation limits for some types
-pub const MAX_PROTOCOL_MESSAGE_LEN: usize = 2 * 1024 * 1024;
+/// The 20 MiB transport cap admits a full 20 MB block. This value is also used
+/// to calculate safe preallocation limits for some types.
+pub const MAX_PROTOCOL_MESSAGE_LEN: usize = 20 * 1024 * 1024;
+
+// The cast is safe: the 20 MB block limit fits in usize on supported targets.
+const _: () = assert!(MAX_PROTOCOL_MESSAGE_LEN >= crate::block::MAX_BLOCK_BYTES as usize);
 
 /// The maximum number of block headers in a single `headers` protocol message.
 ///

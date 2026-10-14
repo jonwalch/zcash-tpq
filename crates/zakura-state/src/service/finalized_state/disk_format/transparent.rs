@@ -34,18 +34,18 @@ pub const OUTPUT_INDEX_DISK_BYTES: usize = 3;
 /// The maximum value of an on-disk serialized [`OutputIndex`].
 ///
 /// This allows us to store [`OutputLocation`]s in
-/// 8 bytes, which makes database searches more efficient.
+/// 10 bytes with a compact height and output index.
 ///
 /// # Consensus
 ///
-/// This output index is impossible with the current 2 MB block size limit.
+/// This output index is impossible with the current 20 MB block size limit.
 ///
 /// Since Zebra only stores fully verified blocks on disk, blocks with larger indexes
 /// are rejected before reaching the database.
 pub const MAX_ON_DISK_OUTPUT_INDEX: OutputIndex =
     OutputIndex::from_index((1 << (OUTPUT_INDEX_DISK_BYTES * 8)) - 1);
 
-/// [`OutputLocation`]s are stored as a 3 byte height, 2 byte transaction index,
+/// [`OutputLocation`]s are stored as a 3 byte height, 4 byte transaction index,
 /// and 3 byte output index on disk.
 ///
 /// This reduces database size and increases lookup performance.
@@ -459,7 +459,7 @@ impl AddressUnspentOutput {
         // Iterating from the next possible output location gets us the next output,
         // even if it is in a later block or transaction.
         //
-        // Consensus: the block size limit is 2MB, which is much lower than the index range.
+        // Consensus: a 20 MB block cannot contain enough outputs to overflow this index.
         self.unspent_output_location.output_index += 1;
     }
 
@@ -550,7 +550,7 @@ impl AddressTransaction {
 
         // Iterating from the start height to the end height filters out transactions that aren't needed.
         let query_start_location = TransactionLocation::from_index(*query.start(), 0);
-        let query_end_location = TransactionLocation::from_index(*query.end(), u16::MAX);
+        let query_end_location = TransactionLocation::max_for_height(*query.end());
 
         let addr_tx = |tx_loc| AddressTransaction::new(address_location, tx_loc);
 
@@ -571,7 +571,7 @@ impl AddressTransaction {
         // Iterating from the next possible output location gets us the next output,
         // even if it is in a later block or transaction.
         //
-        // Consensus: the block size limit is 2MB, which is much lower than the index range.
+        // Consensus: a 20 MB block cannot contain enough transactions to overflow this index.
         self.transaction_location.index.0 += 1;
     }
 
@@ -685,7 +685,7 @@ impl IntoDisk for OutputIndex {
             // # Security
             //
             // The RPC method or state query was given a transparent output index that is
-            // impossible with the current block size limit of 2 MB. To save space in database
+            // impossible with the current block size limit of 20 MB. To save space in database
             // indexes, we don't support output indexes 2^24 and above.
             //
             // Instead,  we return an invalid database output index to the lookup code,
@@ -787,7 +787,7 @@ impl IntoDisk for AddressBalanceLocationChange {
 impl<C: Constraint + Copy + std::fmt::Debug> FromDisk for AddressBalanceLocationInner<C> {
     fn from_bytes(disk_bytes: impl AsRef<[u8]>) -> Self {
         let (balance_bytes, rest) = disk_bytes.as_ref().split_at(BALANCE_DISK_BYTES);
-        let (address_location_bytes, rest) = rest.split_at(BALANCE_DISK_BYTES);
+        let (address_location_bytes, rest) = rest.split_at(OUTPUT_LOCATION_DISK_BYTES);
         let (received_bytes, _) = rest.split_at_checked(size_of::<u64>()).unwrap_or_default();
 
         let balance = Amount::from_bytes(balance_bytes.try_into().unwrap()).unwrap();

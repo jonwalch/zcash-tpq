@@ -80,9 +80,9 @@ where
     ///
     /// Zebra's mempool does not support transaction dependencies, so this list is always empty.
     ///
-    /// We use `u16` because 2 MB blocks are limited to around 39,000 transactions.
+    /// A 20 MB block can contain more transactions than a `u16` index can represent.
     #[getset(get = "pub")]
-    pub(crate) depends: Vec<u16>,
+    pub(crate) depends: Vec<u32>,
 
     /// The fee for this transaction.
     ///

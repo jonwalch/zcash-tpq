@@ -129,6 +129,9 @@ pub struct Config {
     pub enable_cookie_auth: bool,
 
     /// The maximum size of the response body in bytes.
+    ///
+    /// The default allows for verbose transaction JSON, which includes raw hex,
+    /// script hex, disassembled scripts, and metadata in addition to block bytes.
     pub max_response_body_size: usize,
 
     /// Optional TLS configuration for the primary RPC listener.
@@ -186,8 +189,9 @@ impl Default for Config {
             // Enable cookie-based authentication by default.
             enable_cookie_auth: true,
 
-            // 50 MiB
-            max_response_body_size: 52_428_800,
+            // The cast is safe: the block limit and this JSON allowance fit usize.
+            max_response_body_size: 32 * zakura_chain::block::MAX_BLOCK_BYTES as usize
+                + 1024 * 1024,
 
             // Serve plain HTTP unless a caller wires TLS explicitly.
             tls: None,

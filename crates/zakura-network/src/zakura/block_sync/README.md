@@ -191,18 +191,22 @@ pools. The configured look-ahead limit is not a hard cap on total process RSS.
 
 ### Config clamps
 
-At config load (`clamp_reorder_lookahead_to_floor`, serde path only), sub-range budgets
-are raised to one worst-case serialized checkpoint range —
-`BS_CHECKPOINT_RANGE_BYTE_FLOOR` (401 × 2 MB ≈ 802 MB) — with a warning. The clamp is
-defense-in-depth _sizing_ only: liveness is guaranteed by the commit-window exemption,
-not by budget size. Zero config values are rejected.
+At config load (`clamp_reorder_lookahead_to_floor`, serde path only), positive budgets
+below one maximum-size serialized block are raised to 20 MB with a warning. The
+1.5 GiB default stays unchanged on both direct construction and config loading.
+The clamp allows speculative look-ahead to hold one full block. The active checkpoint
+window bypasses this budget, so it does not require an 8.02 GB speculative floor.
+Zero config values are rejected.
 
 ### The bound
 
 Resident memory plateaus near **`effective budget + the bounded decode window`**, plus
 process overhead and bounded transients. At the default 401-block submission window,
 the worst-case decoded contribution is approximately
-401 × `MAX_BLOCK_BYTES` × `DESERIALIZED_MEM_FACTOR` ≈ 3.2 GB:
+401 × `MAX_BLOCK_BYTES` × `DESERIALIZED_MEM_FACTOR` ≈ 32.08 GB of decoded
+copies, plus up to 8.02 GB of retained serialized blocks. The 1.5 GiB look-ahead
+setting therefore does **not** make every workload fit a 4–8 GB machine. Additional
+bounded transients include:
 
 - the floor's first-item progress margin (≤ one block per request — see liveness below);
 - a single in-window response can exceed the byte gate by up to its decoded resident
@@ -251,7 +255,7 @@ borrowed a bypass slot.
 
 | Knob | Default | Notes |
 | --- | --- | --- |
-| `max_reorder_lookahead_bytes` | 1.5 GiB | resident-memory target; serialized pools are charged at wire size and decoded windows at the calibrated multiple; clamped up to ~802 MB |
+| `max_reorder_lookahead_bytes` | 1.5 GiB | resident-memory target; serialized pools are charged at wire size and decoded windows at the calibrated multiple; positive sub-block values clamped up to 20 MB; active checkpoint window is separate |
 | `max_inflight_block_bytes` | 6 GiB | outstanding-request wire budget, released at receipt (separate from the resident gate) |
 | `max_blocks_per_response` | 1 | count cap per request (effective = min of both sides' advertisements, hard max 128) |
 | `floor_bypass_slots` | 2 | extra slots past a saturated cwnd, floor lane only |

@@ -4705,8 +4705,7 @@ async fn read_frame(
             max_frame_bytes,
         });
     }
-    let mut payload = vec![0; payload_len];
-    read_frame_payload(recv, &mut payload, read_timeout).await?;
+    let payload = read_frame_payload(recv, payload_len, read_timeout).await?;
     Ok(Frame {
         message_type,
         flags,
@@ -4716,14 +4715,36 @@ async fn read_frame(
 
 async fn read_frame_payload(
     recv: &mut RecvStream,
-    payload: &mut [u8],
+    payload_len: usize,
     read_timeout: Duration,
-) -> Result<(), ZakuraHandlerError> {
-    match timeout(read_timeout, recv.read_exact(payload))
+) -> Result<Vec<u8>, ZakuraHandlerError> {
+    // Grow only after bytes arrive, so header-only streams cannot pin a full
+    // block each. Chunk reads also avoid zero-filling the announced body size.
+    let read_payload = async {
+        let mut payload = Vec::new();
+        while payload.len() < payload_len {
+            let chunk = recv
+                .read_chunk((payload_len - payload.len()).min(64 * 1024))
+                .await?
+                .ok_or(iroh::endpoint::ReadExactError::FinishedEarly(payload.len()))?;
+            let required = payload.len() + chunk.len();
+            if required > payload.capacity() {
+                // Geometric growth keeps copying linear in the bytes received;
+                // cap the last growth step at the validated payload length.
+                let capacity = required
+                    .max(payload.capacity().saturating_mul(2))
+                    .min(payload_len);
+                payload.reserve_exact(capacity - payload.len());
+            }
+            payload.extend_from_slice(&chunk);
+        }
+        Ok(payload)
+    };
+    match timeout(read_timeout, read_payload)
         .await
         .map_err(|_| ZakuraHandlerError::Timeout("frame payload"))?
     {
-        Ok(()) => Ok(()),
+        Ok(payload) => Ok(payload),
         // A peer can reset a pair during a partial frame. Reset ends that stream;
         // a normal FIN with a truncated payload still reports a protocol error.
         Err(iroh::endpoint::ReadExactError::ReadError(iroh::endpoint::ReadError::Reset(_))) => {
@@ -9573,7 +9594,115 @@ mod tests {
         Ok(())
     }
 
-    // claude-late-message-cap-allocation: read_frame checks only
+    #[tokio::test]
+    async fn read_frame_grows_with_received_bytes() -> Result<(), BoxError> {
+        const ALPN: &[u8] = b"/zakura/testkit/incremental-frame/0";
+        const PAYLOAD_LEN: u32 = 20_000_000;
+        const FRAME_CAP: u32 = 32 * 1024 * 1024;
+        let _guard = zakura_test::init();
+        let server = LocalEndpointFactory::new().endpoint(74).await?;
+        let (conn_tx, _conn_rx) = mpsc::channel(2);
+        let (stream_tx, mut stream_rx) = mpsc::channel(4);
+        let router = Router::builder(server)
+            .accept(
+                ALPN,
+                CaptureConnection {
+                    connection_tx: conn_tx,
+                    stream_tx,
+                },
+            )
+            .spawn();
+        let client = LocalEndpointFactory::new().endpoint(75).await?;
+        let connection = timeout(
+            Duration::from_secs(5),
+            client.connect(router.endpoint().addr(), ALPN),
+        )
+        .await??;
+
+        // Neither an announcement nor a short prefix may reserve the rest of
+        // the body. Measure each poll on this thread, including header reads.
+        for prefix_len in [0, 8192] {
+            let (mut send, _recv) = timeout(Duration::from_secs(2), connection.open_bi()).await??;
+            let mut prefix = vec![0; FRAME_HEADER_BYTES + prefix_len];
+            prefix[4..8].copy_from_slice(&PAYLOAD_LEN.to_le_bytes());
+            timeout(Duration::from_secs(2), send.write_all(&prefix)).await??;
+            let (_, mut recv) = timeout(Duration::from_secs(2), stream_rx.recv())
+                .await?
+                .unwrap();
+            let read = read_frame(
+                &mut recv,
+                FRAME_CAP,
+                FrameFilter::new(None, InboundReader::Persistent),
+                Duration::from_millis(250),
+                Some(Duration::from_secs(2)),
+            );
+            tokio::pin!(read);
+            let mut largest_request = 0;
+            let result = futures::future::poll_fn(|cx| {
+                let (poll, stats) = zakura_test::allocations::measure(|| {
+                    std::future::Future::poll(read.as_mut(), cx)
+                });
+                largest_request = largest_request.max(stats.largest_request);
+                poll
+            })
+            .await;
+            assert!(matches!(
+                result,
+                Err(ZakuraHandlerError::Timeout("frame payload"))
+            ));
+            assert!(
+                largest_request < 1024 * 1024,
+                "{prefix_len} received bytes caused a {largest_request}-byte allocation"
+            );
+        }
+
+        // A full body crosses many chunks and the transport flow-control window.
+        // A following frame verifies that chunk reads stop at the body boundary.
+        let connection = timeout(
+            Duration::from_secs(5),
+            client.connect(router.endpoint().addr(), ALPN),
+        )
+        .await??;
+        let (mut send, _recv) = timeout(Duration::from_secs(2), connection.open_bi()).await??;
+        let frame = Frame {
+            message_type: 0,
+            flags: 0,
+            payload: vec![42; usize::try_from(PAYLOAD_LEN).unwrap()],
+        };
+        let following = Frame {
+            message_type: 0,
+            flags: 0,
+            payload: vec![7],
+        };
+        let bytes = [frame.encode(FRAME_CAP)?, following.encode(FRAME_CAP)?].concat();
+        let writer = tokio::spawn(async move {
+            timeout(Duration::from_secs(20), send.write_all(&bytes))
+                .await
+                .unwrap()
+                .unwrap();
+            send.finish().unwrap();
+        });
+        let (_, mut recv) = timeout(Duration::from_secs(2), stream_rx.recv())
+            .await?
+            .unwrap();
+        for expected in [frame, following] {
+            let actual = read_frame(
+                &mut recv,
+                FRAME_CAP,
+                FrameFilter::new(None, InboundReader::Persistent),
+                Duration::from_secs(20),
+                Some(Duration::from_secs(2)),
+            )
+            .await?;
+            assert_eq!(actual, expected);
+        }
+        writer.await?;
+        client.close().await;
+        router.shutdown().await?;
+        Ok(())
+    }
+
+    // claude-late-message-cap-allocation: read_frame checked only
     // frame_len > max_frame_bytes before `vec![0; payload_len]`, while the smaller
     // max_message_bytes is enforced later in admit_inbound_message. A peer can
     // negotiate max_frame_bytes > max_message_bytes (the caps are clamped
@@ -9685,9 +9814,8 @@ mod tests {
 
         // Stream 2: the SAME oversized header read with the raw frame cap an
         // unfixed path used. It passes the frame-cap size check, so read_frame
-        // allocates `vec![0; payload_len]` and reads the body (failing only because
-        // the body was never sent) -- i.e. NOT rejected as Oversize. This is the
-        // allocate-before-reject amplification the fix removes.
+        // waits for the body (failing because it was never sent), instead of
+        // rejecting the announcement as oversized.
         let (mut raw_send, _raw_recv) = timeout(Duration::from_secs(1), conn_a.open_bi())
             .await
             .expect("client opens the oversized raw-cap stream")?;
@@ -9717,7 +9845,7 @@ mod tests {
                     Err(ZakuraHandlerError::Oversize | ZakuraHandlerError::OversizeFrame { .. })
                 ),
             "with the raw frame cap the same oversized frame passes the size check and \
-             read_frame proceeds to allocate/read the payload (it is not rejected as \
+             read_frame proceeds to read the payload (it is not rejected as \
              Oversize), proving the message cap is enforced too late; got {allocated:?}"
         );
 

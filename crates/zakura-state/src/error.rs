@@ -183,13 +183,26 @@ pub enum StateInitError {
 
     /// State could not read or parse the on-disk semantic format version.
     #[error(
-        "cannot read state database format version at {path:?}. Hint: check the cache directory permissions and version file contents"
+        "cannot read state database format version at {path:?}: {source}. Hint: check the cache directory permissions and version file contents"
     )]
     DatabaseFormatVersion {
         /// Version file whose read or parse failed.
         path: PathBuf,
         /// Underlying I/O or semantic-version error.
         source: BoxError,
+    },
+
+    /// A pre-v30 database cannot be read with the wider transaction indexes.
+    #[error(
+        "state database at {path:?} has incompatible format {version}. \
+         This fork uses wider transaction indexes and requires a fresh state cache; \
+         copying an older database into the new directory does not migrate it"
+    )]
+    IncompatibleTransactionIndexFormat {
+        /// Directory containing the incompatible database.
+        path: PathBuf,
+        /// The recorded on-disk format version.
+        version: semver::Version,
     },
 
     /// RocksDB could not open the requested primary or secondary database.
@@ -245,6 +258,16 @@ pub enum StateInitError {
     )]
     ReadOnlyDatabaseNotFound {
         /// The database path at which no database was found.
+        path: PathBuf,
+    },
+
+    /// An existing empty cache still needs its initial format marker.
+    #[error(
+        "cannot open read-only state: database at {path:?} has not finished initialization. \
+         Start a writable node with the same cache directory first so it can record the format"
+    )]
+    ReadOnlyDatabaseUninitialized {
+        /// The existing, uninitialized database directory.
         path: PathBuf,
     },
 

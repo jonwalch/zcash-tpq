@@ -1,5 +1,5 @@
 ---
-source: zebra-rpc/src/methods/tests/snapshot.rs
+source: crates/zakura-rpc/src/methods/tests/snapshot.rs
 expression: block_template
 ---
 {
@@ -38,7 +38,7 @@ expression: block_template
   ],
   "noncerange": "00000000ffffffff",
   "sigoplimit": 20000,
-  "sizelimit": 2000000,
+  "sizelimit": 20000000,
   "curtime": 1654008617,
   "bits": "1f055554",
   "height": 1687105,

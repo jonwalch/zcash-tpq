@@ -49,10 +49,9 @@ pub const BS_PER_BLOCK_WORST_CASE_BYTES: u64 = block::MAX_BLOCK_BYTES;
 /// stay serialized, this is (to close approximation) the byte ceiling of the
 /// speculative backlog itself, and total process RSS tracks it plus an
 /// era-independent overhead — so the default is chosen as a memory target, not
-/// derived from the wire budget. 1.5 GiB holds roughly a minute of worst-case
-/// committed throughput (~70 MB/s) of look-ahead, nearly two checkpoint ranges
-/// of maximum-size blocks, and multiple hours of typical-era backlog: deeper
-/// speculation buys nothing the committer can consume.
+/// derived from the wire budget. The active checkpoint window is exempt from
+/// this speculative budget, so larger blocks do not require a larger default.
+/// This is not a hard cap on total node memory.
 pub const DEFAULT_BS_MAX_REORDER_LOOKAHEAD_BYTES: u64 = 1536 * 1024 * 1024;
 /// Minimum submitted block applies required to resolve one checkpoint range.
 ///
@@ -62,16 +61,13 @@ pub const DEFAULT_BS_MAX_REORDER_LOOKAHEAD_BYTES: u64 = 1536 * 1024 * 1024;
 /// maximum checkpoint gap plus the boundary block in flight.
 pub const MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES: usize =
     zakura_chain::parameters::checkpoint::constants::MAX_CHECKPOINT_HEIGHT_GAP + 1;
-/// The byte size of one full worst-case checkpoint range held in flight.
+/// Worst-case serialized bytes in the exempt checkpoint window.
 ///
-/// The checkpoint verifier resolves a block's commit only once the entire
-/// contiguous range to the next checkpoint has been submitted, so the whole
-/// range must be co-resident. This floor sizes the resident look-ahead clamp
-/// (`clamp_reorder_lookahead_to_floor`); checkpoint-range liveness itself comes
-/// from the commit-window admission exemption.
-pub const BS_CHECKPOINT_RANGE_BYTE_FLOOR: u64 =
-    // `MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES` is `MAX_CHECKPOINT_HEIGHT_GAP + 1`
-    // (= 401), which fits `u64` losslessly; the product (~802 MB) cannot overflow.
+/// This is separate from the speculative look-ahead budget. The whole active
+/// range can be retained even when that budget is exhausted.
+#[cfg(test)]
+pub const BS_MAX_CHECKPOINT_RANGE_BYTES: u64 =
+    // The 401-block count fits u64 losslessly; the product (8.02 GB) cannot overflow.
     MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES as u64 * BS_PER_BLOCK_WORST_CASE_BYTES;
 /// Default block-sync request timeout.
 pub const DEFAULT_BS_REQUEST_TIMEOUT: Duration = Duration::from_secs(8);
@@ -123,7 +119,7 @@ pub const DEFAULT_BS_BBR_STARTUP_GROWTH_PERCENT: u32 = 200;
 /// Default minimum cwnd in blocks — keeps the pipe primed and lets ProbeRTT send.
 pub const DEFAULT_BS_BBR_MIN_CWND: u32 = 4;
 /// Default minimum cwnd in **bytes**: the [`CwndUnit::Bytes`] floor and the cold-start
-/// window before the first delivery sample. Sized to one max block plus headroom (≈2.5 MB)
+/// window before the first delivery sample. Sized to one max block plus headroom (≈20.5 MB)
 /// so a worst-case body fits, but a just-proven peer then rides its measured BDP up via the
 /// gain instead of bursting to multiple megabytes. Primary live-A/B concurrency lever:
 /// raise to push more in flight, lower if floor head-of-line latency regresses.
@@ -469,27 +465,22 @@ impl ZakuraBlockSyncConfig {
         Ok(())
     }
 
-    /// Clamp the resident look-ahead budget up to one worst-case checkpoint range
-    /// of wire bytes.
+    /// Allow at least one maximum-size serialized block in speculative look-ahead.
     ///
-    /// This is defense-in-depth for the speculative above-window lane: checkpoint
-    /// sync liveness already comes from the commit-window admission exemption, but
-    /// a sub-range byte budget would reject nearly all gated look-ahead work.
-    /// Serialized pools are charged at wire size, so the floor is the range's
-    /// wire bytes, not its decoded multiple: the bounded decode window's cost is
-    /// carried by the exempt lane, which bypasses this budget entirely.
+    /// Checkpoint progress uses the commit-window exemption, so this floor does
+    /// not need to fund a whole checkpoint range or its decoded copies.
     pub fn clamp_reorder_lookahead_to_floor(&mut self) {
-        let range_wire_floor = BS_CHECKPOINT_RANGE_BYTE_FLOOR;
+        let block_wire_floor = BS_PER_BLOCK_WORST_CASE_BYTES;
         if self.max_reorder_lookahead_bytes > 0
-            && self.max_reorder_lookahead_bytes < range_wire_floor
+            && self.max_reorder_lookahead_bytes < block_wire_floor
         {
             tracing::warn!(
                 configured_max_reorder_lookahead_bytes = self.max_reorder_lookahead_bytes,
-                checkpoint_range_wire_floor = range_wire_floor,
-                "zakura.block_sync.max_reorder_lookahead_bytes is below the \
-                 checkpoint-range wire floor; clamping it up so checkpoint sync cannot deadlock",
+                block_wire_floor,
+                "zakura.block_sync.max_reorder_lookahead_bytes is below one \
+                 maximum-size block; clamping it up to allow speculative look-ahead",
             );
-            self.max_reorder_lookahead_bytes = range_wire_floor;
+            self.max_reorder_lookahead_bytes = block_wire_floor;
         }
     }
 

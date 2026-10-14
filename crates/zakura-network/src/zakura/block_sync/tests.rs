@@ -10,7 +10,7 @@ use proptest::{prop_assert, prop_assert_eq};
 use super::*;
 use super::{
     config::{
-        BS_CHECKPOINT_RANGE_BYTE_FLOOR, BS_PER_BLOCK_WORST_CASE_BYTES,
+        BS_MAX_CHECKPOINT_RANGE_BYTES, BS_PER_BLOCK_WORST_CASE_BYTES,
         DEFAULT_BS_BBR_RELIABILITY_WEIGHT_PERCENT, DEFAULT_BS_FLOOR_PEER_AVOID_COOLDOWN,
         DEFAULT_BS_INITIAL_BLOCK_PROBE_REQUESTS, DEFAULT_BS_MAX_INFLIGHT_BLOCK_BYTES,
         DEFAULT_BS_MAX_REORDER_LOOKAHEAD_BYTES, DEFAULT_BS_MAX_REQUESTS_WITHOUT_BLOCK_PROGRESS,
@@ -1670,14 +1670,14 @@ fn config_validate_rejects_degenerate_values() {
     // release their reservation at receipt, so the budget only has to exceed one
     // floor request (checked below the floor-request bound in `validate`).
     config = ZakuraBlockSyncConfig {
-        max_inflight_block_bytes: BS_CHECKPOINT_RANGE_BYTE_FLOOR - 1,
+        max_inflight_block_bytes: BS_MAX_CHECKPOINT_RANGE_BYTES - 1,
         ..ZakuraBlockSyncConfig::default()
     };
     assert!(config.validate().is_ok());
 
     config = ZakuraBlockSyncConfig {
-        max_inflight_block_bytes: BS_CHECKPOINT_RANGE_BYTE_FLOOR,
-        max_reorder_lookahead_bytes: BS_CHECKPOINT_RANGE_BYTE_FLOOR,
+        max_inflight_block_bytes: BS_MAX_CHECKPOINT_RANGE_BYTES,
+        max_reorder_lookahead_bytes: BS_MAX_CHECKPOINT_RANGE_BYTES,
         ..ZakuraBlockSyncConfig::default()
     };
     assert!(config.validate().is_ok());
@@ -1721,7 +1721,7 @@ fn config_deserialize_keeps_below_range_floor_inflight_block_bytes() {
     )
     .expect("a below-range-floor max_inflight_block_bytes config still loads");
     const {
-        assert!(268435456u64 < BS_CHECKPOINT_RANGE_BYTE_FLOOR);
+        assert!(268435456u64 < BS_MAX_CHECKPOINT_RANGE_BYTES);
     }
     assert_eq!(config.zakura.block_sync.max_inflight_block_bytes, 268435456);
 }
@@ -1768,6 +1768,21 @@ fn codec_round_trips_every_message_variant() {
         start_height: block::Height(10),
         count: 3,
     });
+}
+
+#[test]
+fn codec_round_trips_twenty_mb_block_through_negotiated_frame() {
+    let block = Arc::new(zakura_chain::block::tests::generate::block_with_size(
+        20_000_000,
+    ));
+    let message = BlockSyncMessage::Block(block);
+    let frame = message.encode_frame().expect("20 MB block fits in a frame");
+    const {
+        assert!(MAX_BS_FRAME_BYTES <= super::super::handshake::LOCAL_MAX_MESSAGE_BYTES);
+    }
+    let bytes = frame.encode(MAX_BS_FRAME_BYTES).unwrap();
+    let frame = Frame::decode(&bytes, MAX_BS_FRAME_BYTES).unwrap();
+    assert_eq!(BlockSyncMessage::decode_frame(frame).unwrap(), message);
 }
 
 #[test]
@@ -2852,12 +2867,10 @@ fn commit_window_stays_fundable_at_exact_floor() {
     // the gate over budget and the range-completing block was refused — checkpoint sync
     // wedged. With the whole commit window exempt, the active range assembles regardless of
     // how full the gate is.
-    use super::config::{
-        BS_CHECKPOINT_RANGE_BYTE_FLOOR, MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES,
-    };
+    use super::config::{BS_MAX_CHECKPOINT_RANGE_BYTES, MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES};
 
     let mut config = ZakuraBlockSyncConfig {
-        max_inflight_block_bytes: BS_CHECKPOINT_RANGE_BYTE_FLOOR,
+        max_inflight_block_bytes: BS_MAX_CHECKPOINT_RANGE_BYTES,
         max_reorder_lookahead_bytes: 1,
         ..ZakuraBlockSyncConfig::default()
     };
@@ -2868,19 +2881,20 @@ fn commit_window_stays_fundable_at_exact_floor() {
     // verified_tip pinned at 0; applying holds all but the last worst-case range block —
     // all submitted during checkpoint sync, so charged at the decoded multiple — plus
     // next-range contamination in reorder and outstanding reservations. The byte gate is
-    // full: 8 MiB + 800 MB + 4 MB serialized + 800 MB * 4 decoded >= 3_208_000_000.
+    // full: the submitted decoded range alone exceeds the serialized range budget.
+    let submitted_bytes = BS_MAX_CHECKPOINT_RANGE_BYTES - BS_PER_BLOCK_WORST_CASE_BYTES;
     let snapshot = super::admission::AdmissionSnapshot {
         download_floor: block::Height(range_blocks - 1),
         verified_block_tip: block::Height(0),
         reorder_buffered_bytes: 8_388_608,
         reorder_buffered_blocks: 4,
-        applying_buffered_bytes: 800_000_000,
+        applying_buffered_bytes: submitted_bytes,
         applying_buffered_blocks: u64::from(range_blocks) - 1,
         sequencer_input_queued_bytes: 0,
-        in_flight_submission_bytes: 800_000_000,
-        reserved_above_floor_bytes: 4_000_000,
+        in_flight_submission_bytes: submitted_bytes,
+        reserved_above_floor_bytes: 2 * BS_PER_BLOCK_WORST_CASE_BYTES,
         reserved_above_floor_blocks: 2,
-        budget_available: 2_000_000,
+        budget_available: BS_PER_BLOCK_WORST_CASE_BYTES,
     };
 
     // The range-completing block (inside the commit window) stays fundable on both lanes.
@@ -2900,7 +2914,7 @@ fn commit_window_stays_fundable_at_exact_floor() {
         completing.priority,
         super::admission::RequestPriority::Floor
     );
-    assert_eq!(completing.max_request_bytes, 2_000_000);
+    assert_eq!(completing.max_request_bytes, BS_PER_BLOCK_WORST_CASE_BYTES);
 
     // The first height above the window is refused while the gate is full — on both
     // lanes, since `admit` gates every above-window start regardless of priority.
@@ -8966,10 +8980,33 @@ async fn reactor_zero_pause_threshold_preserves_lag_one_downloads() {
 
 #[tokio::test]
 async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
+    for completion_first in [true, false] {
+        peer_is_reused_after_catch_up(
+            BlockSizeEstimate::Advertised(2_000_000),
+            3,
+            completion_first,
+        )
+        .await;
+    }
+}
+
+#[tokio::test]
+async fn reactor_keeps_block_sync_peer_without_size_hints() {
+    for completion_first in [true, false] {
+        peer_is_reused_after_catch_up(BlockSizeEstimate::Unknown, 1, completion_first).await;
+    }
+}
+
+async fn peer_is_reused_after_catch_up(
+    size: BlockSizeEstimate,
+    blocks_per_request: u32,
+    completion_first: bool,
+) {
     // Block-sync streams stay open even when this node is locally caught up: a
     // synced node can still be the server a fresh peer needs for historical
     // bodies, so closing the stream after every local catch-up would starve fresh
     // Zakura-only nodes between checkpoint windows.
+    // A 32 MiB response can reserve one unknown 20 MB body or three hinted 2 MB bodies.
     let mut config = fill_loop_mechanics_config();
     config.peer_limits.max_outbound_peers = 1;
     let (_tip_tx, tip_rx) = watch::channel((block::Height(4), block::Hash([4; 32])));
@@ -9012,61 +9049,75 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
             BlockSyncBlockMeta {
                 height: block::Height(1),
                 hash: block::Hash([1; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(2),
                 hash: block::Hash([2; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(3),
                 hash: block::Hash([3; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size,
             },
         ]))
         .await
         .expect("needed metadata queues");
-    assert_eq!(
-        wait_for_outbound_getblocks(&mut outbound_rx).await,
-        (block::Height(1), 3)
-    );
-
-    for height in [block::Height(1), block::Height(2)] {
-        let hash_byte = u8::try_from(height.0).expect("test height fits in u8");
-        handle
-            .send(BlockSyncEvent::StateFrontiersChanged(BlockSyncFrontiers {
-                finalized_height: block::Height(0),
-                verified_block_tip: height,
-                verified_block_hash: block::Hash([hash_byte; 32]),
-            }))
-            .await
-            .expect("frontier event queues");
+    for height in 1..=3u32 {
+        if height == 1 || blocks_per_request == 1 {
+            assert_eq!(
+                wait_for_outbound_getblocks(&mut outbound_rx).await,
+                (block::Height(height), blocks_per_request),
+            );
+        }
+        let hash_byte = u8::try_from(height).expect("test height fits in u8");
+        let advance_frontier = async {
+            handle
+                .send(BlockSyncEvent::StateFrontiersChanged(BlockSyncFrontiers {
+                    finalized_height: block::Height(0),
+                    verified_block_tip: block::Height(height),
+                    verified_block_hash: block::Hash([hash_byte; 32]),
+                }))
+                .await
+                .expect("frontier event queues");
+        };
+        let complete_request = async {
+            if height % blocks_per_request == 0 {
+                inbound_tx
+                    .send(
+                        BlockSyncMessage::BlocksDone {
+                            start_height: block::Height(height + 1 - blocks_per_request),
+                            returned: blocks_per_request,
+                        }
+                        .encode_frame()
+                        .expect("BlocksDone encodes"),
+                    )
+                    .await
+                    .expect("BlocksDone queues");
+            }
+        };
+        // Cover both a completed response waiting for commit and a committed
+        // frontier waiting for BlocksDone. Neither state should close the peer.
+        let assert_peer_kept = || async {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            assert_eq!(handle.peer_snapshot().outbound_peers, 1);
+            assert_eq!(service.peer_count(), 1);
+        };
+        if completion_first {
+            complete_request.await;
+            assert_peer_kept().await;
+            advance_frontier.await;
+        } else {
+            advance_frontier.await;
+            assert_peer_kept().await;
+            complete_request.await;
+        }
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(handle.peer_snapshot().outbound_peers, 1);
         assert_eq!(service.peer_count(), 1);
     }
 
-    inbound_tx
-        .send(
-            BlockSyncMessage::BlocksDone {
-                start_height: block::Height(1),
-                returned: 3,
-            }
-            .encode_frame()
-            .expect("BlocksDone encodes"),
-        )
-        .await
-        .expect("BlocksDone queues");
-
-    handle
-        .send(BlockSyncEvent::StateFrontiersChanged(BlockSyncFrontiers {
-            finalized_height: block::Height(0),
-            verified_block_tip: block::Height(3),
-            verified_block_hash: block::Hash([3; 32]),
-        }))
-        .await
-        .expect("caught-up frontier event queues");
     tokio::time::sleep(Duration::from_millis(100)).await;
     assert_eq!(
         handle.peer_snapshot().outbound_peers,
@@ -9096,24 +9147,24 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
             BlockSyncBlockMeta {
                 height: block::Height(4),
                 hash: block::Hash([4; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(5),
                 hash: block::Hash([5; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(6),
                 hash: block::Hash([6; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size,
             },
         ]))
         .await
         .expect("new needed metadata queues");
     assert_eq!(
         wait_for_outbound_getblocks(&mut outbound_rx).await,
-        (block::Height(4), 3),
+        (block::Height(4), blocks_per_request),
         "the retained block-sync peer should be reused after later header growth",
     );
 

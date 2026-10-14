@@ -1126,6 +1126,30 @@ impl DiskDb {
             })
     }
 
+    /// Check an unversioned cache without decoding any keys or values.
+    /// An interrupted first open can leave valid RocksDB files but no records.
+    pub(super) fn existing_database_is_empty(path: &Path) -> Result<bool, crate::BoxError> {
+        let options = Self::options();
+        let names = DB::list_cf(&options, path)?;
+        // Do not install typed merge operators when the index layout is unknown.
+        let columns = names
+            .iter()
+            .map(|name| rocksdb::ColumnFamilyDescriptor::new(name, options.clone()));
+        let db = DB::open_cf_descriptors_read_only(&options, path, columns, false)?;
+        for name in names {
+            let cf = db
+                .cf_handle(&name)
+                .ok_or("listed column family was not opened")?;
+            let mut iterator = db.raw_iterator_cf(&cf);
+            iterator.seek_to_first();
+            iterator.status()?;
+            if iterator.valid() {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
     /// Opens or creates the database at a path based on the kind, major version and network,
     /// with the supplied column families, preserving any existing column families,
     /// and returns a shared low-level database wrapper.

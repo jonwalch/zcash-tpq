@@ -342,6 +342,17 @@ class CaughtUpSeed(unittest.TestCase):
             fork.cmd_seed(self.config(), types.SimpleNamespace(force=False))
         return host.commands
 
+    def test_devnet_layout_is_refused_before_touching_the_host(self):
+        with mock.patch.object(fork, "ssh") as ssh:
+            with self.assertRaisesRegex(fork.ForkError, "cannot seed state-tpq"):
+                fork.cmd_seed(self.config(), types.SimpleNamespace(force=True))
+            ssh.assert_not_called()
+
+    def test_upstream_format_parser_is_preserved(self):
+        text = 'pub const STATE_DATABASE_KIND: &str = "state";\nconst DATABASE_FORMAT_VERSION: u64 = 29;\n'
+        with mock.patch.object(Path, "read_text", return_value=text):
+            self.assertEqual(fork.db_format_version(), 29)
+
     def test_the_recorded_tip_is_the_seed_tip(self):
         host = FakeHost(self.TIP)
         with mock.patch.object(fork, "ssh", side_effect=host.ssh):

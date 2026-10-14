@@ -17,7 +17,8 @@ use semver::Version;
 use zakura_chain::{diagnostic::task::WaitForPanics, parameters::Network};
 
 use crate::{
-    config::database_format_version_on_disk,
+    config::{database_format_version_on_disk, read_database_format_version_file},
+    constants::WIDE_TRANSACTION_INDEX_FORMAT_VERSION,
     service::finalized_state::{
         disk_db::DiskDb,
         disk_format::{
@@ -151,7 +152,7 @@ impl ZakuraDb {
         let version_path =
             config.version_file_path(&db_kind, format_version_in_code.major, network);
         let read_disk_version = || {
-            database_format_version_on_disk(config, &db_kind, format_version_in_code.major, network)
+            database_format_for_open(config, &db_kind, format_version_in_code.major, network)
                 .map_err(|source| StateInitError::DatabaseFormatVersion {
                     path: version_path.clone(),
                     source,
@@ -173,17 +174,34 @@ impl ZakuraDb {
                 None => read_disk_version()?,
             }
         };
+        // Version 30 widens transaction indexes without an in-place migration.
+        // Refuse manually copied old databases before any typed read or upgrade,
+        // including read-only and debug-skip-upgrade modes.
+        if format_version_in_code.major >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION {
+            if let Some(version) = disk_version
+                .as_ref()
+                .filter(|version| version.major < WIDE_TRANSACTION_INDEX_FORMAT_VERSION)
+            {
+                return Err(StateInitError::IncompatibleTransactionIndexFormat {
+                    path: config.db_path(&db_kind, format_version_in_code.major, network),
+                    version: version.clone(),
+                });
+            }
+        }
         let disk_version_before_open = disk_version.clone();
 
         // Log any format changes before opening the database, in case opening fails.
         let format_change = DbFormatChange::open_database(format_version_in_code, disk_version);
 
-        // A read-only secondary instance cannot create a database. If there's no database on
-        // disk, fail with a clear, actionable error instead of silently "creating" one.
+        // A read-only secondary cannot create or finish initializing a database.
+        // Distinguish an existing uninitialized cache from a missing path.
         //
         // The read-write path is unaffected: creating a new database is the correct behavior there.
         if read_only && format_change.is_newly_created() {
             let db_path = config.db_path(&db_kind, format_version_in_code.major, network);
+            if db_path.is_dir() {
+                return Err(StateInitError::ReadOnlyDatabaseUninitialized { path: db_path });
+            }
             return Err(StateInitError::ReadOnlyDatabaseNotFound { path: db_path });
         }
 
@@ -214,6 +232,21 @@ impl ZakuraDb {
             format_change_handle: None,
             db: disk_db,
         };
+
+        // A new persistent v30 cache must identify its layout even when an offline
+        // caller skips upgrades. RocksDB now holds the lock; existing caches never
+        // reach this branch and must pass the version checks above.
+        if !config.ephemeral
+            && format_version_in_code.major >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION
+            && debug_skip_format_upgrades
+            && format_change.is_newly_created()
+        {
+            db.update_format_version_on_disk(format_version_in_code)
+                .map_err(|source| StateInitError::DatabaseFormatVersion {
+                    path: version_path.clone(),
+                    source,
+                })?;
+        }
 
         // The original Mainnet VCT fast path did not persist historical Sprout frontiers, so an
         // affected database silently rejects JoinSplits that spend a historical Sprout anchor.
@@ -495,6 +528,49 @@ impl ZakuraDb {
     }
 }
 
+/// Read the version before opening RocksDB. Unlike version queries on an already
+/// open handle, startup must not infer the v30 index layout from a directory name.
+fn database_format_for_open(
+    config: &Config,
+    db_kind: impl AsRef<str>,
+    major_version: u64,
+    network: &Network,
+) -> Result<Option<Version>, BoxError> {
+    let version_path = config.version_file_path(&db_kind, major_version, network);
+    if major_version >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION && !config.ephemeral {
+        // Never infer the major version of this fork's layout from its directory.
+        if let Some(version) = read_database_format_version_file(&version_path, None)? {
+            return Ok(Some(version));
+        }
+        let db_path = config.db_path(&db_kind, major_version, network);
+        match std::fs::read_dir(&db_path) {
+            Ok(mut entries) => {
+                if entries.next().transpose()?.is_some() {
+                    let reason = match DiskDb::existing_database_is_empty(&db_path) {
+                        Ok(true) => return Ok(None),
+                        Ok(false) => "the database contains records".to_string(),
+                        Err(error) => format!("could not confirm that RocksDB is empty: {error}"),
+                    };
+                    return Err(format!(
+                        "database at {} has no format version file at {} and {reason}; \
+                         its transaction-index format is unknown. Use a fresh state cache; \
+                         copying or relabeling an old database does not migrate it",
+                        db_path.display(),
+                        version_path.display(),
+                    )
+                    .into());
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+        // A missing/empty directory or a RocksDB with no records can resume first
+        // initialization. The latter covers interruption before the version write.
+        return Ok(None);
+    }
+    database_format_version_on_disk(config, db_kind, major_version, network)
+}
+
 /// The first database format version whose Mainnet VCT databases are guaranteed to hold the
 /// historical Sprout anchors that JoinSplit verification needs.
 ///
@@ -540,6 +616,7 @@ mod tests {
         (cache, config)
     }
 
+    // Keep the historical VCT migration tests below the incompatible v30 boundary.
     fn open(
         config: &Config,
         network: &Network,
@@ -548,7 +625,7 @@ mod tests {
         ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &state_database_format_version_in_code(),
+            &crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
             network,
             false,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -563,7 +640,7 @@ mod tests {
         let db = ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &state_database_format_version_in_code(),
+            &crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
             network,
             // Skip format upgrades so the seeded version survives until the guard runs.
             true,
@@ -626,5 +703,320 @@ mod tests {
         let (_cache, config) = persistent_config();
         seed_db(&config, &regtest, old, true);
         assert!(open(&config, &regtest, false).is_ok());
+    }
+
+    #[test]
+    fn copied_v29_transaction_indexes_are_rejected_before_open() {
+        copied_v29_transaction_indexes_are_rejected(Some("29.1.0"));
+    }
+
+    #[test]
+    fn copied_unversioned_transaction_indexes_are_rejected_before_open() {
+        copied_v29_transaction_indexes_are_rejected(None);
+    }
+
+    #[test]
+    fn copied_legacy_version_marker_is_rejected_before_open() {
+        copied_v29_transaction_indexes_are_rejected(Some("1.0"));
+    }
+
+    fn copied_v29_transaction_indexes_are_rejected(version_marker: Option<&str>) {
+        use crate::service::finalized_state::disk_db::DiskDb;
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let old_version = crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION;
+        let old_path = config.db_path(STATE_DATABASE_KIND, old_version.major, &network);
+        {
+            let db = DiskDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &old_version,
+                &network,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                false,
+            )
+            .unwrap();
+            let cf = db.cf_handle("hash_by_tx_loc").unwrap();
+            // The old key is a three-byte height and two-byte transaction index.
+            db.put_cf(cf, [0u8; 5], [0x42u8; 32]).unwrap();
+            if let Some(marker) = version_marker {
+                std::fs::write(
+                    config.version_file_path(STATE_DATABASE_KIND, old_version.major, &network),
+                    marker,
+                )
+                .unwrap();
+            }
+        }
+        let new_path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
+        std::fs::create_dir_all(new_path.parent().unwrap()).unwrap();
+        std::fs::rename(old_path, &new_path).unwrap();
+        let version_path = config.version_file_path(STATE_DATABASE_KIND, version.major, &network);
+
+        // The generic version query can infer v30 from the directory. Maintenance
+        // tools must propagate the stricter open error instead of panicking.
+        if version_marker.is_none() {
+            let options = prune::PruneFinalizedStateOptions {
+                tx_retention: crate::constants::min_pruning_retention(&network),
+            };
+            for result in [
+                prune::preview_prune_finalized_state(config.clone(), &network, options.clone()),
+                prune::prune_finalized_state(config.clone(), &network, options),
+            ] {
+                assert!(matches!(
+                    result,
+                    Err(prune::PruneFinalizedStateError::DatabaseOpen(
+                        StateInitError::DatabaseFormatVersion { .. }
+                    ))
+                ));
+            }
+            let options = rollback::RollbackFinalizedStateOptions {
+                target_height: Height(0),
+                keep_rolled_back_blocks: false,
+                max_checkpoint_height: None,
+            };
+            for result in [
+                rollback::preview_rollback_finalized_state(
+                    config.clone(),
+                    &network,
+                    options.clone(),
+                ),
+                rollback::rollback_finalized_state(config.clone(), &network, options),
+            ] {
+                assert!(matches!(
+                    result,
+                    Err(rollback::RollbackFinalizedStateError::DatabaseOpen(
+                        StateInitError::DatabaseFormatVersion { .. }
+                    ))
+                ));
+            }
+            assert!(
+                !version_path.exists(),
+                "maintenance must not relabel an unknown cache"
+            );
+        }
+
+        for read_only in [false, true] {
+            for skip_upgrades in [false, true] {
+                let result = ZakuraDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    skip_upgrades,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    read_only,
+                );
+                if version_marker == Some("29.1.0") {
+                    assert!(matches!(result,
+                        Err(StateInitError::IncompatibleTransactionIndexFormat { version, path })
+                        if version == old_version && path == new_path
+                    ));
+                    assert_eq!(
+                        std::fs::read_to_string(&version_path).unwrap(),
+                        old_version.to_string()
+                    );
+                } else {
+                    assert!(matches!(result,
+                        Err(StateInitError::DatabaseFormatVersion { path, .. })
+                        if path == version_path
+                    ));
+                }
+                assert_eq!(
+                    std::fs::read_to_string(&version_path).ok().as_deref(),
+                    version_marker,
+                    "rejection must not relabel the cache",
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn unversioned_non_database_directory_has_actionable_error() {
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
+        std::fs::create_dir_all(&path).unwrap();
+        let stray = path.join(".DS_Store");
+        std::fs::write(&stray, b"not a RocksDB database").unwrap();
+        for read_only in [false, true] {
+            let error = ZakuraDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &version,
+                &network,
+                false,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                read_only,
+            )
+            .unwrap_err();
+            assert!(matches!(
+                error,
+                StateInitError::DatabaseFormatVersion { .. }
+            ));
+            assert!(error.to_string().contains("Use a fresh state cache"));
+            assert!(error
+                .to_string()
+                .contains("transaction-index format is unknown"));
+            assert_eq!(std::fs::read(&stray).unwrap(), b"not a RocksDB database");
+            assert!(!config
+                .version_file_path(STATE_DATABASE_KIND, version.major, &network)
+                .exists());
+        }
+    }
+
+    #[test]
+    fn interrupted_first_open_resumes_an_empty_unversioned_database() {
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        for skip_upgrades in [false, true] {
+            let (_cache, config) = persistent_config();
+            // Simulate interruption after RocksDB creates its files, before the
+            // version marker and any state records are written.
+            drop(
+                DiskDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    false,
+                )
+                .unwrap(),
+            );
+            let version_path =
+                config.version_file_path(STATE_DATABASE_KIND, version.major, &network);
+            assert!(!version_path.exists());
+            // A secondary cannot finish initialization, and must distinguish
+            // this existing cache from a path that was never created.
+            let error = ZakuraDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &version,
+                &network,
+                skip_upgrades,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                true,
+            )
+            .unwrap_err();
+            assert!(matches!(
+                error,
+                StateInitError::ReadOnlyDatabaseUninitialized { .. }
+            ));
+            assert!(error.to_string().contains("Start a writable node"));
+            assert!(
+                !version_path.exists(),
+                "read-only open must not initialize the cache"
+            );
+            assert!(std::fs::read_dir(config.db_path(
+                STATE_DATABASE_KIND,
+                version.major,
+                &network
+            ))
+            .unwrap()
+            .next()
+            .is_some());
+            for read_only in [false, true] {
+                let db = ZakuraDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    skip_upgrades,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    read_only,
+                )
+                .unwrap();
+                assert_eq!(db.format_version_on_disk().unwrap(), Some(version.clone()));
+                assert_eq!(
+                    std::fs::read_to_string(&version_path).unwrap(),
+                    version.to_string()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn fork_database_does_not_open_an_upstream_cache_with_the_same_version() {
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let upstream_path = config.db_path("state", version.major, &network);
+        std::fs::create_dir_all(&upstream_path).unwrap();
+        let sentinel = upstream_path.join("upstream-data");
+        std::fs::write(&sentinel, b"incompatible upstream layout").unwrap();
+        let fork_path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
+        assert_ne!(upstream_path, fork_path);
+        let db = ZakuraDb::new(
+            &config,
+            STATE_DATABASE_KIND,
+            &version,
+            &network,
+            false,
+            STATE_COLUMN_FAMILIES_IN_CODE
+                .iter()
+                .map(ToString::to_string),
+            false,
+        )
+        .unwrap();
+        assert_eq!(db.format_version_on_disk().unwrap(), Some(version));
+        assert_eq!(
+            std::fs::read(sentinel).unwrap(),
+            b"incompatible upstream layout"
+        );
+        assert!(fork_path.exists());
+    }
+
+    #[test]
+    fn fresh_v30_database_opens_and_reopens() {
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        for create_empty_directory in [false, true] {
+            let (_cache, config) = persistent_config();
+            if create_empty_directory {
+                std::fs::create_dir_all(config.db_path(
+                    STATE_DATABASE_KIND,
+                    version.major,
+                    &network,
+                ))
+                .unwrap();
+            }
+            let open_current = |read_only| {
+                ZakuraDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    false,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    read_only,
+                )
+            };
+            let db = open_current(false).unwrap();
+            assert_eq!(db.format_version_on_disk().unwrap(), Some(version.clone()));
+            drop(db);
+            for read_only in [false, true] {
+                assert!(open_current(read_only).is_ok());
+            }
+        }
     }
 }

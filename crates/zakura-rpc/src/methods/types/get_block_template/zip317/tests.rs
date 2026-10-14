@@ -63,8 +63,9 @@ fn with_serialized_size(
 fn reserves_network_specific_header_and_transaction_count_sizes() {
     let regtest = Network::new_regtest(Default::default());
 
-    assert_eq!(block_template_overhead_bytes(&Network::Mainnet), 1_490);
-    assert_eq!(block_template_overhead_bytes(&regtest), 180);
+    // A 20 MB block can exceed 65,535 transactions, requiring a five-byte count.
+    assert_eq!(block_template_overhead_bytes(&Network::Mainnet), 1_492);
+    assert_eq!(block_template_overhead_bytes(&regtest), 182);
 }
 
 #[test]

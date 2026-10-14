@@ -27,6 +27,27 @@ Repo-relative paths below are from the repo root `/root/zakura/`.
   Defaults put the instrumented binary + CSVs under `/root/wal-bench/` and forks
   under `/mnt/roman-dev-2-data/`.
 
+Set `BENCH_DB_REL` in `cohort.env` before a snapshot run. It is required and must
+name the database directory relative to `BENCH_MASTER`, for example
+`state/v27/mainnet` for the historical upstream snapshot below. The runner uses
+the shared `scripts/benchmark-snapshot.py` checker to require a nonzero tip from
+the node's initial cache report before it collects benchmark results. Normal
+startup first performs any supported upgrades on the per-run clone. The checker
+uses the network selected by the run config, including Testnet or Regtest. An
+empty, unreadable, or incompatible cache stops the run; later sync heights cannot
+substitute for the initial cache report. Python 3 is required. The wait is bounded
+by the run's wall cap. `BENCH_FROM_GENESIS=1` skips this check because that mode
+intentionally starts empty.
+Custom configs must retain the `zakura_state=info` cache event (or the default
+`info` filter), so the checker can identify the initial tip.
+
+This fork uses `state-tpq/v30/<network>`. It cannot use the upstream `state/v27`
+snapshot, even if its directory or version marker is renamed. Prepare a fresh
+snapshot with compatible fork rules and indexes. This runbook's example cohort
+uses Mainnet parameters. The checker does not open a separate database or
+override the configured network or SLH state namespace. Do not use this devnet
+binary with public peers.
+
 ## One-time setup — the two frozen serving nodes
 
 Edit `cohort.env` (`COHORT_TAG`, the two `NODE_*_SSH`/`IP`, `SERVE_COMMIT` = a
@@ -93,6 +114,10 @@ the nodes.
   `feed_run.sh` makes a hard-link fork per run and breaks links on the
   RocksDB metadata + `version`. If the branch DB format changes, re-check
   `crates/zakura-state/src/constants.rs` and relabel the warm master `version`.
+  This historical procedure applies only to compatible upstream layouts. It does
+  not apply to this fork's wider transaction indexes: create a compatible snapshot
+  instead. Supported upstream migrations run normally on the disposable clone;
+  the shared checker validates the cache report after that step.
 
 ## Gotchas
 

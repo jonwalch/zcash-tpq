@@ -49,9 +49,9 @@
       "source_path": "crates/pq-wallet/src/rpc.rs",
       "source_sha256": "92757a9e1b391053fa456bcf3eebc6ed972b52f2b531f1de761208fc7ace75ff",
       "target_path": "crates/pq-wallet/src/rpc.rs",
-      "target_sha256": "5db2d83decae5e378f9dce9cb201a894083a34c9b1942a23096460ee0d9040cf",
+      "target_sha256": "e76d01e4a2b16398b816aaf5b42dbb39fbf3b9a0f95dcdddb34b432200ee8480",
       "classification": "adapted",
-      "adaptations": "Public API docs and rustfmt only; existing bounded loopback framing, authenticated block/UTXO and submission logic retained."
+      "adaptations": "Public API docs and rustfmt only; existing bounded loopback framing, authenticated block/UTXO and submission logic retained. Derive the response bound from twice the fork block limit plus the existing JSON allowance so a 20 MB block can be scanned. Add positive 40 MB hex-response and over-cap rejection controls; keep trusted UTXO and transaction bounds."
     },
     {
       "source_path": "crates/pq-wallet/src/rpc/tests/payment.rs",

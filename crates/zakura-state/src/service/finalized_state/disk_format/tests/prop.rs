@@ -105,6 +105,23 @@ fn roundtrip_block_header() {
 // Transaction
 
 #[test]
+fn transaction_locations_above_u16_roundtrip_in_order() {
+    let _init_guard = zakura_test::init();
+    let height = Height(1);
+    let mut previous = TransactionLocation::min_for_height(height).as_bytes();
+    for index in [65_535, 65_536, 400_000, u32::MAX] {
+        let location = TransactionLocation::from_index(height, index);
+        let bytes = location.as_bytes();
+        assert_eq!(bytes.len(), 7);
+        assert!(previous < bytes);
+        assert_eq!(TransactionLocation::from_bytes(bytes), location);
+        let output = OutputLocation::from_output_index(location, 1);
+        assert_eq!(OutputLocation::from_bytes(output.as_bytes()), output);
+        previous = bytes;
+    }
+}
+
+#[test]
 fn roundtrip_transaction_location() {
     let _init_guard = zakura_test::init();
 

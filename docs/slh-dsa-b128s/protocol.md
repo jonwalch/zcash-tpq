@@ -130,6 +130,83 @@ The native crate does not depend on a signer.
 
 ## Network and state rules
 
+This fork sets the block limit to 20 MB (20,000,000 bytes) on every network for
+devnet use. Transaction decoding uses the same byte limit. Block headers and the
+transaction count also consume block space. This change does not activate SLH
+on public networks or change SLH signature-check budgets.
+The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
+Use this binary only on the devnet. Its rules are not compatible with public
+Mainnet or Testnet, even when those network names are selected in the config.
+The state database format is 30.0.0 because transaction indexes now use four
+bytes. The cache uses `state-tpq/v30` to avoid sharing an upstream database with
+the same version number. Existing caches under `state` require a fresh sync.
+Startup rejects a database marked with a version below 30 in the v30 directory.
+It also rejects an unversioned cache that contains records, whose index layout
+cannot be identified. The version file must include the major version (`30.0.0`, for
+example); legacy minor/patch-only markers cannot identify the layout either.
+These checks apply to read-only and skip-upgrade opens. An absent
+or empty directory can start a fresh database. If the first start stops after
+RocksDB creates its files but before it stores any records or a version marker,
+a writable restart can finish initialization if RocksDB metadata is readable.
+If the stop occurs before RocksDB writes `CURRENT`, the cache cannot be safely
+distinguished from a damaged database. Use a fresh cache in that case. The recovery
+check reads raw column families without decoding indexes. A read-only open reports that initialization
+is incomplete and asks for a writable start first. An unreadable or unidentified
+cache is rejected with its cause and guidance to use a fresh cache.
+Version queries reject partial markers for format 30 or later. A missing marker
+can still yield a version from the directory name, so it does not prove that the
+cache can be opened. Prune and rollback return the strict open error in this case.
+Moving an old cache does not migrate it.
+
+Automatic cleanup stays within `state-tpq`. Old `state` caches remain on disk;
+another upstream node may still use them. Remove an old cache only after
+confirming that it is no longer needed. The inherited public-network snapshot
+bake, source-build benchmark, and NU7 seed tools reject this fork's layout.
+They cannot convert upstream transaction indexes by moving directories.
+`deploy/runner/feed_run.sh` requires an explicit `BENCH_DB_REL` that matches its
+binary and snapshot, such as `state-tpq/v30/<network>` for this fork.
+Snapshot benchmarks use one shared checker for the initial cache report from
+each running binary. This check occurs after normal writable startup and any
+supported upstream database reuse or upgrade. It does not use a read-only open,
+override the configured network, or accept later sync heights as evidence of
+snapshot reuse. A failed check stops the run before it collects benchmark results.
+The checkpoint benchmark checks both source refs, or both release tags' source
+layouts, before it downloads a snapshot or builds a binary. The later startup
+check also covers cached binaries. These checks do not migrate upstream indexes
+to the fork format. See the feed runner's [runbook](../../deploy/runner/runbook.md).
+
+The classical block signature-operation limit deliberately remains 20,000,
+including legacy and P2SH operations. A transparent-payment workload can reach
+that limit before it fills 20 MB. The byte-limit change does not promise ten
+times the classical payment throughput. SLH checks use their separate configured
+budgets, and shielded transactions retain their existing resource limits.
+
+The default RPC response budget is 641,048,576 bytes to allow verbose transaction
+JSON, which repeats data as raw hex, script hex, disassembled scripts, and fields.
+An explicit `rpc.max_response_body_size` setting still takes precedence. Existing
+configs that set the former 50 MiB limit must raise it to receive larger responses.
+The limit applies to each response, not to total RPC memory. Concurrent verbose
+requests can use much more memory than a single response.
+
+The block-sync speculative look-ahead budget defaults to 1.5 GiB. Config loading
+raises positive values below one full block to 20 MB. The active checkpoint
+window bypasses this budget so it can finish when speculative memory is full.
+This separate window can retain 401 full blocks: 8.02 GB of serialized data and
+about 32.08 GB of estimated decoded copies. The 1.5 GiB setting is not a cap on
+total node memory and does not ensure that every workload fits a 4–8 GB machine.
+Requests without a body-size hint reserve 20 MB each, so a fixed request budget
+permits fewer concurrent requests. Legacy block and transaction messages can
+carry up to 20 MiB each. The decoder does not reserve a full body from its header;
+the transport buffer grows as bytes arrive. Completed large messages release
+that buffer when the remaining bytes fit within 64 KiB. The native frame reader
+also reads at most 64 KiB at a time and waits for bytes before growing its buffer.
+Both paths still need a complete body before decoding. Growth can copy data and
+briefly keep both old and new allocations. Other legacy commands, including unknown commands,
+retain the old 2 MiB ceiling; oversized headers are rejected before reserving
+the body buffer. The 1 KiB pre-handshake ceiling still applies.
+Concurrent peers that send full bodies can still consume substantial memory.
+These limits have not been measured in a live devnet run.
+
 The configuration uses these fields:
 
 - `experimental_slh_dsa_b128s_activation_height`
