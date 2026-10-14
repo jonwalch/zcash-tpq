@@ -3138,8 +3138,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Keep the incompatible wide-index format out of reusable in-place upgrades; use named format versions and verify that historical fork caches are preserved instead of reused. Upstream refresh e33dc4308: Map upstream transparent-index cache reuse to fork v31 without allowing legacy pre-v30 index reuse; preserve the current-schema and legacy-boundary regressions.",
-      "sha256": "8ca9a94a31c4c96074938457955cbae59dc81b24898657dd7a63ae9a8cdd84a5"
+      "reason": "PR #9: Keep the incompatible wide-index format out of reusable in-place upgrades; use named format versions and verify that historical fork caches are preserved instead of reused. Upstream refresh e33dc4308: Map upstream transparent-index cache reuse to fork v31 without allowing legacy pre-v30 index reuse; preserve the current-schema and legacy-boundary regressions. Bound upgrade selection by the explicitly selected running format, so retained historical VCT/startup regressions do not attempt v31 on their pre-v30 fixtures; the normal current-format registry is unchanged.",
+      "sha256": "8fc105a0d798134155e9242fdc658760dff771d45d814a62785d0c047b4fd1ae"
     },
     {
       "disposition": "upstream-modification",

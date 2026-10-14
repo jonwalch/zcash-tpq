@@ -682,7 +682,11 @@ impl DbFormatChange {
         run_startup_upgrade_hook(db.path());
 
         // Apply or validate format upgrades
-        for upgrade in format_upgrades(Some(older_disk_version.clone())) {
+        // Historical format tests open the pre-v30 layout explicitly. Never
+        // apply a later registered upgrade beyond the selected running format.
+        for upgrade in format_upgrades(Some(older_disk_version.clone()))
+            .take_while(|upgrade| upgrade.version() <= *newer_running_version)
+        {
             if upgrade.needs_migration() {
                 let timer = CodeTimer::start();
 
