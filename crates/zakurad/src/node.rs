@@ -131,6 +131,8 @@ mod tests {
         )
         .expect("explicit NU7 permits the custom SLH testnet")
         .network;
+        config.network.initial_testnet_peers.clear();
+        config.network.zakura.bootstrap_peers.clear();
         let (ready, received) = tokio::sync::oneshot::channel();
         let result = timeout(
             Duration::from_secs(1),

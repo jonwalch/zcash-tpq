@@ -355,6 +355,38 @@ pub struct Config {
 }
 
 impl Config {
+    /// Reject built-in public peers for an explicitly configured SLH custom testnet.
+    ///
+    /// This check also applies to configurations constructed directly by an
+    /// embedding application. Empty peer lists permit an inbound-only node.
+    /// Regtest and networks without SLH retain their existing peer behavior.
+    pub fn validate_experimental_slh_dsa_b128s_peers(&self) -> Result<(), &'static str> {
+        if self.network.kind() != NetworkKind::Testnet
+            || self
+                .network
+                .experimental_slh_dsa_b128s_activation_height()
+                .is_none()
+        {
+            return Ok(());
+        }
+
+        if contains_default_initial_peers(&self.initial_testnet_peers) {
+            return Err(
+                "custom SLH Testnets require explicit initial_testnet_peers without built-in Mainnet or Testnet peers",
+            );
+        }
+        if [Network::Mainnet, Network::new_default_testnet()]
+            .iter()
+            .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
+            .any(|peer| self.zakura.bootstrap_peers.contains(&peer))
+        {
+            return Err(
+                "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
+            );
+        }
+        Ok(())
+    }
+
     /// The maximum number of outbound connections that Zakura will open at the same time.
     /// When this limit is reached, Zakura stops opening outbound connections.
     ///
@@ -1314,19 +1346,6 @@ impl<'de> Deserialize<'de> for Config {
         // Clamp too-small budgets rather than rejecting existing configurations.
         let mut zakura = zakura;
         zakura.apply_network_defaults(&network);
-        if network.kind() == NetworkKind::Testnet
-            && network
-                .experimental_slh_dsa_b128s_activation_height()
-                .is_some()
-            && [Network::Mainnet, Network::new_default_testnet()]
-                .iter()
-                .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
-                .any(|peer| zakura.bootstrap_peers.contains(&peer))
-        {
-            return Err(de::Error::custom(
-                "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
-            ));
-        }
         let default_zakura_bootstrap_peers =
             ZakuraConfig::default_bootstrap_peers_for_network(&network);
         if zakura.bootstrap_peers.is_empty() {
@@ -1363,7 +1382,7 @@ impl<'de> Deserialize<'de> for Config {
             de::Error::custom(format!("invalid zakura.block_sync config: {error}"))
         })?;
 
-        Ok(Config {
+        let config = Config {
             listen_addr: canonical_socket_addr(listen_addr),
             external_addr: external_socket_addr,
             network,
@@ -1378,7 +1397,11 @@ impl<'de> Deserialize<'de> for Config {
             crawl_new_peer_interval,
             max_connections_per_ip,
             expose_peer_addresses,
-        })
+        };
+        config
+            .validate_experimental_slh_dsa_b128s_peers()
+            .map_err(de::Error::custom)?;
+        Ok(config)
     }
 }
 
