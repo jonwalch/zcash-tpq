@@ -27,6 +27,20 @@ Repo-relative paths below are from the repo root `/root/zakura/`.
   Defaults put the instrumented binary + CSVs under `/root/wal-bench/` and forks
   under `/mnt/roman-dev-2-data/`.
 
+Set `BENCH_DB_REL` in `cohort.env` before a snapshot run. It is required and must
+name the database directory relative to `BENCH_MASTER`, for example
+`state/v27/mainnet` for the historical upstream snapshot below. The runner uses
+`tip-height` with the actual binary and run config to check that the cloned
+snapshot has a nonzero Mainnet tip before it starts the benchmark. An unreadable
+or incompatible snapshot stops the run. `BENCH_FROM_GENESIS=1` skips this check
+because that mode intentionally starts empty.
+
+This fork uses `state-tpq/v30/<network>`. It cannot use the upstream `state/v27`
+snapshot, even if its directory or version marker is renamed. Prepare a fresh
+snapshot with compatible fork rules and indexes. This runbook describes a
+Mainnet-parameter cohort; its preflight does not support the separate SLH Regtest
+state namespace. Do not use this devnet binary with public peers.
+
 ## One-time setup — the two frozen serving nodes
 
 Edit `cohort.env` (`COHORT_TAG`, the two `NODE_*_SSH`/`IP`, `SERVE_COMMIT` = a
@@ -93,6 +107,9 @@ the nodes.
   `feed_run.sh` makes a hard-link fork per run and breaks links on the
   RocksDB metadata + `version`. If the branch DB format changes, re-check
   `crates/zakura-state/src/constants.rs` and relabel the warm master `version`.
+  This historical procedure applies only to compatible upstream layouts. It does
+  not apply to this fork's wider transaction indexes: create a compatible snapshot
+  instead. The preflight must be able to read it without a format migration.
 
 ## Gotchas
 

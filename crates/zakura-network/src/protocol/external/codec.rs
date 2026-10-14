@@ -466,6 +466,13 @@ impl Decoder for Codec {
                     let body = src.split_to(body_len);
                     self.state = DecodeState::Head;
 
+                    // A completed large message must not leave its allocation
+                    // pinned by a small tail for the lifetime of this connection.
+                    // Copy at most 64 KiB; preserve any coalesced next message.
+                    if body_len > 64 * 1024 && src.len() <= 64 * 1024 {
+                        *src = BytesMut::from(&src[..]);
+                    }
+
                     if checksum != sha256d::Checksum::from(&body[..]) {
                         return Err(Parse(
                             "supplied message checksum does not match computed checksum",

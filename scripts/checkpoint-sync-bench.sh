@@ -478,6 +478,26 @@ PY
   log "Zakura traces zipped: $zip_path"
 }
 
+# Check the actual executable, including release downloads. A directory name or
+# source ref does not prove that this binary will open the restored snapshot.
+check_snapshot_height() {
+  local binary="$1" cache_dir="$2" config="$3" expected="${4:-}" output height
+  if ! output=$(timeout 120 "$binary" -c "$config" tip-height \
+    --cache-dir "$cache_dir" --network Mainnet 2>&1); then
+    printf 'FATAL: binary could not read the restored snapshot:\n%s\n' "$output" >&2
+    return 1
+  fi
+  # tip-height can log an error and exit zero: require one positive numeric line.
+  height=$(printf '%s\n' "$output" | awk '/^[0-9]+$/ { print }')
+  if [[ ! "$height" =~ ^[1-9][0-9]*$ ]] || [[ -n "$expected" && "$height" != "$expected" ]]; then
+    printf 'FATAL: restored snapshot height is missing or unexpected (expected %s):\n%s\n' \
+      "${expected:-a nonzero tip}" "$output" >&2
+    printf 'Use a snapshot compatible with this binary; moving or relabeling state/ does not migrate indexes.\n' >&2
+    return 1
+  fi
+  printf 'Verified restored snapshot height: %s\n' "$height"
+}
+
 # ---- 3-7. one benchmark run for a given tag ----------------------------------
 # usage: run_one TAG OUTPREFIX P2P_STACK ; sets RESULT_* globals
 run_one() {
@@ -569,6 +589,12 @@ run_one() {
       echo 'filter = "info"'
     } > "$cfg"
   }
+
+  # Use a minimal config for old release tags that reject modern P2P fields.
+  # Snapshot benchmarks must not silently become genesis-sync benchmarks.
+  printf '[state]\n' > "$cfg"
+  check_snapshot_height "$zakurad" "$fork" "$cfg" "$START_HEIGHT" \
+    || die "snapshot is incompatible with $tag"
 
   local pid t0 mode="p2p_stack"
   log "starting zakurad ($tag), p2p_stack=$p2p_stack, verify=$VERIFY_MODE, stop_height=$STOP_HEIGHT, peer=${FEED_PEER:-DNS-seeders}, peerset=$PEERSET_SIZE, cap=${WALL_CAP}s, metrics=:$METRICS_PORT, listen=:$LISTEN_PORT"

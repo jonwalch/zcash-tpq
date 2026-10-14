@@ -756,6 +756,49 @@ mod tests {
         std::fs::rename(old_path, &new_path).unwrap();
         let version_path = config.version_file_path(STATE_DATABASE_KIND, version.major, &network);
 
+        // The generic version query can infer v30 from the directory. Maintenance
+        // tools must propagate the stricter open error instead of panicking.
+        if version_marker.is_none() {
+            let options = prune::PruneFinalizedStateOptions {
+                tx_retention: crate::constants::min_pruning_retention(&network),
+            };
+            for result in [
+                prune::preview_prune_finalized_state(config.clone(), &network, options.clone()),
+                prune::prune_finalized_state(config.clone(), &network, options),
+            ] {
+                assert!(matches!(
+                    result,
+                    Err(prune::PruneFinalizedStateError::DatabaseOpen(
+                        StateInitError::DatabaseFormatVersion { .. }
+                    ))
+                ));
+            }
+            let options = rollback::RollbackFinalizedStateOptions {
+                target_height: Height(0),
+                keep_rolled_back_blocks: false,
+                max_checkpoint_height: None,
+            };
+            for result in [
+                rollback::preview_rollback_finalized_state(
+                    config.clone(),
+                    &network,
+                    options.clone(),
+                ),
+                rollback::rollback_finalized_state(config.clone(), &network, options),
+            ] {
+                assert!(matches!(
+                    result,
+                    Err(rollback::RollbackFinalizedStateError::DatabaseOpen(
+                        StateInitError::DatabaseFormatVersion { .. }
+                    ))
+                ));
+            }
+            assert!(
+                !version_path.exists(),
+                "maintenance must not relabel an unknown cache"
+            );
+        }
+
         for read_only in [false, true] {
             for skip_upgrades in [false, true] {
                 let result = ZakuraDb::new(

@@ -25,6 +25,26 @@ RUNNER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 [ -f "$RUNNER_DIR/cohort.env" ] && source "$RUNNER_DIR/cohort.env"
 
+# Check the actual executable, including release downloads. A directory name or
+# source ref does not prove that this binary will open the restored snapshot.
+check_snapshot_height() {
+  local binary="$1" cache_dir="$2" config="$3" expected="${4:-}" output height
+  if ! output=$(timeout 120 "$binary" -c "$config" tip-height \
+    --cache-dir "$cache_dir" --network Mainnet 2>&1); then
+    printf 'FATAL: binary could not read the restored snapshot:\n%s\n' "$output" >&2
+    return 1
+  fi
+  # tip-height can log an error and exit zero: require one positive numeric line.
+  height=$(printf '%s\n' "$output" | awk '/^[0-9]+$/ { print }')
+  if [[ ! "$height" =~ ^[1-9][0-9]*$ ]] || [[ -n "$expected" && "$height" != "$expected" ]]; then
+    printf 'FATAL: restored snapshot height is missing or unexpected (expected %s):\n%s\n' \
+      "${expected:-a nonzero tip}" "$output" >&2
+    printf 'Use a snapshot compatible with this binary; moving or relabeling state/ does not migrate indexes.\n' >&2
+    return 1
+  fi
+  printf 'Verified restored snapshot height: %s\n' "$height"
+}
+
 LABEL="${1:?usage: feed_run.sh LABEL BIN [stop] [met] [maxsec]}"
 BIN="${2:?need binary path}"
 STOP="${3:-${BENCH_STOP_DEFAULT:-1830000}}"
@@ -125,6 +145,10 @@ sed -e "s#@@FORK@@#$FORK#g" \
 # Fail loudly if any token went unsubstituted (typo / missing var).
 if grep -q '@@' "$CFG"; then echo "FATAL: unsubstituted @@TOKEN@@ in $CFG:"; grep -n '@@' "$CFG"; exit 1; fi
 echo "[$LABEL] config: $CONFIG_SRC -> $CFG (cache_dir=$FORK, met=$MET, listen=$LISTEN, stop=$STOP)"
+
+if [ -z "${BENCH_FROM_GENESIS:-}" ]; then
+  check_snapshot_height "$BIN" "$FORK" "$CFG" || exit 1
+fi
 
 : > "$LOG"
 "$BIN" -c "$CFG" start >>"$LOG" 2>&1 &

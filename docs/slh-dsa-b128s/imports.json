@@ -2397,8 +2397,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Carry 20 MB blocks and transactions while preserving the upstream 2 MiB limit for every other legacy command; enforce both handshake and command limits before reserving body buffers. PR #9 follow-up: Grow receive buffers with arriving data instead of eagerly reserving an advertised full body; preserve the 20 MiB data and 2 MiB control ceilings.",
-      "sha256": "5bac9c1e1dde1aa1ca7b858dd75e0513a5eab60a561d8011c7bd979237a155ba"
+      "reason": "PR #9: Carry 20 MB blocks and transactions while preserving the upstream 2 MiB limit for every other legacy command; enforce both handshake and command limits before reserving body buffers. PR #9 follow-up: Grow receive buffers with arriving data instead of eagerly reserving an advertised full body; preserve the 20 MiB data and 2 MiB control ceilings. PR #9 follow-up: Release completed large legacy receive buffers by copying at most 64 KiB of the next-message tail; preserve amortized growth while receiving payloads.",
+      "sha256": "9616112f98ee0118ef5d05e0226179b009e3626406ef69bb876ca80cba7e8e16"
     },
     {
       "disposition": "upstream-modification",
@@ -2407,8 +2407,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Cover a full 20 MB block round trip, reject oversized control and unknown message headers before body reservation, and preserve the pre-handshake limit for blocks and transactions. PR #9 follow-up: Cover header-only and partial-body announcements without growth, and verify a full 20 MB block through incremental FramedRead buffering on the decoder-supported multithreaded runtime.",
-      "sha256": "77f7eb20790fa17f60132100ea3f409dccb252e86500a9658ce34a96a467760b"
+      "reason": "PR #9: Cover a full 20 MB block round trip, reject oversized control and unknown message headers before body reservation, and preserve the pre-handshake limit for blocks and transactions. PR #9 follow-up: Cover header-only and partial-body announcements without growth, and verify a full 20 MB block through incremental FramedRead buffering on the decoder-supported multithreaded runtime. PR #9 follow-up: Extend the full-size incremental block test to verify buffer release and preservation of a following ping.",
+      "sha256": "12b90afe1e902e98a0ecde83a6575980b190ea7936330819f4fdf10784b2375f"
     },
     {
       "disposition": "upstream-modification",
@@ -2499,6 +2499,16 @@
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
       "sha256": "9b6600651f958bba7563be385e7ab3db44aeca1ee06523a808c10815820bc660"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/handler.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Grow native frame payloads only after bounded chunks arrive, preserving total payload deadlines and reset/FIN handling; regress header-only and partial-body allocations and transfer a full 20 MB frame followed by another frame over loopback QUIC.",
+      "sha256": "4fbd2ad7626c9430cf259d4f1f6d7cd000ab815a136b317cfae0d8bbdff852f8"
     },
     {
       "disposition": "upstream-modification",
@@ -3158,8 +3168,28 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Reject copied legacy indexes and ambiguous markers in all open modes, but recover empty RocksDB files left before the first version write. Cover recovery with and without upgrades, normal/read-only reopen, and isolation from same-version upstream caches. PR #9 follow-up: Keep raw inspection fail-closed while adding actionable errors for unidentified caches. Exercise read-only interrupted-start refusal before writable recovery and preserve stray-file caches without relabeling.",
-      "sha256": "51c9357885f9d681cdaabb57690584734e6c059ff2df3a9ad7eceab9bbf505ae"
+      "reason": "PR #9: Reject copied legacy indexes and ambiguous markers in all open modes, but recover empty RocksDB files left before the first version write. Cover recovery with and without upgrades, normal/read-only reopen, and isolation from same-version upstream caches. PR #9 follow-up: Keep raw inspection fail-closed while adding actionable errors for unidentified caches. Exercise read-only interrupted-start refusal before writable recovery and preserve stray-file caches without relabeling. PR #9 follow-up: Regress all four prune/rollback preview and writable entrypoints against an unversioned copied v29 database, requiring typed open errors without relabeling or decoding old indexes.",
+      "sha256": "a0959ffcde235aea4ec4301e7342d0f367fc4b18ac8ae274d9aec5ceee77e76f"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/zakura_db/prune.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Propagate strict cache-open failures from preview and writable pruning; the fork index guard exposes the inherited expect panic for unversioned copied databases.",
+      "sha256": "62181ab798670dc9bf299d07a18c608916afa2f03ce2ed5cd52fe1c5aee5d618"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/zakura_db/rollback.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Propagate strict cache-open failures from preview and writable rollback; the fork index guard exposes the inherited expect panic for unversioned copied databases.",
+      "sha256": "f2d7821183815bd49c5e0584bf7db602429d9ca8d0ce7b6e195f7ca97943aaac"
     },
     {
       "disposition": "upstream-modification",
@@ -3287,8 +3317,18 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Require BENCH_DB_REL explicitly so snapshot paths are chosen to match the binary instead of silently assuming state/v27/mainnet.",
-      "sha256": "7075cffca06899c74d78a26b7b05a338090746ac9c1cd5d5e4b7364f67d9e6d3"
+      "reason": "PR #9 follow-up: Require BENCH_DB_REL explicitly so snapshot paths are chosen to match the binary instead of silently assuming state/v27/mainnet. PR #9 follow-up: Check the cloned Mainnet snapshot with the actual binary before non-genesis benchmark starts; require a numeric tip even when tip-height logs an error with zero exit status.",
+      "sha256": "4306554797c197e932a841c32093bc2e95a988e1f2177d40cd01d96d4fe223ef"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "deploy/runner/runbook.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Document required BENCH_DB_REL, the binary snapshot preflight, the Mainnet-only cohort scope, and the incompatibility of upstream snapshot relabeling with wider fork indexes while preserving historical instructions.",
+      "sha256": "083e9153e66989fb2d764873d8cc76d2763161da4e68b645a88f3bb8080d744f"
     },
     {
       "disposition": "upstream-modification",
@@ -3336,8 +3376,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Describe the 20 MB devnet limit, wider indexes in a distinct cache, strict old-cache rejection with empty-start recovery, and separate buffer and sync budgets. PR #9 follow-up: Record actionable cache diagnostics, snapshot compatibility preflights, explicit feed snapshot selection, and removal of eager peer body reservations.",
-      "sha256": "304746d71229d6098e46b9a9b472512da1728e8b513e9d0a84bab94f197e6a55"
+      "reason": "PR #9: Describe the 20 MB devnet limit, wider indexes in a distinct cache, strict old-cache rejection with empty-start recovery, and separate buffer and sync budgets. PR #9 follow-up: Record actionable cache diagnostics, snapshot compatibility preflights, explicit feed snapshot selection, and removal of eager peer body reservations. PR #9 follow-up: Record fallible maintenance opens, binary snapshot checks, and native/legacy incremental buffer handling.",
+      "sha256": "660c6fcaa55d32c43d229c5d05cd7907ac197f8826768ac17a8289a3c261bdf9"
     },
     {
       "disposition": "new",
@@ -3635,8 +3675,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes.",
-      "sha256": "02af76d5a91bbbc0be40635a3e9f5d6eacf50f53a6650c260da6d88e73481855"
+      "reason": "PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata.",
+      "sha256": "aff2809ce6cc64ca681a548ff6beb6f90187acff650af3099fa79f9f51e1e4ec"
     },
     {
       "disposition": "new",
@@ -3746,8 +3786,18 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Inspect selected primary/baseline source layouts before snapshot download and inspect the exact build commit before cached-binary reuse; refuse incompatible fork layouts without changing upstream snapshot formats.",
-      "sha256": "96ee0d49bdb9900c94c0fe9d55a53f7c0b1d01f237bf2e139d66ab23e3ed65c1"
+      "reason": "PR #9 follow-up: Inspect selected primary/baseline source layouts before snapshot download and inspect the exact build commit before cached-binary reuse; refuse incompatible fork layouts without changing upstream snapshot formats. PR #9 follow-up: Verify the exact restored tip with every resolved benchmark binary, including baseline and release downloads, before starting a node; reject missing or mismatched cache layouts without a genesis-sync fallback.",
+      "sha256": "18c481e0c98c88eab6d7cdc48b39d2e80cc77c20c56f1df226a383086298b9e9"
+    },
+    {
+      "disposition": "new",
+      "path": "scripts/tests/test_snapshot_preflight.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Exercise both actual shell snapshot guards with mocked binaries across successful, missing, zero, duplicated, mismatched, and failed tip results without running build or live-node wrappers.",
+      "sha256": "e7a437818c06697bcdb4164c734a807fd44cc951d16208137f19384eb852eb84"
     },
     {
       "disposition": "attribution",
