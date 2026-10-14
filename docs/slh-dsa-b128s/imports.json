@@ -3372,6 +3372,16 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/12.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/guidelines.md"
+      ],
+      "reason": "PR #12 operator-facing release note for the pinned upstream update, retained SLH/devnet behavior and fork v30-to-v31 cache reuse. Preserve inherited upstream release notes and fragments.",
+      "sha256": "241e34dd064122df375bfca2b961a37a9763c7662965c8f3a51ef8bd9b1076c0"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/4.md",
       "provenance": [
         "docs/changelog/unreleased/README.md"
