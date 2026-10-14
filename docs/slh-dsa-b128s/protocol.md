@@ -12,8 +12,8 @@ Live acceptance and independent security review remain open.
 
 | Item | Pinned value |
 | --- | --- |
-| Zakura commit | `24a17b3f0e7d88513688d607054f018ab6f15af2` |
-| Zakura tree | `d31e58e9f200123dd39434d42ad2643eda7a8a23` |
+| Zakura commit | `e33dc43089acca2fe2c6516927932f2b7618b8bc` |
+| Zakura tree | `88637ce09b0bbd5669b664e47b20b37b35523323` |
 | `PQC-Suite-B/signatures` commit | `b392fe82d2d9770142477a576a758a233888bc0a` |
 | Algorithm | `Blake3_128s` |
 | Verifier and wallet signer hash dependency | BLAKE3 `=1.8.5`, without Rayon |
@@ -140,10 +140,14 @@ on public networks or change SLH signature-check budgets.
 The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
 Use this binary only on the devnet. Its rules are not compatible with public
 Mainnet or Testnet, even when those network names are selected in the config.
-The state database format is 30.0.0 because transaction indexes now use four
-bytes. The cache uses `state-tpq/v30` to avoid sharing an upstream database with
-the same version number. Existing caches under `state` require a fresh sync.
-Startup rejects a database marked with a version below 30 in the v30 directory.
+The state database format is 31.0.0. Version 30 introduced four-byte transaction
+indexes. Version 31 adds upstream's support for stopping transparent-index
+updates during pruned checkpoint sync. The new directory prevents older fork
+binaries from opening incomplete indexes. Valid fork v30 caches move to
+`state-tpq/v31` and upgrade in place. Cache reuse requires an explicit version
+marker that matches the source directory. Missing or invalid markers leave the
+old cache unchanged. Existing upstream caches under `state` require a fresh sync.
+Startup rejects a database marked with a version below 30 in the current directory.
 It also rejects an unversioned cache that contains records, whose index layout
 cannot be identified. The version file must include the major version (`30.0.0`, for
 example); legacy minor/patch-only markers cannot identify the layout either.
@@ -167,7 +171,7 @@ confirming that it is no longer needed. The inherited public-network snapshot
 bake, source-build benchmark, and NU7 seed tools reject this fork's layout.
 They cannot convert upstream transaction indexes by moving directories.
 `deploy/runner/feed_run.sh` requires an explicit `BENCH_DB_REL` that matches its
-binary and snapshot, such as `state-tpq/v30/<network>` for this fork.
+binary and snapshot, such as `state-tpq/v31/<network>` for this fork.
 Snapshot benchmarks use one shared checker for the initial cache report from
 each running binary. This check occurs after normal writable startup and any
 supported upstream database reuse or upgrade. It does not use a read-only open,

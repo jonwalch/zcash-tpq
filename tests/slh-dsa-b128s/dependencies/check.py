@@ -84,6 +84,9 @@ def check():
     def record(label, package, features=(), required=(), forbidden=(), edges="normal,build"):
         tree = graph(package, features, edges)
         validate_tree(tree, required=required, forbidden=(*forbidden, BENCH))
+        if package in ("zakura", "zakura-consensus", "zakura-rpc"):
+            require(not any(version == "2.2.0" for version, _ in tree.get("zakura-orchard", ())),
+                    "fixture-only historical Orchard builder in node graph")
         results.append({"case": label, "package_count": len(tree), "edges": edges})
 
     # Check node roots separately to avoid workspace-wide feature unification.

@@ -3,7 +3,7 @@
 use super::*;
 use orchard::{
     builder::{Builder, BundleType},
-    bundle::{Authorized, BatchValidator, Bundle, BundleVersion, Flags},
+    bundle::{BatchValidator, BundleVersion, Flags},
     circuit::{OrchardCircuitVersion, ProvingKey, VerifyingKey},
     keys::{FullViewingKey, Scope, SpendingKey},
     value::NoteValue,
@@ -206,34 +206,44 @@ pub(super) fn action_slot<'a>(tx: &'a mut Transaction, pool: &str) -> &'a mut Op
         _ => unreachable!("pool/version checked"),
     }
 }
-pub(super) fn chain_action(bundle: &Bundle<Authorized, ZatBalance>) -> Result<ShieldedData> {
-    let actions = bundle
-        .actions()
-        .iter()
-        .map(|action| {
-            let mut bytes = Vec::new();
-            bytes.extend(action.cv_net().to_bytes());
-            bytes.extend(action.nullifier().to_bytes());
-            bytes.extend(<[u8; 32]>::from(action.rk()));
-            bytes.extend(action.cmx().to_bytes());
-            bytes.extend(action.encrypted_note().epk_bytes);
-            bytes.extend(action.encrypted_note().enc_ciphertext);
-            bytes.extend(action.encrypted_note().out_ciphertext);
-            Ok(AuthorizedAction::from_parts(
-                converted(Action::zcash_deserialize(bytes.as_slice()))?,
-                <[u8; 64]>::from(action.authorization()).into(),
-            ))
-        })
-        .collect::<Result<Vec<_>>>()?;
-    Ok(ShieldedData {
-        flags: needed(zakura_chain::orchard::Flags::from_bits(bundle.flag_byte()))?,
-        value_balance: converted(i64::from(*bundle.value_balance()).try_into())?,
-        shared_anchor: converted(bundle.anchor().to_bytes().try_into())?,
-        proof: Halo2Proof(bundle.authorization().proof().as_ref().to_vec()),
-        actions: converted(actions.try_into())?,
-        binding_sig: <[u8; 64]>::from(bundle.authorization().binding_signature()).into(),
-    })
+// Both library versions use the same wire fields. Keep one conversion for
+// current bundles and the fixture-only pre-NU6.3 funding builder.
+macro_rules! chain_action_adapter {
+    ($name:ident, $library:ident) => {
+        pub(super) fn $name(
+            bundle: &$library::Bundle<$library::bundle::Authorized, ZatBalance>,
+        ) -> Result<ShieldedData> {
+            let actions = bundle
+                .actions()
+                .iter()
+                .map(|action| {
+                    let mut bytes = Vec::new();
+                    bytes.extend(action.cv_net().to_bytes());
+                    bytes.extend(action.nullifier().to_bytes());
+                    bytes.extend(<[u8; 32]>::from(action.rk()));
+                    bytes.extend(action.cmx().to_bytes());
+                    bytes.extend(action.encrypted_note().epk_bytes);
+                    bytes.extend(action.encrypted_note().enc_ciphertext);
+                    bytes.extend(action.encrypted_note().out_ciphertext);
+                    Ok(AuthorizedAction::from_parts(
+                        converted(Action::zcash_deserialize(bytes.as_slice()))?,
+                        <[u8; 64]>::from(action.authorization()).into(),
+                    ))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            Ok(ShieldedData {
+                flags: needed(zakura_chain::orchard::Flags::from_bits(bundle.flag_byte()))?,
+                value_balance: converted(i64::from(*bundle.value_balance()).try_into())?,
+                shared_anchor: converted(bundle.anchor().to_bytes().try_into())?,
+                proof: Halo2Proof(bundle.authorization().proof().as_ref().to_vec()),
+                actions: converted(actions.try_into())?,
+                binding_sig: <[u8; 64]>::from(bundle.authorization().binding_signature()).into(),
+            })
+        }
+    };
 }
+chain_action_adapter!(chain_action, orchard);
+chain_action_adapter!(chain_legacy_action, orchard_legacy);
 pub(super) fn chain_sapling(
     bundle: &sapling_crypto::Bundle<sapling_crypto::bundle::Authorized, ZatBalance>,
 ) -> Result<sapling::ShieldedData<SharedAnchor>> {
@@ -384,7 +394,7 @@ pub(super) fn prepare(recipe: &ShieldedRecipe) -> Result<Value> {
     let (mut tx, previous, _) = context(recipe)?; // All bounds/parents checked before proving.
     let sapling_prover = recipe.sapling_parameters.as_ref().map(prover).transpose()?;
     let mut rng = rand_10::rng();
-    let pk = ProvingKey::build(OrchardCircuitVersion::PostNu6_3);
+    let pk = converted(ProvingKey::build(OrchardCircuitVersion::PostNu6_3))?;
     let vk = pk.verifying_key();
     let prove_action = |pool: &str, rng: &mut rand_10::rngs::ThreadRng| {
         let unsigned = needed(converted(

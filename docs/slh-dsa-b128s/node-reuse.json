@@ -1,5 +1,5 @@
 {
-  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes. Product boundary corrections use OS arguments for the extracted identity predicate and typed nonpunitive local SLH context/backend failures. Invalid transaction contexts retain consensus rejection; new focused tests use the existing fixtures and error wrappers. PR #9 retains the pinned upstream block decoder, peer codecs, mining byte budgets, RPC transport, and disk-index mechanisms for a 20 MB devnet limit. Widen transaction indexes and fix the address-location decode width that this exposes. Boundary, transport, RPC, wallet, and disk-format tests cover these adaptations; SLH activation and signature budgets do not change.",
+  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes. Product boundary corrections use OS arguments for the extracted identity predicate and typed nonpunitive local SLH context/backend failures. Invalid transaction contexts retain consensus rejection; new focused tests use the existing fixtures and error wrappers. PR #9 retains the pinned upstream block decoder, peer codecs, mining byte budgets, RPC transport, and disk-index mechanisms for a 20 MB devnet limit. Widen transaction indexes and fix the address-location decode width that this exposes. Boundary, transport, RPC, wallet, and disk-format tests cover these adaptations; SLH activation and signature budgets do not change. Upstream refresh e33dc4308 retains the existing SLH shared-output accessor with the pure-Rust script verifier, adapts incremental native frames to zakura-quic, and uses fork format 31 for upstream incomplete transparent-index support. The upstream cache-reuse mechanism upgrades explicitly identified fork v30 caches; strict marker controls prevent old or unidentified layouts from being moved or relabeled.",
   "schema_version": 1,
   "sources": [
     {
@@ -39,7 +39,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files. PR #11 merge with upstream e33dc4308: use zakura-quic NodeId, NodeSecretKey and direct peer addresses for the same SLH public-peer guard and identity-persistence tests. Preserve the upstream key text formats and existing filename suffix.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config.rs",
@@ -48,7 +48,7 @@
       "target_path": "crates/zakura-network/src/config.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files. PR #11 merge with upstream e33dc4308: use zakura-quic NodeId, NodeSecretKey and direct peer addresses for the same SLH public-peer guard and identity-persistence tests. Preserve the upstream key text formats and existing filename suffix.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config/tests/vectors.rs",
@@ -237,7 +237,7 @@
       "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
     },
     {
-      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md.",
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md. Retain the upstream e33dc4308 secp256k1 key API update without changing the SLH generator schedule, classical funding or historical adaptation source pin.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
       "source_path": "crates/zakura-chain/src/local_genesis.rs",
@@ -291,5 +291,5 @@
       "target_path": "crates/zakura-network/src/config/cache_dir.rs"
     }
   ],
-  "upstream_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2"
+  "upstream_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc"
 }

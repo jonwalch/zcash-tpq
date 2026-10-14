@@ -161,6 +161,16 @@ class IsolationPolicyTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "^" + re.escape(f"missing packages: {[name]}") + "$"):
                         self.run_check(trees)
 
+    def test_historical_orchard_builder_is_rejected_in_every_node_graph(self):
+        for key in self.policy:
+            if key[0] not in NODES:
+                continue
+            with self.subTest(graph=key):
+                trees = self.clean_trees()
+                trees[key]["zakura-orchard"] = {("3.0.0", ("circuit",)), ("2.2.0", ("circuit",))}
+                with self.assertRaisesRegex(ValueError, "historical Orchard builder in node graph"):
+                    self.run_check(trees)
+
     def test_metadata_requires_local_paths_product_packages_and_no_alternate_backend(self):
         outside = [str(Path("/outside-product/helper/Cargo.toml")),
                    str(check.ROOT / "crates" / ".." / ".." / "outside-product" / "Cargo.toml")]
