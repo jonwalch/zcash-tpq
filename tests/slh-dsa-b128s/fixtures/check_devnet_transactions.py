@@ -28,6 +28,8 @@ def controls(prepared):
                 or len(original["inputs"]) != 1
                 or len(original["inputs"][0]["records"]) != 1):
             raise ValueError("devnet_fixture_shape")
+        artifacts.require(original["expected"] == oracle.observation(count=1),
+                          "devnet_positive_expectation")
         result.append((name, raw, "positive", oracle.sha256(raw)))
         for mutation in ("wrong-network", "corrupt-signature"):
             changed = copy.deepcopy(original)

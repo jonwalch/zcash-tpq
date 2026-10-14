@@ -148,7 +148,7 @@
       "kind": "bounded_tool_source",
       "path": "tests/slh-dsa-b128s/fixtures/check_devnet_transactions.py",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "cf026ab1e1b348cb2d5f791b3d0437451be133a19727da71f66a7cfc879659c1"
+      "sha256": "9ea63f22c4c8c53152334a9e5ae056e3dbfd404336d6764e701a4a1642867c02"
     },
     "devnet-namespace": {
       "anchor": "experimental_slh_dsa_b128s_devnet_state_and_backups_bind_full_identity",

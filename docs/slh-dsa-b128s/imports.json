@@ -3227,7 +3227,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "8e0ff54f360f164413988eb29513cff6fda3a44412006f72970e2aa4a1914f3f"
+      "sha256": "420858f15e1e83adde65e6bbd1c427e605923fe329f34baacf795040cc1c9437"
     },
     {
       "disposition": "new",
@@ -3347,8 +3347,8 @@
         "tests/slh-dsa-b128s/fixtures/devnet/README.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures.",
-      "sha256": "cf026ab1e1b348cb2d5f791b3d0437451be133a19727da71f66a7cfc879659c1"
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
+      "sha256": "9ea63f22c4c8c53152334a9e5ae056e3dbfd404336d6764e701a4a1642867c02"
     },
     {
       "disposition": "new",
@@ -3547,8 +3547,8 @@
         "tests/slh-dsa-b128s/fixtures/devnet/README.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures.",
-      "sha256": "eb40afdb49e10a350cccec6156b9f56b2f69b4ad988c43fee226dc3d634aa9d5"
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
+      "sha256": "7226b2fe5d900c8124e9aa3ace4a6eccf8fa6f7936a57c9aceedf78da1f26bb6"
     },
     {
       "disposition": "public-fixture",
@@ -3742,8 +3742,8 @@
         "tests/slh-dsa-b128s/fixtures/devnet/README.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures.",
-      "sha256": "4b00dcdeaaa2a386f2117109c766a74afb6046ec33c8cb5ecf46b54526b1cac3"
+      "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
+      "sha256": "dc7ea180c2bc0908956aa0a524c5cfca3ec4bbc6a1177f0e6afaaf59db780565"
     },
     {
       "disposition": "new",

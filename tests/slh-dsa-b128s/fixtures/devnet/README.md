@@ -33,6 +33,12 @@ six signature checks with the separately pinned Python/portable-C reference.
 The check also passed 105 official BLAKE3 controls. It made no producer-source,
 authenticated-UTXO, node-acceptance, or shielded-coverage claim.
 
+The checker requires each original fixture to expect acceptance with one signature
+check. It then requires the independent verifier to match that result. This prevents
+rejected originals from counting as positive controls. Regression tests reject
+corrupted originals whose expectations were changed to rejection, and check that
+a positive expectation still fails when the verifier rejects its signature.
+
 To repeat that bounded check, first prepare the
 [independent reference](../../reference/README.md), then select a fresh receipt:
 

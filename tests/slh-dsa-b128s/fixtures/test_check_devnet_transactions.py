@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
 """Mocked callback checks of devnet mutations; no primitive acceptance claim."""
 
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import Mock, patch
 
 import check_devnet_transactions as checker
 
@@ -37,6 +40,43 @@ class DevnetControlTests(unittest.TestCase):
         self.assertEqual(len(calls), 6)
         with self.assertRaisesRegex(ValueError, "devnet_fixture_count"):
             checker.controls(prepared[:1])
+
+    def test_expected_rejections_cannot_be_positive_controls(self):
+        for invalid_versions in [(5,), (6,), (5, 6)]:
+            with self.subTest(invalid_versions=invalid_versions), \
+                    tempfile.TemporaryDirectory() as directory:
+                fixtures = Path(directory)
+                for version in (5, 6):
+                    name = f"v{version}-testnet-1of1.json"
+                    artifact = checker.oracle.strict_json((checker.HERE / "devnet" / name).read_bytes())
+                    if version in invalid_versions:
+                        tx = checker.wire.parse_transaction(bytes.fromhex(artifact["transaction_hex"]))
+                        descriptor, records = checker.oracle.decode_authorization(tx["inputs"][0]["script"])
+                        signature = bytearray.fromhex(records[0]["signature_hex"])
+                        # Keep this distinct from the checker's byte-100 mutation.
+                        signature[101] ^= 1
+                        records[0]["signature_hex"] = signature.hex()
+                        tx["inputs"][0]["script"] = checker.oracle.encode_authorization(descriptor, records)
+                        artifact["expected"] = checker.oracle.observation("signature", "signature", 0, 1)
+                        checker.mutations.refresh(artifact, tx)
+                    (fixtures / name).write_bytes(checker.oracle.canonical(artifact))
+
+                output = fixtures / "receipt.json"
+                with patch.object(checker.artifacts, "run", side_effect=AssertionError(
+                        "expected-negative originals must fail before reference verification")) as run:
+                    with self.assertRaisesRegex(ValueError, "devnet_positive_expectation"):
+                        checker.run(fixtures, Path("unused-reference"), output)
+                    run.assert_not_called()
+                self.assertFalse(output.exists())
+
+    def test_positive_expectation_still_requires_verifier_acceptance(self):
+        prepared = checker.artifacts.preflight([
+            checker.HERE / f"devnet/v{version}-testnet-1of1.json" for version in (5, 6)])
+        controls = checker.controls(prepared)
+        verify = Mock(return_value=False)
+        with self.assertRaisesRegex(ValueError, "independent_expected_mismatch"):
+            checker.artifacts.evaluate([(name, raw) for name, raw, _, _ in controls], verify)
+        verify.assert_called_once()
 
 
 if __name__ == "__main__":
