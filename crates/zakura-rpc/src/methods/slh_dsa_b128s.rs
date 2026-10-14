@@ -59,6 +59,10 @@ impl ExperimentalSlhDsaB128sInfo {
     /// Returns `None` when SLH is not configured. `tip_height` must come from the
     /// node's observed chain state; pass `None` before bootstrap or when state
     /// cannot provide a tip. It must not be a configured or estimated height.
+    #[expect(
+        clippy::unwrap_in_result,
+        reason = "validated activation always has limits; losing them is an invariant violation, not an unconfigured network"
+    )]
     pub fn for_network(network: &Network, tip_height: Option<Height>) -> Option<Self> {
         let activation_height = network.experimental_slh_dsa_b128s_activation_height()?;
         let limits = network

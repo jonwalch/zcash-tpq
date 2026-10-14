@@ -1840,7 +1840,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
-      "sha256": "9ca355f5d110ad38f52894c25b0407cb3de009264992fe0d071505b75d16d5cf"
+      "sha256": "7cb7d14f4251177258a623cfa970ee2f2ace5186eab4b8bd6af62e2a041a7f9b"
     },
     {
       "disposition": "new",
@@ -2174,7 +2174,7 @@
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
       "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
-      "sha256": "cde81bfcb6a6f890e2fa48e2b54187f08b3d176af988124bffdf62b9253d4904"
+      "sha256": "fb595d62637a151f2cead8e5c70ebd53eccca2e00ccc96d5b7233ff7095bab7c"
     },
     {
       "disposition": "upstream-modification",
@@ -3227,7 +3227,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "185403b1fdc708622399b70feb8d8371b44faaa00691fd26cf55b59cb424e7cc"
+      "sha256": "8e0ff54f360f164413988eb29513cff6fda3a44412006f72970e2aa4a1914f3f"
     },
     {
       "disposition": "new",

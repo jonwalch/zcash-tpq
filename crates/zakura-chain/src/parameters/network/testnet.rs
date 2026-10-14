@@ -1425,16 +1425,9 @@ fn check_experimental_slh_dsa_b128s_network(
                     .any(|name| params.network_name.eq_ignore_ascii_case(name));
             let reserved_magic =
                 [magics::MAINNET, magics::TESTNET, magics::REGTEST].contains(&params.network_magic);
-            let reserved_genesis = [
-                Network::Mainnet.genesis_hash(),
-                TESTNET_GENESIS_HASH
-                    .parse()
-                    .expect("hard-coded hash parses"),
-                REGTEST_GENESIS_HASH
-                    .parse()
-                    .expect("hard-coded hash parses"),
-            ]
-            .contains(&params.genesis_hash);
+            let genesis_hash = params.genesis_hash.to_string();
+            let reserved_genesis = params.genesis_hash == Network::Mainnet.genesis_hash()
+                || [TESTNET_GENESIS_HASH, REGTEST_GENESIS_HASH].contains(&genesis_hash.as_str());
             if invalid_name || reserved_magic || reserved_genesis {
                 return Err(ParametersBuilderError::ExperimentalSlhDsaB128sCustomNetworkIdentity);
             }

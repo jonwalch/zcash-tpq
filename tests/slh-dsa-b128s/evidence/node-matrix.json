@@ -162,7 +162,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-rpc/src/methods/slh_dsa_b128s.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "cde81bfcb6a6f890e2fa48e2b54187f08b3d176af988124bffdf62b9253d4904"
+      "sha256": "fb595d62637a151f2cead8e5c70ebd53eccca2e00ccc96d5b7233ff7095bab7c"
     },
     "devnet-startup": {
       "anchor": "custom_testnet_slh_config_rejects_builtin_peers_before_runtime_support_check",
