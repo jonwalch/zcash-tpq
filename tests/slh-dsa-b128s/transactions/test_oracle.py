@@ -68,7 +68,8 @@ class OracleTests(unittest.TestCase):
     def test_only_recorded_upstream_pins_are_accepted(self):
         artifact = copy.deepcopy(self.artifacts["v5-1of1"])
         for revision in ("9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
-                         "24a17b3f0e7d88513688d607054f018ab6f15af2"):
+                         "24a17b3f0e7d88513688d607054f018ab6f15af2",
+                         "e33dc43089acca2fe2c6516927932f2b7618b8bc"):
             artifact["producer"]["zakura_revision"] = revision
             oracle.validate_schema(artifact)
         artifact["producer"]["zakura_revision"] = "00" * 20

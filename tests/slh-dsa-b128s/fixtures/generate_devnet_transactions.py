@@ -8,16 +8,20 @@ import sys
 
 import generate_transactions as corpus
 
-UPSTREAM = "24a17b3f0e7d88513688d607054f018ab6f15af2"
-SOURCE_PATHS = ["tests/slh-dsa-b128s/fixtures/generate_devnet_transactions.py",
+UPSTREAM = "e33dc43089acca2fe2c6516927932f2b7618b8bc"
+PIN_PATH = "docs/slh-dsa-b128s/imports.json"
+SOURCE_PATHS = [PIN_PATH, "tests/slh-dsa-b128s/fixtures/generate_devnet_transactions.py",
                 "tests/slh-dsa-b128s/fixtures/data/v5-1of1.json",
                 "tests/slh-dsa-b128s/fixtures/data/v6-1of1.json"]
 
 
 def identity(root, host, signer):
+    pin = corpus.strict_json((root / PIN_PATH).read_bytes(), corpus.MAX_HOST)
+    if not isinstance(pin, dict) or pin.get("upstream") != UPSTREAM:
+        raise corpus.FixtureError("upstream_pin")
     producer, inventories = corpus.producer_identity(root, host, signer)
     # The original 18-case producer keeps its historical upstream pin. These
-    # separate fixtures use the current pinned node source and exact inventories.
+    # separate fixtures require the current node pin and inventory its source ledger.
     producer["zakura_revision"] = UPSTREAM
     inventories["devnet_generator"] = corpus.source_inventory(root, SOURCE_PATHS)
     return producer, inventories
