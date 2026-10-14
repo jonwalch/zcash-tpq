@@ -76,6 +76,11 @@ unset GH_CLONE_TOKEN
 git -C /root/zakura fetch --no-tags origin "${BAKE_SHA}"
 git -C /root/zakura checkout --detach "${BAKE_SHA}"
 
+if grep -Fq 'STATE_DATABASE_KIND: &str = "state-tpq"' /root/zakura/crates/zakura-state/src/constants.rs; then
+  echo "This upstream snapshot bake cannot use state-tpq. The devnet fork requires a fresh sync; upstream state/ snapshots are incompatible." >&2
+  exit 1
+fi
+
 # Warm the shared target dir that deploy.py's per-run worktree builds reuse.
 cd /root/zakura
 export CARGO_TARGET_DIR=/root/cargo-target

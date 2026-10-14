@@ -54,7 +54,34 @@ fn large_data_messages_still_obey_the_handshake_limit() {
 }
 
 #[test]
-fn block_message_round_trip_at_twenty_mb() {
+fn body_announcements_do_not_reserve_large_buffers() {
+    for command in [*b"block\0\0\0\0\0\0\0", *b"tx\0\0\0\0\0\0\0\0\0\0"] {
+        let mut codec = Codec::builder().finish();
+        codec.reconfigure_full_body_len();
+        let mut bytes = BytesMut::from(&wire_message(command, &[])[..]);
+        bytes[16..20].copy_from_slice(
+            &u32::try_from(MAX_PROTOCOL_MESSAGE_LEN)
+                .unwrap()
+                .to_le_bytes(),
+        );
+        let capacity = bytes.capacity();
+        assert!(codec.decode(&mut bytes).unwrap().is_none());
+        assert!(
+            bytes.capacity() <= capacity,
+            "a header must not reserve its claimed body"
+        );
+        bytes.extend_from_slice(&[0; 32]);
+        let capacity = bytes.capacity();
+        assert!(codec.decode(&mut bytes).unwrap().is_none());
+        assert!(
+            bytes.capacity() <= capacity,
+            "partial bodies must not reserve missing bytes"
+        );
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn block_message_round_trip_at_twenty_mb() {
     let _init_guard = zakura_test::init();
     let block = std::sync::Arc::new(zakura_chain::block::tests::generate::block_with_size(
         20_000_000,
@@ -66,11 +93,20 @@ fn block_message_round_trip_at_twenty_mb() {
         .encode(Message::Block(block.clone()), &mut bytes)
         .unwrap();
     assert_eq!(bytes.len(), 20_000_000 + HEADER_LEN);
-    let Some(Message::Block(decoded)) = codec.decode(&mut bytes).unwrap() else {
+    // Exercise FramedRead's incremental buffer growth from its small initial
+    // buffer, instead of giving the decoder an already complete body.
+    let message = tokio::time::timeout(std::time::Duration::from_secs(30), async {
+        let mut framed = tokio_util::codec::FramedRead::new(&bytes[..], codec);
+        let message = framed.next().await.unwrap().unwrap();
+        assert!(framed.next().await.is_none());
+        message
+    })
+    .await
+    .unwrap();
+    let Message::Block(decoded) = message else {
         panic!("a complete block message should decode");
     };
     assert_eq!(decoded, block);
-    assert!(bytes.is_empty());
 }
 
 lazy_static! {

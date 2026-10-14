@@ -193,12 +193,15 @@ impl ZakuraDb {
         // Log any format changes before opening the database, in case opening fails.
         let format_change = DbFormatChange::open_database(format_version_in_code, disk_version);
 
-        // A read-only secondary instance cannot create a database. If there's no database on
-        // disk, fail with a clear, actionable error instead of silently "creating" one.
+        // A read-only secondary cannot create or finish initializing a database.
+        // Distinguish an existing uninitialized cache from a missing path.
         //
         // The read-write path is unaffected: creating a new database is the correct behavior there.
         if read_only && format_change.is_newly_created() {
             let db_path = config.db_path(&db_kind, format_version_in_code.major, network);
+            if db_path.is_dir() {
+                return Err(StateInitError::ReadOnlyDatabaseUninitialized { path: db_path });
+            }
             return Err(StateInitError::ReadOnlyDatabaseNotFound { path: db_path });
         }
 
@@ -542,11 +545,14 @@ fn database_format_for_open(
         let db_path = config.db_path(&db_kind, major_version, network);
         match std::fs::read_dir(&db_path) {
             Ok(mut entries) => {
-                if entries.next().transpose()?.is_some()
-                    && !DiskDb::existing_database_is_empty(&db_path)?
-                {
+                if entries.next().transpose()?.is_some() {
+                    let reason = match DiskDb::existing_database_is_empty(&db_path) {
+                        Ok(true) => return Ok(None),
+                        Ok(false) => "the database contains records".to_string(),
+                        Err(error) => format!("could not confirm that RocksDB is empty: {error}"),
+                    };
                     return Err(format!(
-                        "non-empty database at {} has no format version file at {}; \
+                        "database at {} has no format version file at {} and {reason}; \
                          its transaction-index format is unknown. Use a fresh state cache; \
                          copying or relabeling an old database does not migrate it",
                         db_path.display(),
@@ -788,6 +794,43 @@ mod tests {
     }
 
     #[test]
+    fn unversioned_non_database_directory_has_actionable_error() {
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
+        std::fs::create_dir_all(&path).unwrap();
+        let stray = path.join(".DS_Store");
+        std::fs::write(&stray, b"not a RocksDB database").unwrap();
+        for read_only in [false, true] {
+            let error = ZakuraDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &version,
+                &network,
+                false,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                read_only,
+            )
+            .unwrap_err();
+            assert!(matches!(
+                error,
+                StateInitError::DatabaseFormatVersion { .. }
+            ));
+            assert!(error.to_string().contains("Use a fresh state cache"));
+            assert!(error
+                .to_string()
+                .contains("transaction-index format is unknown"));
+            assert_eq!(std::fs::read(&stray).unwrap(), b"not a RocksDB database");
+            assert!(!config
+                .version_file_path(STATE_DATABASE_KIND, version.major, &network)
+                .exists());
+        }
+    }
+
+    #[test]
     fn interrupted_first_open_resumes_an_empty_unversioned_database() {
         let _init_guard = zakura_test::init();
         let network = Network::new_regtest(Default::default());
@@ -812,6 +855,29 @@ mod tests {
             let version_path =
                 config.version_file_path(STATE_DATABASE_KIND, version.major, &network);
             assert!(!version_path.exists());
+            // A secondary cannot finish initialization, and must distinguish
+            // this existing cache from a path that was never created.
+            let error = ZakuraDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &version,
+                &network,
+                skip_upgrades,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                true,
+            )
+            .unwrap_err();
+            assert!(matches!(
+                error,
+                StateInitError::ReadOnlyDatabaseUninitialized { .. }
+            ));
+            assert!(error.to_string().contains("Start a writable node"));
+            assert!(
+                !version_path.exists(),
+                "read-only open must not initialize the cache"
+            );
             assert!(std::fs::read_dir(config.db_path(
                 STATE_DATABASE_KIND,
                 version.major,

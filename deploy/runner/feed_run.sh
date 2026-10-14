@@ -35,7 +35,9 @@ MAXSEC="${5:-${BENCH_MAXSEC_DEFAULT:-3600}}"
 WORK="${BENCH_WORK_DIR:?set BENCH_WORK_DIR in cohort.env}"
 MASTER_WARM="${BENCH_MASTER:?set BENCH_MASTER in cohort.env}"
 MASTER_COLD="${BENCH_MASTER_COLD:-$MASTER_WARM}"
-DBREL="${BENCH_DB_REL:-state/v27/mainnet}"
+# The snapshot and binary must use the same layout. Require the operator to name
+# it: an upstream state/ snapshot cannot seed this fork's state-tpq database.
+DBREL="${BENCH_DB_REL:?set BENCH_DB_REL to the snapshot path matching the binary; this fork uses state-tpq/v30/<network>}"
 FORK_DIR="${BENCH_FORK_DIR:-$WORK}"
 LOG_DIR="${BENCH_LOG_DIR:-$WORK}"
 CONFIG_SRC="${CONFIG_SRC:-${BENCH_CONFIG_SRC:-$RUNNER_DIR/zakura-bench-config.toml}}"

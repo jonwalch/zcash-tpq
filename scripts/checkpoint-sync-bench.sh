@@ -365,6 +365,19 @@ ensure_source() {
   fi
 }
 
+# Reject incompatible source layouts before downloading a snapshot or running a node.
+require_upstream_snapshot_layout() {
+  local ref="$1" full state_constants
+  full="$(git -C "$BUILD_SRC" rev-parse --verify --quiet "origin/$ref^{commit}" \
+        || git -C "$BUILD_SRC" rev-parse --verify --quiet "$ref^{commit}")" \
+        || die "cannot resolve ref '$ref' to a commit"
+  state_constants="$(git -C "$BUILD_SRC" show "$full:crates/zakura-state/src/constants.rs")" \
+        || die "cannot inspect state layout for $full"
+  if grep -Fq 'STATE_DATABASE_KIND: &str = "state-tpq"' <<< "$state_constants"; then
+    die "This benchmark uses upstream snapshots. state-tpq requires a fresh devnet sync; copying state/ does not migrate its indexes."
+  fi
+}
+
 # build $1=ref; sets ZAKURAD_BIN. Skips the build (with revalidation) on a SHA cache hit.
 build_from_ref() {
   local ref="$1" sha full ver bindir zakurad meta
@@ -373,6 +386,7 @@ build_from_ref() {
   full="$(git -C "$BUILD_SRC" rev-parse --verify --quiet "origin/$ref^{commit}" \
         || git -C "$BUILD_SRC" rev-parse --verify --quiet "$ref^{commit}")" \
         || die "cannot resolve ref '$ref' to a commit"
+  require_upstream_snapshot_layout "$full"
   sha="${full:0:9}"
   bindir="$BENCH_HOME/bins/$sha"; zakurad="$bindir/zakurad"; meta="$bindir/meta"
   log "ref '$ref' -> commit $sha"
@@ -729,6 +743,13 @@ fi
 
 ensure_deps
 ensure_bench_home
+if [[ -n "$BUILD_REF" ]]; then
+  ensure_source
+  require_upstream_snapshot_layout "$PRIMARY_SPEC"
+  if [[ -n "$BASELINE_SPEC" ]]; then
+    require_upstream_snapshot_layout "$BASELINE_SPEC"
+  fi
+fi
 ensure_snapshot
 
 SUMMARY="${GITHUB_STEP_SUMMARY:-$OUT_DIR/summary.md}"

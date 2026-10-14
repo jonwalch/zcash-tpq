@@ -437,8 +437,8 @@ impl Decoder for Codec {
                     metrics::counter!("zcash.net.in.bytes.total")
                         .increment((body_len + HEADER_LEN) as u64);
 
-                    // Reserve buffer space for the expected body and the following header.
-                    src.reserve(body_len + HEADER_LEN);
+                    // FramedRead grows its buffer as bytes arrive. A length announcement
+                    // alone must not reserve a full block or transaction body.
 
                     self.state = DecodeState::Body {
                         body_len,

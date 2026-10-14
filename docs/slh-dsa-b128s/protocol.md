@@ -148,7 +148,19 @@ These checks apply to read-only and skip-upgrade opens. An absent
 or empty directory can start a fresh database. If the first start stops after
 RocksDB creates its files but before it stores any records or a version marker,
 a writable restart can finish initialization. This check reads raw column
-families without decoding indexes. Moving an old cache does not migrate it.
+families without decoding indexes. A read-only open reports that initialization
+is incomplete and asks for a writable start first. An unreadable or unidentified
+cache is rejected with its cause and guidance to use a fresh cache.
+All version queries require a full marker for format 30 or later.
+Moving an old cache does not migrate it.
+
+Automatic cleanup stays within `state-tpq`. Old `state` caches remain on disk;
+another upstream node may still use them. Remove an old cache only after
+confirming that it is no longer needed. The inherited public-network snapshot
+bake, source-build benchmark, and NU7 seed tools reject this fork's layout.
+They cannot convert upstream transaction indexes by moving directories.
+`deploy/runner/feed_run.sh` requires an explicit `BENCH_DB_REL` that matches its
+binary and snapshot, such as `state-tpq/v30/<network>` for this fork.
 
 The classical block signature-operation limit deliberately remains 20,000,
 including legacy and P2SH operations. A transparent-payment workload can reach
@@ -171,9 +183,11 @@ about 32.08 GB of estimated decoded copies. The 1.5 GiB setting is not a cap on
 total node memory and does not ensure that every workload fits a 4–8 GB machine.
 Requests without a body-size hint reserve 20 MB each, so a fixed request budget
 permits fewer concurrent requests. Legacy block and transaction messages can
-reserve up to 20 MiB each. Other legacy commands, including unknown commands,
+carry up to 20 MiB each. The decoder does not reserve a full body from its header;
+the transport buffer grows as bytes arrive. Other legacy commands, including unknown commands,
 retain the old 2 MiB ceiling; oversized headers are rejected before reserving
 the body buffer. The 1 KiB pre-handshake ceiling still applies.
+Concurrent peers that send full bodies can still consume substantial memory.
 These limits have not been measured in a live devnet run.
 
 The configuration uses these fields:

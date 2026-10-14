@@ -66,6 +66,11 @@ class ForkError(Exception):
 def db_format_version() -> int:
     """Read DATABASE_FORMAT_VERSION, which names the state directory (state/vNN)."""
     text = STATE_CONSTANTS.read_text()
+    if 'STATE_DATABASE_KIND: &str = "state-tpq"' in text:
+        raise ForkError(
+            "this public-Testnet snapshot workflow cannot seed state-tpq; "
+            "the devnet fork requires a fresh sync, not a renamed upstream cache"
+        )
     match = re.search(r"const DATABASE_FORMAT_VERSION: u64 = (\d+)", text)
     if not match:
         raise ForkError(f"could not read DATABASE_FORMAT_VERSION from {STATE_CONSTANTS}")
