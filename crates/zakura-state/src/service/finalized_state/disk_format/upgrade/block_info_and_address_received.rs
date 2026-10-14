@@ -337,7 +337,7 @@ impl AddressBalanceLocationChange {
     /// for the rationale for using this dummy value.
     fn empty() -> Self {
         Self::new(AddressLocation::from_output_index(
-            TransactionLocation::from_index(MAX_ON_DISK_HEIGHT, u16::MAX),
+            TransactionLocation::max_for_height(MAX_ON_DISK_HEIGHT),
             u32::MAX,
         ))
     }

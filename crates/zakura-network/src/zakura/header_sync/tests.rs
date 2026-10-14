@@ -542,14 +542,27 @@ fn body_hints_completion_and_aux_defaults_are_enforced() {
         tree_aux_schema: AuxSchema::None,
         entries: vec![HeaderEntry {
             header,
-            body_size: 2_000_001,
+            body_size: 20_000_001,
             tree_aux: None,
         }],
     };
     assert!(matches!(
         codec().encode(&HeaderSyncMessage::Headers(response.clone())),
-        Err(HeaderSyncWireError::BodySizeHintOutOfRange(2_000_001))
+        Err(HeaderSyncWireError::BodySizeHintOutOfRange(20_000_001))
     ));
+    response.entries[0].body_size = 20_000_000;
+    let bytes = codec()
+        .encode(&HeaderSyncMessage::Headers(response.clone()))
+        .expect("a full 20 MB block hint encodes");
+    assert!(codec()
+        .decode(
+            &bytes,
+            Some(HeaderSyncDecodeContext {
+                max_header_count: 1,
+                requested_tree_aux_schema: AuxSchema::None,
+            })
+        )
+        .is_ok());
     response.entries[0].body_size = 0;
     assert!(codec()
         .encode(&HeaderSyncMessage::Headers(response.clone()))
@@ -736,10 +749,10 @@ fn decode_rejects_each_vector_hint_schema_and_byte_boundary() {
     let aux_offset = hint_offset + 4;
 
     let mut bad_hint = encoded.clone();
-    bad_hint[hint_offset..aux_offset].copy_from_slice(&2_000_001u32.to_le_bytes());
+    bad_hint[hint_offset..aux_offset].copy_from_slice(&20_000_001u32.to_le_bytes());
     assert!(matches!(
         codec().decode(&bad_hint, Some(context)),
-        Err(HeaderSyncWireError::BodySizeHintOutOfRange(2_000_001))
+        Err(HeaderSyncWireError::BodySizeHintOutOfRange(20_000_001))
     ));
     let mut wrong_aux_height = encoded.clone();
     wrong_aux_height[aux_offset..aux_offset + 4].copy_from_slice(&2u32.to_le_bytes());

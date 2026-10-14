@@ -348,7 +348,7 @@ def namespace(rules):
 
 def state_files(cache, name):
     """Hash only stopped namespaces; no links or nonregular files are accepted."""
-    databases = list((cache / "state").glob(f"v*/{name}"))
+    databases = list((cache / "state-tpq").glob(f"v*/{name}"))
     require(len(databases) == 1 and (databases[0] / "CURRENT").is_file(), "namespace_database")
     backup = cache / "non_finalized_state" / name
     require(backup.is_dir(), "namespace_backup")

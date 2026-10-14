@@ -7,7 +7,8 @@ Built-in Mainnet and public Testnet cannot activate SLH.
 
 This support is for transparent SLH outputs. It preserves the
 [experimental v1 contract](protocol.md), NU7 signing context, classical checks,
-and shielded checks. It changes no block-size or fee policy.
+and shielded checks. SLH activation preserves the fork's 20 MB block limit
+and fee policy.
 The wallet CLI remains Regtest-only. Live devnet acceptance remains pending.
 
 ## Generate one chain definition

@@ -583,6 +583,19 @@ fn block_commitment() {
 }
 
 #[test]
+fn block_limits_exact_byte_boundary() {
+    let _init_guard = zakura_test::init();
+
+    for size in [2_000_001, 19_999_999, 20_000_000, 20_000_001] {
+        let bytes = generate::block_with_size(size)
+            .zcash_serialize_to_vec()
+            .unwrap();
+        let result = Block::zcash_deserialize(&bytes[..]);
+        assert_eq!(result.is_ok(), size <= 20_000_000, "block size: {size}");
+    }
+}
+
+#[test]
 fn block_limits_multi_tx() {
     let _init_guard = zakura_test::init();
 

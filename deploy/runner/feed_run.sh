@@ -25,6 +25,10 @@ RUNNER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 [ -f "$RUNNER_DIR/cohort.env" ] && source "$RUNNER_DIR/cohort.env"
 
+SNAPSHOT_CHECK="$RUNNER_DIR/../../scripts/benchmark-snapshot.py"
+[ -f "$SNAPSHOT_CHECK" ] || { echo "FATAL: missing $SNAPSHOT_CHECK" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "FATAL: python3 is required for snapshot checks" >&2; exit 1; }
+
 LABEL="${1:?usage: feed_run.sh LABEL BIN [stop] [met] [maxsec]}"
 BIN="${2:?need binary path}"
 STOP="${3:-${BENCH_STOP_DEFAULT:-1830000}}"
@@ -35,7 +39,9 @@ MAXSEC="${5:-${BENCH_MAXSEC_DEFAULT:-3600}}"
 WORK="${BENCH_WORK_DIR:?set BENCH_WORK_DIR in cohort.env}"
 MASTER_WARM="${BENCH_MASTER:?set BENCH_MASTER in cohort.env}"
 MASTER_COLD="${BENCH_MASTER_COLD:-$MASTER_WARM}"
-DBREL="${BENCH_DB_REL:-state/v27/mainnet}"
+# The snapshot and binary must use the same layout. Require the operator to name
+# it: an upstream state/ snapshot cannot seed this fork's state-tpq database.
+DBREL="${BENCH_DB_REL:?set BENCH_DB_REL to the snapshot path matching the binary; this fork uses state-tpq/v30/<network>}"
 FORK_DIR="${BENCH_FORK_DIR:-$WORK}"
 LOG_DIR="${BENCH_LOG_DIR:-$WORK}"
 CONFIG_SRC="${CONFIG_SRC:-${BENCH_CONFIG_SRC:-$RUNNER_DIR/zakura-bench-config.toml}}"
@@ -128,6 +134,15 @@ echo "[$LABEL] config: $CONFIG_SRC -> $CFG (cache_dir=$FORK, met=$MET, listen=$L
 "$BIN" -c "$CFG" start >>"$LOG" 2>&1 &
 PID=$!; sleep 3
 if ! kill -0 "$PID" 2>/dev/null; then echo "[$LABEL] died on startup"; tail -15 "$LOG"; exit 1; fi
+if [ -z "${BENCH_FROM_GENESIS:-}" ] && ! python3 "$SNAPSHOT_CHECK" startup \
+  --log "$LOG" --pid "$PID" --timeout "$MAXSEC"; then
+  tail -15 "$LOG" >&2
+  kill "$PID" 2>/dev/null || true
+  for _ in $(seq 1 10); do kill -0 "$PID" 2>/dev/null || break; sleep 1; done
+  kill -9 "$PID" 2>/dev/null || true
+  wait "$PID" 2>/dev/null || true
+  exit 1
+fi
 echo "[$LABEL] started pid=$PID stop=$STOP met=$MET fork=$FORK trace_dir=$TRACEDIR"
 
 HZ=$(getconf CLK_TCK)

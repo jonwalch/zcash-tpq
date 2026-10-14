@@ -1,10 +1,10 @@
 ---
-source: zebra-state/src/service/finalized_state/disk_format/tests/snapshot.rs
+source: crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshot.rs
 expression: cf_data
 ---
 [
   KV(
-    k: "00000100000000010000010000",
+    k: "0000010000000000000100000100000000",
     v: "",
   ),
 ]

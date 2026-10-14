@@ -12,6 +12,7 @@
 # Config via /root/run.env (sourced by the caller before exec). Helper scripts
 # scp'd next to this one by the workflow:
 #   /root/checkpoint-sync-bench.sh
+#   /root/benchmark-snapshot.py
 #   /root/zakura-metrics-dashboard.py
 set -euo pipefail
 
@@ -67,6 +68,9 @@ if [[ -n "${BUILD_REF:-}" ]]; then
   fi
   git checkout --detach "${PRIMARY_SHA}"
 
+  if grep -Fq 'STATE_DATABASE_KIND: &str = "state-tpq"' crates/zakura-state/src/constants.rs; then
+    die "This benchmark uses upstream snapshots. state-tpq requires a fresh devnet sync; copying state/ does not migrate its indexes."
+  fi
   CODE_VER=$(grep -oE 'DATABASE_FORMAT_VERSION: .* [0-9]+' \
     crates/zakura-state/src/constants.rs | grep -oE '[0-9]+' | tail -n1)
   DIR_VER=$(find "$STATE_MASTER/state" -mindepth 1 -maxdepth 1 -type d -name 'v*' 2>/dev/null | \

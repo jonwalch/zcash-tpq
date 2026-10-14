@@ -166,7 +166,9 @@ impl RpcServer {
 
         let surface = primary_rpc_surface(rpc.network(), conf.enable_cookie_auth);
 
-        Self::start_inner(rpc, conf, surface, OPENED_RPC_ENDPOINT_MSG).await
+        Self::start_inner(rpc, conf, surface, OPENED_RPC_ENDPOINT_MSG)
+            .await
+            .map(|(_, task)| task)
     }
 
     /// Starts the loopback-only, cookie-authenticated admin RPC server.
@@ -205,10 +207,12 @@ impl RpcServer {
         conf.enable_cookie_auth = true;
         conf.tls = None;
 
-        Self::start_inner(rpc, conf, RpcSurface::Full, OPENED_ADMIN_RPC_ENDPOINT_MSG).await
+        Self::start_inner(rpc, conf, RpcSurface::Full, OPENED_ADMIN_RPC_ENDPOINT_MSG)
+            .await
+            .map(|(_, task)| task)
     }
 
-    /// Starts one RPC listener with the selected method surface.
+    /// Starts one RPC listener and returns its bound address and task.
     async fn start_inner<
         Mempool,
         State,
@@ -222,7 +226,7 @@ impl RpcServer {
         conf: config::rpc::Config,
         surface: RpcSurface,
         opened_endpoint_msg: &'static str,
-    ) -> Result<ServerTask, tower::BoxError>
+    ) -> Result<(SocketAddr, ServerTask), tower::BoxError>
     where
         Mempool: MempoolService,
         State: StateService,
@@ -243,6 +247,8 @@ impl RpcServer {
         // The largest RPC request is submitblock, which sends a full block
         // as a hex string (2x MAX_BLOCK_BYTES) plus a small JSON-RPC wrapper.
         let max_request_body_size = (MAX_BLOCK_BYTES as usize) * 2 + 1024;
+        let max_request_body_size_u32 = u32::try_from(max_request_body_size)
+            .expect("a hex-encoded maximum block and RPC wrapper fit in u32");
 
         let http_middleware_layer = if conf.enable_cookie_auth {
             let cookie = Cookie::default();
@@ -268,6 +274,7 @@ impl RpcServer {
             let acceptor = TlsAcceptor::from(tls_config);
             let service_builder = Server::builder()
                 .http_only()
+                .max_request_body_size(max_request_body_size_u32)
                 .set_http_middleware(http_middleware)
                 .set_rpc_middleware(rpc_middleware)
                 .max_response_body_size(
@@ -280,7 +287,7 @@ impl RpcServer {
 
             info!("{opened_endpoint_msg}{local_addr}");
 
-            return Ok(tokio::spawn(async move {
+            let task = tokio::spawn(async move {
                 run_tls_listener(
                     listener,
                     acceptor,
@@ -313,11 +320,13 @@ impl RpcServer {
                 )
                 .await?;
                 Ok(())
-            }));
+            });
+            return Ok((local_addr, task));
         }
 
         let server = Server::builder()
             .http_only()
+            .max_request_body_size(max_request_body_size_u32)
             .set_http_middleware(http_middleware)
             .set_rpc_middleware(rpc_middleware)
             .max_response_body_size(
@@ -328,12 +337,14 @@ impl RpcServer {
             .build(listen_addr)
             .await?;
 
-        info!("{opened_endpoint_msg}{}", server.local_addr()?);
+        let local_addr = server.local_addr()?;
+        info!("{opened_endpoint_msg}{local_addr}");
 
-        Ok(tokio::spawn(async move {
+        let task = tokio::spawn(async move {
             server.start(methods).stopped().await;
             Ok(())
-        }))
+        });
+        Ok((local_addr, task))
     }
 
     /// Shut down this RPC server, blocking the current thread.

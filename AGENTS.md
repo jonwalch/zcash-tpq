@@ -1,7 +1,8 @@
 # SLH extension rules
 
 These rules take precedence over the inherited upstream command examples below.
-This repository adds only experimental SLH-DSA-B-128s to pinned upstream Zakura.
+This repository adds experimental SLH-DSA-B-128s and a 20 MB devnet block limit
+to pinned upstream Zakura.
 Use plain English guided by ASD-STE100 for SLH docs and the root README, aiming
 for 80% rather than strict conformity. Follow `docs/slh-dsa-b128s/writing.md`.
 Preserve inherited documentation, historical evidence, and license text.
@@ -25,7 +26,8 @@ implementation.
 
 Keep experimental support off by default. Allow activation only on Regtest and
 explicit custom testnets with separate network identities. Built-in Mainnet and
-public Testnet must reject activation. Node dependencies
+public Testnet must reject activation. The 20 MB block limit applies to all
+network configurations in this devnet fork. Node dependencies
 must not include key generation, signing, alternate PQ backends, fixture tools
 or a dependency on an external research checkout. Never add research notes,
 experiments, raw results, real secrets or research Git history to this repository.

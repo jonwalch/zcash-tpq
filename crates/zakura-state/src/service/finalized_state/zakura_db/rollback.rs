@@ -53,7 +53,7 @@ use crate::{
         },
         non_finalized_state::write_semantically_verified_backup_block,
     },
-    Config, SemanticallyVerifiedBlock,
+    Config, SemanticallyVerifiedBlock, StateInitError,
 };
 
 /// Options for rolling back the finalized state.
@@ -104,6 +104,10 @@ pub struct RollbackFinalizedStateSummary {
 /// Errors returned by finalized-state rollback.
 #[derive(Debug, thiserror::Error)]
 pub enum RollbackFinalizedStateError {
+    /// The database could not be opened safely.
+    #[error("could not open the state database: {0}")]
+    DatabaseOpen(#[from] StateInitError),
+
     /// The on-disk state database format does not match the running code.
     #[error(
         "state database format mismatch: on disk {on_disk:?}, running code {in_code}; \
@@ -266,7 +270,7 @@ pub fn preview_rollback_finalized_state(
 ) -> Result<RollbackFinalizedStateSummary, RollbackFinalizedStateError> {
     check_format_version(&config, network)?;
 
-    let db = open_rollback_db(&config, network, true);
+    let db = open_rollback_db(&config, network, true)?;
     let bounds = validate_rollback(&db, &options)?;
 
     // A dry run only reports the plan, so it deliberately skips the genesis-to-target treestate
@@ -286,7 +290,7 @@ pub fn rollback_finalized_state(
 ) -> Result<RollbackFinalizedStateSummary, RollbackFinalizedStateError> {
     check_format_version(&config, network)?;
 
-    let db = open_rollback_db(&config, network, false);
+    let db = open_rollback_db(&config, network, false)?;
     rollback_open_db(&db, network, options)
 }
 
@@ -363,7 +367,11 @@ fn check_format_version(
     }
 }
 
-fn open_rollback_db(config: &Config, network: &Network, read_only: bool) -> ZakuraDb {
+fn open_rollback_db(
+    config: &Config,
+    network: &Network,
+    read_only: bool,
+) -> Result<ZakuraDb, StateInitError> {
     ZakuraDb::new(
         config,
         STATE_DATABASE_KIND,
@@ -378,7 +386,7 @@ fn open_rollback_db(config: &Config, network: &Network, read_only: bool) -> Zaku
             .iter()
             .map(ToString::to_string),
         read_only,
-    ).expect("opening the finalized state database failed; the configured cache directory must contain a readable Zakura database")
+    )
 }
 
 /// The validated bounds of a rollback: where the finalized tip is now, and where it will end up.

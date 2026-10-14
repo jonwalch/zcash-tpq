@@ -8,6 +8,7 @@
 # Primary CI path (checkpoint-sync-bench.yml): an ephemeral DigitalOcean droplet
 # mounts a baked sandblast volume and sets STATE_MASTER so no archive download is
 # needed. Local/manual runs can still stream-download a snapshot into BENCH_HOME.
+# Keep benchmark-snapshot.py beside this script; snapshot checks require Python 3.
 #
 # Binary source (pick one; BUILD_REF wins):
 #   BUILD_REF             git branch/tag/SHA to build ON THIS HOST, cached by commit
@@ -100,6 +101,9 @@ DASHBOARD="${DASHBOARD:-1}"
 DASHBOARD_ARCHIVE="${DASHBOARD_ARCHIVE:-$OUT_DIR/dashboard-runs}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DASHBOARD_PY="${DASHBOARD_PY:-$SCRIPT_DIR/zakura-metrics-dashboard.py}"
+SNAPSHOT_CHECK="$SCRIPT_DIR/benchmark-snapshot.py"
+[[ -f "$SNAPSHOT_CHECK" ]] || { echo "FATAL: missing $SNAPSHOT_CHECK" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "FATAL: python3 is required for snapshot checks" >&2; exit 1; }
 GITHUB_RUN_URL="${GITHUB_RUN_URL:-}"
 if [[ -z "$GITHUB_RUN_URL" && -n "${GITHUB_RUN_ID:-}" ]]; then
   GITHUB_RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-$GH_REPO}/actions/runs/$GITHUB_RUN_ID"
@@ -365,6 +369,19 @@ ensure_source() {
   fi
 }
 
+# Reject incompatible source layouts before downloading a snapshot or running a node.
+require_upstream_snapshot_layout() {
+  local ref="$1" full state_constants
+  full="$(git -C "$BUILD_SRC" rev-parse --verify --quiet "origin/$ref^{commit}" \
+        || git -C "$BUILD_SRC" rev-parse --verify --quiet "$ref^{commit}")" \
+        || die "cannot resolve ref '$ref' to a commit"
+  state_constants="$(git -C "$BUILD_SRC" show "$full:crates/zakura-state/src/constants.rs")" \
+        || die "cannot inspect state layout for $full"
+  if grep -Fq 'STATE_DATABASE_KIND: &str = "state-tpq"' <<< "$state_constants"; then
+    die "This benchmark uses upstream snapshots. state-tpq requires a fresh devnet sync; copying state/ does not migrate its indexes."
+  fi
+}
+
 # build $1=ref; sets ZAKURAD_BIN. Skips the build (with revalidation) on a SHA cache hit.
 build_from_ref() {
   local ref="$1" sha full ver bindir zakurad meta
@@ -373,6 +390,7 @@ build_from_ref() {
   full="$(git -C "$BUILD_SRC" rev-parse --verify --quiet "origin/$ref^{commit}" \
         || git -C "$BUILD_SRC" rev-parse --verify --quiet "$ref^{commit}")" \
         || die "cannot resolve ref '$ref' to a commit"
+  require_upstream_snapshot_layout "$full"
   sha="${full:0:9}"
   bindir="$BENCH_HOME/bins/$sha"; zakurad="$bindir/zakurad"; meta="$bindir/meta"
   log "ref '$ref' -> commit $sha"
@@ -588,9 +606,17 @@ run_one() {
     die "startup failure for $tag"
   fi
 
+  # Check what normal startup loaded, after writable reuse/upgrade. A read-only
+  # tip-height preflight would reject compatible snapshots from the previous major.
+  if ! python3 "$SNAPSHOT_CHECK" startup --log "$logf" --pid "$pid" \
+    --timeout "$WALL_CAP" --expected-height "$START_HEIGHT"; then
+    tail -20 "$logf" >&2
+    die "binary did not load the expected snapshot for $tag"
+  fi
+
   # Dashboard recorder sidecar: scrape this node's /metrics into a per-run series
   # copied into the CI artifact for local replay, and classified for the bottleneck
-  # verdict. Best-effort: a missing python3 never fails a bench.
+  # verdict. The optional recorder is independent of the required snapshot check.
   local rec_dir=""
   if [[ "$DASHBOARD" == "1" ]] && command -v python3 >/dev/null 2>&1 && [[ -f "$DASHBOARD_PY" ]]; then
     rec_dir="$DASHBOARD_ARCHIVE/$run_id"
@@ -729,6 +755,20 @@ fi
 
 ensure_deps
 ensure_bench_home
+if [[ -n "$BUILD_REF" ]]; then
+  ensure_source
+  require_upstream_snapshot_layout "$PRIMARY_SPEC"
+  if [[ -n "$BASELINE_SPEC" ]]; then
+    require_upstream_snapshot_layout "$BASELINE_SPEC"
+  fi
+else
+  python3 "$SNAPSHOT_CHECK" release-layout --repo "$GH_REPO" --tag "$PRIMARY_SPEC" \
+    || die "primary release is incompatible with upstream snapshots"
+  if [[ -n "$BASELINE_SPEC" ]]; then
+    python3 "$SNAPSHOT_CHECK" release-layout --repo "$GH_REPO" --tag "$BASELINE_SPEC" \
+      || die "baseline release is incompatible with upstream snapshots"
+  fi
+fi
 ensure_snapshot
 
 SUMMARY="${GITHUB_STEP_SUMMARY:-$OUT_DIR/summary.md}"

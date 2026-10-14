@@ -155,7 +155,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-state/src/config.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "717c8c54149ceead7463a243916f9880b95b33835c2d6ac964f4463cd540fc8c"
+      "sha256": "2c9cf2d3de7f9642d766c7f808c2d9a437697c1223a4ffd22f19e2d6bf33795b"
     },
     "devnet-rpc": {
       "anchor": "slh_info_reports_rules_without_claiming_tip_readiness",
@@ -225,7 +225,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     "human-build": {
       "anchor": "def build(",
@@ -260,7 +260,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     "human-dust-policy": {
       "anchor": "receipt[\"dust_relay\"]",
@@ -281,7 +281,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     "human-mixed-lifecycle": {
       "anchor": "receipt[\"mixed_reactivation\"]",
@@ -295,7 +295,7 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     "human-node-crashes": {
       "anchor": "def run_subject(",
@@ -400,14 +400,14 @@
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     "human-startup": {
       "anchor": "def startup_refusal(",
       "kind": "human_case_prepared",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
       "scope": "Prepared only; no live execution. Run the matching acceptance.md command for versions 5/6 and single/multisig; replay also requires --finalized-history. Wallet maximum uses 15/15, one input.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     "human-template": {
       "anchor": "template_exact_slh_block_budget",
@@ -477,7 +477,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-state/src/config.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "717c8c54149ceead7463a243916f9880b95b33835c2d6ac964f4463cd540fc8c"
+      "sha256": "2c9cf2d3de7f9642d766c7f808c2d9a437697c1223a4ffd22f19e2d6bf33795b"
     },
     "observation-consensus": {
       "anchor": "slh_diagnostics_match_actual_primitive_entries_and_authorization_identity",

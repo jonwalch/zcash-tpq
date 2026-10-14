@@ -15,13 +15,12 @@ use crate::{
     work::{difficulty::CompactDifficulty, equihash},
 };
 
-/// The maximum size of a Zcash block, in bytes.
+/// The maximum size of a block in this fork, in bytes (20 MB).
 ///
-/// Post-Sapling, this is also the maximum size of a transaction
-/// in the Zcash specification. (But since blocks also contain a
-/// block header and transaction count, the maximum size of a
-/// transaction in the chain is approximately 1.5 kB smaller.)
-pub const MAX_BLOCK_BYTES: u64 = 2_000_000;
+/// This fork raises the upstream 2 MB limit on every network for devnet use.
+/// Post-Sapling transaction decoding uses the same limit. A transaction in a
+/// block must also leave room for the block header and transaction count.
+pub const MAX_BLOCK_BYTES: u64 = 20_000_000;
 
 /// Checks if a block header version is valid.
 ///
@@ -160,6 +159,7 @@ impl ZcashDeserialize for Block {
         //
         // https://zips.z.cash/protocol/protocol.pdf#blockheader
         //
+        // This fork raises that upstream limit to MAX_BLOCK_BYTES for devnet use.
         // If the limit is reached, we'll get an UnexpectedEof error
         let limited_reader = &mut reader.with_limit(MAX_BLOCK_BYTES);
         Ok(Block {

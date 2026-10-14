@@ -11,6 +11,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": ".github/workflows/checkpoint-sync-bench.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Copy the shared snapshot checker with the existing benchmark script to the ephemeral runner; preserve all workflow triggers and invocation controls.",
+      "sha256": "751ce478460051d72b4a20dd89d3effe2d196d68f92491cd9c9be302ee4d5a31"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": ".github/workflows/coverage.yml",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
@@ -53,6 +63,36 @@
       ],
       "reason": "Record the action version pin updates already merged in TPQ PR #1; preserve the existing workflow behavior.",
       "sha256": "816fab337077f1a3a03af8e73ff3f9248713e48b1f2e69dd3d7ecebef78cc074"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/scripts/checkpoint-sync-bench-run.sh",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Reject state-tpq source refs before the upstream checkpoint snapshot benchmark build with explicit fresh-sync guidance. PR #9 follow-up: Document the companion checker supplied by the workflow for snapshot benchmark validation.",
+      "sha256": "12f2cdc62ae183191c8cf530f7112af7c48d656956f5d039ea01726165fa0fe5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/scripts/perf-bench-run.sh",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Reject state-tpq source refs before the upstream snapshot benchmark build instead of parsing an aliased version or silently syncing a different cache.",
+      "sha256": "81b649f27532bbeffcd58bbcb43972f1f2b213c454ac470259bb4d16e62792a0"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": ".github/workflows/scripts/pr-node-bake.sh",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Reject the fork layout before building a node for an incompatible upstream snapshot bake; preserve the inherited upstream workflow.",
+      "sha256": "a7de8b04c0a7509731c0ded9840a3ff10df7b1a29651ab4081c0c518222d5dbc"
     },
     {
       "disposition": "upstream-modification",
@@ -132,10 +172,11 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
         "docs/slh-dsa-b128s/devnets.md",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "7f202ff1266cfd5fde7681f4363749f9049ce8dc1dc3de81edf5d8473d815119"
+      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Document the fork-wide 20 MB devnet exception while retaining the default-off, Regtest-only SLH activation rule.",
+      "sha256": "b4753af59563f516d8ec2fe1e1d0a2ec5f0990ec7192ac84e072655e82607009"
     },
     {
       "disposition": "upstream-modification",
@@ -163,10 +204,11 @@
         "docs/slh-dsa-b128s/packaging.md",
         "docs/slh-dsa-b128s/benchmarking.md",
         "docs/slh-dsa-b128s/devnets.md",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "9797921c764e7ed9d83a89c72712d846e59d4784d705e00ec4964dd6d8709c07"
+      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: State the user-approved fork-wide 20 MB devnet scope, public-network incompatibility, and the separate state-tpq cache with a fresh sync requirement.",
+      "sha256": "008ab86d2111b6bc030ca825f125500ee933108f46859f909b78285fc5e0fca3"
     },
     {
       "disposition": "new",
@@ -176,8 +218,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "2b09cc90e588bbdf7db36ffd57f61c8a3104cdad13324d8f4877d00aa4722f89"
+      "reason": "Document saved-evidence adapters, payment metrics and attached-node collection, including required evidence and limits on live acceptance claims.",
+      "sha256": "3e52eecf5d5a96cf367af0884124f20d54785653a42382661fc8a4cb4227499b"
     },
     {
       "disposition": "new",
@@ -187,8 +229,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Isolate the human-run primitive benchmark with locked product signer/verifier dependencies; exclude it from node graphs and publication.",
-      "sha256": "a1f9c67bcb2bd24cd6c971d02614c1fef0cc94fc218b811ecde1f1400982970c"
+      "reason": "Lock the isolated primitive and wallet payment benchmark dependencies, including classical controls and disposable storage; keep the executable outside node graphs and publication.",
+      "sha256": "f3e0a0193f1b4b11b220a92b73473c7cd10f5c722fe69f5fc77a6e664bc3c2fa"
     },
     {
       "disposition": "new",
@@ -198,8 +240,19 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Isolate the human-run primitive benchmark with locked product signer/verifier dependencies; exclude it from node graphs and publication.",
-      "sha256": "314b6fc4f3a465b8c22e152f508ca96ea3b261af1782e7067b797b4d55a55321"
+      "reason": "Declare the separate, non-publishable primitive and wallet payment benchmark workspace with product wallet, transaction-context and classical-control dependencies.",
+      "sha256": "b626b95405c93a253ae92f618655a689546b984ebe5103cb6487e123b290633f"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/NODE_COLLECTION.md",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Document registration and bounded collection of an existing Regtest node, node-build provenance, raw-evidence replay and matched comparison limits. Separate static planning from execution that needs approval.",
+      "sha256": "9f6a25cb015f0ee8d98ae4d7b62427653e4490419234e2956d549fd01d3650e3"
     },
     {
       "disposition": "attribution",
@@ -209,8 +262,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
-      "sha256": "f17de42f846ddecd21b601c0e2d71f8169aade52e609f1210d086d79d54789f0"
+      "reason": "Preserve pinned benchmark source identities, licenses and adaptation boundaries for primitive measurements, wallet payments, independent checks and node collection.",
+      "sha256": "b0159205f6d3561a267c60f88820b6b6863da21ec72e4b39566e29da27819be0"
     },
     {
       "disposition": "new",
@@ -220,8 +273,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "288bc89c1c18c08e2913c68c7c07deb9ffe4475d007b618dee884a80acdd3533"
+      "reason": "Describe the isolated primitive, wallet payment and node collection commands, with explicit execution approval and links to evidence and reporting contracts.",
+      "sha256": "7a514607b729396ce8739f80a4dc9d22d9a98843afc4a9828ad2df0d6b6a27d3"
     },
     {
       "disposition": "adapted",
@@ -231,8 +284,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Use existing event/gauge meanings with strict process/node/apply-token/hash/height/class correlation, failure retention, explicit millisecond precision and checkpoint residence, and a throughput-probe-disabled assertion. Proposed propagation events are a new input contract because the required live node boundaries are not currently emitted.",
-      "sha256": "dfc8a2aa661fe324e05fb451e0955072e3d85ff62493dc663a5ae7a06430c67e"
+      "reason": "Reuse attributed event and gauge meanings for strict saved-evidence correlation. Permit an unknown queued block height only when later boundaries supply a consistent height; retain probe-disablement and failure checks.",
+      "sha256": "8c4a537f9adccfb533c7e13cef6843c5ba580dfc49ce72371144250fc72a7000"
     },
     {
       "disposition": "new",
@@ -242,8 +295,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Python standard-library Linux proc/cgroup/interface readers with explicit sampling boundaries and availability. No copied external collector implementation.",
-      "sha256": "2c0614f2bf1d34f657d5ea0ae8284a64fd072900337245c84a4385c20cc6488d"
+      "reason": "Read bounded Linux process, cgroup and interface counters with explicit availability and sampling scope. Keep declared process CPU entitlement separate from leader affinity; derive cgroup entitlement only from matching observed constraints.",
+      "sha256": "e3b19c4eb38a6d70f6dd1acd676449e15a5edc1f76650561dc134fdd00396532"
     },
     {
       "disposition": "new",
@@ -253,8 +306,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Present saved statistics with readable units, explicit per-process and outcome boundaries, nearby coverage/sample caveats and expandable exact values/provenance. No statistical recalculation or external dependencies.",
-      "sha256": "78230657b5c0e4ecda63ce99c0c92e5afa020521c8066489f49fee9d8694d52c"
+      "reason": "Present saved primitive, payment and node statistics with exact values, separate populations and coverage limits. Show wallet fixture boundaries, node sampling scope and escaped operator declarations without recalculating statistics.",
+      "sha256": "ed2488c8316f00a26a998bb90da41981651d50acc983f152052230dbd28b043b"
     },
     {
       "disposition": "adapted",
@@ -264,8 +317,63 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Use the local bounded file, hashing and canonical JSON helpers to archive declared evidence, check adapter contracts and retain failure/completion status. Exact saved configuration hashes do not authenticate producer configuration use.",
-      "sha256": "8febb85d5f88e28d43de78551521e4ff55841f7d52cdd47076ae7b21fd21b3e4"
+      "reason": "Adapt local bounded-file and canonical-JSON helpers to retain saved evidence and failure state. Bind payment metric extensions, effective node configuration and the observed or declared CPU entitlement used in comparisons.",
+      "sha256": "063f6df84f70e60c733013450ef367419a2a183f631b9f20bee341f01bc97641"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/node_build.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt the existing acceptance build helper and attributed benchmark supervisor to retain original build receipts and compiler settings. Validate portable artifacts and require complete build-time metadata for matched node comparisons.",
+      "sha256": "0644ff41b087d05a8666b4efce30d8a90e1f70d6ca17ebd7e8a0bafeffd11ba7"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/node_run.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse attributed supervision and acceptance receipt checks for static node registration and bounded collection. Keep compiled node and sampler identities separate, replay raw observations and distinguish build variants from matched conditions.",
+      "sha256": "4f5cec40c2a15bef27700ba9992f3277023786813b6bd961db17b391ccbdc774"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/node_sampling.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse local resource readers and mempool parsers in an attached-node sampler. Bind process, configuration and cgroup identity; bound loopback HTTP reads with one deadline and retain raw evidence for replay without owning the node lifecycle.",
+      "sha256": "2ff1a463d9fe4e13244586abdfdfb0aedae590ebe51d2a82b39d8cb884ddbf0e"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/payment_checks.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse pinned independent transaction, authorization and wallet-format oracles with the separate SLH reference. Check public payment artifacts and mutations, and add bounded independent secp256k1 verification without production crypto or a general Script claim.",
+      "sha256": "f0c99a850c42869e9533e0a84106a18509bbc4d978ff6e68db15aaa508b4feef"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/payment_run.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt the attributed runner and acceptance helpers to register bounded wallet payment cases, storage identities and reference snapshots. Keep measurements and independent artifact checks in separate processes and retain partial failures.",
+      "sha256": "9dc795c3fd6ab67021f177a8ac8ad2748ef108ccf8e106b63bea29106f078d06"
     },
     {
       "disposition": "adapted",
@@ -275,8 +383,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Retain regular-file hashes, canonical serialization, source snapshots, and bounded JSON concepts. Benchmark JSON permits finite measurement floats and has its own record schema; it is not the wallet fixture decoder. Add benchmark artifact inventories and atomic receipt handling.",
-      "sha256": "7ca3b455a373102ec3b2b2da67ecf296918eb8ca9f2a2cbc37d253be973e2701"
+      "reason": "Adapt pinned source, file-hash and receipt helpers for benchmark identities. Retain only bounded, verified payment reference sources, licenses and prepared libraries without executing them; preserve compiler configuration identity across worktrees.",
+      "sha256": "512ad5514c55c8b36db465d82468f515af1d7b2e798810569e64d94c16c2cc61"
     },
     {
       "disposition": "adapted",
@@ -286,8 +394,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Use the empirical nearest-rank index ceil(n*p/100)-1 for p50/p95/p99. New Python validation and reporting preserve process/case boundaries, warmups, outcome populations, unavailable values, and censored observations. No research result rows are imported.",
-      "sha256": "d34a2c59e33e3b32a8c2ff7ddf2b4568d47b7811f7541f44dea5912f91fe1955"
+      "reason": "Reuse the attributed nearest-rank rule with separate process, outcome and availability populations. Add payment metrics and require matching metric catalogs, wallet storage and recorded node build settings for comparisons.",
+      "sha256": "d9d1309c6d902ff395d015067c8e6b77210d10e6b5e461432cd51557d24979d7"
     },
     {
       "disposition": "adapted",
@@ -297,8 +405,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Retain fresh build outputs, Cargo compiler-artifact discovery, copied binary identity, source checks, complete/incomplete state, and raw evidence. Limit builds to the isolated primitive package. Add bounded stream supervision, registered case settings, attempt normalization, process failure records, and offline artifact verification instead of importing the research matrix or node workloads.",
-      "sha256": "84520276fc5ed98982170276b268a98cfe20b9117187a3e62b57d36731eaf607"
+      "reason": "Adapt the pinned build and evidence driver with bounded supervision, explicit execution and primitive record limits. Register payment, node-build and attached-node commands through their modules; retain interrupted observations with an explicit unverified status.",
+      "sha256": "b66e3add08b11a112c4f1204d5f28bb4bf30be05d588492b7ae528a674134063"
     },
     {
       "disposition": "new",
@@ -308,8 +416,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "6feec9e27ef67c99c3edcf2717c8a882ba252335c49a9eda7f238641fca9ff3b"
+      "reason": "Specify benchmark record fields, separate primitive and payment metric catalogs, durable wallet stage boundaries and limits on comparisons with classical transaction controls.",
+      "sha256": "1494241feb81cea03812c4bf035fc08cba9493b3a76a118297ed7e8dd3828c21"
     },
     {
       "disposition": "new",
@@ -323,6 +431,17 @@
       "sha256": "c08dbc9c859f5c71f6bb23a8c0345a16583e7173778bee0ff595c39ec47b8357"
     },
     {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/schema/payment-metrics.json",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Define an additive payment metric catalog with durable wallet stages, separate classical transaction stages and an observed foreground total. Preserve the original primitive catalog and its historical receipts.",
+      "sha256": "8ac01ddc77057aa468ea1f0157fc2e7695be2c56305510aa410d21e6e0ec92d7"
+    },
+    {
       "disposition": "attribution",
       "path": "benchmarks/slh-dsa-b128s/sources.json",
       "provenance": [
@@ -330,8 +449,19 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Preserve pinned benchmark source mappings, source hashes, licenses and adaptation boundaries.",
-      "sha256": "d5f45ab2e47e102fe2096bb9ca96b5b719bdc6563a7c946a124dbd633ae3c83f"
+      "reason": "Record pinned source files, hashes, licenses and adaptation boundaries for primitive measurements, wallet payment controls, independent checking and node collection, without importing research history or results.",
+      "sha256": "f20928d195d5d7cf3d9d892a48a39be8e66d3509a9a1d3980e5df555bc792b3c"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/classical.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt pinned product P2SH fixtures and transaction recipes into bounded v5/v6 classical payment controls with actual serialized fee actions. Verify with prepared public keys outside secret-key generation; claim neither a durable wallet workflow nor full Script validation.",
+      "sha256": "e4b8266a0246feccdf6df92ddf94f3a2360b7b50d55b92a8d3497b8539150dd6"
     },
     {
       "disposition": "new",
@@ -341,8 +471,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Strict bounded argument parsing, explicit human execution switch, required input-reuse mode, and non-measuring inspection commands.",
-      "sha256": "600dc3e635754a09a1d04515c16f125815a4d4504a975807b30baa147ef9bac2"
+      "reason": "Parse bounded, explicit primitive and payment case dimensions, storage paths and execution flags. Keep the single-case untimed payment check separate from measurement commands.",
+      "sha256": "ff748561d7a23b39d356041c91042423683d4afa9d058f5af97f0964728a3498"
     },
     {
       "disposition": "adapted",
@@ -363,8 +493,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Time the complete product key root, public randomized signing including mandatory self-verification, and external Pure verification. Emit only public hashes/lengths and attempt records. Keep fixture preparation, hashes, corruption, and benchmark postconditions outside observation windows.",
-      "sha256": "e7b51e022eceabc13aaaaa9c68a43ed475499721250042f204aacc00f6522517"
+      "reason": "Call existing product primitive APIs with public measurement records and dispatch wallet payment measurements or untimed checks to the payment module. Expose both case catalogs without emitting secret material.",
+      "sha256": "33c18a6c11998ff9e83de89ab8ca9cc7b6fc8dc54aac938f5695ce879269fc16"
     },
     {
       "disposition": "adapted",
@@ -378,6 +508,28 @@
       "sha256": "b25fd6a381aa9903ce3d9e1ed2bee1b69f221206eb8e01a3c1ea103cc87961b1"
     },
     {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/payment.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Reuse product WatchStore lifecycle APIs and attributed measurement boundaries for bounded offline payments. Separate public artifacts from private disposable storage, disclose fixture preparation scope and keep independent checks outside timing.",
+      "sha256": "e4c453f9bf180af6c89f055fc48b5f73e8165fce3f52daacc81426c67a06a05a"
+    },
+    {
+      "disposition": "adapted",
+      "path": "benchmarks/slh-dsa-b128s/src/payment_fixture.rs",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Adapt pinned wallet payment and watch tests into a bounded synthetic chain at the trusted-node interface. Use existing enrollment and backup APIs with private disposable keys and indexed prepared responses, without claiming consensus-valid funding or live acceptance.",
+      "sha256": "d64833da3d748851f83c71d49c9ad6aa5f52c18b0d93c15dff9483cb6fe0a5eb"
+    },
+    {
       "disposition": "new",
       "path": "benchmarks/slh-dsa-b128s/tests/test_adapters.py",
       "provenance": [
@@ -385,8 +537,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Exercise strict saved trace, gauge, transaction, and propagation adapter contracts using public or synthetic input; no live network workload.",
-      "sha256": "697ded64318a2bbedf8d718f0529d56fe23c4a1eb258fd14ee908f4183ed65b4"
+      "reason": "Test strict saved trace, gauge and propagation contracts with public or synthetic inputs. Cover unknown queued heights, required later heights and conflicting block identities without a live workload.",
+      "sha256": "37be56eabe81a53e9a5306fcd46414ad09f2aae096f64e88d3f59096cb3e1afd"
     },
     {
       "disposition": "new",
@@ -396,8 +548,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Exercise Linux resource snapshots and counter handling using synthetic file content, without profiling a live process.",
-      "sha256": "5057808b9684bcca870d79d214299288232c897a5b34a4722dc3d928b4ec838f"
+      "reason": "Test Linux resource accounting with synthetic counters. Cover declared process entitlement, leader-affinity limits and rejection of caller-supplied cgroup entitlement without profiling a process.",
+      "sha256": "7b5f694cbc3715308b470574be8f07bc62fbab36983efed48232a236c45d787a"
     },
     {
       "disposition": "new",
@@ -407,8 +559,96 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Check all saved-input kinds, profile validation, bounded files, immutable copies, source identity, archived probe configuration and failed/incomplete import receipts. No live workload is executed.",
-      "sha256": "147d77e7bc6b15ffe494b876892fc07f2b2535d440ef8046add77eeb380cb190"
+      "reason": "Test bounded saved-evidence imports, failure receipts and source identity. Cover payment metric extensions, effective configuration and observed cgroup entitlement in report comparisons without a live workload.",
+      "sha256": "38b219e6c23e0949abae2fe2b9ca2170242f5dd7ccf09180a0bb0870226a364a"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_build.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use mocked compiler and build children to test flags, configuration changes, wrapper rejection, portable receipt binding and failure retention. Reject comparisons with incomplete historical build metadata without compiling or running a node.",
+      "sha256": "bb7c19b03a7d2f41e2c7d0c921600902f98398e44b867ce0bbcba9ad1f32bac4"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_comparison.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Use mocked build and observation fixtures to test default/SLH comparisons through planning and reports. Require complete matching compiler and observation settings while retaining per-side build identities and historical configuration IDs.",
+      "sha256": "45585fa372165097f090ce9004ecb20271d6a34a3ddda44b152efa9828991041"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_reports.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test visible node collection scope, schedules, missing capabilities, separate gauges and net growth, and escaped operator declarations using saved synthetic observations.",
+      "sha256": "6430f5e485e3c04d19b80cc1ba5beea7c2a6d0bccf9f7134c40cc9b6f3af452e"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_runner.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test static node planning, retained-evidence replay, exact record accounting, timeout and cancellation, and substituted inputs with mocked children and bounded fixture streams.",
+      "sha256": "41a79c539691fdc77b18acea57d7a8b5649c95341e21f33dab3d0bd29095e5ee"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_node_sampling.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test process, endpoint and cgroup binding, interval arithmetic, gauge recovery and absolute HTTP deadlines with synthetic counters and bounded HTTP responses, without a live node.",
+      "sha256": "02ef9b00fe48993bc712408bf92eb48fa436abfe82e03fb7527f0c8de7028aaf"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_payment_checks.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test independent public payment checks across transaction versions, input counts and policies. Reject altered effects, signatures, noncanonical encodings and invalid mutation verdicts with bounded public fixtures.",
+      "sha256": "388e7848acc2ae3369af8e4b92d4cbd3ed6aefbf37f620443a98f94ef5851ff0"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_payment_runner.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test wallet payment registration, storage identity, separate checker receipts, failures, timeouts and artifact substitution with synthetic children. Cover stage reports and comparisons without a payment or performance workload.",
+      "sha256": "bced98459ac57a6995d2e5c0993196efc1f12c790e2f3d756c1e486231659057"
+    },
+    {
+      "disposition": "new",
+      "path": "benchmarks/slh-dsa-b128s/tests/test_reference_snapshot.py",
+      "provenance": [
+        "benchmarks/slh-dsa-b128s/NOTICE",
+        "benchmarks/slh-dsa-b128s/sources.json",
+        "docs/slh-dsa-b128s/benchmarking.md"
+      ],
+      "reason": "Test exact pinned reference retention and reject source or library substitutions, symlinks, unexpected Python modules, overwrites and excessive copy sizes without executing foreign code.",
+      "sha256": "b4d58c7861297e537e7847125aa63d665317ec89e52453e35a7193f093c45883"
     },
     {
       "disposition": "new",
@@ -429,8 +669,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Exercise bounded fake child processes, source/artifact identity, settings, and failure/receipt handling without signer, node, or benchmark execution.",
-      "sha256": "d7960ab16f71ea343649801f66477e53962541379bdf7f4b6af9420f281b9a55"
+      "reason": "Test fake child supervision, source and compiler identities, primitive record bounds and interrupted-run recovery. Keep incomplete evidence explicit and reject changed finalized inventories without running a signer, node or benchmark.",
+      "sha256": "3d353ad27139f4e44b66931e361c50ec49a554d67cf8c792f8f815c8ac9b9273"
     },
     {
       "disposition": "adapted",
@@ -1105,10 +1345,12 @@
       "provenance": [
         "crates/pq-wallet/PROVENANCE.json",
         "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
-        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "79638730b2df331ac821b576c1659237628e87f32c1d6b4013ecbcf945f589aa"
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "edea3d4b1da320c0f0b9af529a7c9e865331abc430d88e5fb1c8f55ca0b0cb85"
     },
     {
       "disposition": "adapted",
@@ -1631,10 +1873,12 @@
       "provenance": [
         "crates/pq-wallet/PROVENANCE.json",
         "crates/pq-wallet/PAYMENTS_PROVENANCE.json",
-        "crates/pq-wallet/RECOVERY_PROVENANCE.json"
+        "crates/pq-wallet/RECOVERY_PROVENANCE.json",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "97ab53aa7e4368cf3466aaa1d602162244190b5d91755fd26da8d1c6dbbd1100"
+      "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "e76d01e4a2b16398b816aaf5b42dbb39fbf3b9a0f95dcdddb34b432200ee8480"
     },
     {
       "disposition": "adapted",
@@ -1801,6 +2045,36 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/block/serialize.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "00b14f87db4d82244542fd545ff49df38c90aab3978f2dce55e1c168827ded30"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/block/tests/generate.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "6bdbf84ec1201850775c352effd83f415e0a6ead869ceb8ef2b10bba82c59bb4"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/block/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "c33f31f82e8adbe41f05fe97c7888769fa4482a87141cbe08e720a64d8ef75b3"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-chain/src/local_genesis.rs",
       "provenance": [
         "docs/slh-dsa-b128s/devnets.md",
@@ -1808,6 +2082,16 @@
       ],
       "reason": "Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
       "sha256": "45257b8c1fa16b870a07e53cfa2249473d683580ec63ad6732b9380fc7e6cc17"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/parallel/tree.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "50739e98d55db15416777661ea6e5f86538855644fb2faf00b89fcb8e04b572a"
     },
     {
       "disposition": "upstream-modification",
@@ -1862,6 +2146,26 @@
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
       "sha256": "9d21f8703e087ca6d2fa833581ad2df7d5362fc0fd68bd6cc8bf761359143bbe"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/serialization/zcash_deserialize.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "b6c5a4dd2cb38963ed94eacefb214570743394a4f866bb619e83adb1a3d97566"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/serialization/zcash_serialize.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "a126f954cb4bfa92ae0079456194cfcc70de462b12c8e75992ddce729a5fa60b"
     },
     {
       "disposition": "upstream-modification",
@@ -2137,6 +2441,156 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/protocol/external/codec.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Carry 20 MB blocks and transactions while preserving the upstream 2 MiB limit for every other legacy command; enforce both handshake and command limits before reserving body buffers. PR #9 follow-up: Grow receive buffers with arriving data instead of eagerly reserving an advertised full body; preserve the 20 MiB data and 2 MiB control ceilings. PR #9 follow-up: Release completed large legacy receive buffers by copying at most 64 KiB of the next-message tail; preserve amortized growth while receiving payloads.",
+      "sha256": "9616112f98ee0118ef5d05e0226179b009e3626406ef69bb876ca80cba7e8e16"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/protocol/external/codec/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Cover a full 20 MB block round trip, reject oversized control and unknown message headers before body reservation, and preserve the pre-handshake limit for blocks and transactions. PR #9 follow-up: Cover header-only and partial-body announcements without growth, and verify a full 20 MB block through incremental FramedRead buffering on the decoder-supported multithreaded runtime. PR #9 follow-up: Extend the full-size incremental block test to verify buffer release and preservation of a following ping.",
+      "sha256": "12b90afe1e902e98a0ecde83a6575980b190ea7936330819f4fdf10784b2375f"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/README.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Document the 1.5 GiB speculative look-ahead budget, one-block clamp, and the separate 20 MB checkpoint-window memory bound without claiming a total RSS cap.",
+      "sha256": "b03f4e6a44e55f568558cf2e8ca8f8d5f4b4e5703c0c7096306ea153890de10c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/admission.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Exercise all 401 checkpoint-window heights at the unchanged 1.5 GiB default through request and both retention gates without large allocations; require above-window requests to stop when memory is full.",
+      "sha256": "efcf4384ec46bfe7d6e507cd3f0da49ba539a906cd403806352b1eefa619e53a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/bbr.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "a9f752fc83840d40c91f0f1ebe7dbff2ce1b65a414ef866ebd661996dba427d6"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/config.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Retain the upstream 1.5 GiB speculative default with 20 MB blocks and clamp only sub-block budgets; the existing checkpoint-window exemption supplies liveness independently of this budget.",
+      "sha256": "88174f7f7e5167497b3cccf569a9e292bc178d6917c2594c356d65d7448ae028"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/regulated/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Exercise the full 20 MB regulated block envelope in both directions and reject one byte above the limit without constructing a consensus fixture.",
+      "sha256": "3e1c1aedc710257db1df944851a62990daaab9bf0c69d6495a99918d8f91f184"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/regulated/wire.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Derive the regulated block envelope limit from MAX_BLOCK_BYTES plus its tag so the alternate requester accepts full devnet blocks.",
+      "sha256": "3b23e7cbcec273c878f4232146420cd22a9c14cf4e0748343a4aa5cd4342d340"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/service.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "428ac01043e6bd4f708a624e8f9390e278054be9ef6550c9c8ed7638563219b5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Cover peer retention and reuse with advertised sizes and unknown 20 MB reservations, testing both response-completion and verified-frontier event orders; retain checkpoint admission and framing regressions.",
+      "sha256": "cb26c9d595d4f65b861e465e12763a4a45d9f99cb16c1c34bdcd4db2820408ad"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/wire.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "9b6600651f958bba7563be385e7ab3db44aeca1ee06523a808c10815820bc660"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/handler.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Grow native frame payloads only after bounded chunks arrive, preserving total payload deadlines and reset/FIN handling; regress header-only and partial-body allocations and transfer a full 20 MB frame followed by another frame over loopback QUIC.",
+      "sha256": "4fbd2ad7626c9430cf259d4f1f6d7cd000ab815a136b317cfae0d8bbdff852f8"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/handshake.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "ab587cf9399d4266e2e5a22892e7b1db5e519a11095600fb4a91690b40d478ac"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/header_sync/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "e23278daac4e2b8fe3552f424b23d419a33ed54ca93cd2d675164c978d2f5386"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/header_sync/wire.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "d8478b9f8313ba7e98dc319b405cdf6223c45b9215554321a0f933eb1c025e2d"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-rpc/Cargo.toml",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
@@ -2158,6 +2612,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/config/rpc.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Scale the default RPC response budget for verbose JSON from 20 MB blocks while retaining explicit operator limits; cover a response above the former 50 MiB cap over HTTP.",
+      "sha256": "71311eaff7c037697a0c7244e1c650e47db696d6521f9bbc0ca4fbe3fad6e40c"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-rpc/src/methods.rs",
       "provenance": [
         "docs/slh-dsa-b128s/devnets.md",
@@ -2175,6 +2639,46 @@
       ],
       "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
       "sha256": "fb595d62637a151f2cead8e5c70ebd53eccca2e00ccc96d5b7233ff7095bab7c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_basic@mainnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "8e5def7d0ff0d4f358196e5186ed4e224f4638caf4a07b05bf61be89ab49ccbe"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_basic@testnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "48498a847aad44463131d4b63530e9fa69736a2d0d90deac289a0f9d3fc1ff48"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_long_poll@mainnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "f51c2a99eed1205f57f71af5f7ad53b064dfcaac79d7d78891806dd7c57ced88"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_long_poll@testnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "e4110d6438699c0b803a3c7e58cbd0823add5b284314a8a7067d9379751eb334"
     },
     {
       "disposition": "upstream-modification",
@@ -2204,7 +2708,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "b687794d0af848fc4784b4809de28e9cb0483992e140523dd2107492f439ea76"
+      "sha256": "1cb1ac8cd062d60bc725e1a2c1c100c8ffaef61d82a87a1ef736444f94d6b015"
     },
     {
       "disposition": "new",
@@ -2215,6 +2719,36 @@
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
       "sha256": "0c494937c3bb4bd0c5ad2a4eec829955801fc3ef95268e7947956a2487a0f7bb"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/types/transaction.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "0ef66dff2cdc1bc96e1e3592183a2c3e7781379cdcaf18888ce408e0ae864087"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/server.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Expose the actual listener address internally so HTTP regression tests can use OS-assigned ports without a reservation race; preserve public server APIs.",
+      "sha256": "8a4699d85816b331ffcc800dcd0673fd5b5b76f7da019ad0318904a086614df2"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/server/tests/vectors.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Keep OS-assigned ports and full-size HTTP request/verbose-response regressions, make ordinary startup/shutdown independent of large payloads, and borrow response hex instead of duplicating its JSON tree.",
+      "sha256": "4d2e5aabe128745955d73b98e92d2167dfbe4d2689c387dba975c4f724b3e38f"
     },
     {
       "disposition": "upstream-modification",
@@ -2252,10 +2786,31 @@
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
         "docs/slh-dsa-b128s/protocol.md",
-        "docs/slh-dsa-b128s/devnets.md"
+        "docs/slh-dsa-b128s/devnets.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
-      "sha256": "717c8c54149ceead7463a243916f9880b95b33835c2d6ac964f4463cd540fc8c"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #9: Separate fork state paths under state-tpq and share version-file parsing between historical migration discovery and strict startup layout checks; preserve legacy parsing only when the caller supplies the old major version. PR #9 follow-up: Require explicit major.minor.patch markers in wide-index format queries as well as startup; retain historical minor.patch parsing for pre-wide-index formats and test both paths.",
+      "sha256": "2c9cf2d3de7f9642d766c7f808c2d9a437697c1223a4ffd22f19e2d6bf33795b"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/constants.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Use four-byte transaction indexes in format 30 under a distinct state-tpq database kind, avoiding future upstream major-version collisions; name the layout boundary and last pinned upstream format.",
+      "sha256": "94f372debe756fba54c017226643d061f516113a00484db68786000fa8dbb0ab"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/error.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Explain why a copied pre-wide-index database cannot be opened as the fork format and requires a fresh cache. PR #9 follow-up: Expose the underlying unknown-cache cause in startup diagnostics and distinguish a read-only uninitialized database from a missing path.",
+      "sha256": "b8cff2b23751cf8462edb4b838a49adf3c0c7c09309d9405527462382a5a68dd"
     },
     {
       "disposition": "upstream-modification",
@@ -2277,6 +2832,456 @@
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Reuse the existing reset event sequence on an explicitly configured custom SLH Testnet as well as Regtest, to cover activation and rollback without live services.",
       "sha256": "cb641f52993db8af9ce09d565abc9a15e05daca4994594932603c7a73d8364b6"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_db.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Inspect unversioned RocksDB column families without typed decoding or merge operators; only an empty database may resume interrupted first initialization.",
+      "sha256": "c6e1b84b787f0b3493b1265d04ce9720b3ce059d5fe8f097f397fd5546c8da6d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/block.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "56c2fd5ec9236f6a6b1f1c8075d03dd61b68acb6bb0088ba9013c6d5c8666575"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/prop.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "3362c7049e284fdf31b8a2ae490c2c89b0323812df7558bdd5f829e98e3e7ea0"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/balance_by_transparent_addr_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "807a73560ff908a07fceff7752460261e7126ba2abd1bc1362398120f1b747dc"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/balance_by_transparent_addr_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "0484099985686707da29c689f231aae91695aa2d3b4508a4ebccf682296e181d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/balance_by_transparent_addr_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "6019d32ce7286a36e1eb448f532e7a7f33220957f7170f6dbc343d9c1fa95382"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/balance_by_transparent_addr_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "87813b0d769fb2d7b19d8a6054e29e27de531b6c11a3be09e79d5674ee42e608"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/hash_by_tx_loc_raw_data@mainnet_0.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "93b8eefa846db3a787ed200e743a5a1df4a7a94424649e459fa994ecf7b839d8"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/hash_by_tx_loc_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "35c43149dc60a17589f3bc43466cb5d858206ab12a2bacb2b8d27b03f33e2c17"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/hash_by_tx_loc_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "ecd8b47828ffe0cd465e7835751d08c8750c3d286ffd7221d930c4f428c216f7"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/hash_by_tx_loc_raw_data@testnet_0.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "93b8eefa846db3a787ed200e743a5a1df4a7a94424649e459fa994ecf7b839d8"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/hash_by_tx_loc_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "fd4b525e8cbbfaa77d2e03ecb9648606ac92bbd86c52bcf202da345fabcddaee"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/hash_by_tx_loc_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "b28559a7e6284793c2d20d34eba4f328e8f3e9566028a38bc1a945a1b068bdeb"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_by_loc_raw_data@mainnet_0.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "0d306b298632c4acfa3a9304e9aaf04bccd3298c76da5e270f1a27ca84d1dc2e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_by_loc_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "7ee928469a9c7dafb29d95e65784deff48f5a4580bc87b36afe57432c2361047"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_by_loc_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "549c9b89183b87660cae534c67ea3d9ec0a3195a5bab6197bc467914e48fd3ed"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_by_loc_raw_data@testnet_0.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "0d306b298632c4acfa3a9304e9aaf04bccd3298c76da5e270f1a27ca84d1dc2e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_by_loc_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "cb1f732928358d65ca99f263967b512e86be93a57dc06c2f037d4be5edbf5a95"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_by_loc_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "40d0a5b475b15d72a71e0d6919da8c3c3d9c1a62c418e23e9e1af8cee60d5872"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_hash_raw_data@mainnet_0.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "f75e5aa01bb9e0d55f84dce2b53ac808ef39b3a5df8defd6f33ec18bfc061078"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_hash_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "666f3d83e18e4361146471e65a3532e2870b09472d3cc79bc3a2aa70a1552cde"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_hash_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "8219d3440aa88bd447112125c55989d024f1174fec0d33f1ddf91e0224d6368c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_hash_raw_data@testnet_0.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "f75e5aa01bb9e0d55f84dce2b53ac808ef39b3a5df8defd6f33ec18bfc061078"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_hash_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "5223f4b03cf833152b58d467a5994554956c0132887b735d9ff23e3be6786632"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_hash_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "cff52299ee47dae7f4a968decda1df11adc04380527baef577dff0a92b47b761"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_transparent_addr_loc_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "7668fb052e8958ffa1e6e3a1e1f6f6c351780f29288257d1997ce61e80edff87"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_transparent_addr_loc_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "3a8ec411ed4f9b409b3ffba195db8230b337a87c09196eecbb9b8209d972fa28"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_transparent_addr_loc_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "7668fb052e8958ffa1e6e3a1e1f6f6c351780f29288257d1997ce61e80edff87"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/tx_loc_by_transparent_addr_loc_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "3a8ec411ed4f9b409b3ffba195db8230b337a87c09196eecbb9b8209d972fa28"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_by_out_loc_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "a9ce69daa3a66884a3227072850dd4de4f4d0ee31d17b3b92ccc715a8844f36d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_by_out_loc_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "bff0a40cae7b0116ea2885f2a1caf48fac7633e8ca393e61ab52439debbba38f"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_by_out_loc_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "605dedc2172dc514f370a3e693e0dbdfae19fbfcfba473a7170aeed3cc6949fe"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_by_out_loc_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "347fc98c51a0090ba5b659d8915d55b85906ad6c444b5e154666e5b900202ca1"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_loc_by_transparent_addr_loc_raw_data@mainnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "7a173294f0d9c3b482d7db65718c6d2bbf0bc9e19f0f6d965c62f2d2d5eb4be5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_loc_by_transparent_addr_loc_raw_data@mainnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "1490ac5cb91e23622e5b69880f294f6a51d3974b540a3573b3bd6f6532f3aa6a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_loc_by_transparent_addr_loc_raw_data@testnet_1.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "7a173294f0d9c3b482d7db65718c6d2bbf0bc9e19f0f6d965c62f2d2d5eb4be5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/tests/snapshots/utxo_loc_by_transparent_addr_loc_raw_data@testnet_2.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "1490ac5cb91e23622e5b69880f294f6a51d3974b540a3573b3bd6f6532f3aa6a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/transparent.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "06844099f956acdb6aa55353e3a604156f657c0089a4546a2ca1cf733925296d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/upgrade.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Keep the incompatible wide-index format out of reusable in-place upgrades; use named format versions and verify that historical fork caches are preserved instead of reused.",
+      "sha256": "1c07f7667db80498fb54330b0d3adcac7cfcd88ee7ecb900915e5bef099a2b9a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/upgrade/block_info_and_address_received.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "42b506bbbf17cc2a84c21a4fdca0ea9e3c1d68bc0171677591a9823232b57212"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/upgrade/nsm_value_balance_pool.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Exercise historical in-place migrations below the incompatible wide-index boundary using the named pinned upstream format.",
+      "sha256": "d655bba50fb867205fd72578c46be726432e348338e0505ba3ca5919efa1765c"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_format/upgrade/unauthenticated_commitment_roots.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Initialize historical migration fixtures against the named pre-wide-index format from creation, preserving cutover, failure and retry controls.",
+      "sha256": "19980d59487f4e502cd6d31d95b05e142dd65e4236c344f4f49d427d9e180aae"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/zakura_db.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Reject copied legacy indexes and ambiguous markers in all open modes, but recover empty RocksDB files left before the first version write. Cover recovery with and without upgrades, normal/read-only reopen, and isolation from same-version upstream caches. PR #9 follow-up: Keep raw inspection fail-closed while adding actionable errors for unidentified caches. Exercise read-only interrupted-start refusal before writable recovery and preserve stray-file caches without relabeling. PR #9 follow-up: Regress all four prune/rollback preview and writable entrypoints against an unversioned copied v29 database, requiring typed open errors without relabeling or decoding old indexes.",
+      "sha256": "a0959ffcde235aea4ec4301e7342d0f367fc4b18ac8ae274d9aec5ceee77e76f"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/zakura_db/prune.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Propagate strict cache-open failures from preview and writable pruning; the fork index guard exposes the inherited expect panic for unversioned copied databases.",
+      "sha256": "62181ab798670dc9bf299d07a18c608916afa2f03ce2ed5cd52fe1c5aee5d618"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/zakura_db/rollback.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Propagate strict cache-open failures from preview and writable rollback; the fork index guard exposes the inherited expect panic for unversioned copied databases.",
+      "sha256": "f2d7821183815bd49c5e0584bf7db602429d9ca8d0ce7b6e195f7ca97943aaac"
     },
     {
       "disposition": "upstream-modification",
@@ -2319,6 +3324,16 @@
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
       "sha256": "759eadccc3e7ed5266f3838ce9d5ecebea6b88f6043f73fde8b0fe15cce068d5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/commands/start/zakura/header_sync_driver.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Derive the malformed body-size-hint test from the active block limit instead of treating a now-valid 2 MB hint as oversized.",
+      "sha256": "d914145155ea80cceb2803b89f7d209740192a859a6613b469d6b3eab626d7c9"
     },
     {
       "disposition": "upstream-modification",
@@ -2380,6 +3395,56 @@
       "sha256": "c14479c58b592e35ad4e3193b0442b3e6db80a99c53dad3b2d0fea3f901afcce"
     },
     {
+      "disposition": "upstream-modification",
+      "path": "deploy/nu7-fork/fork.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Reject the incompatible devnet cache layout before public-Testnet seed operations can touch a host or copy upstream indexes.",
+      "sha256": "019da2e99227f191e7776190be7b85376585cbb8274c6a8240ff478ddfeabc04"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "deploy/nu7-fork/test_fork.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Mock the seed path to prove fork-layout refusal precedes host operations, and preserve the upstream source-version parser with a historical fixture.",
+      "sha256": "64b599ceb26e2e0d03f7aae1fdb735400c2d91ec134508f179c890fb68e20869"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "deploy/runner/feed_run.sh",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Require BENCH_DB_REL explicitly so snapshot paths are chosen to match the binary instead of silently assuming state/v27/mainnet. PR #9 follow-up: Check the cloned Mainnet snapshot with the actual binary before non-genesis benchmark starts; require a numeric tip even when tip-height logs an error with zero exit status. PR #9 follow-up: Replace the duplicated read-only Mainnet preflight with the shared initial-cache-report checker after normal startup, so supported version reuse and the configured network work; stop the owned process on rejection.",
+      "sha256": "cd9f377df209d440ac4c51d21acce66ef9cdcd33e00d566a3f6942768f9d4fbf"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "deploy/runner/runbook.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Document required BENCH_DB_REL, the binary snapshot preflight, the Mainnet-only cohort scope, and the incompatibility of upstream snapshot relabeling with wider fork indexes while preserving historical instructions. PR #9 follow-up: Document normal upgrade handling on the run clone, network-independent startup checking, the Python helper and required cache-event logging, while preserving historical upstream instructions.",
+      "sha256": "9a6454a5ffa7e48e57abc353977bd8e577d7dc6ed2370ce018e281649abba558"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "docs/changelog/params.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Record block, native transport, RPC and wallet limits, the retained speculative default, and the legacy per-command buffer ceiling. PR #9 follow-up: Clarify that larger data-message limits do not cause full-body reservations from headers alone.",
+      "sha256": "04947863390cee9e0495302ea58a2807f4fa6dc5ec343de6ad337a83d95ae7aa"
+    },
+    {
       "disposition": "new",
       "path": "docs/changelog/unreleased/4.md",
       "provenance": [
@@ -2387,6 +3452,36 @@
       ],
       "reason": "Record the required no-changelog fragment for the internal SLH test review pull request.",
       "sha256": "705736afd9b668f013d3bbaaa6976f0b9d4f01382007dd1a5063be7f4dc1187c"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/7.md",
+      "provenance": [
+        "docs/changelog/unreleased/README.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
+      ],
+      "reason": "Record the required no-changelog fragment for the isolated offline wallet benchmark, reports and regression tests in PR #7.",
+      "sha256": "d1bbad2820d0113bbc18c5f67dfa2c5ecdb17abe75adb98fa94e1bf43a948485"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/8.md",
+      "provenance": [
+        "docs/changelog/unreleased/README.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
+      ],
+      "reason": "Record the required no-changelog fragment for node collection and benchmark workflow fixes in PR #8.",
+      "sha256": "1a0819c9dd0a8e44131eb0bd8d5215c72749a06ddcf5de7673b25338d6687532"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/9.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Describe the 20 MB devnet limit, wider indexes in a distinct cache, strict old-cache rejection with empty-start recovery, and separate buffer and sync budgets. PR #9 follow-up: Record actionable cache diagnostics, snapshot compatibility preflights, explicit feed snapshot selection, and removal of eager peer body reservations. PR #9 follow-up: Record fallible maintenance opens, binary snapshot checks, and native/legacy incremental buffer handling. PR #9 follow-up: Qualify interrupted-first-start recovery as requiring readable RocksDB metadata and record benchmark checks that preserve supported upstream upgrades and configured network selection.",
+      "sha256": "c0e8d5a40bfa54cd55a967829be4a6441401845820c6f87e2c4ae3eb61805984"
     },
     {
       "disposition": "new",
@@ -2417,8 +3512,8 @@
         "benchmarks/slh-dsa-b128s/sources.json",
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
-      "reason": "Document and validate benchmark metric, command, saved-evidence and reporting contracts, with live workload limits explicit.",
-      "sha256": "03f08ddb1d3fa4a396a31192af2d2a1cd2fd81878ccbbb7ff624eb570686cfd8"
+      "reason": "Document primitive, offline wallet payment and attached-node benchmark workflows, independent evidence checks, comparison requirements and commands that need explicit execution approval.",
+      "sha256": "fb86556a697ef1189736c50286f2c3cdfa18e6e85ef2ca7c9a126c10ff181289"
     },
     {
       "disposition": "new",
@@ -2455,7 +3550,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "bb767b0afe3e408dca88908659ba74824a22e7a5f9d4c6480cad6714c6bb652c"
+      "sha256": "bdf55118ce5b96035eb0f6b2f0c135251498afcbab04e09c192c2b97be21f739"
     },
     {
       "disposition": "new",
@@ -2643,10 +3738,11 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
         "docs/slh-dsa-b128s/devnets.md",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "a20297debb487ff62aa98a2c1710aa1769542b525b0dca2e1d08b4d2f1039e2d"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "178f84dcead01959308f70fe434a6af9976aa37d7c0eaa020db7512b774c717c"
     },
     {
       "disposition": "new",
@@ -2673,10 +3769,11 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/relay-mining.md",
         "docs/slh-dsa-b128s/wallet.md",
-        "docs/slh-dsa-b128s/writing.md"
+        "docs/slh-dsa-b128s/writing.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Track unresolved ecosystem choices for public SLH adoption. State existing Zcash rules as the baseline and distinguish SLH security, fee, signing, resource, receiver and migration decisions from prototype operation.",
-      "sha256": "5ab1b64164a033a7a9acb04f3f4cc80e05492f44482cefa3ff0e11e846ce8d2e"
+      "reason": "Track unresolved ecosystem choices for public SLH adoption. State existing Zcash rules as the baseline and distinguish SLH security, fee, signing, resource, receiver and migration decisions from prototype operation. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "8b54c2bb62e93d52c9dc66e7f1ec11b5fd9e4eb9a93d933339d2db534e8179a0"
     },
     {
       "disposition": "new",
@@ -2693,10 +3790,11 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md",
         "docs/slh-dsa-b128s/devnets.md",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "34de401a24feb746089107627c3282c804be77c1f482419db3205fef42305207"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata. PR #9 follow-up: Describe early target/baseline source or release layout checks and a shared startup-cache guard that runs after normal database reuse, without a separate read-only network override.",
+      "sha256": "c7a7f28d771f097962fe0d465cad1e1383d795ee733476cc0bd7917f18a47a26"
     },
     {
       "disposition": "new",
@@ -2802,6 +3900,36 @@
       "sha256": "608dcec7de1db123bb98cdb400ba7c90936916bda5dc6b5a144aeafad8b58617"
     },
     {
+      "disposition": "new",
+      "path": "scripts/benchmark-snapshot.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Share bounded initial-cache-report validation based on pinned upstream StateService startup logging; reject empty/wrong tips before benchmark collection, and inspect release constants with a bounded read and timeout before snapshot downloads. This helper never opens or changes databases.",
+      "sha256": "1d733441fd00fb634c4e12d38d4060b579257dfb599bbcf4cfa1f7c9462a5850"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "scripts/checkpoint-sync-bench.sh",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Inspect selected primary/baseline source layouts before snapshot download and inspect the exact build commit before cached-binary reuse; refuse incompatible fork layouts without changing upstream snapshot formats. PR #9 follow-up: Verify the exact restored tip with every resolved benchmark binary, including baseline and release downloads, before starting a node; reject missing or mismatched cache layouts without a genesis-sync fallback. PR #9 follow-up: Replace the read-only preflight that blocked previous-major snapshot reuse with an initial cached-tip check after writable startup; check both release source layouts before expensive snapshot downloads or builds, retaining source-ref checks.",
+      "sha256": "86fdc157f74755f642f41d519b4e4bfe12bcd2dd2e18044cc36321ed563fd143"
+    },
+    {
+      "disposition": "new",
+      "path": "scripts/tests/test_snapshot_preflight.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Exercise both actual shell snapshot guards with mocked binaries across successful, missing, zero, duplicated, mismatched, and failed tip results without running build or live-node wrappers. PR #9 follow-up: Replace obsolete duplicated-shell/read-only checks with 16 bounded tests for initial-cache reports, migration progress, configured-network independence, partial and invalid logs, process exit and deadlines, release layout checks, and actual target/baseline preflight ordering with all external work stubbed.",
+      "sha256": "860e526075641083e5939fb0f4a3b5926bb8aa53154a3e2fb02b8de2b640b186"
+    },
+    {
       "disposition": "attribution",
       "path": "tests/slh-dsa-b128s/acceptance/NOTICE",
       "provenance": [
@@ -2898,10 +4026,12 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json",
         "tests/slh-dsa-b128s/acceptance/NOTICE",
-        "tests/slh-dsa-b128s/acceptance/README.md"
+        "tests/slh-dsa-b128s/acceptance/README.md",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "reason": "PR #9: Adapt cache inventory to the fork state-tpq directory while preserving existing namespace and backup controls; this path change does not extend previous live execution evidence.",
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     {
       "disposition": "new",
@@ -3056,10 +4186,12 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json",
         "tests/slh-dsa-b128s/acceptance/NOTICE",
-        "tests/slh-dsa-b128s/acceptance/README.md"
+        "tests/slh-dsa-b128s/acceptance/README.md",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "2d3b5a070ea56095556a9ce6f9316bb13c9d65a768360c3884dc1923e1cd939f"
+      "reason": "PR #9: Use mocked state-tpq/v30 cache fixtures and verify that same-version upstream state files are excluded from the fork namespace inventory.",
+      "sha256": "9a076002005940c2d937c723f123ccb45b902dc56e0cedd8ebe80fa661621c85"
     },
     {
       "disposition": "new",
@@ -3172,30 +4304,33 @@
       "path": "tests/slh-dsa-b128s/dependencies/README.md",
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "457fc434597b8218447649b6aa41481acca66daaa6aebed320ef5885a82e6730"
+      "reason": "Document allowed dependency graphs for the isolated primitive and wallet payment benchmark, including product transaction context, while keeping benchmark code out of node, wallet and verifier graphs.",
+      "sha256": "c548b24af019441c7ca151d26dbfdfb0c59079d501133b81f815369046d3dd6b"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/check.py",
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "75956ef66d66bb567e6502d55f748fdf95fdfb5e26ee6b067c7ad0441128eeef"
+      "reason": "Check resolved feature graphs for SLH dependency isolation. Require product wallet and transaction-context dependencies in the separate benchmark while excluding node services, the CLI and fixture tools and preserving the BLAKE3 pin without Rayon.",
+      "sha256": "cb495ca59f5e197f446e8d0e162216c2077fc5c17247d6c295eda84923756669"
     },
     {
       "disposition": "new",
       "path": "tests/slh-dsa-b128s/dependencies/test_check.py",
       "provenance": [
         "tests/slh-dsa-b128s/dependencies/README.md",
-        "docs/slh-dsa-b128s/benchmarking.md"
+        "docs/slh-dsa-b128s/benchmarking.md",
+        "benchmarks/slh-dsa-b128s/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "6a636502d7d649a173a1f776f7bcf4c625099e65c0466e652ad3f7aef2347ffc"
+      "reason": "Use mocked dependency graphs to test the updated wallet payment benchmark requirements and forbidden node-service edges, alongside existing signer, verifier and default-feature isolation controls.",
+      "sha256": "69730e0b11d6c4d2467774f1a496728d696e4be3b0fb5169e30a8d5b69c4956a"
     },
     {
       "disposition": "new",
@@ -3227,7 +4362,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "420858f15e1e83adde65e6bbd1c427e605923fe329f34baacf795040cc1c9437"
+      "sha256": "97672dc6b87278078bb438af486e019d61f9f203b55a0d3dce220e6d66eb3385"
     },
     {
       "disposition": "new",

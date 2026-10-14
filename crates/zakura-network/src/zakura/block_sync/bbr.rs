@@ -1459,10 +1459,9 @@ mod bbr_tests {
         assert_eq!(window.available_slots_with_bonus(2), 0);
     }
 
-    /// Two worst-case reservations per 2.5 MB floor deliver two 100 KB bodies per round
-    /// trip: a 5 MB/s sample and a 200 KB BDP, so the gain-3 target (600 KB) never reaches
-    /// the floor. Twenty-five hinted bodies per round trip sample 62.5 MB/s and a 7.5 MB
-    /// target, but for the first `bbr_rtprop_window` (10 s) the delay gate holds the window
+    /// Two small bodies per round trip leave the gain-3 BDP target below the byte
+    /// floor. Twenty-five hinted bodies lift that target well above the floor, but
+    /// for the first `bbr_rtprop_window` (10 s) the delay gate holds the window
     /// at the floor: the first per-ack sample's size residual is
     /// `elapsed - bytes / (bytes / elapsed)` = 0, clamped to the 0.1 ms minimum, so every
     /// round trip in that window reads as a standing queue. Once that sample ages out the
@@ -1481,7 +1480,7 @@ mod bbr_tests {
         };
         let floor = usize::try_from(DEFAULT_BS_BBR_MIN_CWND_BYTES)
             .expect("the default byte floor fits usize on supported targets");
-        let body_bytes: u64 = 100_000;
+        let body_bytes = super::super::config::BS_PER_BLOCK_WORST_CASE_BYTES / 20;
         let rtt = Duration::from_millis(40);
 
         // `requests_per_round` bodies are sent together, share one delivery snapshot, and
