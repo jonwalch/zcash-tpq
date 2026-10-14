@@ -43,7 +43,8 @@ Hashes permit comparison but cannot replace manual review for secrets and licens
 The ledger records two exact upstream commits and trees.
 `foundation` is the original Zakura base for product history.
 `upstream` is the current Zakura base for the final file comparison.
-The current upstream must descend from the foundation and must be merged into the product.
+The current upstream must descend from the foundation. Integration requires
+upstream ancestry or the exact authenticated squash record below.
 The guard checks all product commits outside the pinned upstream history.
 At an upstream merge, it exempts only entries with the same mode and bytes as a merged upstream parent.
 It still checks product merge resolutions and both sides of product merges.
@@ -70,10 +71,13 @@ history. The guard checks its tree, sole parent, and upstream pins. At that
 commit only, it exempts entries with the same mode, object kind, and bytes as
 the pinned upstream tree. Other entries still need a product disposition.
 An unrecorded commit cannot use this exception, even if its tree is identical.
-The upstream must still be a real ancestor of the selected branch. A separate
-integration merge must retain that history; the squash record does not replace it.
+The record also establishes integration when later feature PRs are squashed
+onto this imported base and no upstream parent remains in the selected branch.
+Without that authenticated record, the upstream must be a real ancestor.
+Both paths require the exact upstream commit and tree as local audit inputs.
 Local Git tests cover changed entries, invalid records, unselected and later
-commits, and deleted private files on merged side branches.
+commits, later feature and fix squashes, and deleted private files on merged
+side branches.
 
 Publish only the selected branch.
 Do not publish all refs, all tags, or a mirror of a developer clone.
@@ -100,6 +104,17 @@ After integration, check the merged result.
 
 Create an independent clone with `git clone --no-local --single-branch --no-tags`.
 Select the committed product branch.
+Squash merges can leave the pinned upstream object outside product ancestry.
+Before the offline audit, retrieve that exact public input:
+
+```sh
+git fetch --no-tags https://github.com/zakura-core/zakura.git e33dc43089acca2fe2c6516927932f2b7618b8bc
+```
+
+The content CI uses the same explicit input step. This adds no upstream branch
+or tags to the product. The audit checks the commit, tree, and foundation
+relationship; it never fetches missing objects itself.
+
 Check for Git object alternates, external source links, and Cargo paths outside the clone.
 Start with empty Cargo home and target directories.
 Run the guard tests and archive audit.

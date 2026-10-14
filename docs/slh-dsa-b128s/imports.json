@@ -109,8 +109,8 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Read-only bounded source/content/archive regression CI without live or build workloads.",
-      "sha256": "6bd26ce4631af62849748d65777e9a50f4f5d0b5b5ef934e35200b59d63ba07e"
+      "reason": "Read-only bounded source/content/archive regression CI without live or build workloads. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "e8acc8adc7489ad23a530ccc648a999dbfe5c05cd27d69add0c8617c652d8feb"
     },
     {
       "disposition": "upstream-modification",
@@ -3831,8 +3831,8 @@
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain real upstream ancestry, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history.",
-      "sha256": "40f61577d9dca4f5ddd65c69ea487e96dddd370df10dc8fad49d8d50c96f60a0"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "6e56b7807971b27366ef1aae2b3b2f0cefdb288b166b2e3f86105870e5e8722e"
     },
     {
       "disposition": "new",
@@ -5173,8 +5173,8 @@
         "docs/slh-dsa-b128s/benchmarking.md",
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain real upstream ancestry, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history.",
-      "sha256": "dd096058fdc377b919f1030843ccce5619d3f884c98264e12e742bc8df8e4c23"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "1799a2bab9f5b926921580fe604b1107476b24e4c77928282d417239bd2e0d29"
     },
     {
       "disposition": "new",
@@ -5184,8 +5184,8 @@
         "tests/slh-dsa-b128s/release-content/README.md",
         "docs/slh-dsa-b128s/packaging.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain real upstream ancestry, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history.",
-      "sha256": "9070cc7a5d42f4d294b82434698732cb937cd617a875978d02555bf191da5eff"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
+      "sha256": "9755285bb67c88f5923bc55d6349878a6e4cbaec151b80bbe1685d69f3226604"
     },
     {
       "disposition": "new",

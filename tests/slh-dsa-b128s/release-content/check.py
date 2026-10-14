@@ -26,7 +26,7 @@ FOUNDATION_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
 UPSTREAM = "e33dc43089acca2fe2c6516927932f2b7618b8bc"
 UPSTREAM_TREE = "88637ce09b0bbd5669b664e47b20b37b35523323"
 # GitHub squashed PR #12, so its exact upstream entries have no upstream parent
-# at this historical commit. This record does not replace baseline ancestry.
+# at this historical commit. Its exact record also survives later feature squashes.
 RECORDED_SQUASH_IMPORTS = {
     "de7880372c50bbb285a622bcc4e577df7b35ca7d": {
         "upstream": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
@@ -410,7 +410,8 @@ def validate_baselines(root):
             "foundation tree mismatch")
     require(git(root, "rev-parse", UPSTREAM + "^{tree}").decode().strip() == UPSTREAM_TREE, "upstream tree mismatch")
     require(ancestor(root, FOUNDATION, UPSTREAM), "upstream does not descend from foundation")
-    require(ancestor(root, UPSTREAM, "HEAD"), "current upstream is not integrated")
+    require(ancestor(root, UPSTREAM, "HEAD") or bool(authenticated_squash_imports(root)),
+            "current upstream is not integrated by ancestry or an authenticated squash import")
 
 
 def check(root, *, packages=False):

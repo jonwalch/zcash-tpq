@@ -18,5 +18,7 @@ jobs:
           persist-credentials: false
       - name: Bounded guard regressions
         run: python3 -m unittest discover -s tests/slh-dsa-b128s/release-content -p 'test_*.py' -v
+      - name: Fetch pinned upstream audit input
+        run: git fetch --no-tags https://github.com/zakura-core/zakura.git e33dc43089acca2fe2c6516927932f2b7618b8bc
       - name: Audit source, history, archive and publication boundaries
         run: python3 tests/slh-dsa-b128s/release-content/check.py
