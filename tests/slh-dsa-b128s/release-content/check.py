@@ -23,8 +23,8 @@ from generate_transactions import canonical, strict_json  # noqa: E402
 
 FOUNDATION = "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
 FOUNDATION_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
-UPSTREAM = "24a17b3f0e7d88513688d607054f018ab6f15af2"
-UPSTREAM_TREE = "d31e58e9f200123dd39434d42ad2643eda7a8a23"
+UPSTREAM = "e33dc43089acca2fe2c6516927932f2b7618b8bc"
+UPSTREAM_TREE = "88637ce09b0bbd5669b664e47b20b37b35523323"
 LEDGER = "docs/slh-dsa-b128s/imports.json"
 KINDS = {"adapted", "new", "upstream-modification", "public-fixture", "attribution"}
 PRODUCT_PACKAGES = {"zakura-pq-cli", "zakura-pq-wallet", "zakura-pq-slh-dsa-b-sign",

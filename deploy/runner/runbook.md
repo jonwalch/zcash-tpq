@@ -41,7 +41,7 @@ intentionally starts empty.
 Custom configs must retain the `zakura_state=info` cache event (or the default
 `info` filter), so the checker can identify the initial tip.
 
-This fork uses `state-tpq/v30/<network>`. It cannot use the upstream `state/v27`
+This fork uses `state-tpq/v31/<network>`. It cannot use the upstream `state/v27`
 snapshot, even if its directory or version marker is renamed. Prepare a fresh
 snapshot with compatible fork rules and indexes. This runbook's example cohort
 uses Mainnet parameters. The checker does not open a separate database or
@@ -65,7 +65,7 @@ cd deploy/runner
 
 Frozen = seeded once past the bench range, then cut off from public so the nodes
 serve a byte-identical range every run (no public dependency, no self-sync
-jitter). Each node's iroh identity persists in its state cache dir — **never wipe
+jitter). Each node's Zakura identity persists in its state cache dir — **never wipe
 it**, or the captured peer ids change.
 
 The deployer renders the cohort config itself:
@@ -97,8 +97,8 @@ the nodes.
 
 - `[network]` `p2p_stack="zakura"` — Zakura-only, so the bench node's only
   peers are the cohort.
-- `[network.zakura]` `listen_addr="0.0.0.0:8234"` — **not loopback** (iroh uses one
-  UDP socket for send+recv, so a loopback bind breaks outbound). `dev_network` and
+- `[network.zakura]` `listen_addr="0.0.0.0:8234"` — **not loopback** (the QUIC endpoint
+  uses one UDP socket for send+recv, so a loopback bind breaks outbound). `dev_network` and
   `bootstrap_peers` are token-filled by `perf.sh` from `cohort.env`.
 - `[network.zakura.block_sync] replace_legacy_syncer=true` — Zakura owns block
   download; the legacy syncer does tip discovery only.

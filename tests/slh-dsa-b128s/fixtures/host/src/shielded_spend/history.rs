@@ -438,6 +438,7 @@ enum EitherNote {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use orchard::value::NoteValue;
     // Canonical serialization/history tests only: these synthetic successor blocks
     // are deliberately not claimed to have valid PoW or consensus state.
     fn exported() -> ShieldedHistory {
@@ -626,15 +627,31 @@ mod tests {
                     },
                 );
                 *sapling_slot(&mut tx) = Some(chain_sapling(&fake).unwrap());
+            } else if pool == "orchard" {
+                let unsigned = legacy_funding_builder()
+                    .unwrap()
+                    .build::<ZatBalance>(&mut rng)
+                    .unwrap()
+                    .unwrap()
+                    .0;
+                let fake = unsigned.map_authorization(
+                    &mut (),
+                    |_, _, _| [0; 64].into(),
+                    |_, _| {
+                        orchard_legacy::bundle::Authorized::from_parts(
+                            orchard_legacy::Proof::new(vec![
+                                0;
+                                orchard_legacy::Proof::expected_proof_size(2)
+                            ]),
+                            [0; 64].into(),
+                        )
+                    },
+                );
+                *action_slot(&mut tx, pool) = Some(chain_legacy_action(&fake).unwrap());
             } else {
-                let version = if pool == "orchard" {
-                    BundleVersion::orchard_v2()
-                } else {
-                    BundleVersion::ironwood_v3()
-                };
                 let mut builder = Builder::new(
                     BundleType::DEFAULT,
-                    version,
+                    BundleVersion::ironwood_v3(),
                     Flags::SPENDS_DISABLED,
                     orchard::Anchor::empty_tree(),
                 )
