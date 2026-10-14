@@ -547,7 +547,7 @@ mod tests {
 mod database_tests {
     use super::*;
     use crate::{
-        constants::{state_database_format_version_in_code, STATE_DATABASE_KIND},
+        constants::STATE_DATABASE_KIND,
         service::finalized_state::{
             disk_format::RawBytes, TypedColumnFamily, STATE_COLUMN_FAMILIES_IN_CODE,
         },
@@ -588,6 +588,7 @@ mod database_tests {
         legacy_db_with_config(network, rows, pool_len, &Config::ephemeral())
     }
 
+    // These fixtures exercise the historical NSM migration, below the v30 boundary.
     fn legacy_db_with_config(
         network: Network,
         rows: u32,
@@ -597,7 +598,7 @@ mod database_tests {
         let db = ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &state_database_format_version_in_code(),
+            &Version::new(29, 1, 0),
             &network,
             true,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -1413,7 +1414,7 @@ mod database_tests {
         let db = legacy_db_with_config(slow_start_deferred_network(Some(4)), 5, 48, &config);
         populate_deferred_balances(&db, 5);
         let old_version = Version::new(28, 1, 5);
-        let running_version = state_database_format_version_in_code();
+        let running_version = Version::new(29, 1, 0);
         db.update_format_version_on_disk(&old_version).unwrap();
         let baseline = db.raw_block_info_cf().zs_get(&Height(3)).unwrap();
         let mut old_replay_baseline = baseline.clone();
@@ -1501,7 +1502,7 @@ mod database_tests {
         let db = legacy_db_with_config(slow_start_deferred_network(None), 11, 48, &config);
         populate_deferred_balances(&db, 11);
         let old_version = Version::new(28, 1, 5);
-        let running_version = state_database_format_version_in_code();
+        let running_version = Version::new(29, 1, 0);
         db.update_format_version_on_disk(&old_version).unwrap();
         let (_tx, rx) = crossbeam_channel::bounded(1);
         DbFormatChange::open_database(&running_version, Some(old_version))

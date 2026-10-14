@@ -192,6 +192,19 @@ pub enum StateInitError {
         source: BoxError,
     },
 
+    /// A pre-v30 database cannot be read with the wider transaction indexes.
+    #[error(
+        "state database at {path:?} has incompatible format {version}. \
+         Format 30 uses wider transaction indexes and requires a fresh state cache; \
+         copying an older database into the new directory does not migrate it"
+    )]
+    IncompatibleTransactionIndexFormat {
+        /// Directory containing the incompatible database.
+        path: PathBuf,
+        /// The recorded on-disk format version.
+        version: semver::Version,
+    },
+
     /// RocksDB could not open the requested primary or secondary database.
     #[error(
         "cannot open state database at {path:?}. Hint: check whether another process holds the database lock and whether cache_dir is readable and writable"

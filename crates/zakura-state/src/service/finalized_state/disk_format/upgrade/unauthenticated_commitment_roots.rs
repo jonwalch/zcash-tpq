@@ -177,11 +177,12 @@ mod tests {
         (cache, config)
     }
 
+    // Run the historical cutover without crossing the incompatible v30 boundary.
     fn open_persistent(config: &Config) -> Result<ZakuraDb, StateInitError> {
         ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &state_database_format_version_in_code(),
+            &Version::new(29, 1, 0),
             &Network::Mainnet,
             false,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -237,7 +238,7 @@ mod tests {
             reopened
                 .format_version_on_disk()
                 .expect("the migrated version is readable"),
-            Some(state_database_format_version_in_code())
+            Some(Version::new(29, 1, 0))
         );
     }
 
@@ -251,6 +252,7 @@ mod tests {
             let (_cache, config) = persistent_config();
             let mut state = FinalizedState::new(&config, &Network::Mainnet)
                 .expect("fixture finalized state opens");
+            state.db = open_persistent(&config).expect("historical fixture database opens");
             let genesis: Arc<block::Block> = BLOCK_MAINNET_GENESIS_BYTES
                 .zcash_deserialize_into()
                 .expect("mainnet genesis deserializes");
@@ -310,13 +312,8 @@ mod tests {
                 if message == "injected migration write failure"
         ));
         assert_eq!(
-            database_format_version_on_disk(
-                &config,
-                STATE_DATABASE_KIND,
-                state_database_format_version_in_code().major,
-                &Network::Mainnet,
-            )
-            .expect("the preserved version is readable"),
+            database_format_version_on_disk(&config, STATE_DATABASE_KIND, 29, &Network::Mainnet,)
+                .expect("the preserved version is readable"),
             Some(Version::new(28, 1, 4))
         );
 
@@ -327,7 +324,7 @@ mod tests {
             reopened
                 .format_version_on_disk()
                 .expect("the migrated version is readable"),
-            Some(state_database_format_version_in_code())
+            Some(Version::new(29, 1, 0))
         );
     }
 

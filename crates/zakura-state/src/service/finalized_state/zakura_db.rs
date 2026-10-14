@@ -173,6 +173,17 @@ impl ZakuraDb {
                 None => read_disk_version()?,
             }
         };
+        // Version 30 widens transaction indexes without an in-place migration.
+        // Refuse manually copied old databases before any typed read or upgrade,
+        // including read-only and debug-skip-upgrade modes.
+        if format_version_in_code.major >= 30 {
+            if let Some(version) = disk_version.as_ref().filter(|version| version.major < 30) {
+                return Err(StateInitError::IncompatibleTransactionIndexFormat {
+                    path: config.db_path(&db_kind, format_version_in_code.major, network),
+                    version: version.clone(),
+                });
+            }
+        }
         let disk_version_before_open = disk_version.clone();
 
         // Log any format changes before opening the database, in case opening fails.
@@ -540,6 +551,7 @@ mod tests {
         (cache, config)
     }
 
+    // Keep the historical VCT migration tests below the incompatible v30 boundary.
     fn open(
         config: &Config,
         network: &Network,
@@ -548,7 +560,7 @@ mod tests {
         ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &state_database_format_version_in_code(),
+            &Version::new(29, 1, 0),
             network,
             false,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -563,7 +575,7 @@ mod tests {
         let db = ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &state_database_format_version_in_code(),
+            &Version::new(29, 1, 0),
             network,
             // Skip format upgrades so the seeded version survives until the guard runs.
             true,
@@ -626,5 +638,92 @@ mod tests {
         let (_cache, config) = persistent_config();
         seed_db(&config, &regtest, old, true);
         assert!(open(&config, &regtest, false).is_ok());
+    }
+
+    #[test]
+    fn copied_v29_transaction_indexes_are_rejected_before_open() {
+        use crate::service::finalized_state::disk_db::DiskDb;
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let old_version = Version::new(29, 1, 0);
+        let old_path = config.db_path(STATE_DATABASE_KIND, old_version.major, &network);
+        {
+            let db = DiskDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &old_version,
+                &network,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                false,
+            )
+            .unwrap();
+            let cf = db.cf_handle("hash_by_tx_loc").unwrap();
+            // The old key is a three-byte height and two-byte transaction index.
+            db.put_cf(cf, [0u8; 5], [0x42u8; 32]).unwrap();
+            std::fs::write(
+                config.version_file_path(STATE_DATABASE_KIND, old_version.major, &network),
+                old_version.to_string(),
+            )
+            .unwrap();
+        }
+        let new_path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
+        std::fs::create_dir_all(new_path.parent().unwrap()).unwrap();
+        std::fs::rename(old_path, &new_path).unwrap();
+        let version_path = config.version_file_path(STATE_DATABASE_KIND, version.major, &network);
+
+        for read_only in [false, true] {
+            for skip_upgrades in [false, true] {
+                let result = ZakuraDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    skip_upgrades,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    read_only,
+                );
+                assert!(matches!(result,
+                    Err(StateInitError::IncompatibleTransactionIndexFormat { version, path })
+                    if version == old_version && path == new_path
+                ));
+                assert_eq!(
+                    std::fs::read_to_string(&version_path).unwrap(),
+                    old_version.to_string()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn fresh_v30_database_opens_and_reopens() {
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let open_current = |read_only| {
+            ZakuraDb::new(
+                &config,
+                STATE_DATABASE_KIND,
+                &version,
+                &network,
+                true,
+                STATE_COLUMN_FAMILIES_IN_CODE
+                    .iter()
+                    .map(ToString::to_string),
+                read_only,
+            )
+        };
+        let db = open_current(false).unwrap();
+        db.update_format_version_on_disk(&version).unwrap();
+        drop(db);
+        for read_only in [false, true] {
+            assert!(open_current(read_only).is_ok());
+        }
     }
 }

@@ -993,8 +993,7 @@ fn database_startup_waits_for_format_upgrade() {
     use std::time::Duration;
 
     use crate::{
-        constants::{state_database_format_version_in_code, STATE_DATABASE_KIND},
-        service::finalized_state::STATE_COLUMN_FAMILIES_IN_CODE,
+        constants::STATE_DATABASE_KIND, service::finalized_state::STATE_COLUMN_FAMILIES_IN_CODE,
         Config,
     };
     use zakura_chain::parameters::Network;
@@ -1007,7 +1006,8 @@ fn database_startup_waits_for_format_upgrade() {
         ..Config::default()
     };
     let network = Network::Mainnet;
-    let running_version = state_database_format_version_in_code();
+    // Exercise the historical in-place upgrades, before the incompatible v30 boundary.
+    let running_version = Version::new(29, 1, 0);
 
     let db = ZakuraDb::new(
         &config,
@@ -1076,7 +1076,7 @@ fn database_startup_waits_for_format_upgrade() {
         returned_rx
             .recv_timeout(Duration::from_secs(10))
             .expect("startup returns after the format upgrade"),
-        Some(state_database_format_version_in_code()),
+        Some(Version::new(29, 1, 0)),
     );
     open_thread.join().expect("startup thread does not panic");
 }

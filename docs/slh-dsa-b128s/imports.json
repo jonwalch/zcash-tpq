@@ -2189,8 +2189,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "704b02d2809c001fd8276882b9d41164adae8b422cc9ccac23c59df8046b3156"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Exercise checkpoint-range admission using the unmodified default resident budget, so missing default-floor updates cannot be hidden by a test clamp.",
+      "sha256": "a114d0b41a93471a87be38be2c239f1234b4be55a1e68109bc41aca30d10ff42"
     },
     {
       "disposition": "upstream-modification",
@@ -2229,8 +2229,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "f397a024f75135a8fc30f4c9dd944f2c960d0a6164d7bcc4dfc944b34b0cd801"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Cover peer retention and reuse with both advertised 2 MB sizes and unknown 20 MB reservations, including each smaller request round.",
+      "sha256": "9d5181f6ccd65ec979a49f140e0ea4ad7e396acbf8ef9a3d9888d307ca425e59"
     },
     {
       "disposition": "upstream-modification",
@@ -2281,6 +2281,16 @@
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
       "sha256": "a043f6f3379695daae864128e905215cdea94c3ff982cebbbd97e22c7509966e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/config/rpc.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Scale the default RPC response budget for verbose JSON from 20 MB blocks while retaining explicit operator limits; cover a response above the former 50 MiB cap over HTTP.",
+      "sha256": "71311eaff7c037697a0c7244e1c650e47db696d6521f9bbc0ca4fbe3fad6e40c"
     },
     {
       "disposition": "upstream-modification",
@@ -2379,8 +2389,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "3a88ec130a5f21e70f0304dd61300314e1e80d570abdb850e5e7a57a6bea3fa1"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Expose the actual listener address internally so HTTP regression tests can use OS-assigned ports without a reservation race; preserve public server APIs.",
+      "sha256": "8a4699d85816b331ffcc800dcd0673fd5b5b76f7da019ad0318904a086614df2"
     },
     {
       "disposition": "upstream-modification",
@@ -2389,8 +2399,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "2024ec3aa14ebe1cd9f85e9b91f9bf3206c57e1889fe4f5ba8ec1ee27e4809a1"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Bind port zero and test a full-size hex request plus a verbose transaction response above the former 50 MiB cap through the real HTTP server with mocked services.",
+      "sha256": "16746efa1e38bc95763acfd8dfbdf458e6c7a600ddcf2c03bda85e0d8d3920cc"
     },
     {
       "disposition": "upstream-modification",
@@ -2431,6 +2441,16 @@
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
       "sha256": "82652248c1afc0ddfafebebd2e5eb29674d57db9b1b37fab01a9ff4f36795497"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/error.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Report incompatible pre-v30 transaction-index data with a fresh-cache instruction before typed database reads.",
+      "sha256": "6b535e00ae4e778830e42a0e7eece794a782f86f8b4e7d135abafa3b1927bc0b"
     },
     {
       "disposition": "upstream-modification",
@@ -2829,8 +2849,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "6db1c4cc51267d0ea5d0f2e7494a6dfb1bf7eb3efb203536d0fadfa73a860a75"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Keep the startup-waits-for-upgrade test on its historical v29 target, since v30 has no compatible in-place migration.",
+      "sha256": "80741c15f1ef535c92e3336006fb742b851fcff511cf197babbfcb092e32a929"
     },
     {
       "disposition": "upstream-modification",
@@ -2849,8 +2869,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "334b295ab11ffa9b825553aae1e1cf332118ac62e947a6778e92c84e9f14e9cd"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Keep legacy accounting migration fixtures and reopen tests on v29, preserving their migration checks without crossing the incompatible v30 boundary.",
+      "sha256": "a83125e8f48b3b776df77edef95bb733618227a53d18788870d3591e2f40b19b"
     },
     {
       "disposition": "upstream-modification",
@@ -2859,8 +2879,18 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "f216cd0caed46ebdabae70db91afb9ae6cd596af7338093781697969e0fd23fe"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Keep historical commitment-root cutover fixtures and retry checks on v29 while production v30 rejects incompatible indexes.",
+      "sha256": "51dacf66432d9df693d43e0c4ab9a695fbe3353de4fcc15fc4a2dd9ce9f4824a"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/zakura_db.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Reject marked pre-v30 caches copied into the v30 directory before opening RocksDB; test all read-only/skip-upgrade combinations and fresh v30 reopens, and keep VCT migration fixtures below the incompatible boundary.",
+      "sha256": "0885cd6a97c9503f0358d7d28ef631dac2383f3cf318f3c1b67561e5c5b0338c"
     },
     {
       "disposition": "upstream-modification",
@@ -2958,8 +2988,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "1a20e9fc42aa025282255a32b97e682363600cd8e58f154744aca97144c0880b"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Record the raised default verbose RPC response budget and preserve explicit operator overrides.",
+      "sha256": "8de2b095168e9ef9a34a39f1f54ccb53b7d90b3b7e86f33f947bfbc6c0eb6def"
     },
     {
       "disposition": "new",
@@ -2977,8 +3007,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "c38bc4a582fb54d0fd1b486b5d1da347cc9056f612ab6d38c20c9e2e84fd8991"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Include verbose RPC support and rejection of copied older databases in the devnet change note.",
+      "sha256": "c1c026127c690a1ced1bee6f04c87885b3e04e619cb2a41cafa0e80c0383d5a5"
     },
     {
       "disposition": "new",
@@ -3276,8 +3306,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "c4aa0534b651bd641b3937fe4599efdf1097e9970da657d90f9c352d46741001"
+      "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Document the deliberately unchanged 20,000 classical signature-operation budget, separate SLH limits, verbose RPC budget, and rejection of copied older databases.",
+      "sha256": "19a2f652202cc683aded2b748ace10b9e43a7ec372360d7d9231cea753fd2635"
     },
     {
       "disposition": "new",

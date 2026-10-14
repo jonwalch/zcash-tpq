@@ -137,6 +137,19 @@ on public networks or change SLH signature-check budgets.
 The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
 The state database format is 30.0.0 because transaction indexes now use four
 bytes. Existing version 29 databases require a fresh sync.
+Startup rejects a database marked with a version below 30 in the v30 directory,
+including read-only and skip-upgrade opens. Moving an old cache does not migrate it.
+
+The classical block signature-operation limit deliberately remains 20,000,
+including legacy and P2SH operations. A transparent-payment workload can reach
+that limit before it fills 20 MB. The byte-limit change does not promise ten
+times the classical payment throughput. SLH checks use their separate configured
+budgets, and shielded transactions retain their existing resource limits.
+
+The default RPC response budget is 641,048,576 bytes to allow verbose transaction
+JSON, which repeats data as raw hex, script hex, disassembled scripts, and fields.
+An explicit `rpc.max_response_body_size` setting still takes precedence. Existing
+configs that set the former 50 MiB limit must raise it to receive larger responses.
 
 The block-sync checkpoint-range budget now has a floor of 8.02 GB (401 full
 blocks). Decoded blocks and other node state need additional memory. A devnet

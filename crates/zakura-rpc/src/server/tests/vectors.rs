@@ -12,7 +12,7 @@ use zakura_chain::{
     chain_sync_status::MockSyncStatus, chain_tip::NoChainTip, parameters::Network::*,
 };
 use zakura_network::address_book_peers::MockAddressBookPeers;
-use zakura_node_services::BoxError;
+use zakura_node_services::{mempool, BoxError};
 use zakura_test::mock_service::MockService;
 
 use super::super::*;
@@ -89,7 +89,7 @@ async fn rpc_server_spawn_unallocated_port() {
     rpc_spawn_unallocated_port(false).await
 }
 
-/// A full block-sized hex request reaches RPC dispatch before the server shuts down.
+/// Full block-sized requests and verbose transaction responses fit the default limits.
 #[tokio::test]
 async fn rpc_server_accepts_twenty_mb_block_request_and_shuts_down() {
     rpc_spawn_unallocated_port(true).await
@@ -102,11 +102,7 @@ async fn rpc_server_accepts_twenty_mb_block_request_and_shuts_down() {
 async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
     let _init_guard = zakura_test::init();
 
-    let port = if do_shutdown {
-        zakura_test::net::random_known_port()
-    } else {
-        zakura_test::net::random_unallocated_port()
-    };
+    let port = zakura_test::net::random_unallocated_port();
     #[allow(unknown_lints)]
     #[allow(clippy::bool_to_int_with_if)]
     let conf = Config {
@@ -149,9 +145,14 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
         None,
     );
 
-    let rpc = RpcServer::start(rpc_impl, conf)
-        .await
-        .expect("server should start");
+    let (address, rpc) = RpcServer::start_inner(
+        rpc_impl,
+        conf,
+        RpcSurface::Restricted,
+        OPENED_RPC_ENDPOINT_MSG,
+    )
+    .await
+    .expect("server should start");
 
     info!("spawned RPC server, checking services...");
 
@@ -164,11 +165,12 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
 
     if do_shutdown {
         crate::indexer::server::install_tls_crypto_provider();
-        let response = reqwest::Client::builder()
+        let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))
             .build()
-            .unwrap()
-            .post(format!("http://127.0.0.1:{port}"))
+            .unwrap();
+        let response = client
+            .post(format!("http://{address}"))
             .header("content-type", "application/json")
             .body(
                 serde_json::json!({
@@ -186,6 +188,55 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
         let response: serde_json::Value = serde_json::from_str(&response).unwrap();
         // Method-not-found proves the request passed both HTTP byte limits.
         assert_eq!(response["error"]["code"], -32601);
+
+        let mut block = zakura_chain::block::tests::generate::block_with_size(20_000_000);
+        let transaction = Arc::make_mut(&mut block.transactions[0]);
+        let mut script = transaction.outputs()[0].lock_script.as_raw_bytes().to_vec();
+        // One data push produces large hex/asm fields without millions of opcode objects.
+        let payload_len = u32::try_from(script.len() - 5).unwrap();
+        script[0] = 0x4e; // OP_PUSHDATA4
+        script[1..5].copy_from_slice(&payload_len.to_le_bytes());
+        transaction.outputs_mut()[0].lock_script = zakura_chain::transparent::Script::new(&script);
+        let transaction: zakura_chain::transaction::UnminedTx =
+            block.transactions[0].clone().into();
+        let txid = transaction.id().mined_id();
+        let transaction_size = transaction.size();
+
+        let request = async {
+            client
+                .post(format!("http://{address}"))
+                .header("content-type", "application/json")
+                .body(
+                    serde_json::json!({
+                        "jsonrpc": "2.0", "id": 2, "method": "getrawtransaction",
+                        "params": [txid.to_string(), 1],
+                    })
+                    .to_string(),
+                )
+                .send()
+                .await
+                .unwrap()
+                .text()
+                .await
+                .unwrap()
+        };
+        let respond = async {
+            mempool
+                .expect_request(mempool::Request::TransactionsByMinedId([txid].into()))
+                .await
+                .respond(mempool::Response::Transactions(vec![transaction]));
+        };
+        let (response, ()) = tokio::join!(request, respond);
+        assert!(
+            response.len() > 50 * 1024 * 1024,
+            "response exceeds the old cap"
+        );
+        let response: serde_json::Value = serde_json::from_str(&response).unwrap();
+        assert_eq!(response["result"]["size"], transaction_size);
+        assert_eq!(
+            response["result"]["hex"].as_str().unwrap().len(),
+            2 * transaction_size
+        );
         rpc.abort();
     }
 }

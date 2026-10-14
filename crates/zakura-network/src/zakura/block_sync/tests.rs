@@ -8982,11 +8982,20 @@ async fn reactor_zero_pause_threshold_preserves_lag_one_downloads() {
 
 #[tokio::test]
 async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
+    peer_is_reused_after_catch_up(BlockSizeEstimate::Advertised(2_000_000), 3).await;
+}
+
+#[tokio::test]
+async fn reactor_keeps_block_sync_peer_without_size_hints() {
+    peer_is_reused_after_catch_up(BlockSizeEstimate::Unknown, 1).await;
+}
+
+async fn peer_is_reused_after_catch_up(size: BlockSizeEstimate, blocks_per_request: u32) {
     // Block-sync streams stay open even when this node is locally caught up: a
     // synced node can still be the server a fresh peer needs for historical
     // bodies, so closing the stream after every local catch-up would starve fresh
     // Zakura-only nodes between checkpoint windows.
-    // Small body hints let each three-block range fit the 32 MiB response budget.
+    // A 32 MiB response can reserve one unknown 20 MB body or three hinted 2 MB bodies.
     let mut config = fill_loop_mechanics_config();
     config.peer_limits.max_outbound_peers = 1;
     let (_tip_tx, tip_rx) = watch::channel((block::Height(4), block::Hash([4; 32])));
@@ -9029,61 +9038,55 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
             BlockSyncBlockMeta {
                 height: block::Height(1),
                 hash: block::Hash([1; 32]),
-                size: BlockSizeEstimate::Advertised(2_000_000),
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(2),
                 hash: block::Hash([2; 32]),
-                size: BlockSizeEstimate::Advertised(2_000_000),
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(3),
                 hash: block::Hash([3; 32]),
-                size: BlockSizeEstimate::Advertised(2_000_000),
+                size,
             },
         ]))
         .await
         .expect("needed metadata queues");
-    assert_eq!(
-        wait_for_outbound_getblocks(&mut outbound_rx).await,
-        (block::Height(1), 3)
-    );
-
-    for height in [block::Height(1), block::Height(2)] {
-        let hash_byte = u8::try_from(height.0).expect("test height fits in u8");
+    for height in 1..=3u32 {
+        if height == 1 || blocks_per_request == 1 {
+            assert_eq!(
+                wait_for_outbound_getblocks(&mut outbound_rx).await,
+                (block::Height(height), blocks_per_request),
+            );
+        }
+        let hash_byte = u8::try_from(height).expect("test height fits in u8");
         handle
             .send(BlockSyncEvent::StateFrontiersChanged(BlockSyncFrontiers {
                 finalized_height: block::Height(0),
-                verified_block_tip: height,
+                verified_block_tip: block::Height(height),
                 verified_block_hash: block::Hash([hash_byte; 32]),
             }))
             .await
             .expect("frontier event queues");
+        if height % blocks_per_request == 0 {
+            inbound_tx
+                .send(
+                    BlockSyncMessage::BlocksDone {
+                        start_height: block::Height(height + 1 - blocks_per_request),
+                        returned: blocks_per_request,
+                    }
+                    .encode_frame()
+                    .expect("BlocksDone encodes"),
+                )
+                .await
+                .expect("BlocksDone queues");
+        }
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(handle.peer_snapshot().outbound_peers, 1);
         assert_eq!(service.peer_count(), 1);
     }
 
-    inbound_tx
-        .send(
-            BlockSyncMessage::BlocksDone {
-                start_height: block::Height(1),
-                returned: 3,
-            }
-            .encode_frame()
-            .expect("BlocksDone encodes"),
-        )
-        .await
-        .expect("BlocksDone queues");
-
-    handle
-        .send(BlockSyncEvent::StateFrontiersChanged(BlockSyncFrontiers {
-            finalized_height: block::Height(0),
-            verified_block_tip: block::Height(3),
-            verified_block_hash: block::Hash([3; 32]),
-        }))
-        .await
-        .expect("caught-up frontier event queues");
     tokio::time::sleep(Duration::from_millis(100)).await;
     assert_eq!(
         handle.peer_snapshot().outbound_peers,
@@ -9113,24 +9116,24 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
             BlockSyncBlockMeta {
                 height: block::Height(4),
                 hash: block::Hash([4; 32]),
-                size: BlockSizeEstimate::Advertised(2_000_000),
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(5),
                 hash: block::Hash([5; 32]),
-                size: BlockSizeEstimate::Advertised(2_000_000),
+                size,
             },
             BlockSyncBlockMeta {
                 height: block::Height(6),
                 hash: block::Hash([6; 32]),
-                size: BlockSizeEstimate::Advertised(2_000_000),
+                size,
             },
         ]))
         .await
         .expect("new needed metadata queues");
     assert_eq!(
         wait_for_outbound_getblocks(&mut outbound_rx).await,
-        (block::Height(4), 3),
+        (block::Height(4), blocks_per_request),
         "the retained block-sync peer should be reused after later header growth",
     );
 
