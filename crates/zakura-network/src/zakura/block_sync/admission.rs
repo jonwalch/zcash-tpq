@@ -323,7 +323,7 @@ pub(super) fn retain_received_body(
 /// tied to it escalates unboundedly ahead of commit. Anchoring the exemption to the
 /// verified tip caps the pipeline to the look-ahead budget plus one worst-case window
 /// (`COMMIT_WINDOW_EXEMPT_SPAN_BLOCKS × MAX_BLOCK_BYTES × DESERIALIZED_MEM_FACTOR`
-/// ≈ 3.2 GB; a single in-window response can also exceed the byte gate by up to the
+/// ≈ 32 GB; a single in-window response can also exceed the byte gate by up to the
 /// response cap × the factor) regardless of how far headers/downloads run ahead.
 ///
 /// Floor-priority requests are never blocked just because the request budget is exactly
@@ -496,82 +496,88 @@ mod tests {
         assert!(fast < now + TIMEOUT + Duration::from_millis(100));
     }
 
-    /// During checkpoint sync, `verified_tip`
-    /// stays pinned to the previous checkpoint until the whole range (up to
-    /// `MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES` blocks) is co-resident. The whole range
-    /// is commit-window exempt, so it assembles regardless of the gated budget; the
-    /// default resident budget must also leave gated headroom just above the window,
-    /// independently of the 1 GiB request budget.
+    /// The default speculative budget can fill before the active checkpoint
+    /// window. Requests and both retention gates must still admit that window,
+    /// while blocking speculation above it until commit frees the retained data.
     #[test]
     fn checkpoint_range_progresses_with_one_gib_request_budget() {
-        use super::super::config::{
-            BS_CHECKPOINT_RANGE_BYTE_FLOOR, BS_PER_BLOCK_WORST_CASE_BYTES,
-            MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES,
-        };
+        use super::super::config::BS_PER_BLOCK_WORST_CASE_BYTES;
 
         let config = ZakuraBlockSyncConfig {
             max_inflight_block_bytes: 1024 * 1024 * 1024,
             ..ZakuraBlockSyncConfig::default()
         };
-
-        // One block short of a full co-resident range, with `verified_tip` pinned at 0.
+        assert_eq!(config.max_reorder_lookahead_bytes, 1536 * 1024 * 1024);
         let range_blocks = u32::try_from(MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES)
             .expect("checkpoint range block count fits in u32");
-        let snapshot = AdmissionSnapshot {
-            download_floor: block::Height(range_blocks - 1),
-            verified_block_tip: block::Height(0),
-            reorder_buffered_bytes: 0,
-            reorder_buffered_blocks: 0,
-            applying_buffered_bytes: BS_CHECKPOINT_RANGE_BYTE_FLOOR - BS_PER_BLOCK_WORST_CASE_BYTES,
-            applying_buffered_blocks: u64::from(range_blocks) - 1,
-            sequencer_input_queued_bytes: 0,
-            in_flight_submission_bytes: 0,
-            reserved_above_floor_bytes: 0,
-            reserved_above_floor_blocks: 0,
-            budget_available: config.max_inflight_block_bytes,
-        };
-        // The range-completing block is inside the commit window, so it is exempt.
-        assert!(
-            matches!(
-                admit(
-                    &config,
-                    snapshot,
-                    block::Height(range_blocks),
-                    block::Height(range_blocks),
-                    u64::MAX
-                ),
+        for height in 1..=range_blocks {
+            let held_blocks = u64::from(height - 1);
+            let held_bytes = held_blocks * BS_PER_BLOCK_WORST_CASE_BYTES;
+            // Count decoded copies as well as retained serialized bodies. No
+            // large allocations are needed to exercise the admission decisions.
+            let snapshot = AdmissionSnapshot {
+                download_floor: block::Height(height - 1),
+                verified_block_tip: block::Height(0),
+                reorder_buffered_bytes: 0,
+                reorder_buffered_blocks: 0,
+                applying_buffered_bytes: held_bytes,
+                applying_buffered_blocks: held_blocks,
+                sequencer_input_queued_bytes: 0,
+                in_flight_submission_bytes: held_bytes,
+                reserved_above_floor_bytes: 0,
+                reserved_above_floor_blocks: 0,
+                budget_available: config.max_inflight_block_bytes,
+            };
+            let height = block::Height(height);
+            assert!(matches!(
+                admit(&config, snapshot, height, height, u64::MAX),
                 AdmissionOutcome::Admit(_)
-            ),
-            "the final block of a checkpoint range must be admissible under a 1 GiB in-flight budget",
-        );
-        // The first height above the window is memory-gated but must still have headroom
-        // under this budget: 400 full serialized blocks (charged at wire size)
-        // sit below the default 401-block resident budget. This keeps the assertion
-        // non-vacuous now that the whole range is window-exempt.
-        assert!(
-            matches!(
-                admit(
+            ));
+            assert!(admit_received_body(
+                &config,
+                &snapshot,
+                height,
+                BS_PER_BLOCK_WORST_CASE_BYTES
+            ));
+            assert!(retain_received_body(
+                config.max_reorder_lookahead_bytes,
+                snapshot.verified_block_tip,
+                held_bytes,
+                held_blocks,
+                height,
+                BS_PER_BLOCK_WORST_CASE_BYTES,
+            ));
+            if lookahead_over_budget(&config, &snapshot) {
+                let above_window = block::Height(range_blocks + 1);
+                assert!(matches!(
+                    admit(&config, snapshot, above_window, above_window, u64::MAX),
+                    AdmissionOutcome::LookaheadAtCap
+                ));
+                assert!(!admit_received_body(
                     &config,
-                    snapshot,
-                    block::Height(range_blocks + 1),
-                    block::Height(range_blocks + 1),
-                    u64::MAX
-                ),
-                AdmissionOutcome::Admit(_)
-            ),
-            "the first gated height above the commit window must still be admissible",
-        );
+                    &snapshot,
+                    above_window,
+                    BS_PER_BLOCK_WORST_CASE_BYTES
+                ));
+            }
+        }
     }
 
-    /// A sub-range configured budget is clamped up so checkpoint sync cannot wedge.
+    /// Small positive budgets allow one full block without raising the default.
     #[test]
-    fn clamp_reorder_lookahead_floors_sub_range_configs() {
-        use super::super::config::BS_CHECKPOINT_RANGE_BYTE_FLOOR;
+    fn clamp_reorder_lookahead_floors_sub_block_configs() {
+        use super::super::config::BS_PER_BLOCK_WORST_CASE_BYTES;
         let mut config = ZakuraBlockSyncConfig {
-            max_reorder_lookahead_bytes: 1024 * 1024, // 1 MiB, far below one range of wire bytes
+            max_reorder_lookahead_bytes: 1024 * 1024, // 1 MiB, below one full block
             ..ZakuraBlockSyncConfig::default()
         };
         config.clamp_reorder_lookahead_to_floor();
-        assert!(config.max_reorder_lookahead_bytes >= BS_CHECKPOINT_RANGE_BYTE_FLOOR);
+        assert_eq!(
+            config.max_reorder_lookahead_bytes,
+            BS_PER_BLOCK_WORST_CASE_BYTES
+        );
+        let mut default = ZakuraBlockSyncConfig::default();
+        default.clamp_reorder_lookahead_to_floor();
+        assert_eq!(default.max_reorder_lookahead_bytes, 1536 * 1024 * 1024);
     }
 }

@@ -151,7 +151,7 @@ impl ZakuraDb {
         let version_path =
             config.version_file_path(&db_kind, format_version_in_code.major, network);
         let read_disk_version = || {
-            database_format_version_on_disk(config, &db_kind, format_version_in_code.major, network)
+            database_format_for_open(config, &db_kind, format_version_in_code.major, network)
                 .map_err(|source| StateInitError::DatabaseFormatVersion {
                     path: version_path.clone(),
                     source,
@@ -225,6 +225,21 @@ impl ZakuraDb {
             format_change_handle: None,
             db: disk_db,
         };
+
+        // A new persistent v30 cache must identify its layout even when an offline
+        // caller skips upgrades. RocksDB now holds the lock; existing caches never
+        // reach this branch and must pass the version checks above.
+        if !config.ephemeral
+            && format_version_in_code.major >= 30
+            && debug_skip_format_upgrades
+            && format_change.is_newly_created()
+        {
+            db.update_format_version_on_disk(format_version_in_code)
+                .map_err(|source| StateInitError::DatabaseFormatVersion {
+                    path: version_path.clone(),
+                    source,
+                })?;
+        }
 
         // The original Mainnet VCT fast path did not persist historical Sprout frontiers, so an
         // affected database silently rejects JoinSplits that spend a historical Sprout anchor.
@@ -506,6 +521,46 @@ impl ZakuraDb {
     }
 }
 
+/// Read the version before opening RocksDB. Unlike version queries on an already
+/// open handle, startup must not infer the v30 index layout from a directory name.
+fn database_format_for_open(
+    config: &Config,
+    db_kind: impl AsRef<str>,
+    major_version: u64,
+    network: &Network,
+) -> Result<Option<Version>, BoxError> {
+    let version_path = config.version_file_path(&db_kind, major_version, network);
+    if major_version >= 30 && !config.ephemeral {
+        match std::fs::read_to_string(&version_path) {
+            // Require a full major.minor.patch marker. The legacy minor.patch
+            // fallback would infer an incompatible cache's major from its directory.
+            Ok(version) => return Ok(Some(version.parse()?)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+        let db_path = config.db_path(&db_kind, major_version, network);
+        match std::fs::read_dir(&db_path) {
+            Ok(mut entries) => {
+                if entries.next().transpose()?.is_some() {
+                    return Err(format!(
+                        "non-empty database at {} has no format version file at {}; \
+                         its transaction-index format is unknown. Use a fresh state cache; \
+                         copying or relabeling an old database does not migrate it",
+                        db_path.display(),
+                        version_path.display(),
+                    )
+                    .into());
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+        // A missing or empty directory is safe for a fresh database.
+        return Ok(None);
+    }
+    database_format_version_on_disk(config, db_kind, major_version, network)
+}
+
 /// The first database format version whose Mainnet VCT databases are guaranteed to hold the
 /// historical Sprout anchors that JoinSplit verification needs.
 ///
@@ -642,6 +697,20 @@ mod tests {
 
     #[test]
     fn copied_v29_transaction_indexes_are_rejected_before_open() {
+        copied_v29_transaction_indexes_are_rejected(Some("29.1.0"));
+    }
+
+    #[test]
+    fn copied_unversioned_transaction_indexes_are_rejected_before_open() {
+        copied_v29_transaction_indexes_are_rejected(None);
+    }
+
+    #[test]
+    fn copied_legacy_version_marker_is_rejected_before_open() {
+        copied_v29_transaction_indexes_are_rejected(Some("1.0"));
+    }
+
+    fn copied_v29_transaction_indexes_are_rejected(version_marker: Option<&str>) {
         use crate::service::finalized_state::disk_db::DiskDb;
         let _init_guard = zakura_test::init();
         let network = Network::new_regtest(Default::default());
@@ -664,11 +733,13 @@ mod tests {
             let cf = db.cf_handle("hash_by_tx_loc").unwrap();
             // The old key is a three-byte height and two-byte transaction index.
             db.put_cf(cf, [0u8; 5], [0x42u8; 32]).unwrap();
-            std::fs::write(
-                config.version_file_path(STATE_DATABASE_KIND, old_version.major, &network),
-                old_version.to_string(),
-            )
-            .unwrap();
+            if let Some(marker) = version_marker {
+                std::fs::write(
+                    config.version_file_path(STATE_DATABASE_KIND, old_version.major, &network),
+                    marker,
+                )
+                .unwrap();
+            }
         }
         let new_path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
         std::fs::create_dir_all(new_path.parent().unwrap()).unwrap();
@@ -688,13 +759,25 @@ mod tests {
                         .map(ToString::to_string),
                     read_only,
                 );
-                assert!(matches!(result,
-                    Err(StateInitError::IncompatibleTransactionIndexFormat { version, path })
-                    if version == old_version && path == new_path
-                ));
+                if version_marker == Some("29.1.0") {
+                    assert!(matches!(result,
+                        Err(StateInitError::IncompatibleTransactionIndexFormat { version, path })
+                        if version == old_version && path == new_path
+                    ));
+                    assert_eq!(
+                        std::fs::read_to_string(&version_path).unwrap(),
+                        old_version.to_string()
+                    );
+                } else {
+                    assert!(matches!(result,
+                        Err(StateInitError::DatabaseFormatVersion { path, .. })
+                        if path == version_path
+                    ));
+                }
                 assert_eq!(
-                    std::fs::read_to_string(&version_path).unwrap(),
-                    old_version.to_string()
+                    std::fs::read_to_string(&version_path).ok().as_deref(),
+                    version_marker,
+                    "rejection must not relabel the cache",
                 );
             }
         }
@@ -705,25 +788,35 @@ mod tests {
         let _init_guard = zakura_test::init();
         let network = Network::new_regtest(Default::default());
         let version = state_database_format_version_in_code();
-        let (_cache, config) = persistent_config();
-        let open_current = |read_only| {
-            ZakuraDb::new(
-                &config,
-                STATE_DATABASE_KIND,
-                &version,
-                &network,
-                true,
-                STATE_COLUMN_FAMILIES_IN_CODE
-                    .iter()
-                    .map(ToString::to_string),
-                read_only,
-            )
-        };
-        let db = open_current(false).unwrap();
-        db.update_format_version_on_disk(&version).unwrap();
-        drop(db);
-        for read_only in [false, true] {
-            assert!(open_current(read_only).is_ok());
+        for create_empty_directory in [false, true] {
+            let (_cache, config) = persistent_config();
+            if create_empty_directory {
+                std::fs::create_dir_all(config.db_path(
+                    STATE_DATABASE_KIND,
+                    version.major,
+                    &network,
+                ))
+                .unwrap();
+            }
+            let open_current = |read_only| {
+                ZakuraDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    false,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    read_only,
+                )
+            };
+            let db = open_current(false).unwrap();
+            assert_eq!(db.format_version_on_disk().unwrap(), Some(version.clone()));
+            drop(db);
+            for read_only in [false, true] {
+                assert!(open_current(read_only).is_ok());
+            }
         }
     }
 }

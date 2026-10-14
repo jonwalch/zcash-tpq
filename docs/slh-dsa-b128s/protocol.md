@@ -137,8 +137,12 @@ on public networks or change SLH signature-check budgets.
 The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
 The state database format is 30.0.0 because transaction indexes now use four
 bytes. Existing version 29 databases require a fresh sync.
-Startup rejects a database marked with a version below 30 in the v30 directory,
-including read-only and skip-upgrade opens. Moving an old cache does not migrate it.
+Startup rejects a database marked with a version below 30 in the v30 directory.
+It also rejects a non-empty cache with no version file, whose index layout cannot
+be identified. The version file must include the major version (`30.0.0`, for
+example); legacy minor/patch-only markers cannot identify the layout either.
+These checks apply to read-only and skip-upgrade opens. An absent
+or empty directory can start a fresh database. Moving an old cache does not migrate it.
 
 The classical block signature-operation limit deliberately remains 20,000,
 including legacy and P2SH operations. A transparent-payment workload can reach
@@ -151,12 +155,15 @@ JSON, which repeats data as raw hex, script hex, disassembled scripts, and field
 An explicit `rpc.max_response_body_size` setting still takes precedence. Existing
 configs that set the former 50 MiB limit must raise it to receive larger responses.
 
-The block-sync checkpoint-range budget now has a floor of 8.02 GB (401 full
-blocks). Decoded blocks and other node state need additional memory. A devnet
-that uses checkpoint sync must account for this floor. Requests without a body
-size hint reserve 20 MB each, so a fixed request budget permits fewer concurrent
-requests. Peer message buffers can also hold larger payloads. These limits have
-not been measured in a live devnet run.
+The block-sync speculative look-ahead budget defaults to 1.5 GiB. Config loading
+raises positive values below one full block to 20 MB. The active checkpoint
+window bypasses this budget so it can finish when speculative memory is full.
+This separate window can retain 401 full blocks: 8.02 GB of serialized data and
+about 32.08 GB of estimated decoded copies. The 1.5 GiB setting is not a cap on
+total node memory and does not ensure that every workload fits a 4–8 GB machine.
+Requests without a body-size hint reserve 20 MB each, so a fixed request budget
+permits fewer concurrent requests. Peer message buffers can also hold larger
+payloads. These limits have not been measured in a live devnet run.
 
 The configuration uses these fields:
 

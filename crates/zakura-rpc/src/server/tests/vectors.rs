@@ -83,23 +83,21 @@ async fn rpc_server_spawn() {
     );
 }
 
-/// Test that the JSON-RPC server spawns on an OS-assigned unallocated port.
+/// Test startup and task shutdown on an OS-assigned port without large payloads.
 #[tokio::test]
-async fn rpc_server_spawn_unallocated_port() {
+async fn rpc_server_spawn_unallocated_port_and_shuts_down() {
     rpc_spawn_unallocated_port(false).await
 }
 
 /// Full block-sized requests and verbose transaction responses fit the default limits.
 #[tokio::test]
-async fn rpc_server_accepts_twenty_mb_block_request_and_shuts_down() {
+async fn rpc_server_accepts_twenty_mb_requests_and_verbose_responses() {
     rpc_spawn_unallocated_port(true).await
 }
 
-/// Test RPC startup, optionally sending a request and shutting down.
-///
-/// Set `do_shutdown` to true to close the server using the close handle.
+/// Test RPC startup and task shutdown, optionally exercising full-size payloads.
 #[tracing::instrument]
-async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
+async fn rpc_spawn_unallocated_port(probe_large_payloads: bool) {
     let _init_guard = zakura_test::init();
 
     let port = zakura_test::net::random_unallocated_port();
@@ -163,7 +161,7 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
         block_verifier_router.expect_no_requests(),
     );
 
-    if do_shutdown {
+    if probe_large_payloads {
         crate::indexer::server::install_tls_crypto_provider();
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))
@@ -231,14 +229,24 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
             response.len() > 50 * 1024 * 1024,
             "response exceeds the old cap"
         );
-        let response: serde_json::Value = serde_json::from_str(&response).unwrap();
-        assert_eq!(response["result"]["size"], transaction_size);
-        assert_eq!(
-            response["result"]["hex"].as_str().unwrap().len(),
-            2 * transaction_size
-        );
-        rpc.abort();
+        // Borrow the raw hex and skip unused verbose fields while parsing, rather
+        // than allocating another full copy of this large response as a JSON tree.
+        #[derive(serde::Deserialize)]
+        struct TransactionResult<'a> {
+            size: usize,
+            hex: &'a str,
+        }
+        #[derive(serde::Deserialize)]
+        struct TransactionResponse<'a> {
+            #[serde(borrow)]
+            result: TransactionResult<'a>,
+        }
+        let response: TransactionResponse<'_> = serde_json::from_str(&response).unwrap();
+        assert_eq!(response.result.size, transaction_size);
+        assert_eq!(response.result.hex.len(), 2 * transaction_size);
     }
+    rpc.abort();
+    assert!(rpc.await.unwrap_err().is_cancelled());
 }
 
 /// Test if the RPC server will panic correctly when there is a port conflict.

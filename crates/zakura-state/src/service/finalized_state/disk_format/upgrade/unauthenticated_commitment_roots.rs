@@ -250,9 +250,24 @@ mod tests {
 
         for old_version in [Version::new(28, 0, 2), Version::new(28, 1, 3)] {
             let (_cache, config) = persistent_config();
-            let mut state = FinalizedState::new(&config, &Network::Mainnet)
-                .expect("fixture finalized state opens");
-            state.db = open_persistent(&config).expect("historical fixture database opens");
+            // Build every component against the historical fixture from the start.
+            // Production constructors intentionally select the incompatible v30 format.
+            let mut state = FinalizedState {
+                debug_stop_at_height: None,
+                checkpoint_raw_tx_retention_start: None,
+                checkpoint_raw_tx_archive_backlog: Arc::new(std::sync::atomic::AtomicBool::new(
+                    false,
+                )),
+                db: open_persistent(&config).expect("historical fixture database opens"),
+                vct: crate::service::finalized_state::vct::VctCommitState::new(
+                    crate::service::finalized_state::vct::VctState::from_config(
+                        config.checkpoint_sync,
+                        config.vct_fast_sync,
+                        &Network::Mainnet,
+                    ),
+                    false,
+                ),
+            };
             let genesis: Arc<block::Block> = BLOCK_MAINNET_GENESIS_BYTES
                 .zcash_deserialize_into()
                 .expect("mainnet genesis deserializes");
