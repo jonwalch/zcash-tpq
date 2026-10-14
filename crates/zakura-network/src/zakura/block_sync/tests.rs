@@ -1777,7 +1777,9 @@ fn codec_round_trips_twenty_mb_block_through_negotiated_frame() {
     ));
     let message = BlockSyncMessage::Block(block);
     let frame = message.encode_frame().expect("20 MB block fits in a frame");
-    assert!(MAX_BS_FRAME_BYTES <= super::super::handshake::LOCAL_MAX_MESSAGE_BYTES);
+    const {
+        assert!(MAX_BS_FRAME_BYTES <= super::super::handshake::LOCAL_MAX_MESSAGE_BYTES);
+    }
     let bytes = frame.encode(MAX_BS_FRAME_BYTES).unwrap();
     let frame = Frame::decode(&bytes, MAX_BS_FRAME_BYTES).unwrap();
     assert_eq!(BlockSyncMessage::decode_frame(frame).unwrap(), message);
