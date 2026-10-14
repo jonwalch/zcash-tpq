@@ -598,7 +598,7 @@ mod database_tests {
         let db = ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &Version::new(29, 1, 0),
+            &crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
             &network,
             true,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -1414,7 +1414,7 @@ mod database_tests {
         let db = legacy_db_with_config(slow_start_deferred_network(Some(4)), 5, 48, &config);
         populate_deferred_balances(&db, 5);
         let old_version = Version::new(28, 1, 5);
-        let running_version = Version::new(29, 1, 0);
+        let running_version = crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION;
         db.update_format_version_on_disk(&old_version).unwrap();
         let baseline = db.raw_block_info_cf().zs_get(&Height(3)).unwrap();
         let mut old_replay_baseline = baseline.clone();
@@ -1463,7 +1463,7 @@ mod database_tests {
         // These historical in-place upgrades end at 29.1; version 30 requires a fresh database.
         assert_eq!(
             db.format_version_on_disk().unwrap(),
-            Some(Version::new(29, 1, 0))
+            Some(crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION)
         );
         assert!(Upgrade.validate(&db, &rx).unwrap().is_ok());
     }
@@ -1502,14 +1502,14 @@ mod database_tests {
         let db = legacy_db_with_config(slow_start_deferred_network(None), 11, 48, &config);
         populate_deferred_balances(&db, 11);
         let old_version = Version::new(28, 1, 5);
-        let running_version = Version::new(29, 1, 0);
+        let running_version = crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION;
         db.update_format_version_on_disk(&old_version).unwrap();
         let (_tx, rx) = crossbeam_channel::bounded(1);
         DbFormatChange::open_database(&running_version, Some(old_version))
             .apply_format_upgrade(&db, Some(Height(10)), &rx)
             .unwrap();
         // These historical in-place upgrades end at 29.1; version 30 requires a fresh database.
-        let upgraded_version = Version::new(29, 1, 0);
+        let upgraded_version = crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION;
         assert_eq!(
             db.format_version_on_disk().unwrap(),
             Some(upgraded_version.clone())

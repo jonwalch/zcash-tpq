@@ -148,7 +148,7 @@ fn format_upgrades(
         Box::new(nsm_value_balance_pool::Upgrade),
         Box::new(no_migration::NoMigration::new(
             "add Zakura header auxiliary body size corrections",
-            Version::new(29, 1, 0),
+            crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
         )),
     ] as [Box<dyn DiskFormatUpgrade>; 12])
         .into_iter()
@@ -1007,7 +1007,7 @@ fn database_startup_waits_for_format_upgrade() {
     };
     let network = Network::Mainnet;
     // Exercise the historical in-place upgrades, before the incompatible v30 boundary.
-    let running_version = Version::new(29, 1, 0);
+    let running_version = crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION;
 
     let db = ZakuraDb::new(
         &config,
@@ -1076,7 +1076,7 @@ fn database_startup_waits_for_format_upgrade() {
         returned_rx
             .recv_timeout(Duration::from_secs(10))
             .expect("startup returns after the format upgrade"),
-        Some(Version::new(29, 1, 0)),
+        Some(crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION),
     );
     open_thread.join().expect("startup thread does not panic");
 }
@@ -1124,7 +1124,10 @@ fn vct_format_changes_include_root_auth_metadata_updates() {
     assert_eq!(upgrades[4].version(), Version::new(28, 1, 4));
     assert_eq!(upgrades[5].version(), Version::new(28, 1, 5));
     assert_eq!(upgrades[6].version(), Version::new(29, 0, 0));
-    assert_eq!(upgrades[7].version(), Version::new(29, 1, 0));
+    assert_eq!(
+        upgrades[7].version(),
+        crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION
+    );
     assert!(
         !upgrades[3].needs_migration(),
         "the header-chain column families are created on open without rebasing authenticated roots"
@@ -1139,14 +1142,20 @@ fn vct_format_changes_include_root_auth_metadata_updates() {
             .last()
             .expect("latest in-place format upgrade is registered")
             .version(),
-        Version::new(29, 1, 0)
+        crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION
     );
 }
 
 #[test]
 fn twenty_mb_database_does_not_reuse_u16_transaction_indexes() {
     use crate::service::finalized_state::disk_db::DiskDb;
-    use crate::{constants::state_database_format_version_in_code, Config};
+    use crate::{
+        constants::{
+            state_database_format_version_in_code, LEGACY_STATE_DATABASE_FORMAT_VERSION,
+            STATE_DATABASE_KIND, WIDE_TRANSACTION_INDEX_FORMAT_VERSION,
+        },
+        Config,
+    };
 
     let directory = tempfile::tempdir().unwrap();
     let config = Config {
@@ -1155,19 +1164,25 @@ fn twenty_mb_database_does_not_reuse_u16_transaction_indexes() {
         ..Default::default()
     };
     let network = zakura_chain::parameters::Network::Mainnet;
-    let old_path = config.db_path("state", 29, &network);
+    let old_path = config.db_path(
+        STATE_DATABASE_KIND,
+        LEGACY_STATE_DATABASE_FORMAT_VERSION.major,
+        &network,
+    );
     std::fs::create_dir_all(&old_path).unwrap();
     std::fs::write(old_path.join("old-index-format"), b"u16").unwrap();
     let version = state_database_format_version_in_code();
-    assert_eq!(version.major, 30);
+    assert_eq!(version.major, WIDE_TRANSACTION_INDEX_FORMAT_VERSION);
     assert!(DiskDb::try_reusing_previous_db_after_major_upgrade(
         &restorable_db_versions(),
         &version,
         &config,
-        "state",
+        STATE_DATABASE_KIND,
         &network,
     )
     .is_none());
     assert!(old_path.join("old-index-format").exists());
-    assert!(!config.db_path("state", 30, &network).exists());
+    assert!(!config
+        .db_path(STATE_DATABASE_KIND, version.major, &network)
+        .exists());
 }

@@ -43,7 +43,12 @@ pub(super) const RULES: &[MessageRule] = &[
         },
     },
     GET_BLOCKS,
-    response(MSG_BS_BLOCK, false, PayloadLen::between(2, 2_000_001)),
+    response(
+        MSG_BS_BLOCK,
+        false,
+        // The block limit fits usize; the payload also carries a one-byte tag.
+        PayloadLen::between(2, block::MAX_BLOCK_BYTES as usize + 1),
+    ),
     response(MSG_BS_BLOCKS_DONE, true, PayloadLen::exact(9)),
     response(MSG_BS_RANGE_UNAVAILABLE, true, PayloadLen::exact(9)),
 ];

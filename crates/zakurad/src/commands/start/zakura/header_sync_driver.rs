@@ -1914,8 +1914,11 @@ mod tests {
         let source = zakura_header_chain::SourceId::from_digest([6; 32]);
         let hash = block::Hash([7; 32]);
         let error = classify_body_size_hint_failure(
-            zakura_header_chain::BodySizeHint::new(2_000_001)
-                .expect_err("the fixture exceeds the canonical body-size hint limit"),
+            zakura_header_chain::BodySizeHint::new(
+                u32::try_from(block::MAX_BLOCK_BYTES + 1)
+                    .expect("the block-size boundary fits u32"),
+            )
+            .expect_err("the fixture exceeds the canonical body-size hint limit"),
             hash,
             source,
         );

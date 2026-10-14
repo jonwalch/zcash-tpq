@@ -135,14 +135,20 @@ devnet use. Transaction decoding uses the same byte limit. Block headers and the
 transaction count also consume block space. This change does not activate SLH
 on public networks or change SLH signature-check budgets.
 The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
+Use this binary only on the devnet. Its rules are not compatible with public
+Mainnet or Testnet, even when those network names are selected in the config.
 The state database format is 30.0.0 because transaction indexes now use four
-bytes. Existing version 29 databases require a fresh sync.
+bytes. The cache uses `state-tpq/v30` to avoid sharing an upstream database with
+the same version number. Existing caches under `state` require a fresh sync.
 Startup rejects a database marked with a version below 30 in the v30 directory.
-It also rejects a non-empty cache with no version file, whose index layout cannot
-be identified. The version file must include the major version (`30.0.0`, for
+It also rejects an unversioned cache that contains records, whose index layout
+cannot be identified. The version file must include the major version (`30.0.0`, for
 example); legacy minor/patch-only markers cannot identify the layout either.
 These checks apply to read-only and skip-upgrade opens. An absent
-or empty directory can start a fresh database. Moving an old cache does not migrate it.
+or empty directory can start a fresh database. If the first start stops after
+RocksDB creates its files but before it stores any records or a version marker,
+a writable restart can finish initialization. This check reads raw column
+families without decoding indexes. Moving an old cache does not migrate it.
 
 The classical block signature-operation limit deliberately remains 20,000,
 including legacy and P2SH operations. A transparent-payment workload can reach
@@ -154,6 +160,8 @@ The default RPC response budget is 641,048,576 bytes to allow verbose transactio
 JSON, which repeats data as raw hex, script hex, disassembled scripts, and fields.
 An explicit `rpc.max_response_body_size` setting still takes precedence. Existing
 configs that set the former 50 MiB limit must raise it to receive larger responses.
+The limit applies to each response, not to total RPC memory. Concurrent verbose
+requests can use much more memory than a single response.
 
 The block-sync speculative look-ahead budget defaults to 1.5 GiB. Config loading
 raises positive values below one full block to 20 MB. The active checkpoint
@@ -162,8 +170,11 @@ This separate window can retain 401 full blocks: 8.02 GB of serialized data and
 about 32.08 GB of estimated decoded copies. The 1.5 GiB setting is not a cap on
 total node memory and does not ensure that every workload fits a 4–8 GB machine.
 Requests without a body-size hint reserve 20 MB each, so a fixed request budget
-permits fewer concurrent requests. Peer message buffers can also hold larger
-payloads. These limits have not been measured in a live devnet run.
+permits fewer concurrent requests. Legacy block and transaction messages can
+reserve up to 20 MiB each. Other legacy commands, including unknown commands,
+retain the old 2 MiB ceiling; oversized headers are rejected before reserving
+the body buffer. The 1 KiB pre-handshake ceiling still applies.
+These limits have not been measured in a live devnet run.
 
 The configuration uses these fields:
 

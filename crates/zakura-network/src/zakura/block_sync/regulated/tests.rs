@@ -386,3 +386,18 @@ fn envelope_allocations_are_bounded_by_the_payload() {
         );
     }
 }
+
+#[test]
+fn block_envelope_accepts_the_full_block_limit_and_rejects_one_byte_more() {
+    let limit = usize::try_from(block::MAX_BLOCK_BYTES).unwrap();
+    let mut frame = encode_frame(&Message::Block(vec![0; limit])).unwrap();
+    assert_eq!(frame.payload.len(), limit + 1);
+    let Message::Block(body) = decode_frame::<Message>(&frame).unwrap() else {
+        panic!("the block tag must decode as a block envelope");
+    };
+    assert_eq!(body.len(), limit);
+    drop(body);
+    frame.payload.push(0);
+    assert!(decode_frame::<Message>(&frame).is_err());
+    assert!(encode_frame(&Message::Block(vec![0; limit + 1])).is_err());
+}

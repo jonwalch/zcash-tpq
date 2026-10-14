@@ -67,7 +67,7 @@ pub struct Config {
     /// # Implementation Details
     ///
     /// Each state format version and network has a separate state.
-    /// These states are stored in `state/vN/mainnet` and `state/vN/testnet` subdirectories,
+    /// These states are stored in `state-tpq/vN/mainnet` and `state-tpq/vN/testnet` subdirectories,
     /// underneath the `cache_dir` path, where `N` is the state format version.
     /// Experimental SLH Regtest uses `regtest-slh-dsa-b128s-v1-hH-tT-bB`, where
     /// `H` is its activation height and `T`/`B` are its transaction/block check
@@ -1036,27 +1036,8 @@ pub(crate) fn database_format_version_at_path(
     db_path: &Path,
     major_version: u64,
 ) -> Result<Option<Version>, BoxError> {
-    let disk_version_file = match fs::read_to_string(version_path) {
-        Ok(version) => Some(version),
-        Err(e) if e.kind() == ErrorKind::NotFound => {
-            // If the version file doesn't exist, don't guess the version yet.
-            None
-        }
-        Err(e) => Err(e)?,
-    };
-
-    // The database has a version file on disk
-    if let Some(version) = disk_version_file {
-        return Ok(Some(
-            version
-                .parse()
-                // Try to parse the previous format of the disk version file if it cannot be parsed as a `Version` directly.
-                .or_else(|err| {
-                    format!("{major_version}.{version}")
-                        .parse()
-                        .map_err(|err2| format!("failed to parse format version: {err}, {err2}"))
-                })?,
-        ));
+    if let Some(version) = read_database_format_version_file(version_path, Some(major_version))? {
+        return Ok(Some(version));
     }
 
     // There's no version file on disk, so we need to guess the version
@@ -1072,6 +1053,28 @@ pub(crate) fn database_format_version_at_path(
         Err(e) if e.kind() == ErrorKind::NotFound => Ok(None),
 
         Err(e) => Err(e)?,
+    }
+}
+
+/// Read a version marker, optionally accepting the historical minor.patch form.
+/// Callers that cannot infer the data layout from a directory must pass `None`.
+pub(crate) fn read_database_format_version_file(
+    version_path: &Path,
+    legacy_major_version: Option<u64>,
+) -> Result<Option<Version>, BoxError> {
+    let text = match fs::read_to_string(version_path) {
+        Ok(text) => text,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    match text.parse() {
+        Ok(version) => Ok(Some(version)),
+        Err(error) => match legacy_major_version {
+            Some(major) => Ok(Some(format!("{major}.{text}").parse().map_err(
+                |legacy_error| format!("failed to parse format version: {error}, {legacy_error}"),
+            )?)),
+            None => Err(error.into()),
+        },
     }
 }
 

@@ -26,8 +26,14 @@ pub const MAX_BLOCK_REORG_HEIGHT: u32 = zakura_chain::parameters::constants::MAX
 /// the wait in that case. Callers treat the timeout as retryable.
 pub const AWAIT_BLOCK_INFO_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(2 * 60);
 
-/// The directory name used to distinguish the state database from Zebra's other databases or flat files.
-pub const STATE_DATABASE_KIND: &str = "state";
+/// The directory name that separates this fork's state layout from upstream caches.
+pub const STATE_DATABASE_KIND: &str = "state-tpq";
+
+/// First format with this fork's four-byte transaction indexes.
+pub(crate) const WIDE_TRANSACTION_INDEX_FORMAT_VERSION: u64 = 30;
+
+/// Last pinned upstream format, before this fork's incompatible transaction indexes.
+pub(crate) const LEGACY_STATE_DATABASE_FORMAT_VERSION: Version = Version::new(29, 1, 0);
 
 /// The minimum retention window allowed in pruned storage mode.
 ///
@@ -100,7 +106,7 @@ pub const MAX_PRUNE_HEIGHTS_PER_COMMIT: u32 = 100;
 ///
 /// Instead of using this constant directly, use [`constants::state_database_format_version_in_code()`]
 /// or [`config::database_format_version_on_disk()`] to get the full semantic format version.
-const DATABASE_FORMAT_VERSION: u64 = 30;
+const DATABASE_FORMAT_VERSION: u64 = WIDE_TRANSACTION_INDEX_FORMAT_VERSION;
 
 /// The database format minor version, incremented each time the on-disk database format has a
 /// significant data format change.

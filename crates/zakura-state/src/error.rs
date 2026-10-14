@@ -195,7 +195,7 @@ pub enum StateInitError {
     /// A pre-v30 database cannot be read with the wider transaction indexes.
     #[error(
         "state database at {path:?} has incompatible format {version}. \
-         Format 30 uses wider transaction indexes and requires a fresh state cache; \
+         This fork uses wider transaction indexes and requires a fresh state cache; \
          copying an older database into the new directory does not migrate it"
     )]
     IncompatibleTransactionIndexFormat {

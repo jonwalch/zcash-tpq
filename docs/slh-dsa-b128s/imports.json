@@ -165,8 +165,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "52faab27298f46c6e19a649249f7b8411d2454262ad275d4a2633ae4628eed0d"
+      "reason": "PR #9: State the user-approved fork-wide 20 MB devnet scope, public-network incompatibility, and the separate state-tpq cache with a fresh sync requirement.",
+      "sha256": "a65c653c756cdf6ed66a9e886f469bb25df639b24fa0037bd2647ae512cfb785"
     },
     {
       "disposition": "new",
@@ -2367,8 +2367,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "48b5b9734227680216e1b916aa2a98ad73c0ac749ef0120943b395bd07aed0ce"
+      "reason": "PR #9: Carry 20 MB blocks and transactions while preserving the upstream 2 MiB limit for every other legacy command; enforce both handshake and command limits before reserving body buffers.",
+      "sha256": "30444200e852011bbc62ccd49dbf887092e782599c8b26297f17dee89241eaa1"
     },
     {
       "disposition": "upstream-modification",
@@ -2377,8 +2377,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "0596636c809a02bb2d13c5b430efbfaaa7e69b298d8952c77187d4c687e03cf9"
+      "reason": "PR #9: Cover a full 20 MB block round trip, reject oversized control and unknown message headers before body reservation, and preserve the pre-handshake limit for blocks and transactions.",
+      "sha256": "442ac7ed244a289b5e730ad4c95c676142bb6526649aa3d04f6bc9cac45635b5"
     },
     {
       "disposition": "upstream-modification",
@@ -2419,6 +2419,26 @@
       ],
       "reason": "PR #9: Retain the upstream 1.5 GiB speculative default with 20 MB blocks and clamp only sub-block budgets; the existing checkpoint-window exemption supplies liveness independently of this budget.",
       "sha256": "88174f7f7e5167497b3cccf569a9e292bc178d6917c2594c356d65d7448ae028"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/regulated/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Exercise the full 20 MB regulated block envelope in both directions and reject one byte above the limit without constructing a consensus fixture.",
+      "sha256": "3e1c1aedc710257db1df944851a62990daaab9bf0c69d6495a99918d8f91f184"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/regulated/wire.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Derive the regulated block envelope limit from MAX_BLOCK_BYTES plus its tag so the alternate requester accepts full devnet blocks.",
+      "sha256": "3b23e7cbcec273c878f4232146420cd22a9c14cf4e0748343a4aa5cd4342d340"
     },
     {
       "disposition": "upstream-modification",
@@ -2635,10 +2655,11 @@
       "path": "crates/zakura-state/src/config.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
-        "docs/slh-dsa-b128s/protocol.md"
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
-      "sha256": "39b4f9afc1012d86eca4be61c630172cbb95ef53ca4e5277ecc234fe87465e74"
+      "reason": "PR #9: Separate fork state paths under state-tpq and share version-file parsing between historical migration discovery and strict startup layout checks; preserve legacy parsing only when the caller supplies the old major version.",
+      "sha256": "6263d052a4bfc928775ffade731e34bda541b6239633415b81a296ba547460d7"
     },
     {
       "disposition": "upstream-modification",
@@ -2647,8 +2668,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "82652248c1afc0ddfafebebd2e5eb29674d57db9b1b37fab01a9ff4f36795497"
+      "reason": "PR #9: Use four-byte transaction indexes in format 30 under a distinct state-tpq database kind, avoiding future upstream major-version collisions; name the layout boundary and last pinned upstream format.",
+      "sha256": "94f372debe756fba54c017226643d061f516113a00484db68786000fa8dbb0ab"
     },
     {
       "disposition": "upstream-modification",
@@ -2657,8 +2678,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Report incompatible pre-v30 transaction-index data with a fresh-cache instruction before typed database reads.",
-      "sha256": "6b535e00ae4e778830e42a0e7eece794a782f86f8b4e7d135abafa3b1927bc0b"
+      "reason": "PR #9: Explain why a copied pre-wide-index database cannot be opened as the fork format and requires a fresh cache.",
+      "sha256": "10ada634497131ca539ff4884b09461dbf308194732bb0493c402032f27a7c81"
     },
     {
       "disposition": "upstream-modification",
@@ -2679,6 +2700,16 @@
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
       "sha256": "44fc5e52fdad495cd5b66e4cb2fd1f17f7a7c49f586f8282d55fc499a10f8b9d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-state/src/service/finalized_state/disk_db.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Inspect unversioned RocksDB column families without typed decoding or merge operators; only an empty database may resume interrupted first initialization.",
+      "sha256": "c6e1b84b787f0b3493b1265d04ce9720b3ce059d5fe8f097f397fd5546c8da6d"
     },
     {
       "disposition": "upstream-modification",
@@ -3057,8 +3088,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Keep the startup-waits-for-upgrade test on its historical v29 target, since v30 has no compatible in-place migration.",
-      "sha256": "80741c15f1ef535c92e3336006fb742b851fcff511cf197babbfcb092e32a929"
+      "reason": "PR #9: Keep the incompatible wide-index format out of reusable in-place upgrades; use named format versions and verify that historical fork caches are preserved instead of reused.",
+      "sha256": "1c07f7667db80498fb54330b0d3adcac7cfcd88ee7ecb900915e5bef099a2b9a"
     },
     {
       "disposition": "upstream-modification",
@@ -3077,8 +3108,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Keep legacy accounting migration fixtures and reopen tests on v29, preserving their migration checks without crossing the incompatible v30 boundary.",
-      "sha256": "a83125e8f48b3b776df77edef95bb733618227a53d18788870d3591e2f40b19b"
+      "reason": "PR #9: Exercise historical in-place migrations below the incompatible wide-index boundary using the named pinned upstream format.",
+      "sha256": "d655bba50fb867205fd72578c46be726432e348338e0505ba3ca5919efa1765c"
     },
     {
       "disposition": "upstream-modification",
@@ -3087,8 +3118,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Build historical cutover fixtures against v29 from creation instead of swapping databases after initialization; preserve migration, storage-failure and retry coverage.",
-      "sha256": "1495a975c560b20dcb16dbacacfedbb1fe29633f4b6c0c5e8141a5653275fe23"
+      "reason": "PR #9: Initialize historical migration fixtures against the named pre-wide-index format from creation, preserving cutover, failure and retry controls.",
+      "sha256": "19980d59487f4e502cd6d31d95b05e142dd65e4236c344f4f49d427d9e180aae"
     },
     {
       "disposition": "upstream-modification",
@@ -3097,8 +3128,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Reject copied pre-v30 indexes, non-empty unversioned caches and ambiguous legacy version markers before opening RocksDB in every open mode; allow fresh empty directories and record their v30 layout even when upgrades are skipped. Cover rejection, fresh opens/reopens and historical VCT guards.",
-      "sha256": "7d944e89b2c83ad9ad940b6d79272e788912f77da286520ef6d14080f3a86730"
+      "reason": "PR #9: Reject copied legacy indexes and ambiguous markers in all open modes, but recover empty RocksDB files left before the first version write. Cover recovery with and without upgrades, normal/read-only reopen, and isolation from same-version upstream caches.",
+      "sha256": "6b2b405fefcbb8e8b00b178f0c3e1e8eca876d8d96e04903164a5e4ae9599b1b"
     },
     {
       "disposition": "upstream-modification",
@@ -3139,6 +3170,16 @@
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol",
       "sha256": "7a8d70d961186202c30748aa9816b70caa37e9807213161217591ced94fda4b5"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/commands/start/zakura/header_sync_driver.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9: Derive the malformed body-size-hint test from the active block limit instead of treating a now-valid 2 MB hint as oversized.",
+      "sha256": "d914145155ea80cceb2803b89f7d209740192a859a6613b469d6b3eab626d7c9"
     },
     {
       "disposition": "upstream-modification",
@@ -3196,8 +3237,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Record 20 MB block, transport, request, wallet and verbose RPC response limits, plus the one-block speculative clamp with the 1.5 GiB default retained.",
-      "sha256": "0037c7e31d568b34bb33f3a9f338cbb44b13d332ea5a128e8f3a6e09a749abc2"
+      "reason": "PR #9: Record block, native transport, RPC and wallet limits, the retained speculative default, and the legacy per-command buffer ceiling.",
+      "sha256": "50af0ebb3cc73945e118422f0ec73fb54bd8932a48c3fe239490fe3743afb548"
     },
     {
       "disposition": "new",
@@ -3235,8 +3276,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Describe the devnet block limit, transport and RPC support, fresh-sync requirement, old/unversioned cache rejection, and separate speculative/checkpoint memory budgets.",
-      "sha256": "ff8965da24ed6fcc5bc36ea08164ac0c91000ad64ed13803b85c78a3e9e9248c"
+      "reason": "PR #9: Describe the 20 MB devnet limit, wider indexes in a distinct cache, strict old-cache rejection with empty-start recovery, and separate buffer and sync budgets.",
+      "sha256": "3b81b1c40f358aa3f2fe0a7d32c881eece19ae44be9692a7dd2952678e60ab6d"
     },
     {
       "disposition": "new",
@@ -3534,8 +3575,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Maintain the experimental SLH contract. Document the 20 MB devnet byte limit, deliberately unchanged 20,000 classical signature-operation budget, separate SLH limits, verbose RPC cap, strict v30 cache identity, and speculative versus exempt checkpoint-window memory limits.",
-      "sha256": "ed7cb232a1c4ab2a51b292cdb866d83d0e6cf5a7a6ad026f70156e4b26140e56"
+      "reason": "PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks.",
+      "sha256": "7c0548f22c64b94adffa635fc712f84306e8045aaf9589d17dd7a1c75484d3fb"
     },
     {
       "disposition": "new",
@@ -3735,10 +3776,12 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json",
         "tests/slh-dsa-b128s/acceptance/NOTICE",
-        "tests/slh-dsa-b128s/acceptance/README.md"
+        "tests/slh-dsa-b128s/acceptance/README.md",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a"
+      "reason": "PR #9: Adapt cache inventory to the fork state-tpq directory while preserving existing namespace and backup controls; this path change does not extend previous live execution evidence.",
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483"
     },
     {
       "disposition": "new",
@@ -3893,10 +3936,12 @@
       "provenance": [
         "tests/slh-dsa-b128s/acceptance/sources.json",
         "tests/slh-dsa-b128s/acceptance/NOTICE",
-        "tests/slh-dsa-b128s/acceptance/README.md"
+        "tests/slh-dsa-b128s/acceptance/README.md",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "2d3b5a070ea56095556a9ce6f9316bb13c9d65a768360c3884dc1923e1cd939f"
+      "reason": "PR #9: Use mocked state-tpq/v30 cache fixtures and verify that same-version upstream state files are excluded from the fork namespace inventory.",
+      "sha256": "9a076002005940c2d937c723f123ccb45b902dc56e0cedd8ebe80fa661621c85"
     },
     {
       "disposition": "new",

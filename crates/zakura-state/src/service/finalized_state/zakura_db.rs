@@ -17,7 +17,8 @@ use semver::Version;
 use zakura_chain::{diagnostic::task::WaitForPanics, parameters::Network};
 
 use crate::{
-    config::database_format_version_on_disk,
+    config::{database_format_version_on_disk, read_database_format_version_file},
+    constants::WIDE_TRANSACTION_INDEX_FORMAT_VERSION,
     service::finalized_state::{
         disk_db::DiskDb,
         disk_format::{
@@ -176,8 +177,11 @@ impl ZakuraDb {
         // Version 30 widens transaction indexes without an in-place migration.
         // Refuse manually copied old databases before any typed read or upgrade,
         // including read-only and debug-skip-upgrade modes.
-        if format_version_in_code.major >= 30 {
-            if let Some(version) = disk_version.as_ref().filter(|version| version.major < 30) {
+        if format_version_in_code.major >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION {
+            if let Some(version) = disk_version
+                .as_ref()
+                .filter(|version| version.major < WIDE_TRANSACTION_INDEX_FORMAT_VERSION)
+            {
                 return Err(StateInitError::IncompatibleTransactionIndexFormat {
                     path: config.db_path(&db_kind, format_version_in_code.major, network),
                     version: version.clone(),
@@ -230,7 +234,7 @@ impl ZakuraDb {
         // caller skips upgrades. RocksDB now holds the lock; existing caches never
         // reach this branch and must pass the version checks above.
         if !config.ephemeral
-            && format_version_in_code.major >= 30
+            && format_version_in_code.major >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION
             && debug_skip_format_upgrades
             && format_change.is_newly_created()
         {
@@ -530,18 +534,17 @@ fn database_format_for_open(
     network: &Network,
 ) -> Result<Option<Version>, BoxError> {
     let version_path = config.version_file_path(&db_kind, major_version, network);
-    if major_version >= 30 && !config.ephemeral {
-        match std::fs::read_to_string(&version_path) {
-            // Require a full major.minor.patch marker. The legacy minor.patch
-            // fallback would infer an incompatible cache's major from its directory.
-            Ok(version) => return Ok(Some(version.parse()?)),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-            Err(error) => return Err(error.into()),
+    if major_version >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION && !config.ephemeral {
+        // Never infer the major version of this fork's layout from its directory.
+        if let Some(version) = read_database_format_version_file(&version_path, None)? {
+            return Ok(Some(version));
         }
         let db_path = config.db_path(&db_kind, major_version, network);
         match std::fs::read_dir(&db_path) {
             Ok(mut entries) => {
-                if entries.next().transpose()?.is_some() {
+                if entries.next().transpose()?.is_some()
+                    && !DiskDb::existing_database_is_empty(&db_path)?
+                {
                     return Err(format!(
                         "non-empty database at {} has no format version file at {}; \
                          its transaction-index format is unknown. Use a fresh state cache; \
@@ -555,7 +558,8 @@ fn database_format_for_open(
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             Err(error) => return Err(error.into()),
         }
-        // A missing or empty directory is safe for a fresh database.
+        // A missing/empty directory or a RocksDB with no records can resume first
+        // initialization. The latter covers interruption before the version write.
         return Ok(None);
     }
     database_format_version_on_disk(config, db_kind, major_version, network)
@@ -615,7 +619,7 @@ mod tests {
         ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &Version::new(29, 1, 0),
+            &crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
             network,
             false,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -630,7 +634,7 @@ mod tests {
         let db = ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &Version::new(29, 1, 0),
+            &crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
             network,
             // Skip format upgrades so the seeded version survives until the guard runs.
             true,
@@ -716,7 +720,7 @@ mod tests {
         let network = Network::new_regtest(Default::default());
         let version = state_database_format_version_in_code();
         let (_cache, config) = persistent_config();
-        let old_version = Version::new(29, 1, 0);
+        let old_version = crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION;
         let old_path = config.db_path(STATE_DATABASE_KIND, old_version.major, &network);
         {
             let db = DiskDb::new(
@@ -781,6 +785,93 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn interrupted_first_open_resumes_an_empty_unversioned_database() {
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        for skip_upgrades in [false, true] {
+            let (_cache, config) = persistent_config();
+            // Simulate interruption after RocksDB creates its files, before the
+            // version marker and any state records are written.
+            drop(
+                DiskDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    false,
+                )
+                .unwrap(),
+            );
+            let version_path =
+                config.version_file_path(STATE_DATABASE_KIND, version.major, &network);
+            assert!(!version_path.exists());
+            assert!(std::fs::read_dir(config.db_path(
+                STATE_DATABASE_KIND,
+                version.major,
+                &network
+            ))
+            .unwrap()
+            .next()
+            .is_some());
+            for read_only in [false, true] {
+                let db = ZakuraDb::new(
+                    &config,
+                    STATE_DATABASE_KIND,
+                    &version,
+                    &network,
+                    skip_upgrades,
+                    STATE_COLUMN_FAMILIES_IN_CODE
+                        .iter()
+                        .map(ToString::to_string),
+                    read_only,
+                )
+                .unwrap();
+                assert_eq!(db.format_version_on_disk().unwrap(), Some(version.clone()));
+                assert_eq!(
+                    std::fs::read_to_string(&version_path).unwrap(),
+                    version.to_string()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn fork_database_does_not_open_an_upstream_cache_with_the_same_version() {
+        let _init_guard = zakura_test::init();
+        let network = Network::new_regtest(Default::default());
+        let version = state_database_format_version_in_code();
+        let (_cache, config) = persistent_config();
+        let upstream_path = config.db_path("state", version.major, &network);
+        std::fs::create_dir_all(&upstream_path).unwrap();
+        let sentinel = upstream_path.join("upstream-data");
+        std::fs::write(&sentinel, b"incompatible upstream layout").unwrap();
+        let fork_path = config.db_path(STATE_DATABASE_KIND, version.major, &network);
+        assert_ne!(upstream_path, fork_path);
+        let db = ZakuraDb::new(
+            &config,
+            STATE_DATABASE_KIND,
+            &version,
+            &network,
+            false,
+            STATE_COLUMN_FAMILIES_IN_CODE
+                .iter()
+                .map(ToString::to_string),
+            false,
+        )
+        .unwrap();
+        assert_eq!(db.format_version_on_disk().unwrap(), Some(version));
+        assert_eq!(
+            std::fs::read(sentinel).unwrap(),
+            b"incompatible upstream layout"
+        );
+        assert!(fork_path.exists());
     }
 
     #[test]

@@ -182,7 +182,7 @@ mod tests {
         ZakuraDb::new(
             config,
             STATE_DATABASE_KIND,
-            &Version::new(29, 1, 0),
+            &crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
             &Network::Mainnet,
             false,
             STATE_COLUMN_FAMILIES_IN_CODE
@@ -238,7 +238,7 @@ mod tests {
             reopened
                 .format_version_on_disk()
                 .expect("the migrated version is readable"),
-            Some(Version::new(29, 1, 0))
+            Some(crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION)
         );
     }
 
@@ -297,7 +297,7 @@ mod tests {
                 reopened
                     .format_version_on_disk()
                     .expect("the migrated version is readable"),
-                Some(Version::new(29, 1, 0))
+                Some(crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION)
             );
         }
     }
@@ -339,7 +339,7 @@ mod tests {
             reopened
                 .format_version_on_disk()
                 .expect("the migrated version is readable"),
-            Some(Version::new(29, 1, 0))
+            Some(crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION)
         );
     }
 

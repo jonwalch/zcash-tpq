@@ -291,7 +291,7 @@ class FilesAndRefusalTests(unittest.TestCase):
 
     def populate(self, root):
         name = controls.namespace((110, 16, 64))
-        database = root / "state/v29" / name
+        database = root / "state-tpq/v30" / name
         backup = root / "non_finalized_state" / name
         database.mkdir(parents=True)
         backup.mkdir(parents=True)
@@ -304,8 +304,12 @@ class FilesAndRefusalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             name, backup = self.populate(root)
+            upstream = root / "state/v30" / name
+            upstream.mkdir(parents=True)
+            (upstream / "CURRENT").write_bytes(b"unrelated upstream cache")
             files = controls.state_files(root, name)
             self.assertEqual(len(files), 3)
+            self.assertFalse(any(path.startswith("state/") for path in files))
             node = SimpleNamespace(tip=lambda: (3, "11" * 32), rpc=lambda *_: "abcd")
             saved = controls.backup_tip(node, root, name)
             self.assertEqual(saved["raw_block_sha256"], hashlib.sha256(bytes.fromhex("abcd")).hexdigest())

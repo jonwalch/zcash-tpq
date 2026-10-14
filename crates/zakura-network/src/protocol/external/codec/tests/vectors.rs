@@ -9,6 +9,51 @@ use lazy_static::lazy_static;
 use super::*;
 
 #[test]
+fn oversized_control_messages_are_rejected_before_body_reservation() {
+    for command in [
+        *b"addr\0\0\0\0\0\0\0\0",
+        *b"addrv2\0\0\0\0\0\0",
+        *b"headers\0\0\0\0\0",
+        *b"inv\0\0\0\0\0\0\0\0\0",
+        *b"getdata\0\0\0\0\0",
+        *b"filterload\0\0",
+        *b"unknown\0\0\0\0\0",
+    ] {
+        let mut codec = Codec::builder().finish();
+        codec.reconfigure_full_body_len();
+        let mut bytes = BytesMut::from(&wire_message(command, &[])[..]);
+        bytes[16..20].copy_from_slice(
+            &u32::try_from(MAX_CONTROL_MESSAGE_BODY_LEN + 1)
+                .unwrap()
+                .to_le_bytes(),
+        );
+        let capacity = bytes.capacity();
+        assert!(matches!(
+            codec.decode(&mut bytes),
+            Err(Error::Parse("body length exceeded maximum size"))
+        ));
+        assert!(bytes.capacity() <= capacity, "no body buffer was reserved");
+    }
+}
+
+#[test]
+fn large_data_messages_still_obey_the_handshake_limit() {
+    for command in [*b"block\0\0\0\0\0\0\0", *b"tx\0\0\0\0\0\0\0\0\0\0"] {
+        let mut codec = Codec::builder().finish();
+        let mut bytes = BytesMut::from(&wire_message(command, &[])[..]);
+        bytes[16..20].copy_from_slice(
+            &u32::try_from(MAX_HANDSHAKE_BODY_LEN + 1)
+                .unwrap()
+                .to_le_bytes(),
+        );
+        assert!(matches!(
+            codec.decode(&mut bytes),
+            Err(Error::Parse("body length exceeded maximum size"))
+        ));
+    }
+}
+
+#[test]
 fn block_message_round_trip_at_twenty_mb() {
     let _init_guard = zakura_test::init();
     let block = std::sync::Arc::new(zakura_chain::block::tests::generate::block_with_size(

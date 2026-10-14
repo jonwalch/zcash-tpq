@@ -14,7 +14,9 @@ It is not a FIPS 205 profile or a production release.
 This fork permits blocks up to **20 MB (20,000,000 bytes)** on all networks for
 use on a separate devnet. This is a consensus change from upstream's 2 MB limit.
 All devnet nodes must use compatible rules. The state database format is now
-30.0.0; existing version 29 databases require a fresh sync.
+30.0.0 under `state-tpq`; existing caches under `state` require a fresh sync.
+Use this binary only on the devnet. It is not consensus-compatible with public
+Mainnet or Testnet.
 SLH activation remains off by default and Regtest-only.
 
 ## Start here

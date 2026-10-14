@@ -52,6 +52,9 @@ const BLOOM_FILTER_COMMANDS: [[u8; 12]; 3] =
 /// verack is 0 bytes. 1 KB provides headroom for future protocol changes.
 const MAX_HANDSHAKE_BODY_LEN: usize = 1024;
 
+/// Preserve the upstream buffer limit for messages that do not carry a block or transaction.
+const MAX_CONTROL_MESSAGE_BODY_LEN: usize = 2 * 1024 * 1024;
+
 /// The parse error returned when a legacy message body parser panics.
 const PANICKED_MESSAGE_BODY_PARSE_ERROR: &str = "panic while parsing peer message body";
 
@@ -119,6 +122,15 @@ impl Codec {
     pub fn reconfigure_full_body_len(&mut self) {
         self.builder.max_len = MAX_PROTOCOL_MESSAGE_LEN;
     }
+
+    /// Bound the body before reserving its buffer, including unknown commands.
+    fn max_body_len(&self, command: &[u8; 12]) -> usize {
+        let command_limit = match command {
+            b"block\0\0\0\0\0\0\0" | b"tx\0\0\0\0\0\0\0\0\0\0" => MAX_PROTOCOL_MESSAGE_LEN,
+            _ => MAX_CONTROL_MESSAGE_BODY_LEN,
+        };
+        self.builder.max_len.min(command_limit)
+    }
 }
 
 impl Builder {
@@ -156,14 +168,6 @@ impl Encoder<Message> for Codec {
 
         let body_length = self.body_length(&item);
 
-        if body_length > self.builder.max_len {
-            return Err(Parse("body length exceeded maximum size"));
-        }
-
-        // Aggregate totals only: per-addr labels are never pruned by the Prometheus
-        // exporter and grow without bound on public listeners.
-        metrics::counter!("zcash.net.out.bytes.total").increment((body_length + HEADER_LEN) as u64);
-
         use Message::*;
         // Note: because all match arms must have
         // the same type, and the array length is
@@ -189,6 +193,13 @@ impl Encoder<Message> for Codec {
             Tx { .. } => b"tx\0\0\0\0\0\0\0\0\0\0",
             Mempool => b"mempool\0\0\0\0\0",
         };
+        if body_length > self.max_body_len(command) {
+            return Err(Parse("body length exceeded maximum size"));
+        }
+
+        // Aggregate totals only: per-addr labels are never pruned by the Prometheus
+        // exporter and grow without bound on public listeners.
+        metrics::counter!("zcash.net.out.bytes.total").increment((body_length + HEADER_LEN) as u64);
         trace!(?item, len = body_length);
 
         dst.reserve(HEADER_LEN + body_length);
@@ -414,7 +425,7 @@ impl Decoder for Codec {
                     if magic != self.builder.network.magic() {
                         return Err(Parse("supplied magic did not meet expectations"));
                     }
-                    if body_len > self.builder.max_len {
+                    if body_len > self.max_body_len(&command) {
                         return Err(Parse("body length exceeded maximum size"));
                     }
                     if command == *crate::zakura::P2P_V2_UPGRADE_COMMAND_BYTES
