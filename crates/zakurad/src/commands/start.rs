@@ -238,7 +238,7 @@ impl StartCmd {
     }
 
     /// A node without the SLH-DSA-B-128s verifier would reject SLH-DSA-B-128s spends that other
-    /// nodes on the same experimental Regtest chain accept, so it must not start.
+    /// nodes on the same experimental chain accept, so it must not start.
     fn validate_experimental_slh_dsa_b128s_support(config: &ZakuradConfig) -> Result<(), Report> {
         if config
             .network
@@ -1511,6 +1511,41 @@ mod tests {
             result.is_ok(),
             zakura_consensus::supports_experimental_slh_dsa_b128s(),
             "{result:?}"
+        );
+    }
+
+    #[test]
+    fn custom_testnet_slh_config_requires_complete_runtime_support() {
+        use zakura_chain::{
+            local_genesis::{
+                generate_local_testnet_with_slh_dsa_b128s, LocalTestnetGenesisOptions,
+            },
+            parameters::{testnet::ExperimentalSlhDsaB128sLimits, NetworkUpgrade},
+        };
+
+        let mut config = ZakuradConfig::default();
+        config.network.network = generate_local_testnet_with_slh_dsa_b128s(
+            Vec::new(),
+            LocalTestnetGenesisOptions {
+                latest_network_upgrade: NetworkUpgrade::Nu7,
+                ..Default::default()
+            },
+            ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap(),
+        )
+        .expect("explicit NU7 permits the custom SLH testnet")
+        .network;
+        assert!(!config.network.network.is_regtest());
+        let result = StartCmd::validate_consensus_config(&config);
+        assert_eq!(
+            result.is_ok(),
+            zakura_consensus::supports_experimental_slh_dsa_b128s(),
+            "{result:?}"
+        );
+        let result = StartCmd::default().override_config(config);
+        assert_eq!(
+            result.is_ok(),
+            zakura_consensus::supports_experimental_slh_dsa_b128s(),
+            "CLI and embedded startup both apply the same configuration override: {result:?}"
         );
     }
 
