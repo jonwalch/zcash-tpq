@@ -44,12 +44,13 @@ use crate::{
 mod cache_dir;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use cache_dir::CacheDir;
 
 pub(crate) use cache_dir::{
-    default_network_identity_dir, zakura_node_secret_key_file_path as zakura_secret_key_file_path,
+    default_network_identity_dir, legacy_zakura_node_secret_key_file_path,
+    zakura_node_secret_key_file_path as zakura_secret_key_file_path,
 };
 
 /// A sensitive secret-key override for Zakura P2P node identity.
@@ -127,12 +128,20 @@ impl P2pStack {
     /// Resolves [`P2pStack::Default`] to the binary default for `network`, and returns every
     /// other stack unchanged.
     ///
-    /// Mainnet defaults to [`P2pStack::Legacy`] until Zakura P2P v2 is proven there. Every other
-    /// network defaults to [`P2pStack::Dual`], so Zakura P2P v2 gets exercised while legacy
-    /// peers stay reachable.
+    /// Mainnet defaults to [`P2pStack::Legacy`] until Zakura P2P v2 is proven there.
+    /// SLH custom testnets require [`P2pStack::Zakura`] to verify their chain fingerprint.
+    /// Other networks default to [`P2pStack::Dual`] to keep legacy peers reachable.
     pub fn resolve(self, network: &Network) -> P2pStack {
         match self {
             P2pStack::Default if matches!(network, Network::Mainnet) => P2pStack::Legacy,
+            P2pStack::Default
+                if network.kind() == NetworkKind::Testnet
+                    && network
+                        .experimental_slh_dsa_b128s_activation_height()
+                        .is_some() =>
+            {
+                P2pStack::Zakura
+            }
             P2pStack::Default => P2pStack::Dual,
             resolved => resolved,
         }
@@ -356,7 +365,7 @@ pub struct Config {
 }
 
 impl Config {
-    /// Reject built-in public peers for an explicitly configured SLH custom testnet.
+    /// Require native peering and valid non-public bootstrap peers for an SLH custom testnet.
     ///
     /// This check also applies to configurations constructed directly by an
     /// embedding application. Empty peer lists permit an inbound-only node.
@@ -369,6 +378,12 @@ impl Config {
                 .is_none()
         {
             return Ok(());
+        }
+
+        if self.p2p_stack.resolve(&self.network) != P2pStack::Zakura {
+            return Err(
+                "custom SLH Testnets require network.p2p_stack = 'zakura'; legacy peers cannot verify the chain fingerprint",
+            );
         }
 
         static PUBLIC_PEERS: LazyLock<(HashSet<String>, HashSet<NodeId>)> = LazyLock::new(|| {
@@ -410,22 +425,20 @@ impl Config {
                 );
             }
         }
-        if self
-            .zakura
-            .bootstrap_peers
-            .iter()
-            .filter_map(|peer| crate::zakura::parse_bootstrap_peer(peer).ok())
-            .any(|peer| {
-                public_ids.contains(&peer.id)
-                    || peer
-                        .direct
-                        .iter()
-                        .any(|addr| public_hosts.contains(&slh_peer_ip(addr.ip()).to_string()))
-            })
-        {
-            return Err(
-                "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
-            );
+        for entry in &self.zakura.bootstrap_peers {
+            let peer = crate::zakura::parse_bootstrap_peer(entry).map_err(|_| {
+                "custom SLH Testnets require valid zakura.bootstrap_peers in NodeId@IP:port format"
+            })?;
+            if public_ids.contains(&peer.id)
+                || peer
+                    .direct
+                    .iter()
+                    .any(|addr| public_hosts.contains(&slh_peer_ip(addr.ip()).to_string()))
+            {
+                return Err(
+                    "custom SLH Testnets require explicit zakura.bootstrap_peers without built-in Mainnet or Testnet peers",
+                );
+            }
         }
         Ok(())
     }
@@ -836,10 +849,8 @@ impl Config {
         }
 
         let key_file = zakura_secret_key_file_path(&self.identity_dir, &self.network);
-        let legacy_key_file = self.identity_dir.join(format!(
-            "{}.zakura-iroh-secret-key",
-            self.network.lowercase_name()
-        ));
+        let legacy_key_file =
+            legacy_zakura_node_secret_key_file_path(&self.identity_dir, &self.network);
         if key_file != legacy_key_file && !key_file.exists() && legacy_key_file.is_file() {
             warn!(
                 old_key_file = %legacy_key_file.display(),

@@ -105,10 +105,19 @@ pub(crate) fn default_network_identity_dir() -> PathBuf {
 /// Returns the persistent Zakura iroh secret-key file path for `network` under
 /// `identity_dir`.
 pub(crate) fn zakura_node_secret_key_file_path(identity_dir: &Path, network: &Network) -> PathBuf {
-    identity_dir.join(format!(
-        "{}.zakura-iroh-secret-key",
-        network_file_stem(network)
-    ))
+    identity_key_file_path(identity_dir, &network_file_stem(network))
+}
+
+/// Returns the former name-only identity path, used to detect an SLH identity change.
+pub(crate) fn legacy_zakura_node_secret_key_file_path(
+    identity_dir: &Path,
+    network: &Network,
+) -> PathBuf {
+    identity_key_file_path(identity_dir, &network.lowercase_name())
+}
+
+fn identity_key_file_path(identity_dir: &Path, network_stem: &str) -> PathBuf {
+    identity_dir.join(format!("{network_stem}.zakura-iroh-secret-key"))
 }
 
 /// Separate SLH custom-chain peers and identities while retaining all other paths.

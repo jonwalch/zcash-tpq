@@ -30,8 +30,11 @@ The values 16 and 64 remain a functional test profile, not a capacity recommenda
 
 The result is `GeneratedLocalTestnet`: network parameters, seed blocks, classical
 funded keys, and checkpoints. If the seed tip is S, NU7 activates at S+1 and SLH
-at S+2. The generator checks height arithmetic before it generates keys or blocks.
-It does not generate SLH keys or signatures.
+at S+2. Both generators check seed-count and activation-height arithmetic before
+they generate keys or blocks. The shared helper rejects overflow instead of
+saturating the seed count, which could otherwise start an excessive generation
+loop before an invalid SLH schedule is detected. Ordinary generation retains
+this early error as well. It does not generate SLH keys or signatures.
 
 Generate these values once. Save the network and seed blocks, and reuse them
 for every node and restart. Keep generated keys in the launcher's private storage.
@@ -71,8 +74,19 @@ It does not configure a custom testnet. A custom SLH testnet needs a nonreserved
 name and magic and a genesis different from the built-in networks. A renamed
 public Testnet does not qualify.
 
-Set the launcher's own legacy and Zakura bootstrap peers. Clear unused peer lists.
-Configuration loading and startup reject known public seed host names regardless
+SLH custom testnets use the native Zakura peer stack. Set
+`network.p2p_stack = 'zakura'`, or leave it at `default`, which selects `zakura`
+for these networks. Configuration loading and startup reject `legacy` and `dual`: the
+legacy handshake cannot check the full chain fingerprint, and dual mode can
+fall back to legacy after a failed native handshake. Regtest and other networks
+retain their existing stack choices.
+
+Set the launcher's own `network.zakura.bootstrap_peers`. Each entry must use
+`NodeId@IP:port`, with brackets around an IPv6 address. Malformed entries stop
+configuration loading and startup; a bare socket address is not a native peer.
+Empty bootstrap lists permit an inbound-only node. Clear the unused
+`network.initial_testnet_peers` list.
+The peer checks reject known public seed host names regardless
 of port, letter case, or a final DNS dot. They also reject built-in native peer
 identities and IP addresses, including IPv4-mapped and IPv4-compatible IPv6 addresses.
 The check also recognizes the standard NAT64 prefix `64:ff9b::/96`
@@ -141,6 +155,14 @@ on the same chain still needs its own identity directory or explicit key.
 Keep the saved chain definition with backups. Changing consensus settings starts
 a different devnet; it does not update an existing chain in place.
 
+The native handshake uses the fingerprint as its chain ID. A development cohort
+tag is derived from that ID, so a shared tag cannot bypass the rule comparison.
+Peers with the same genesis and magic but different SLH activation or limits
+are rejected before block exchange. This applies before activation as well.
+Earlier SLH custom-testnet nodes used genesis alone as the native chain ID;
+upgrade all peers together. These nodes cannot connect to the new chain ID.
+Other networks keep their existing handshake identity.
+
 The fingerprint identifies settings. It does not authenticate a remote node or
 prove its execution. It also does not change signatures: custom testnets use the
 existing Testnet byte 01. Cloned histories do not gain separate signature domains
@@ -204,7 +226,7 @@ Its request fingerprint is not this node's normalized consensus fingerprint.
 Do not mark a deployment ready merely because those draft files were generated.
 
 Focused tests cover custom configuration, rule identity, state isolation, local
-chain generation, startup refusal, and the RPC response. Source presence does
+chain generation, native handshake isolation, startup refusal, and the RPC response. Source presence does
 not establish a successful live run. The [validation guide](validation.md)
 separates recorded checks from live acceptance.
 
@@ -238,9 +260,19 @@ and a disabled temporary Orchard soft fork were not retained. The configuration
 adapter now preserves both settings. Tests compare all four combinations and
 the actual generated network before and after TOML, including their fingerprints.
 The peer guard reuses the native bootstrap parser. Tests cover known host, port,
-IP, and native identity aliases through TOML and embedded configuration.
+IP, and native identity aliases through TOML and embedded configuration. They
+also reject malformed native entries and explicit legacy modes. The public
+network initializer applies the same check before opening a listener or resolving
+a node key; a mocked library test checks this order without network I/O.
+Handshake tests reuse the configuration fixture and check both native control
+and upgrade validators, including matching rules, changed limits and activation,
+shared cohort tags, and unchanged identities on other networks.
+The shared generator uses checked arithmetic because SLH needs a valid height
+after NU7. Separate regression cases reject overflowing ordinary seed schedules
+before key or block generation. Ordinary valid schedules retain upstream behavior.
 The peer cache and automatic identity-key file extend the upstream paths with
-the existing SLH fingerprint.
+the existing SLH fingerprint. Current and former identity paths share one
+filename helper so the upgrade warning follows the persistence path.
 Tests separate same-name chains with different genesis or rules and retain the
 old paths for other networks. Identity tests also check persistence through
 config reloads with the peer cache disabled. Peer tests reject ambiguous numeric

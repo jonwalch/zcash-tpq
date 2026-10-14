@@ -1601,6 +1601,26 @@ mod tests {
                 .contains("require explicit zakura.bootstrap_peers"));
         }
 
+        config.network.zakura.bootstrap_peers = vec!["127.0.0.1:19934".to_string()];
+        let error = StartCmd::default()
+            .override_config(config.clone())
+            .unwrap_err();
+        assert!(error.to_string().contains("NodeId@IP:port"));
+        config.network.zakura.bootstrap_peers.clear();
+        for stack in [
+            zakura_network::P2pStack::Legacy,
+            zakura_network::P2pStack::Dual,
+        ] {
+            config.network.p2p_stack = stack;
+            let error = StartCmd::default()
+                .override_config(config.clone())
+                .unwrap_err();
+            assert!(error
+                .to_string()
+                .contains("legacy peers cannot verify the chain fingerprint"));
+        }
+        config.network.p2p_stack = zakura_network::P2pStack::Default;
+
         for use_custom_peers in [false, true] {
             config.network.zakura.bootstrap_peers.clear();
             if use_custom_peers {
@@ -1612,7 +1632,7 @@ mod tests {
                     .network
                     .zakura
                     .bootstrap_peers
-                    .push("127.0.0.1:19934".to_string());
+                    .push("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a@127.0.0.1:19934".to_string());
             }
             assert!(config
                 .network

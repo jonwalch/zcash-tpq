@@ -71,21 +71,21 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
+      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
     },
     "config-invalid": {
       "anchor": "experimental_slh_dsa_b128s_config_rejects_invalid_boundaries",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
+      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
     },
     "config-required": {
       "anchor": "experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest",
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
+      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
     },
     "consensus-receipt": {
       "anchor": "27af4949d7ee3211987b5a75b7dbdac8c5355ac5",
@@ -106,7 +106,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/config/tests/vectors.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
+      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
     },
     "devnet-consensus": {
       "anchor": "slh_devnet_block_dispatch_accepts_testnet_signatures_and_rejects_wrong_domains",
@@ -141,7 +141,14 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-chain/src/local_genesis.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "361e148fdf087893791e2858cf43f4de26bc3973cad4dc91dda6c6aa6fafa438"
+      "sha256": "e39f1eb93275c2ff64e94caf3d5a514b058193bf48aa931a9768aecacc61434d"
+    },
+    "devnet-handshake": {
+      "anchor": "experimental_slh_dsa_b128s_handshake_binds_consensus_rules",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/zakura/handshake.rs",
+      "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
+      "sha256": "ffe85829927c233b47b450fdffbfc8a36caf626ca8dbf7b86430ffa987b640f0"
     },
     "devnet-independent": {
       "anchor": "def controls(",
@@ -157,6 +164,13 @@
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
       "sha256": "d434e8b4c83ab7fbf286403a355256e55e456fe220a754e37dec886b8d992f97"
     },
+    "devnet-native-only": {
+      "anchor": "experimental_slh_dsa_b128s_network_init_rejects_invalid_peering_before_io",
+      "kind": "bounded_test_source",
+      "path": "crates/zakura-network/src/config/tests/vectors.rs",
+      "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
+      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+    },
     "devnet-rpc": {
       "anchor": "slh_info_reports_rules_without_claiming_tip_readiness",
       "kind": "bounded_test_source",
@@ -169,7 +183,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakurad/src/commands/start.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "a2fb0ac5edb789b05a84d50e37688d04cf0c1ba00b33ede0624edd2e50a1ebf7"
+      "sha256": "b6f2a46bbd975ce0af9af7957f4a7ac1b3d3ee0a198575559e7412ccbbe12954"
     },
     "domains": {
       "anchor": "commitment_known_answers_and_exact_template_are_domain_separated",
@@ -1319,11 +1333,13 @@
             "human-namespace",
             "devnet-config",
             "devnet-genesis",
-            "devnet-rpc"
+            "devnet-rpc",
+            "devnet-handshake",
+            "devnet-native-only"
           ],
           "id": "config",
           "remaining_preparation": "Custom Testnet launcher bootstrap/readiness and live multi-node acceptance still need preparation and approved execution.",
-          "requirement": "Absent/active/varied budgets, required fields and invalid boundaries."
+          "requirement": "Absent/active/varied budgets, required fields and invalid boundaries. Custom SLH peer identity binds the rules fingerprint even with shared cohorts; legacy fallback and malformed native bootstrap entries fail before network I/O."
         },
         {
           "evidence": [
@@ -1443,7 +1459,7 @@
           ],
           "id": "namespace",
           "remaining_preparation": null,
-          "requirement": "Changing gate/limits isolates Regtest state; changing custom Testnet consensus identity creates a separate state/backup namespace. Peer cache paths remain a launcher responsibility."
+          "requirement": "Changing gate/limits isolates Regtest state; changing custom Testnet consensus identity creates separate state, backup, peer-cache, and automatic node-key namespaces."
         },
         {
           "evidence": [

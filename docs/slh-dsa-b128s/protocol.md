@@ -223,7 +223,11 @@ The configuration uses these fields:
 The configuration requires all three fields or none.
 It rejects built-in public networks, invalid limits, and integer overflow.
 Custom testnets require a separate name, network magic, and genesis hash, and
-must not use the built-in bootstrap peers.
+must not use the built-in bootstrap peers. SLH custom testnets require the native
+Zakura peer stack and valid native bootstrap entries. The native chain ID binds
+the full rules fingerprint, including when a development cohort tag is set.
+Legacy and dual modes are rejected because legacy fallback cannot check that ID.
+This peer isolation does not add signature replay protection to cloned histories.
 Activation must follow NU7 and every checkpoint.
 `ExperimentalSlhDsaB128sLimits::{new,transaction,block}` supplies typed limits.
 `Network::{experimental_slh_dsa_b128s_activation_height,experimental_slh_dsa_b128s_limits,is_experimental_slh_dsa_b128s_active}`

@@ -2080,8 +2080,8 @@
         "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
-      "reason": "Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces.",
-      "sha256": "361e148fdf087893791e2858cf43f4de26bc3973cad4dc91dda6c6aa6fafa438"
+      "reason": "Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 peer-isolation review: The SLH shared generator intentionally replaces saturating seed-count arithmetic with checked addition and rejects invalid upgrade/SLH heights before generation. This also changes overflowing ordinary-generator requests to early errors; bounded ordinary and SLH regression tests cover height and count overflow without generating blocks.",
+      "sha256": "e39f1eb93275c2ff64e94caf3d5a514b058193bf48aa931a9768aecacc61434d"
     },
     {
       "disposition": "upstream-modification",
@@ -2425,8 +2425,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. Reject ambiguous numeric IP forms before DNS and recognize IPv4-compatible IPv6; initialize the known peer inventory once. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls.",
-      "sha256": "ee7486578e3caa9145b6bb9d782c69a4dc19627cd5e8b2ba79e3ad61d4f4ceb3"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. Reject ambiguous numeric IP forms before DNS and recognize IPv4-compatible IPv6; initialize the known peer inventory once. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Require native-only peering for SLH custom chains so a failed fingerprint check cannot fall back to the legacy magic-only handshake. Reuse the native parser strictly, rejecting malformed entries instead of silently skipping them. TOML, direct-config, and startup tests cover both restrictions.",
+      "sha256": "683fa97e791899782ceae6e6f751a49bd3a71c173109f9b155aa46f625ceff4c"
     },
     {
       "disposition": "upstream-modification",
@@ -2435,8 +2435,18 @@
         "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
-      "reason": "PR #11: Scope peer-cache files to the existing SLH custom-chain fingerprint; preserve disabled caches and paths for other networks. Regression tests separate same-name chains with different genesis or rules and retain paths after TOML round trips. Also isolate automatic native identity-key files, preserve explicit overrides and other networks, and check identity persistence across config reloads.",
-      "sha256": "f5a988b6adc583eeda548a74c2bcc2b03c6d392a54aae1a47743aad4c37f7dcf"
+      "reason": "PR #11: Scope peer-cache files to the existing SLH custom-chain fingerprint; preserve disabled caches and paths for other networks. Regression tests separate same-name chains with different genesis or rules and retain paths after TOML round trips. Also isolate automatic native identity-key files, preserve explicit overrides and other networks, and check identity persistence across config reloads. PR #11 peer-isolation review: Share one identity filename helper between current and former name-only paths so the upgrade warning cannot drift from key persistence; filenames and existing persistence controls stay unchanged.",
+      "sha256": "63afd98a1720b40478b65f066d242a19e2c31a14fe376c633e5de3d98ebe5389"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/config/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Move the existing product custom-SLH TOML fixture into this test-only parent module for shared use by configuration and native-handshake tests; no runtime API or dependency changes.",
+      "sha256": "9e40c34627a582be44d3d865ad6cc2664627aaf64c1926fe58139ccb57de21c9"
     },
     {
       "disposition": "upstream-modification",
@@ -2446,8 +2456,18 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls.",
-      "sha256": "f9cd07273323aff673e9435ae2095d7c1bcaa32240c468c27e2aaeec0070edb0"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Share the custom-network fixture with handshake tests. Check native-only defaults and explicit-stack rejection, valid and malformed native peers, and public network initialization refusal before I/O.",
+      "sha256": "9ebdb0d62cb8df3fff3b353788a6e92ad20edfa5d3992329b861aa6684edfabb"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/peer_set/initialize.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Apply the existing SLH configuration guard at the public initializer before listeners, native keys, or services start. This closes a direct-library bypass of CLI and embedded-node checks; mocked focused tests reject legacy/dual stacks and malformed bootstrap entries without network I/O.",
+      "sha256": "17fb026d271857f8fbb87607d52c751dfaacac60b25c89b085f8d94d505fb58a"
     },
     {
       "disposition": "upstream-modification",
@@ -2574,10 +2594,12 @@
       "path": "crates/zakura-network/src/zakura/handshake.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
-        "docs/changelog/unreleased/9.md"
+        "docs/changelog/unreleased/9.md",
+        "docs/slh-dsa-b128s/node-reuse.json",
+        "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "15fc4daac50f4e1193b6ffdd4395c8387620bfa30b99731ce15d11965ee78232"
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #11 peer-isolation review: Extend the retained native chain-ID validators with the existing product SLH rules fingerprint; derive cohorts from the selected chain ID. Preserve the native encoding, cohort algorithm, non-SLH and Regtest identities, and the existing 20 MB fork frame allowance. Same-genesis rule mutations, matching rules, and cohort controls exercise prelude and native/upgraded control validators. The pinned research activation mechanism supplies the SLH gate; this newer upstream native handshake is retained instead of importing another transport.",
+      "sha256": "ffe85829927c233b47b450fdffbfc8a36caf626ca8dbf7b86430ffa987b640f0"
     },
     {
       "disposition": "upstream-modification",
@@ -3342,8 +3364,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls.",
-      "sha256": "a2fb0ac5edb789b05a84d50e37688d04cf0c1ba00b33ede0624edd2e50a1ebf7"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls. PR #11 peer-isolation review: Startup regressions reject malformed native bootstrap entries and explicit legacy/dual stacks before checking SLH verifier availability; valid native fixture entries include a public test node ID.",
+      "sha256": "b6f2a46bbd975ce0af9af7957f4a7ac1b3d3ee0a198575559e7412ccbbe12954"
     },
     {
       "disposition": "upstream-modification",
@@ -3476,6 +3498,16 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/11.md",
+      "provenance": [
+        "docs/changelog/guidelines.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Record PR #11 custom devnet SLH configuration, state isolation, genesis generation and rule diagnostics in its required user-visible changelog fragment.",
+      "sha256": "691939cfb21ab2d07477858953591c683c6844e7e5354119c59bd8e19020d963"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/12.md",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
@@ -3483,16 +3515,6 @@
       ],
       "reason": "PR #12 operator-facing release note for the pinned upstream update, retained SLH/devnet behavior and fork v30-to-v31 cache reuse. Preserve inherited upstream release notes and fragments.",
       "sha256": "241e34dd064122df375bfca2b961a37a9763c7662965c8f3a51ef8bd9b1076c0"
-    },
-    {
-      "disposition": "new",
-      "path": "docs/changelog/unreleased/11.md",
-      "provenance": [
-        "docs/changelog/guidelines.md",
-        "docs/slh-dsa-b128s/devnets.md"
-      ],
-      "reason": "Record PR #11 custom devnet SLH configuration, state isolation, genesis generation and rule diagnostics in its required user-visible changelog fragment.",
-      "sha256": "f7408b4d3960b38de2db955b1db490b166b1a17a3980fec6efd65226f80babe4"
     },
     {
       "disposition": "new",
@@ -3600,7 +3622,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "2c46240615cd5b880d1f7992529cbe0ec333317818c8f3ab3e9dcaf6d2cb874e"
+      "sha256": "3af91700e5c73934103144e6a6d6df7c5edb58d464faa55b76bd8f39cec44c9c"
     },
     {
       "disposition": "new",
@@ -3792,7 +3814,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "28f79ac9854cb0929bd0d0fd7ce3931742c2b3c9b86fb855204ec09b0a2fe930"
+      "sha256": "ac331970a3121263052e63be1e24e1449fd4503fae1232444dc89ebc7a456a19"
     },
     {
       "disposition": "new",
@@ -3844,7 +3866,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata. PR #9 follow-up: Describe early target/baseline source or release layout checks and a shared startup-cache guard that runs after normal database reuse, without a separate read-only network override.",
-      "sha256": "fb688528c51223ed9c54841a0c8b96243e3c6fe271769c557e06877865cd1a2f"
+      "sha256": "ebd1d71ddf0893a2ce60b68f0063d8d1da51e36e34b1fa5b714453b213dd6e5f"
     },
     {
       "disposition": "new",
@@ -4412,7 +4434,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "df155beaae831a8043a3ffdd4d02b623f9dadd00f7aa497e902f52d337d79c1f"
+      "sha256": "2e5db6369d6727db89ad56ddf6c3f57c21b7e0aa22361fa7b90b7835a9884195"
     },
     {
       "disposition": "new",

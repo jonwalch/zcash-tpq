@@ -111,7 +111,8 @@ impl GeneratedLocalTestnet {
 /// premine block per miner name, each paying 10 ZEC to a freshly generated
 /// P2PKH address, plus optional extra empty blocks. Network upgrades activate
 /// after all generated seed blocks so they can use the simpler pre-Overwinter
-/// commitment format.
+/// commitment format. Invalid seed counts and activation heights return an error
+/// before key or block generation, for both ordinary and SLH custom testnets.
 ///
 /// When `disable_pow` is false and the `internal-miner` feature is enabled,
 /// each block header is solved with Equihash before inclusion.
@@ -827,6 +828,22 @@ mod tests {
             panic!("the non-SLH generator default must not enable SLH implicitly");
         };
         assert!(error.to_string().contains("explicitly select NU7"));
+    }
+
+    #[test]
+    fn slh_shared_generator_rejects_classical_height_overflow_before_generating_blocks() {
+        for miner_names in [Vec::new(), vec!["miner".to_string()]] {
+            for maturity_padding_blocks in [Height::MAX.0, u32::MAX] {
+                assert!(generate_local_testnet_with_funded_keys(
+                    miner_names.clone(),
+                    LocalTestnetGenesisOptions {
+                        maturity_padding_blocks,
+                        ..Default::default()
+                    },
+                )
+                .is_err());
+            }
+        }
     }
 
     #[test]

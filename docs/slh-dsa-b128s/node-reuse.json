@@ -39,7 +39,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files. PR #11 merge with upstream e33dc4308: use zakura-quic NodeId, NodeSecretKey and direct peer addresses for the same SLH public-peer guard and identity-persistence tests. Preserve the upstream key text formats and existing filename suffix. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files. PR #11 merge with upstream e33dc4308: use zakura-quic NodeId, NodeSecretKey and direct peer addresses for the same SLH public-peer guard and identity-persistence tests. Preserve the upstream key text formats and existing filename suffix. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. Require native-only peering for SLH custom chains so a failed fingerprint check cannot fall back to the legacy magic-only handshake. Reuse the native parser strictly, rejecting malformed entries instead of silently skipping them. TOML, direct-config, and startup tests cover both restrictions.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config.rs",
@@ -48,7 +48,7 @@
       "target_path": "crates/zakura-network/src/config.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files. PR #11 merge with upstream e33dc4308: use zakura-quic NodeId, NodeSecretKey and direct peer addresses for the same SLH public-peer guard and identity-persistence tests. Preserve the upstream key text formats and existing filename suffix. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files. PR #11 merge with upstream e33dc4308: use zakura-quic NodeId, NodeSecretKey and direct peer addresses for the same SLH public-peer guard and identity-persistence tests. Preserve the upstream key text formats and existing filename suffix. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. Share the custom-network fixture with handshake tests. Check native-only defaults and explicit-stack rejection, valid and malformed native peers, and public network initialization refusal before I/O.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config/tests/vectors.rs",
@@ -84,7 +84,7 @@
       "target_path": "crates/zakura-state/src/service/chain_tip/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Startup regressions reject malformed native bootstrap entries and explicit legacy/dual stacks before checking SLH verifier availability; valid native fixture entries include a public test node ID.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakurad/src/commands/start.rs",
@@ -237,7 +237,7 @@
       "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
     },
     {
-      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md. Retain the upstream e33dc4308 secp256k1 key API update without changing the SLH generator schedule, classical funding or historical adaptation source pin.",
+      "adaptation": "Reuse the existing local genesis, embedded lifecycle, or RPC serialization mechanism. Add an opt-in SLH helper or optional rule diagnostics and focused compatibility tests; preserve default behavior. See devnets.md. Retain the upstream e33dc4308 secp256k1 key API update without changing the SLH generator schedule, classical funding or historical adaptation source pin. The SLH shared generator intentionally replaces saturating seed-count arithmetic with checked addition and rejects invalid upgrade/SLH heights before generation. This also changes overflowing ordinary-generator requests to early errors; bounded ordinary and SLH regression tests cover height and count overflow without generating blocks.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
       "source_path": "crates/zakura-chain/src/local_genesis.rs",
@@ -282,13 +282,40 @@
       "target_path": "crates/zakura-rpc/tests/serialization_tests.rs"
     },
     {
-      "adaptation": "Extend the pinned upstream peer-cache filename with the existing SLH custom-chain fingerprint. Preserve cache disablement and all other network paths. Same-name genesis/rule variants and TOML restoration have regression coverage in config/tests/vectors.rs. Apply the same namespace to automatically persisted native identity keys, preserving explicit keys and other networks. Test same-name chain separation and stable identity after TOML reload with the peer cache disabled.",
+      "adaptation": "Extend the pinned upstream peer-cache filename with the existing SLH custom-chain fingerprint. Preserve cache disablement and all other network paths. Same-name genesis/rule variants and TOML restoration have regression coverage in config/tests/vectors.rs. Apply the same namespace to automatically persisted native identity keys, preserving explicit keys and other networks. Test same-name chain separation and stable identity after TOML reload with the peer cache disabled. Share one identity filename helper between current and former name-only paths so the upgrade warning cannot drift from key persistence; filenames and existing persistence controls stay unchanged.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
       "source_path": "crates/zakura-network/src/config/cache_dir.rs",
       "source_repository": "https://github.com/zakura-core/zakura",
       "source_sha256": "f27c8f212c8702387ceb4e324c9fd5c6fdbe88016a95f70730ab891d06231e11",
       "target_path": "crates/zakura-network/src/config/cache_dir.rs"
+    },
+    {
+      "adaptation": "Extend the retained native chain-ID validators with the existing product SLH rules fingerprint; derive cohorts from the selected chain ID. Preserve the native encoding, cohort algorithm, non-SLH and Regtest identities, and the existing 20 MB fork frame allowance. Same-genesis rule mutations, matching rules, and cohort controls exercise prelude and native/upgraded control validators. The pinned research activation mechanism supplies the SLH gate; this newer upstream native handshake is retained instead of importing another transport.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/zakura/handshake.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "cf433bc444de374c50023f777db18b6b04760da642daa45f32bb5708acbbd464",
+      "target_path": "crates/zakura-network/src/zakura/handshake.rs"
+    },
+    {
+      "adaptation": "Apply the existing SLH configuration guard at the public initializer before listeners, native keys, or services start. This closes a direct-library bypass of CLI and embedded-node checks; mocked focused tests reject legacy/dual stacks and malformed bootstrap entries without network I/O.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/peer_set/initialize.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "e1105ce1dd5c5901e5e59a74cec4ab498231dcb38b95fe60827552ac87fa5875",
+      "target_path": "crates/zakura-network/src/peer_set/initialize.rs"
+    },
+    {
+      "adaptation": "Move the existing product custom-SLH TOML fixture into this test-only parent module for shared use by configuration and native-handshake tests; no runtime API or dependency changes.",
+      "license": "MIT OR Apache-2.0",
+      "source_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+      "source_path": "crates/zakura-network/src/config/tests.rs",
+      "source_repository": "https://github.com/zakura-core/zakura",
+      "source_sha256": "820223944f066a8c9371e97cb07eb968ae29328db567c85cacc944e41e49c997",
+      "target_path": "crates/zakura-network/src/config/tests.rs"
     }
   ],
   "upstream_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc"

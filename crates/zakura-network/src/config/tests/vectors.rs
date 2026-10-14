@@ -24,7 +24,7 @@ use crate::{
     CacheDir, Config, P2pStack,
 };
 
-use super::super::load_or_generate_zakura_secret_key;
+use super::{super::load_or_generate_zakura_secret_key, custom_slh_config, CUSTOM_SLH_FIELDS};
 
 fn default_zakura_bootstrap_peers() -> Vec<String> {
     DEFAULT_ZAKURA_BOOTSTRAP_PEERS
@@ -1645,20 +1645,6 @@ fn activation_height_overlay_is_only_for_configured_testnets() {
     }
 }
 
-const CUSTOM_SLH_FIELDS: &str = "experimental_slh_dsa_b128s_activation_height = 110, experimental_slh_dsa_b128s_max_checks_per_transaction = 16, experimental_slh_dsa_b128s_max_checks_per_block = 64";
-
-fn custom_slh_config(fields: &str) -> String {
-    let genesis = zakura_chain::block::Hash([42; 32]);
-    let fields = if fields.is_empty() {
-        String::new()
-    } else {
-        format!(", {fields}")
-    };
-    format!(
-        "initial_testnet_peers = []\nnetwork = {{ network_name = 'SlhDevnet', network_magic = [83, 76, 72, 49], genesis_hash = '{genesis}', activation_heights = {{ 'NU6.3' = 1, NU7 = 105 }}, funding_streams = [], lockbox_disbursements = [], checkpoints = false{fields} }}\n[zakura]\nbootstrap_peers = []"
-    )
-}
-
 #[test]
 fn experimental_slh_dsa_b128s_custom_config_roundtrips() {
     let config: Config = toml::from_str(&custom_slh_config(CUSTOM_SLH_FIELDS)).unwrap();
@@ -2082,6 +2068,7 @@ fn experimental_slh_dsa_b128s_custom_config_checks_boundaries() {
 #[test]
 fn experimental_slh_dsa_b128s_custom_config_rejects_builtin_bootstrap_peers() {
     let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let custom_id = zakura_quic::NodeSecretKey::from_bytes(&[42; 32]).public();
     let error = toml::from_str::<Config>(&valid.replace("initial_testnet_peers = []\n", ""))
         .unwrap_err()
         .to_string();
@@ -2100,7 +2087,7 @@ fn experimental_slh_dsa_b128s_custom_config_rejects_builtin_bootstrap_peers() {
         default_zakura_bootstrap_peers(),
         default_testnet_zakura_bootstrap_peers(),
     ] {
-        peers.push("127.0.0.1:19933".to_string());
+        peers.push(format!("{custom_id}@127.0.0.1:19934"));
         let text = valid.replace(
             "bootstrap_peers = []",
             &format!("bootstrap_peers = {peers:?}"),
@@ -2118,12 +2105,137 @@ fn experimental_slh_dsa_b128s_custom_config_rejects_builtin_bootstrap_peers() {
         )
         .replace(
             "bootstrap_peers = []",
-            "bootstrap_peers = ['127.0.0.1:19934']",
+            &format!("bootstrap_peers = ['{custom_id}@127.0.0.1:19934']"),
         );
     assert!(toml::from_str::<Config>(&custom).is_ok());
     // Existing custom networks keep their native bootstrap behavior until SLH is enabled.
     let non_slh = custom_slh_config("").replace("[zakura]\nbootstrap_peers = []", "");
     assert!(toml::from_str::<Config>(&non_slh).is_ok());
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_requires_native_p2p() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    for (mode, accepted) in [
+        ("default", true),
+        ("zakura", true),
+        ("legacy", false),
+        ("dual", false),
+    ] {
+        let text = format!("p2p_stack = '{mode}'\n{valid}");
+        let parsed = toml::from_str::<Config>(&text);
+        assert_eq!(parsed.is_ok(), accepted, "{mode}: {parsed:?}");
+        if let Err(error) = parsed {
+            assert!(error
+                .to_string()
+                .contains("legacy peers cannot verify the chain fingerprint"));
+        }
+        let mut direct: Config = toml::from_str(&valid).unwrap();
+        direct.p2p_stack = match mode {
+            "default" => P2pStack::Default,
+            "zakura" => P2pStack::Zakura,
+            "legacy" => P2pStack::Legacy,
+            "dual" => P2pStack::Dual,
+            _ => unreachable!(),
+        };
+        assert_eq!(
+            direct.validate_experimental_slh_dsa_b128s_peers().is_ok(),
+            accepted
+        );
+        if accepted {
+            assert!(direct.v2_p2p());
+            assert!(!direct.legacy_p2p());
+        }
+        // This restriction does not change the available stacks on other custom networks.
+        let ordinary = format!("p2p_stack = '{mode}'\n{}", custom_slh_config(""));
+        assert!(toml::from_str::<Config>(&ordinary).is_ok());
+    }
+    let ordinary: Config = toml::from_str(&custom_slh_config("")).unwrap();
+    assert_eq!(
+        ordinary.p2p_stack.resolve(&ordinary.network),
+        P2pStack::Dual
+    );
+}
+
+#[test]
+fn experimental_slh_dsa_b128s_requires_valid_native_bootstrap_peers() {
+    let valid = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let custom_id = zakura_quic::NodeSecretKey::from_bytes(&[42; 32]).public();
+    for address in ["127.0.0.1:19934", "[::1]:19934"] {
+        let peer = format!("{custom_id}@{address}");
+        let text = valid.replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = {:#?}", [peer]),
+        );
+        let config: Config = toml::from_str(&text).unwrap();
+        assert!(config.validate_experimental_slh_dsa_b128s_peers().is_ok());
+    }
+    for peer in [
+        "127.0.0.1:19934".to_string(),
+        "invalid-id@127.0.0.1:19934".to_string(),
+        format!("{custom_id}@localhost:19934"),
+        format!("{custom_id}@127.0.0.1:65536"),
+        format!("{custom_id}@::1:19934"),
+        format!("{custom_id}@127.0.0.1"),
+        format!(" {custom_id}@127.0.0.1:19934"),
+        format!("{custom_id}@127.0.0.1:19934 "),
+    ] {
+        let mut direct: Config = toml::from_str(&valid).unwrap();
+        direct.zakura.bootstrap_peers = vec![peer.clone()];
+        assert!(
+            direct
+                .validate_experimental_slh_dsa_b128s_peers()
+                .unwrap_err()
+                .contains("NodeId@IP:port"),
+            "{peer}"
+        );
+        let text = valid.replace(
+            "bootstrap_peers = []",
+            &format!("bootstrap_peers = {:#?}", [peer]),
+        );
+        assert!(toml::from_str::<Config>(&text)
+            .unwrap_err()
+            .to_string()
+            .contains("NodeId@IP:port"));
+    }
+}
+
+#[tokio::test]
+async fn experimental_slh_dsa_b128s_network_init_rejects_invalid_peering_before_io() {
+    let valid: Config = toml::from_str(&custom_slh_config(CUSTOM_SLH_FIELDS)).unwrap();
+    let mut invalid = Vec::new();
+    for stack in [P2pStack::Legacy, P2pStack::Dual] {
+        let mut config = valid.clone();
+        config.p2p_stack = stack;
+        invalid.push((config, "legacy peers cannot verify the chain fingerprint"));
+    }
+    let mut malformed = valid;
+    malformed.zakura.bootstrap_peers = vec!["127.0.0.1:19934".to_string()];
+    invalid.push((malformed, "NodeId@IP:port"));
+    for (config, expected) in invalid {
+        let inbound = tower::service_fn(|_: crate::Request| async {
+            std::future::pending::<Result<crate::Response, crate::BoxError>>().await
+        });
+        let result = tokio::time::timeout(
+            Duration::from_secs(5),
+            crate::init_with_zakura(
+                config,
+                inbound,
+                zakura_chain::chain_tip::NoChainTip,
+                String::new(),
+                crate::protocol::external::types::PeerServices::empty(),
+                Vec::new(),
+                None,
+                Vec::new(),
+            ),
+        )
+        .await
+        .expect("invalid configuration fails without waiting for a network operation");
+        let Err(error) = result else {
+            panic!("invalid SLH configuration must not open a network endpoint");
+        };
+        assert!(error.to_string().contains(expected), "{error}");
+    }
 }
 
 #[test]
