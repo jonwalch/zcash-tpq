@@ -127,8 +127,10 @@ fn chain_output(value: u64, script: Vec<u8>) -> Result<ChainOutput> {
 }
 fn producer(value: &Producer) -> Result<()> {
     require(
-        value.zakura_revision == "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
-            && value.algorithm_revision == "b392fe82d2d9770142477a576a758a233888bc0a"
+        matches!(
+            value.zakura_revision.as_str(),
+            "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc" | "24a17b3f0e7d88513688d607054f018ab6f15af2"
+        ) && value.algorithm_revision == "b392fe82d2d9770142477a576a758a233888bc0a"
             && value.blake3_version == "1.8.5",
         "schema",
         "producer_pin",
@@ -1068,6 +1070,22 @@ mod tests {
             );
         }
     }
+    #[test]
+    fn producer_accepts_only_recorded_upstream_pins() {
+        let artifact: Value =
+            serde_json::from_str(include_str!("../../data/v5-1of1.json")).unwrap();
+        let mut identity: Producer = serde_json::from_value(artifact["producer"].clone()).unwrap();
+        for revision in [
+            "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+            "24a17b3f0e7d88513688d607054f018ab6f15af2",
+        ] {
+            identity.zakura_revision = revision.to_owned();
+            assert!(producer(&identity).is_ok());
+        }
+        identity.zakura_revision = "00".repeat(20);
+        assert_eq!(producer(&identity).unwrap_err().reason, "producer_pin");
+    }
+
     #[test]
     fn fail_closed_assembly_and_exact_consumption() {
         let mut value = request();

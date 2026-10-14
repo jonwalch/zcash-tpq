@@ -65,6 +65,16 @@ class OracleTests(unittest.TestCase):
     def setUpClass(cls):
         cls.artifacts = synthetic_artifacts()
 
+    def test_only_recorded_upstream_pins_are_accepted(self):
+        artifact = copy.deepcopy(self.artifacts["v5-1of1"])
+        for revision in ("9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
+                         "24a17b3f0e7d88513688d607054f018ab6f15af2"):
+            artifact["producer"]["zakura_revision"] = revision
+            oracle.validate_schema(artifact)
+        artifact["producer"]["zakura_revision"] = "00" * 20
+        with self.assertRaisesRegex(oracle.InterfaceFailure, "schema/producer_pin"):
+            oracle.validate_schema(artifact)
+
     def test_all_120_policy_shapes_roundtrip_and_exact_bounds(self):
         for n in range(1, 16):
             for m in range(1, n+1):
