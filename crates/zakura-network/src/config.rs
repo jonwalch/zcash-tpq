@@ -7,12 +7,12 @@ use std::{
     net::{IpAddr, SocketAddr},
     path::{Path, PathBuf},
     str::FromStr,
-    sync::Arc,
+    sync::{Arc, LazyLock},
     time::Duration,
 };
 
 use indexmap::IndexSet;
-use iroh::SecretKey;
+use iroh::{EndpointId, SecretKey};
 use rand::{rngs::OsRng, RngCore};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use tokio::fs;
@@ -370,34 +370,44 @@ impl Config {
             return Ok(());
         }
 
-        let defaults = Config::default();
-        let public_native_peers: Vec<_> = [Network::Mainnet, Network::new_default_testnet()]
-            .iter()
-            .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
-            .map(|peer| {
-                crate::zakura::parse_bootstrap_peer(&peer)
-                    .expect("built-in native bootstrap peers have valid identities and addresses")
-            })
-            .collect();
-        let public_hosts: HashSet<_> = defaults
-            .initial_mainnet_peers
-            .iter()
-            .chain(&defaults.initial_testnet_peers)
-            .map(|peer| normalized_peer_host(peer))
-            .chain(public_native_peers.iter().flat_map(|peer| {
-                peer.ip_addrs()
-                    .map(|addr| canonical_socket_addr(*addr).ip().to_string())
-            }))
-            .collect();
+        static PUBLIC_PEERS: LazyLock<(HashSet<String>, HashSet<EndpointId>)> =
+            LazyLock::new(|| {
+                let defaults = Config::default();
+                let public_networks = [Network::Mainnet, Network::new_default_testnet()];
+                let public_native_peers: Vec<_> = public_networks
+                    .iter()
+                    .flat_map(ZakuraConfig::default_bootstrap_peers_for_network)
+                    .map(|peer| {
+                        crate::zakura::parse_bootstrap_peer(&peer)
+                            .expect("built-in native peers have valid identities and addresses")
+                    })
+                    .collect();
+                let public_hosts = defaults
+                    .initial_mainnet_peers
+                    .iter()
+                    .chain(&defaults.initial_testnet_peers)
+                    .map(|peer| {
+                        normalized_peer_host(peer).expect("built-in seed hosts use canonical names")
+                    })
+                    .chain(public_native_peers.iter().flat_map(|peer| {
+                        peer.ip_addrs()
+                            .map(|addr| slh_peer_ip(addr.ip()).to_string())
+                    }))
+                    .collect();
+                let public_ids = public_native_peers
+                    .into_iter()
+                    .map(|peer| peer.id)
+                    .collect();
+                (public_hosts, public_ids)
+            });
+        let (public_hosts, public_ids) = &*PUBLIC_PEERS;
 
-        if self
-            .initial_testnet_peers
-            .iter()
-            .any(|peer| public_hosts.contains(&normalized_peer_host(peer)))
-        {
-            return Err(
-                "custom SLH Testnets require explicit initial_testnet_peers without built-in Mainnet or Testnet peers",
-            );
+        for peer in &self.initial_testnet_peers {
+            if public_hosts.contains(&normalized_peer_host(peer)?) {
+                return Err(
+                    "custom SLH Testnets require explicit initial_testnet_peers without built-in Mainnet or Testnet peers",
+                );
+            }
         }
         if self
             .zakura
@@ -405,12 +415,10 @@ impl Config {
             .iter()
             .filter_map(|peer| crate::zakura::parse_bootstrap_peer(peer).ok())
             .any(|peer| {
-                public_native_peers
-                    .iter()
-                    .any(|public| public.id == peer.id)
-                    || peer.ip_addrs().any(|addr| {
-                        public_hosts.contains(&canonical_socket_addr(*addr).ip().to_string())
-                    })
+                public_ids.contains(&peer.id)
+                    || peer
+                        .ip_addrs()
+                        .any(|addr| public_hosts.contains(&slh_peer_ip(addr.ip()).to_string()))
             })
         {
             return Err(
@@ -1485,19 +1493,44 @@ fn contains_default_initial_peers(initial_peers: &IndexSet<String>) -> bool {
 
 /// Compare known public hosts independent of ports, DNS case, or a final DNS dot.
 /// This is a configuration guard, not a DNS ownership or network-egress check.
-fn normalized_peer_host(peer: &str) -> String {
+fn normalized_peer_host(peer: &str) -> Result<String, &'static str> {
     if let Ok(addr) = peer.parse::<SocketAddr>() {
-        return canonical_socket_addr(addr).ip().to_string();
+        return Ok(slh_peer_ip(addr.ip()).to_string());
     }
     if let Ok(ip) = peer.trim_matches(['[', ']']).parse::<IpAddr>() {
-        return canonical_socket_addr(SocketAddr::new(ip, 0))
-            .ip()
-            .to_string();
+        return Ok(slh_peer_ip(ip).to_string());
     }
-    peer.split_once(':')
+    let host = peer
+        .rsplit_once(':')
         .map_or(peer, |(host, _)| host)
         .trim_end_matches('.')
-        .to_ascii_lowercase()
+        .to_ascii_lowercase();
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        return Ok(slh_peer_ip(ip).to_string());
+    }
+
+    // OS resolvers accept integer, short, octal, and hexadecimal IPv4 forms that
+    // Rust's IP parser rejects. Do not pass ambiguous numeric hosts to DNS.
+    if host.contains([':', '[', ']'])
+        || host.split('.').all(|part| {
+            if let Some(hex) = part.strip_prefix("0x") {
+                !hex.is_empty() && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+            } else {
+                !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())
+            }
+        })
+    {
+        return Err("custom SLH Testnet peers require canonical IP addresses or DNS names, not ambiguous numeric address forms");
+    }
+    Ok(host)
+}
+
+/// Compare both IPv4-mapped and IPv4-compatible IPv6 forms with known public IPs.
+fn slh_peer_ip(ip: IpAddr) -> IpAddr {
+    match ip {
+        IpAddr::V6(ipv6) => ipv6.to_ipv4().map_or(ip, IpAddr::V4),
+        IpAddr::V4(_) => ip,
+    }
 }
 
 fn build_configured_testnet<'de, D>(

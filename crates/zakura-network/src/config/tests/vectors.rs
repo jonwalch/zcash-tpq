@@ -1797,6 +1797,65 @@ fn experimental_slh_dsa_b128s_peer_cache_binds_chain_rules() {
 }
 
 #[test]
+fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
+    let directory = tempfile::tempdir().unwrap();
+    let original = custom_slh_config(CUSTOM_SLH_FIELDS);
+    let mut identities = HashSet::new();
+    for text in [
+        custom_slh_config(""),
+        original.clone(),
+        original.replace("per_block = 64", "per_block = 65"),
+        original.replace(
+            &zakura_chain::block::Hash([42; 32]).to_string(),
+            &zakura_chain::block::Hash([43; 32]).to_string(),
+        ),
+    ] {
+        let mut config: Config = toml::from_str(&text).unwrap();
+        config.identity_dir = directory.path().to_owned();
+        // Persistent identities must remain available with the peer cache disabled.
+        config.cache_dir = CacheDir::disabled();
+        let key_path = zakura_secret_key_file_path(&config.identity_dir, &config.network);
+        if let Some(fingerprint) = config
+            .network
+            .experimental_slh_dsa_b128s_chain_fingerprint()
+        {
+            assert!(key_path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .contains(&hex::encode(fingerprint)));
+        } else {
+            assert_eq!(
+                key_path.file_name().unwrap(),
+                "slhdevnet.zakura-iroh-secret-key"
+            );
+        }
+        let identity = config.zakura_secret_key().unwrap().public();
+        assert!(
+            identities.insert(identity),
+            "different chains must not reuse an identity key"
+        );
+        assert!(key_path.is_file());
+        let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+        assert_eq!(restored.zakura_secret_key().unwrap().public(), identity);
+    }
+    for network in [
+        Network::Mainnet,
+        Network::new_default_testnet(),
+        Network::new_regtest(Default::default()),
+    ] {
+        assert_eq!(
+            zakura_secret_key_file_path(directory.path(), &network),
+            directory.path().join(format!(
+                "{}.zakura-iroh-secret-key",
+                network.lowercase_name()
+            ))
+        );
+    }
+}
+
+#[test]
 fn experimental_slh_dsa_b128s_custom_config_requires_complete_settings_and_identity() {
     let fields: Vec<_> = CUSTOM_SLH_FIELDS.split(", ").collect();
     for mask in 1..7 {
@@ -1986,15 +2045,30 @@ fn experimental_slh_dsa_b128s_rejects_public_peer_aliases() {
     {
         let (id, address) = seed.split_once('@').unwrap();
         let address: SocketAddr = address.parse().unwrap();
+        let std::net::IpAddr::V4(ip) = address.ip() else {
+            panic!("these built-in peer fixtures use IPv4");
+        };
+        let [a, b, c, d] = ip.octets();
         legacy_aliases.extend([
             address.ip().to_string(),
             format!("{}:19933", address.ip()),
             format!("[::ffff:{}]:19933", address.ip()),
+            format!("[::{}]:19933", address.ip()),
+            format!("{}:19933", u32::from(ip)),
+            format!("0x{:08x}:19933", u32::from(ip)),
+            format!("{a}.{b}.{}:19933", (u16::from(c) << 8) | u16::from(d)),
+            format!(
+                "{a}.{}:19933",
+                (u32::from(b) << 16) | (u32::from(c) << 8) | u32::from(d)
+            ),
+            format!("0{a:o}.0{b:o}.0{c:o}.0{d:o}:19933"),
+            format!("0x{a:x}.{b}.{c}.{d}:19933"),
         ]);
         native_aliases.extend([
             format!("{id}@127.0.0.1:19934"),
             format!("{custom_id}@{}:19934", address.ip()),
             format!("{custom_id}@[::ffff:{}]:19934", address.ip()),
+            format!("{custom_id}@[::{}]:19934", address.ip()),
         ]);
     }
     for (field, aliases) in [
@@ -2023,7 +2097,7 @@ fn experimental_slh_dsa_b128s_rejects_public_peer_aliases() {
     let custom = valid
         .replace(
             "initial_testnet_peers = []",
-            "initial_testnet_peers = ['seed.devnet.example:19933']",
+        "initial_testnet_peers = ['seed.devnet.example:19933', '123.devnet.example:19933', '[::1]:19933', '127.0.0.1:19933']",
         )
         .replace(
             "bootstrap_peers = []",

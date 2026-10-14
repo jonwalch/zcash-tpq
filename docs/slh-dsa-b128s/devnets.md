@@ -5,6 +5,9 @@ The same node can run in a public or private devnet. Each node must use the same
 chain definition and include the `experimental-slh-dsa-b128s` feature.
 Built-in Mainnet and public Testnet cannot activate SLH.
 
+This custom-testnet scope implements the repository owner's request to support
+the `zdn` launcher on a separate public or private devnet beyond Regtest.
+
 This support is for transparent SLH outputs. It preserves the
 [experimental v1 contract](protocol.md), NU7 signing context, classical checks,
 and shielded checks. SLH activation preserves the fork's 20 MB block limit
@@ -71,11 +74,17 @@ public Testnet does not qualify.
 Set the launcher's own legacy and Zakura bootstrap peers. Clear unused peer lists.
 Configuration loading and startup reject known public seed host names regardless
 of port, letter case, or a final DNS dot. They also reject built-in native peer
-identities and IP addresses, including IPv4-mapped IPv6 addresses.
+identities and IP addresses, including IPv4-mapped and IPv4-compatible IPv6 addresses.
+Use canonical dotted-quad IPv4 or IPv6 addresses. SLH custom testnets reject
+integer, short, octal, and hexadecimal IPv4 forms that system resolvers can
+interpret differently.
 This check does not resolve DNS aliases or identify every public-network node.
 Use the launcher's own peer inventory. For a private devnet, enforce its network
 access rules outside the node. Use separate listening ports, peer identity
 directories, cache paths, and data roots for each node.
+Log and trace destinations are explicit paths: `tracing.log_file` and
+`network.zakura.trace_dir`. Assign different destinations to each node; these
+paths do not get an automatic network-name or chain-fingerprint suffix.
 Serialize through the node network configuration type so the complete custom
 parameters are retained; `NetworkKind::Testnet` alone is not a chain definition.
 This preserves the generated network and its fingerprint. Custom Testnet TOML
@@ -116,6 +125,12 @@ The database and nonfinalized backup namespace is
 genesis or rules use different state. The legacy peer cache uses the same
 namespace with a `.peers` suffix. Existing caches keyed only by name are not
 loaded for SLH custom testnets. Regtest retains its existing namespaces.
+Automatic native identity-key files also use the chain namespace under
+`network.identity_dir`. Existing keys named only by network name are left in
+place and are not reused for SLH custom testnets. The first start with this
+namespace creates a new identity, so update the launcher's bootstrap peer IDs.
+An explicit `network.zakura_node_secret_key` still takes precedence. Each node
+on the same chain still needs its own identity directory or explicit key.
 Keep the saved chain definition with backups. Changing consensus settings starts
 a different devnet; it does not update an existing chain in place.
 
@@ -215,7 +230,12 @@ adapter now preserves both settings. Tests compare all four combinations and
 the actual generated network before and after TOML, including their fingerprints.
 The peer guard reuses the native bootstrap parser. Tests cover known host, port,
 IP, and native identity aliases through TOML and embedded configuration.
-The peer cache extends the upstream path with the existing SLH fingerprint.
+The peer cache and automatic identity-key file extend the upstream paths with
+the existing SLH fingerprint.
 Tests separate same-name chains with different genesis or rules and retain the
-old paths for other networks. These changes support the launcher boundary;
+old paths for other networks. Identity tests also check persistence through
+config reloads with the peer cache disabled. Peer tests reject ambiguous numeric
+addresses before system resolution and cover IPv4-compatible IPv6 aliases.
+The built-in peer inventory is initialized once and reused by later checks.
+These changes support the launcher boundary;
 they do not revise the signature contract.

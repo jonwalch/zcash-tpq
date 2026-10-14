@@ -65,18 +65,10 @@ impl CacheDir {
 
     /// Returns the peer cache file path for `network`, if enabled.
     pub fn peer_cache_file_path(&self, network: &Network) -> Option<PathBuf> {
-        let name = match network.experimental_slh_dsa_b128s_chain_fingerprint() {
-            Some(fingerprint) => format!(
-                "{}-slh-dsa-b128s-v1-{}",
-                network.lowercase_name(),
-                hex::encode(fingerprint)
-            ),
-            None => network.lowercase_name(),
-        };
         Some(
             self.cache_dir()?
                 .join("network")
-                .join(format!("{name}.peers")),
+                .join(format!("{}.peers", network_file_stem(network))),
         )
     }
 
@@ -115,6 +107,18 @@ pub(crate) fn default_network_identity_dir() -> PathBuf {
 pub(crate) fn zakura_node_secret_key_file_path(identity_dir: &Path, network: &Network) -> PathBuf {
     identity_dir.join(format!(
         "{}.zakura-iroh-secret-key",
-        network.lowercase_name()
+        network_file_stem(network)
     ))
+}
+
+/// Separate SLH custom-chain peers and identities while retaining all other paths.
+fn network_file_stem(network: &Network) -> String {
+    match network.experimental_slh_dsa_b128s_chain_fingerprint() {
+        Some(fingerprint) => format!(
+            "{}-slh-dsa-b128s-v1-{}",
+            network.lowercase_name(),
+            hex::encode(fingerprint)
+        ),
+        None => network.lowercase_name(),
+    }
 }

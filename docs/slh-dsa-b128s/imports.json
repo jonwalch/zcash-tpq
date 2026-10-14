@@ -2425,8 +2425,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/slh-dsa-b128s/devnets.md"
       ],
-      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths.",
-      "sha256": "2d2bbaaaafb7d0286fa7cdf96081df3f4d57ea7e152f55baea688317de4c1aa7"
+      "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. Reject ambiguous numeric IP forms before DNS and recognize IPv4-compatible IPv6; initialize the known peer inventory once.",
+      "sha256": "99ef4145433566342be0539636ef02f7257748615be959c86c3321645fc708a3"
     },
     {
       "disposition": "upstream-modification",
@@ -2435,8 +2435,8 @@
         "docs/slh-dsa-b128s/devnets.md",
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
-      "reason": "PR #11: Scope peer-cache files to the existing SLH custom-chain fingerprint; preserve disabled caches and paths for other networks. Regression tests separate same-name chains with different genesis or rules and retain paths after TOML round trips.",
-      "sha256": "ec317254504c013f482ce4e4c0ad978ba6bd8dd34c642820713264de522a2139"
+      "reason": "PR #11: Scope peer-cache files to the existing SLH custom-chain fingerprint; preserve disabled caches and paths for other networks. Regression tests separate same-name chains with different genesis or rules and retain paths after TOML round trips. Also isolate automatic native identity-key files, preserve explicit overrides and other networks, and check identity persistence across config reloads.",
+      "sha256": "f5a988b6adc583eeda548a74c2bcc2b03c6d392a54aae1a47743aad4c37f7dcf"
     },
     {
       "disposition": "upstream-modification",
@@ -2447,7 +2447,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths.",
-      "sha256": "230c3e262ae4f8ced8401810ce8102cf3063e029020428ec08ff1052120a69fe"
+      "sha256": "bd11459b4ed91cdbd417126faa92d454fba5b4349b4c058e8e6ab83a9d47a222"
     },
     {
       "disposition": "upstream-modification",
@@ -3462,7 +3462,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Record PR #11 custom devnet SLH configuration, state isolation, genesis generation and rule diagnostics in its required user-visible changelog fragment.",
-      "sha256": "01e9d7b67d62ad1c8fce2fa6ace79787ee019c33720b65ee25e3a59ff77feff9"
+      "sha256": "d1379b6fccaa24fcfb28acfe7db75f691a4023fd3ebd10eab9130224e7739076"
     },
     {
       "disposition": "new",
@@ -3570,7 +3570,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "ff7287d4dfb5608586904719fd285f33eab75a7847ac158707a84ac700dd417d"
+      "sha256": "e6ba049a4fbdc5f449bebaedc8584abb3d2b5394c91507f3405ff0327ed53d3a"
     },
     {
       "disposition": "new",
@@ -3762,7 +3762,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "122c03f959e1652efb8dd76c5e6c3d77589e02dbce0d2bd5b9b3f28ec2e0e1f1"
+      "sha256": "e78dc574fb4af593455b2be8d7ba038d5178231079005f6e56a8077eff904cd0"
     },
     {
       "disposition": "new",
@@ -4382,7 +4382,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "d33ea42833b799350fafb2038b8219bdaab4dd78b627ee866445523d55e54d3e"
+      "sha256": "88c74d4d4b1d2d49b094897976f089baffc486353ec8a9ad1083bb7341076369"
     },
     {
       "disposition": "new",

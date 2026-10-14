@@ -39,7 +39,7 @@
       "target_path": "crates/zakura-chain/src/parameters/network/tests/vectors.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config.rs",
@@ -48,7 +48,7 @@
       "target_path": "crates/zakura-network/src/config.rs"
     },
     {
-      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation.",
+      "adaptation": "Reuse reviewed activation and namespace mechanisms for experimental SLH. Preserve Regtest behavior and extend explicit custom Testnet parameters, with strict NU7/checkpoint boundaries, distinct chain identity, isolated state and complete runtime support. See devnets.md for the change reason and regression coverage. Preserve upstream builder-only coinbase/Orchard options across launcher TOML and compare known bootstrap aliases using the retained native parser; regression tests cover generated rules, both options, aliases, and peer-cache separation. Reject ambiguous numeric IPv4 syntax before system resolution, compare IPv4-compatible aliases, and initialize the built-in peer inventory once. Reuse the existing key persistence function to verify chain-specific default identity files.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "85f75af3f70cc292918a013b280ed06426b6fa98",
       "source_path": "node/zakura/crates/zakura-network/src/config/tests/vectors.rs",
@@ -282,7 +282,7 @@
       "target_path": "crates/zakura-rpc/tests/serialization_tests.rs"
     },
     {
-      "adaptation": "Extend the pinned upstream peer-cache filename with the existing SLH custom-chain fingerprint. Preserve cache disablement and all other network paths. Same-name genesis/rule variants and TOML restoration have regression coverage in config/tests/vectors.rs.",
+      "adaptation": "Extend the pinned upstream peer-cache filename with the existing SLH custom-chain fingerprint. Preserve cache disablement and all other network paths. Same-name genesis/rule variants and TOML restoration have regression coverage in config/tests/vectors.rs. Apply the same namespace to automatically persisted native identity keys, preserving explicit keys and other networks. Test same-name chain separation and stable identity after TOML reload with the peer cache disabled.",
       "license": "MIT OR Apache-2.0",
       "source_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2",
       "source_path": "crates/zakura-network/src/config/cache_dir.rs",
