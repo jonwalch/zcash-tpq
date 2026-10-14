@@ -374,12 +374,12 @@ async fn mutual_p2p_v2_legacy_upgrade_forms_zakura_connection() {
     assert_eq!(local_peers.len(), 1);
     assert_eq!(local_peers[0].addr, peer_addr(18233));
     assert_eq!(
-        local_peers[0].user_agent.as_ref(),
-        TEST_HANDSHAKE_USER_AGENT
+        local_peers[0].user_agent.as_deref(),
+        Some(TEST_HANDSHAKE_USER_AGENT)
     );
     assert_eq!(
         local_peers[0].version,
-        constants::CURRENT_NETWORK_PROTOCOL_VERSION
+        Some(constants::CURRENT_NETWORK_PROTOCOL_VERSION)
     );
     assert!(!local_peers[0].is_inbound);
 
@@ -387,12 +387,12 @@ async fn mutual_p2p_v2_legacy_upgrade_forms_zakura_connection() {
     assert_eq!(remote_peers.len(), 1);
     assert_eq!(remote_peers[0].addr, peer_addr(28233));
     assert_eq!(
-        remote_peers[0].user_agent.as_ref(),
-        TEST_HANDSHAKE_USER_AGENT
+        remote_peers[0].user_agent.as_deref(),
+        Some(TEST_HANDSHAKE_USER_AGENT)
     );
     assert_eq!(
         remote_peers[0].version,
-        constants::CURRENT_NETWORK_PROTOCOL_VERSION
+        Some(constants::CURRENT_NETWORK_PROTOCOL_VERSION)
     );
     assert!(remote_peers[0].is_inbound);
 

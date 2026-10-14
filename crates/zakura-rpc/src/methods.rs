@@ -2014,7 +2014,7 @@ where
         let version = GetInfoResponse::version_from_string(&self.build_version)
             .expect("invalid version string");
 
-        let connections = self.address_book.recently_live_peers(Utc::now()).len();
+        let connections = self.address_book.connected_peer_count(Utc::now());
 
         let last_error_recorded = self.last_warn_error_log_rx.borrow().clone();
         let (last_error_log, _level, last_error_log_time) = last_error_recorded.unwrap_or((
@@ -3987,7 +3987,7 @@ where
         // Deprecated: zcashd always returns 0.
         let timeoffset = 0;
 
-        let connections = self.address_book.recently_live_peers(Utc::now()).len();
+        let connections = self.address_book.connected_peer_count(Utc::now());
 
         // TODO: make `limited`, `reachable`, and `proxy` dynamic if Zebra supports network filtering
         let networks = vec![

@@ -244,13 +244,39 @@ async fn rpc_getinfo() {
     let mut read_state: MockService<_, _, _, BoxError> = MockService::build().for_unit_tests();
 
     let (_tx, rx) = tokio::sync::watch::channel(None);
-    let (rpc, rpc_tx_queue) = mock_rpc(
+    let (mut rpc, rpc_tx_queue) = mock_rpc(
         Mainnet,
         Buffer::new(mempool.clone(), 1),
         Buffer::new(state.clone(), 1),
         Buffer::new(read_state.clone(), 1),
         NoChainTip,
         rx,
+    );
+
+    let native_peers = vec![
+        ConnectedPeer::from_native(
+            "192.0.2.1:19934".parse().expect("test address parses"),
+            false,
+        ),
+        ConnectedPeer::from_native(
+            "[2001:db8::2]:34567".parse().expect("test address parses"),
+            true,
+        ),
+    ];
+    rpc.address_book = MockAddressBookPeers::default().with_connected_peers(native_peers.clone());
+    assert_eq!(
+        rpc.get_network_info()
+            .await
+            .expect("network info succeeds")
+            .connections,
+        2
+    );
+    assert_eq!(
+        rpc.get_peer_info().await.expect("peer info succeeds"),
+        native_peers
+            .into_iter()
+            .map(PeerInfo::from)
+            .collect::<Vec<_>>(),
     );
 
     let getinfo_future = tokio::spawn(async move { rpc.get_info().await });
@@ -280,6 +306,7 @@ async fn rpc_getinfo() {
     // make sure there is a `build` field in the response,
     // and that is equal to the provided string, with an added 'v' version prefix.
     assert_eq!(get_info.build, "v0.0.1");
+    assert_eq!(get_info.connections, 2);
 
     // make sure there is a `subversion` field,
     // and that is equal to the Zebra user agent.
@@ -2699,16 +2726,16 @@ async fn rpc_getpeerinfo() {
     let connected_peers = vec![
         ConnectedPeer {
             addr: outbound_mock_peer_address.addr(),
-            user_agent: Arc::from("/Zakura:1.0.3/"),
-            version: Version(170_160),
+            user_agent: Some(Arc::from("/Zakura:1.0.3/")),
+            version: Some(Version(170_160)),
             is_inbound: false,
             rtt: None,
             ping_sent_at: None,
         },
         ConnectedPeer {
             addr: inbound_mock_peer_address.addr(),
-            user_agent: Arc::from("/MagicBean:2.1.1/"),
-            version: Version(170_120),
+            user_agent: Some(Arc::from("/MagicBean:2.1.1/")),
+            version: Some(Version(170_120)),
             is_inbound: true,
             rtt: None,
             ping_sent_at: None,

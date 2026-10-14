@@ -74,8 +74,8 @@ impl From<ConnectedPeer> for PeerInfo {
     fn from(peer: ConnectedPeer) -> Self {
         Self {
             addr: peer.addr,
-            subver: Some(peer.user_agent.to_string()),
-            version: Some(peer.version.0),
+            subver: peer.user_agent.map(|user_agent| user_agent.to_string()),
+            version: peer.version.map(|version| version.0),
             inbound: peer.is_inbound,
             pingtime: peer.rtt.map(|duration| duration.as_secs_f64()),
             pingwait: peer
@@ -107,11 +107,28 @@ mod tests {
     use super::*;
 
     #[test]
+    fn native_peer_conversion_omits_unadvertised_metadata() {
+        let peer = ConnectedPeer::from_native(
+            "[2001:db8::1]:19934".parse().expect("test address parses"),
+            true,
+        );
+        let json = serde_json::to_value(PeerInfo::from(peer)).expect("peer info serializes");
+        assert_eq!(json["addr"], "[2001:db8::1]:19934");
+        assert_eq!(json["inbound"], true);
+        for absent in ["subver", "version", "pingtime", "pingwait"] {
+            assert!(
+                json.get(absent).is_none(),
+                "native peer did not advertise {absent}"
+            );
+        }
+    }
+
+    #[test]
     fn connected_peer_conversion_includes_handshake_metadata() {
         let peer = ConnectedPeer {
             addr: "127.0.0.1:8233".parse().expect("test address parses"),
-            user_agent: Arc::from("/Zakura:1.0.3/"),
-            version: Version(170_160),
+            user_agent: Some(Arc::from("/Zakura:1.0.3/")),
+            version: Some(Version(170_160)),
             is_inbound: true,
             rtt: None,
             ping_sent_at: None,

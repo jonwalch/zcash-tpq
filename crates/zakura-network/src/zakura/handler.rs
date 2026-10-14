@@ -54,7 +54,7 @@ use crate::zakura::drive_header_sync_actions;
 use crate::zakura::HeaderSyncAction;
 use crate::{
     constants::MAX_FIND_BLOCKS_RESPONSE_HASHES, peer_registry::PeerRegistry, BoxError, Config,
-    MAX_TX_INV_IN_SENT_MESSAGE,
+    ConnectedPeer, MAX_TX_INV_IN_SENT_MESSAGE,
 };
 use crate::{
     protocol::external::InventoryHash,
@@ -1448,6 +1448,7 @@ impl ZakuraSupervisorHandle {
         outbound_handle: ZakuraPeerHandle,
         disconnect_token: CancellationToken,
         _accepted_capabilities: u64,
+        connected_peer: ConnectedPeer,
     ) -> ZakuraRegistration {
         let remote_ip = remote_ip.map(canonical_ip);
         let mut state = self.inner.lock().await;
@@ -1505,7 +1506,11 @@ impl ZakuraSupervisorHandle {
                 set_active_connection_gauge(registered_ids.len());
                 self.peer_set_tx.send_replace(registered_ids);
                 if let Some(peer_registry) = &self.peer_registry {
-                    peer_registry.register_native_connection(peer_id.clone(), conn_id);
+                    peer_registry.register_native_connection(
+                        peer_id.clone(),
+                        conn_id,
+                        connected_peer,
+                    );
                 }
                 let _ = self.registration_tx.send(ZakuraConnectionRegistration {
                     peer_id: peer_id.clone(),
@@ -3578,6 +3583,10 @@ impl ZakuraProtocolHandler {
                 outbound_handle,
                 connection_token.clone(),
                 context.accepted_capabilities,
+                ConnectedPeer::from_native(
+                    connection.admitted_addr().into(),
+                    context.direction == ServicePeerDirection::Inbound,
+                ),
             )
             .await;
         // A registered connection now counts as registered in `ip_slots`.
@@ -6778,6 +6787,68 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn native_peer_registration_populates_diagnostics() {
+        use crate::AddressBookPeers;
+
+        let registry = PeerRegistry::default();
+        let supervisor = ZakuraSupervisorHandle::new_with_peer_registry(2, registry.clone());
+        let address_book = crate::AddressBook::new(
+            "127.0.0.1:19933".parse().expect("test listener parses"),
+            &Network::new_default_testnet(),
+            2,
+            tracing::Span::none(),
+        )
+        .with_peer_registry(registry);
+        let mut registrations = Vec::new();
+        let mut expected = Vec::new();
+        for (index, (addr, is_inbound)) in
+            [("192.0.2.1:19934", false), ("[2001:db8::2]:34567", true)]
+                .into_iter()
+                .enumerate()
+        {
+            let addr: SocketAddr = addr.parse().expect("test peer address parses");
+            let metadata = ConnectedPeer::from_native(addr.into(), is_inbound);
+            let peer_id = test_peer(u8::try_from(index).expect("two peers fit in u8"));
+            let (outbound_tx, _outbound_rx) = mpsc::channel(1);
+            let conn_id = registered_conn_id(
+                supervisor
+                    .register(
+                        test_conn_id(),
+                        peer_id.clone(),
+                        Some(addr.ip()),
+                        [1; TRANSCRIPT_HASH_BYTES],
+                        ZakuraPeerHandle::new_for_tests(peer_id.clone(), outbound_tx),
+                        CancellationToken::new(),
+                        ZAKURA_CAP_LEGACY_GOSSIP,
+                        metadata.clone(),
+                    )
+                    .await,
+            );
+            registrations.push((peer_id, conn_id));
+            expected.push(metadata);
+        }
+        let peers = address_book
+            .connected_peers()
+            .expect("live registry is present");
+        assert_eq!(peers.len(), 2);
+        for peer in expected {
+            assert!(
+                peers.contains(&peer),
+                "native address and direction must match the transport"
+            );
+        }
+        assert!(address_book
+            .recently_live_peers(chrono::Utc::now())
+            .is_empty());
+        assert_eq!(address_book.connected_peer_count(chrono::Utc::now()), 2);
+        for (peer_id, conn_id) in registrations {
+            supervisor.deregister(&peer_id, conn_id).await;
+        }
+        assert_eq!(address_book.connected_peers(), Some(Vec::new()));
+        assert_eq!(address_book.connected_peer_count(chrono::Utc::now()), 0);
+    }
+
+    #[tokio::test]
     async fn handoff_wait_returns_exact_generation_and_rejects_duplicates() {
         let supervisor = ZakuraSupervisorHandle::new(1);
         let peer_id = test_peer(6);
@@ -6807,6 +6878,7 @@ mod tests {
                 ZakuraPeerHandle::new_for_tests(peer_id.clone(), outbound_tx),
                 CancellationToken::new(),
                 ZAKURA_CAP_LEGACY_GOSSIP,
+                ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
             )
             .await;
         let conn_id = registered_conn_id(registration);
@@ -6894,6 +6966,7 @@ mod tests {
                     ZakuraPeerHandle::new_for_tests(peer.clone(), outbound_tx),
                     CancellationToken::new(),
                     ZAKURA_CAP_LEGACY_GOSSIP,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await,
         );
@@ -6935,6 +7008,7 @@ mod tests {
                     outbound_handle,
                     token,
                     ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await
         }
@@ -7432,6 +7506,7 @@ mod tests {
                 outbound_handle,
                 disconnect_token,
                 ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
             )
             .await;
 
@@ -7460,6 +7535,7 @@ mod tests {
                 outbound_handle,
                 disconnect_token,
                 ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
             )
             .await
     }
@@ -8045,6 +8121,7 @@ mod tests {
                     outbound_handle,
                     token,
                     ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await
         }
@@ -8115,6 +8192,7 @@ mod tests {
                     outbound_handle,
                     token,
                     ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await
         }
@@ -8177,6 +8255,7 @@ mod tests {
                     outbound_handle,
                     CancellationToken::new(),
                     ZAKURA_CAP_DISCOVERY,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await
         }
@@ -8246,6 +8325,7 @@ mod tests {
                     outbound_handle,
                     token,
                     ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await
         }
@@ -11538,6 +11618,7 @@ mod tests {
                     outbound_handle,
                     CancellationToken::new(),
                     ZAKURA_CAP_LEGACY_GOSSIP | ZAKURA_CAP_HEADER_SYNC,
+                    ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
                 )
                 .await
         }
@@ -11718,6 +11799,7 @@ mod tests {
                 ZakuraPeerHandle::new_for_tests(peer, outbound_tx),
                 CancellationToken::new(),
                 ZAKURA_CAP_LEGACY_GOSSIP,
+                ConnectedPeer::from_native(crate::PeerSocketAddr::unspecified(), false),
             )
             .await;
         assert!(matches!(registered, ZakuraRegistration::Registered { .. }));
