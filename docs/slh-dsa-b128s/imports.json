@@ -3446,6 +3446,16 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/11.md",
+      "provenance": [
+        "docs/changelog/guidelines.md",
+        "docs/slh-dsa-b128s/devnets.md"
+      ],
+      "reason": "Record PR #11 custom devnet SLH configuration, state isolation, genesis generation and rule diagnostics in its required user-visible changelog fragment.",
+      "sha256": "569f06d7e1a5c3128f555f070e40ad50fd3273038740e54caabc01e19d8cd7aa"
+    },
+    {
+      "disposition": "new",
       "path": "docs/changelog/unreleased/4.md",
       "provenance": [
         "docs/changelog/unreleased/README.md"
