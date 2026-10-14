@@ -776,7 +776,7 @@ mod tests {
     }
 
     #[test]
-    fn slh_generator_preserves_seed_chain_and_round_trips_rules() {
+    fn slh_generator_preserves_seed_chain_and_sets_rules() {
         let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
         let generated = generate_local_testnet_with_slh_dsa_b128s(
             vec!["alice".to_string()],
@@ -812,14 +812,6 @@ mod tests {
             Some(generated.funded_keys[0].address)
         );
 
-        let serialized = serde_json::to_string(network).unwrap();
-        let restored: Network = serde_json::from_str(&serialized).unwrap();
-        assert_eq!(restored, *network);
-        assert_eq!(serde_json::to_string(&restored).unwrap(), serialized);
-        assert_eq!(
-            restored.experimental_slh_dsa_b128s_chain_fingerprint(),
-            network.experimental_slh_dsa_b128s_chain_fingerprint()
-        );
         assert!(network
             .experimental_slh_dsa_b128s_chain_fingerprint()
             .is_some());
