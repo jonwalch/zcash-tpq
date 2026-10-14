@@ -43,7 +43,7 @@ python3 tests/slh-dsa-b128s/fixtures/check_devnet_transactions.py \
   --output .context/new-devnet-independent.json
 ```
 
-The [custom network consensus tests](../../../../../crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/devnet.rs)
+The [custom network consensus tests](../../../../crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s/devnet.rs)
 reuse the retained trusted-service controls with these signatures. They cover
 block and mempool dispatch, wrong-domain and corrupt signatures, activation,
 compiled-verifier refusal, budgets, bound metadata, and classical funding.
