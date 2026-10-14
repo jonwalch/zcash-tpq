@@ -459,7 +459,7 @@ impl AddressUnspentOutput {
         // Iterating from the next possible output location gets us the next output,
         // even if it is in a later block or transaction.
         //
-        // Consensus: the block size limit is 2MB, which is much lower than the index range.
+        // Consensus: a 20 MB block cannot contain enough outputs to overflow this index.
         self.unspent_output_location.output_index += 1;
     }
 
@@ -571,7 +571,7 @@ impl AddressTransaction {
         // Iterating from the next possible output location gets us the next output,
         // even if it is in a later block or transaction.
         //
-        // Consensus: the block size limit is 2MB, which is much lower than the index range.
+        // Consensus: a 20 MB block cannot contain enough transactions to overflow this index.
         self.transaction_location.index.0 += 1;
     }
 
@@ -685,7 +685,7 @@ impl IntoDisk for OutputIndex {
             // # Security
             //
             // The RPC method or state query was given a transparent output index that is
-            // impossible with the current block size limit of 2 MB. To save space in database
+            // impossible with the current block size limit of 20 MB. To save space in database
             // indexes, we don't support output indexes 2^24 and above.
             //
             // Instead,  we return an invalid database output index to the lookup code,

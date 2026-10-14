@@ -49,10 +49,9 @@ pub const BS_PER_BLOCK_WORST_CASE_BYTES: u64 = block::MAX_BLOCK_BYTES;
 /// stay serialized, this is (to close approximation) the byte ceiling of the
 /// speculative backlog itself, and total process RSS tracks it plus an
 /// era-independent overhead — so the default is chosen as a memory target, not
-/// derived from the wire budget. 1.5 GiB holds roughly a minute of worst-case
-/// committed throughput (~70 MB/s) of look-ahead, nearly two checkpoint ranges
-/// of maximum-size blocks, and multiple hours of typical-era backlog: deeper
-/// speculation buys nothing the committer can consume.
+/// derived from the wire budget. The checkpoint-range clamp raises this target
+/// to 8.02 GB with the fork's 20 MB blocks. Actual resident memory also includes
+/// decoded blocks and other node state.
 pub const DEFAULT_BS_MAX_REORDER_LOOKAHEAD_BYTES: u64 = 1536 * 1024 * 1024;
 /// Minimum submitted block applies required to resolve one checkpoint range.
 ///
@@ -71,7 +70,7 @@ pub const MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES: usize =
 /// from the commit-window admission exemption.
 pub const BS_CHECKPOINT_RANGE_BYTE_FLOOR: u64 =
     // `MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES` is `MAX_CHECKPOINT_HEIGHT_GAP + 1`
-    // (= 401), which fits `u64` losslessly; the product (~802 MB) cannot overflow.
+    // (= 401), which fits `u64` losslessly; the product (8.02 GB) cannot overflow.
     MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES as u64 * BS_PER_BLOCK_WORST_CASE_BYTES;
 /// Default block-sync request timeout.
 pub const DEFAULT_BS_REQUEST_TIMEOUT: Duration = Duration::from_secs(8);

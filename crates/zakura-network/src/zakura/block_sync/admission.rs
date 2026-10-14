@@ -500,19 +500,20 @@ mod tests {
     /// stays pinned to the previous checkpoint until the whole range (up to
     /// `MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES` blocks) is co-resident. The whole range
     /// is commit-window exempt, so it assembles regardless of the gated budget; the
-    /// budget under a legal 1 GiB in-flight budget must also leave gated headroom just
-    /// above the window.
+    /// clamped resident budget must also leave gated headroom just above the window,
+    /// independently of the 1 GiB request budget.
     #[test]
-    fn checkpoint_range_fits_under_one_gib_inflight_budget() {
+    fn checkpoint_range_progresses_with_one_gib_request_budget() {
         use super::super::config::{
             BS_CHECKPOINT_RANGE_BYTE_FLOOR, BS_PER_BLOCK_WORST_CASE_BYTES,
             MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES,
         };
 
-        let config = ZakuraBlockSyncConfig {
+        let mut config = ZakuraBlockSyncConfig {
             max_inflight_block_bytes: 1024 * 1024 * 1024,
             ..ZakuraBlockSyncConfig::default()
         };
+        config.clamp_reorder_lookahead_to_floor();
 
         // One block short of a full co-resident range, with `verified_tip` pinned at 0.
         let range_blocks = u32::try_from(MIN_BS_CHECKPOINT_SUBMITTED_BLOCK_APPLIES)
@@ -545,8 +546,8 @@ mod tests {
             "the final block of a checkpoint range must be admissible under a 1 GiB in-flight budget",
         );
         // The first height above the window is memory-gated but must still have headroom
-        // under this budget: ~800 MB of serialized applying bytes (charged at wire size)
-        // sit below the 1.5 GiB default resident budget. This keeps the assertion
+        // under this budget: 400 full serialized blocks (charged at wire size)
+        // sit below the clamped 401-block resident budget. This keeps the assertion
         // non-vacuous now that the whole range is window-exempt.
         assert!(
             matches!(

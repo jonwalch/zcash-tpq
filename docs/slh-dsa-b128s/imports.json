@@ -130,10 +130,12 @@
       "disposition": "upstream-modification",
       "path": "AGENTS.md",
       "provenance": [
-        "docs/slh-dsa-b128s/packaging.md"
+        "docs/slh-dsa-b128s/packaging.md",
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style.",
-      "sha256": "f9aaecfae629b8d7e3844500a7785f770cc12f5daed7e6849f51ed23a8b74384"
+      "reason": "Preserve upstream guidance and add SLH scope, human-only validation rules, and the requested documentation style. PR #9: Document the fork-wide 20 MB devnet exception while retaining the default-off, Regtest-only SLH activation rule.",
+      "sha256": "e2438beeed3b6d8d2270faeac6263591e4f614c7c5aad532eba53a09a84e5fd9"
     },
     {
       "disposition": "upstream-modification",
@@ -2182,6 +2184,36 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/admission.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "704b02d2809c001fd8276882b9d41164adae8b422cc9ccac23c59df8046b3156"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/bbr.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "a9f752fc83840d40c91f0f1ebe7dbff2ce1b65a414ef866ebd661996dba427d6"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/src/zakura/block_sync/config.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "3de1fcfaefa567cd9af725ae405d60f80efea8d5432ab2246b9295fd9f6e3b9a"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-network/src/zakura/block_sync/service.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
@@ -2198,7 +2230,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "0d3094ade7de0604ed253dce1cc282e854b50b887d142f1bc48b37893577ae78"
+      "sha256": "c551428021381be26a5bb8091363aa1f36ec2a7201a9c1134fc1d8b610421b93"
     },
     {
       "disposition": "upstream-modification",
@@ -2252,6 +2284,46 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_basic@mainnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "8e5def7d0ff0d4f358196e5186ed4e224f4638caf4a07b05bf61be89ab49ccbe"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_basic@testnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "48498a847aad44463131d4b63530e9fa69736a2d0d90deac289a0f9d3fc1ff48"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_long_poll@mainnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "f51c2a99eed1205f57f71af5f7ad53b064dfcaac79d7d78891806dd7c57ced88"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/snapshots/get_block_template_long_poll@testnet_10.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
+      "sha256": "e4110d6438699c0b803a3c7e58cbd0823add5b284314a8a7067d9379751eb334"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-rpc/src/methods/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/node-reuse.json",
@@ -2278,7 +2350,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "b687794d0af848fc4784b4809de28e9cb0483992e140523dd2107492f439ea76"
+      "sha256": "1cb1ac8cd062d60bc725e1a2c1c100c8ffaef61d82a87a1ef736444f94d6b015"
     },
     {
       "disposition": "new",
@@ -2318,7 +2390,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "466c0c29be94ee25234618836e76a0083bfcfd8f40a30ad8cbdc619a01d7ddf9"
+      "sha256": "2024ec3aa14ebe1cd9f85e9b91f9bf3206c57e1889fe4f5ba8ec1ee27e4809a1"
     },
     {
       "disposition": "upstream-modification",
@@ -2748,7 +2820,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "acf4b467b2305589ffb4e241e82cf1d5daa202f1ea406ffe40052854520261cb"
+      "sha256": "06844099f956acdb6aa55353e3a604156f657c0089a4546a2ca1cf733925296d"
     },
     {
       "disposition": "upstream-modification",
@@ -2887,7 +2959,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "7f3f793fe384054a89a9fc7f433f95d893deb4a65da7343248dc01111fe76161"
+      "sha256": "6fbf26aff6c341efd04c49996ddb986a7d30b9b267a91b71d199b8a15f4c2fdf"
     },
     {
       "disposition": "new",
@@ -3205,7 +3277,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "bfa5452d3b66f12729dfb7fcf89481df6e4bded6709c6c4ecdc5393a3b4025ca"
+      "sha256": "c4aa0534b651bd641b3937fe4599efdf1097e9970da657d90f9c352d46741001"
     },
     {
       "disposition": "new",

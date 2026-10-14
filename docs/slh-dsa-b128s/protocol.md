@@ -138,6 +138,13 @@ The upstream block limit is 2 MB. Nodes with that limit reject larger blocks.
 The state database format is 30.0.0 because transaction indexes now use four
 bytes. Existing version 29 databases require a fresh sync.
 
+The block-sync checkpoint-range budget now has a floor of 8.02 GB (401 full
+blocks). Decoded blocks and other node state need additional memory. A devnet
+that uses checkpoint sync must account for this floor. Requests without a body
+size hint reserve 20 MB each, so a fixed request budget permits fewer concurrent
+requests. Peer message buffers can also hold larger payloads. These limits have
+not been measured in a live devnet run.
+
 The configuration uses these fields:
 
 - `experimental_slh_dsa_b128s_activation_height`

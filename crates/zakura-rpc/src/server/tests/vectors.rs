@@ -95,14 +95,18 @@ async fn rpc_server_accepts_twenty_mb_block_request_and_shuts_down() {
     rpc_spawn_unallocated_port(true).await
 }
 
-/// Test if the RPC server will spawn on an OS-assigned unallocated port.
+/// Test RPC startup, optionally sending a request and shutting down.
 ///
 /// Set `do_shutdown` to true to close the server using the close handle.
 #[tracing::instrument]
 async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
     let _init_guard = zakura_test::init();
 
-    let port = zakura_test::net::random_unallocated_port();
+    let port = if do_shutdown {
+        zakura_test::net::random_known_port()
+    } else {
+        zakura_test::net::random_unallocated_port()
+    };
     #[allow(unknown_lints)]
     #[allow(clippy::bool_to_int_with_if)]
     let conf = Config {
@@ -159,21 +163,27 @@ async fn rpc_spawn_unallocated_port(do_shutdown: bool) {
     );
 
     if do_shutdown {
-        let response: serde_json::Value = reqwest::Client::builder()
+        crate::indexer::server::install_tls_crypto_provider();
+        let response = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))
             .build()
             .unwrap()
             .post(format!("http://127.0.0.1:{port}"))
-            .json(&serde_json::json!({
-                "jsonrpc": "2.0", "id": 1, "method": "block_size_probe",
-                "params": ["00".repeat(20_000_000)],
-            }))
+            .header("content-type", "application/json")
+            .body(
+                serde_json::json!({
+                    "jsonrpc": "2.0", "id": 1, "method": "block_size_probe",
+                    "params": ["00".repeat(20_000_000)],
+                })
+                .to_string(),
+            )
             .send()
             .await
             .unwrap()
-            .json()
+            .text()
             .await
             .unwrap();
+        let response: serde_json::Value = serde_json::from_str(&response).unwrap();
         // Method-not-found proves the request passed both HTTP byte limits.
         assert_eq!(response["error"]["code"], -32601);
         rpc.abort();

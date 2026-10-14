@@ -2881,19 +2881,20 @@ fn commit_window_stays_fundable_at_exact_floor() {
     // verified_tip pinned at 0; applying holds all but the last worst-case range block —
     // all submitted during checkpoint sync, so charged at the decoded multiple — plus
     // next-range contamination in reorder and outstanding reservations. The byte gate is
-    // full: 8 MiB + 800 MB + 4 MB serialized + 800 MB * 4 decoded >= 3_208_000_000.
+    // full: the submitted decoded range alone exceeds the serialized range budget.
+    let submitted_bytes = BS_CHECKPOINT_RANGE_BYTE_FLOOR - BS_PER_BLOCK_WORST_CASE_BYTES;
     let snapshot = super::admission::AdmissionSnapshot {
         download_floor: block::Height(range_blocks - 1),
         verified_block_tip: block::Height(0),
         reorder_buffered_bytes: 8_388_608,
         reorder_buffered_blocks: 4,
-        applying_buffered_bytes: 800_000_000,
+        applying_buffered_bytes: submitted_bytes,
         applying_buffered_blocks: u64::from(range_blocks) - 1,
         sequencer_input_queued_bytes: 0,
-        in_flight_submission_bytes: 800_000_000,
-        reserved_above_floor_bytes: 4_000_000,
+        in_flight_submission_bytes: submitted_bytes,
+        reserved_above_floor_bytes: 2 * BS_PER_BLOCK_WORST_CASE_BYTES,
         reserved_above_floor_blocks: 2,
-        budget_available: 2_000_000,
+        budget_available: BS_PER_BLOCK_WORST_CASE_BYTES,
     };
 
     // The range-completing block (inside the commit window) stays fundable on both lanes.
@@ -2913,7 +2914,7 @@ fn commit_window_stays_fundable_at_exact_floor() {
         completing.priority,
         super::admission::RequestPriority::Floor
     );
-    assert_eq!(completing.max_request_bytes, 2_000_000);
+    assert_eq!(completing.max_request_bytes, BS_PER_BLOCK_WORST_CASE_BYTES);
 
     // The first height above the window is refused while the gate is full — on both
     // lanes, since `admit` gates every above-window start regardless of priority.
@@ -8983,6 +8984,7 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
     // synced node can still be the server a fresh peer needs for historical
     // bodies, so closing the stream after every local catch-up would starve fresh
     // Zakura-only nodes between checkpoint windows.
+    // Small body hints let each three-block range fit the 32 MiB response budget.
     let mut config = fill_loop_mechanics_config();
     config.peer_limits.max_outbound_peers = 1;
     let (_tip_tx, tip_rx) = watch::channel((block::Height(4), block::Hash([4; 32])));
@@ -9025,17 +9027,17 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
             BlockSyncBlockMeta {
                 height: block::Height(1),
                 hash: block::Hash([1; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size: BlockSizeEstimate::Advertised(2_000_000),
             },
             BlockSyncBlockMeta {
                 height: block::Height(2),
                 hash: block::Hash([2; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size: BlockSizeEstimate::Advertised(2_000_000),
             },
             BlockSyncBlockMeta {
                 height: block::Height(3),
                 hash: block::Hash([3; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size: BlockSizeEstimate::Advertised(2_000_000),
             },
         ]))
         .await
@@ -9109,17 +9111,17 @@ async fn reactor_keeps_block_sync_peer_after_catch_up_and_reuses_later() {
             BlockSyncBlockMeta {
                 height: block::Height(4),
                 hash: block::Hash([4; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size: BlockSizeEstimate::Advertised(2_000_000),
             },
             BlockSyncBlockMeta {
                 height: block::Height(5),
                 hash: block::Hash([5; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size: BlockSizeEstimate::Advertised(2_000_000),
             },
             BlockSyncBlockMeta {
                 height: block::Height(6),
                 hash: block::Hash([6; 32]),
-                size: BlockSizeEstimate::Unknown,
+                size: BlockSizeEstimate::Advertised(2_000_000),
             },
         ]))
         .await
