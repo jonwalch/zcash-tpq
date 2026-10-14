@@ -150,7 +150,13 @@ fn format_upgrades(
             "add Zakura header auxiliary body size corrections",
             crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION,
         )),
-    ] as [Box<dyn DiskFormatUpgrade>; 12])
+        // Reuse the existing cache, but keep binaries that do not understand incomplete
+        // transparent indexes from opening it through their older version directory.
+        Box::new(no_migration::NoMigration::new(
+            "allow transparent index updates to stop in place",
+            Version::new(31, 0, 0),
+        )),
+    ] as [Box<dyn DiskFormatUpgrade>; 13])
         .into_iter()
         .filter(move |upgrade| upgrade.version() > min_version())
 }
@@ -1116,7 +1122,7 @@ fn fast_sync_metadata_cf_upgrade_is_no_migration() {
 fn vct_format_changes_include_root_auth_metadata_updates() {
     let upgrades: Vec<_> = format_upgrades(Some(Version::new(27, 3, 0))).collect();
 
-    assert_eq!(upgrades.len(), 8);
+    assert_eq!(upgrades.len(), 9);
     assert_eq!(upgrades[0].version(), Version::new(28, 0, 0));
     assert_eq!(upgrades[1].version(), Version::new(28, 0, 1));
     assert_eq!(upgrades[2].version(), Version::new(28, 0, 2));
@@ -1128,6 +1134,8 @@ fn vct_format_changes_include_root_auth_metadata_updates() {
         upgrades[7].version(),
         crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION
     );
+    assert_eq!(upgrades[8].version(), Version::new(31, 0, 0));
+    assert!(upgrades[8].is_reusable_major_upgrade());
     assert!(
         !upgrades[3].needs_migration(),
         "the header-chain column families are created on open without rebasing authenticated roots"
@@ -1136,13 +1144,15 @@ fn vct_format_changes_include_root_auth_metadata_updates() {
         !upgrades[7].needs_migration(),
         "the sparse body size correction column family is created on open"
     );
-    // Version 30 requires a fresh database, so it has no in-place upgrade.
+    // The v30 wider-index boundary cannot reuse a legacy cache. Version 31
+    // reuses only the already compatible v30 cache within state-tpq.
+    assert!(!restorable_db_versions().contains(&30));
     assert_eq!(
         upgrades
             .last()
             .expect("latest in-place format upgrade is registered")
             .version(),
-        crate::constants::LEGACY_STATE_DATABASE_FORMAT_VERSION
+        crate::constants::state_database_format_version_in_code()
     );
 }
 
@@ -1172,7 +1182,7 @@ fn twenty_mb_database_does_not_reuse_u16_transaction_indexes() {
     std::fs::create_dir_all(&old_path).unwrap();
     std::fs::write(old_path.join("old-index-format"), b"u16").unwrap();
     let version = state_database_format_version_in_code();
-    assert_eq!(version.major, WIDE_TRANSACTION_INDEX_FORMAT_VERSION);
+    assert!(version.major >= WIDE_TRANSACTION_INDEX_FORMAT_VERSION);
     assert!(DiskDb::try_reusing_previous_db_after_major_upgrade(
         &restorable_db_versions(),
         &version,

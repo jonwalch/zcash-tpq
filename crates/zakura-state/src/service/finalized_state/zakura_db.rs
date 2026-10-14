@@ -233,6 +233,14 @@ impl ZakuraDb {
             db: disk_db,
         };
 
+        // Reject stale address-query state before any upgrade can modify it. This also
+        // applies to read-only and offline utility opens, which skip format upgrades.
+        if config.pruning_config().is_none() && db.transparent_indexes_skipped_from().is_some() {
+            return Err(StateInitError::TransparentIndexesMissingInArchiveMode {
+                path: db.path().to_owned(),
+            });
+        }
+
         // A new persistent v30 cache must identify its layout even when an offline
         // caller skips upgrades. RocksDB now holds the lock; existing caches never
         // reach this branch and must pass the version checks above.
@@ -569,6 +577,44 @@ fn database_format_for_open(
         return Ok(None);
     }
     database_format_version_on_disk(config, db_kind, major_version, network)
+}
+
+#[cfg(test)]
+impl ZakuraDb {
+    /// Returns every raw key and value in the column family named `cf_name`, in key order.
+    pub(crate) fn raw_column_family_entries_for_test(
+        &self,
+        cf_name: &str,
+    ) -> Vec<(Vec<u8>, Vec<u8>)> {
+        let cf = self
+            .db
+            .cf_handle(cf_name)
+            .expect("tests only read column families opened from the running schema");
+
+        self.db
+            .raw_range_cf(&cf, &[], None)
+            .expect("reading a test database succeeds")
+    }
+
+    /// Writes a raw key and value to the column family named `cf_name`, bypassing every format
+    /// invariant. Tests use this to plant stale or corrupt entries.
+    pub(crate) fn insert_raw_entry_for_test(&self, cf_name: &str, key: &[u8], value: &[u8]) {
+        use super::disk_db::WriteDisk;
+        use super::RawBytes;
+
+        let cf = self
+            .db
+            .cf_handle(cf_name)
+            .expect("tests only write column families opened from the running schema");
+        let mut batch = super::DiskWriteBatch::new();
+        batch.zs_insert(
+            &cf,
+            RawBytes::new_raw_bytes(key.to_vec()),
+            RawBytes::new_raw_bytes(value.to_vec()),
+        );
+        self.write_batch(batch)
+            .expect("writing a test database succeeds");
+    }
 }
 
 /// The first database format version whose Mainnet VCT databases are guaranteed to hold the

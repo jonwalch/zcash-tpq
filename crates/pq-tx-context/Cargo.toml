@@ -13,5 +13,5 @@ historical-test-vectors = []
 
 [dependencies]
 zakura-chain = { path = "../zakura-chain" }
-zcash_protocol = { version = "=2.2.0", package = "zakura-protocol" }
+zcash_protocol = { workspace = true }
 thiserror = "2.0"

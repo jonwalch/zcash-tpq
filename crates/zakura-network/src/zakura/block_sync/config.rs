@@ -88,8 +88,8 @@ pub const DEFAULT_BS_MAX_REQUESTS_WITHOUT_BLOCK_PROGRESS: u32 = 64;
 pub const DEFAULT_BS_NO_PROGRESS_PEER_COOLDOWN: Duration = Duration::from_secs(180);
 /// Default hard floor-peer avoid cooldown after a watchdog cancellation.
 pub const DEFAULT_BS_FLOOR_PEER_AVOID_COOLDOWN: Duration = DEFAULT_BS_REQUEST_TIMEOUT;
-/// Default block-sync status refresh interval after local frontier changes.
-pub const DEFAULT_BS_STATUS_REFRESH_INTERVAL: Duration = Duration::from_secs(30);
+/// Bound tip-growth advertisements so peers can promptly request new block bodies.
+pub const DEFAULT_BS_STATUS_REFRESH_INTERVAL: Duration = Duration::from_secs(1);
 /// Default tolerated size-hint deviation percentage before a peer is reported.
 pub const DEFAULT_BS_SIZE_DEVIATION_TOLERANCE: u32 = 200;
 /// Maximum peer-advertised aggregate byte target accepted per requested range.
@@ -462,6 +462,12 @@ impl ZakuraBlockSyncConfig {
         if self.bbr_probe_rtt_interval <= self.bbr_probe_rtt_duration {
             return Err("bbr_probe_rtt_interval must exceed bbr_probe_rtt_duration");
         }
+        if !super::regulated::session::serving_sessions_fit_budget(self) {
+            return Err(
+                "max_inbound_peers plus max_outbound_peers must be at most 3,633 \
+                 so GetBlocks serving fits its bookkeeping budget",
+            );
+        }
         Ok(())
     }
 
@@ -529,11 +535,4 @@ pub fn clamp_advertised_inflight(count: u32) -> u32 {
 /// Clamp an advertised response byte target to the largest stream-6 message.
 pub fn clamp_advertised_response_bytes(bytes: u32) -> u32 {
     bytes.clamp(1, MAX_BS_RESPONSE_BYTES)
-}
-
-/// Maximum inbound `GetBlocks.count` this node will serve before looking at body sizes.
-pub fn inbound_get_blocks_count_limit(config: &ZakuraBlockSyncConfig) -> u32 {
-    config
-        .advertised_max_blocks_per_response()
-        .clamp(1, MAX_BS_BLOCKS_PER_REQUEST)
 }

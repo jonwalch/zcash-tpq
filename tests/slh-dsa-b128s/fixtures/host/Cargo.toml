@@ -21,7 +21,7 @@ secp256k1 = { workspace = true }
 ripemd = { workspace = true }
 orchard = { workspace = true, optional = true }
 sapling-crypto = { workspace = true, features = ["circuit"], optional = true }
-zcash_proofs = { workspace = true, features = ["local-prover"], optional = true }
+zcash_proofs = { version = "=3.0.0", package = "zakura-proofs", default-features = false, features = ["local-prover"], optional = true }
 zcash_protocol = { workspace = true, optional = true }
 rand_10 = { workspace = true, optional = true }
 incrementalmerkletree = { workspace = true, optional = true }

@@ -1,5 +1,5 @@
 {
-  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes. Product boundary corrections use OS arguments for the extracted identity predicate and typed nonpunitive local SLH context/backend failures. Invalid transaction contexts retain consensus rejection; new focused tests use the existing fixtures and error wrappers. PR #9 retains the pinned upstream block decoder, peer codecs, mining byte budgets, RPC transport, and disk-index mechanisms for a 20 MB devnet limit. Widen transaction indexes and fix the address-location decode width that this exposes. Boundary, transport, RPC, wallet, and disk-format tests cover these adaptations; SLH activation and signature budgets do not change.",
+  "note": "Selective mechanism/hunk attribution; current full target hashes and dispositions are in imports.json. These are not whole-file import claims. Preserve upstream resolver, shielded, serialization and storage behavior outside the SLH changes. Product boundary corrections use OS arguments for the extracted identity predicate and typed nonpunitive local SLH context/backend failures. Invalid transaction contexts retain consensus rejection; new focused tests use the existing fixtures and error wrappers. PR #9 retains the pinned upstream block decoder, peer codecs, mining byte budgets, RPC transport, and disk-index mechanisms for a 20 MB devnet limit. Widen transaction indexes and fix the address-location decode width that this exposes. Boundary, transport, RPC, wallet, and disk-format tests cover these adaptations; SLH activation and signature budgets do not change. Upstream refresh e33dc4308 retains the existing SLH shared-output accessor with the pure-Rust script verifier, adapts incremental native frames to zakura-quic, and uses fork format 31 for upstream incomplete transparent-index support. The upstream cache-reuse mechanism upgrades explicitly identified fork v30 caches; strict marker controls prevent old or unidentified layouts from being moved or relabeled.",
   "schema_version": 1,
   "sources": [
     {
@@ -237,5 +237,5 @@
       "target_path": "crates/zakura-consensus/src/transaction/slh_dsa_b128s/worker.rs"
     }
   ],
-  "upstream_commit": "24a17b3f0e7d88513688d607054f018ab6f15af2"
+  "upstream_commit": "e33dc43089acca2fe2c6516927932f2b7618b8bc"
 }
