@@ -1798,6 +1798,7 @@ fn experimental_slh_dsa_b128s_peer_cache_binds_chain_rules() {
 
 #[test]
 fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
+    let _init_guard = zakura_test::init();
     let directory = tempfile::tempdir().unwrap();
     let original = custom_slh_config(CUSTOM_SLH_FIELDS);
     let mut identities = HashSet::new();
@@ -1831,14 +1832,25 @@ fn experimental_slh_dsa_b128s_identity_files_bind_chain_rules() {
                 "slhdevnet.zakura-iroh-secret-key"
             );
         }
+        let capture = zakura_test::log_capture::LogCapture::new();
         let identity = config.zakura_secret_key().unwrap().public();
+        assert_eq!(
+            capture.contains("SLH custom-testnet identity path changed"),
+            config
+                .network
+                .experimental_slh_dsa_b128s_chain_fingerprint()
+                .is_some(),
+            "only replacing the old name-only identity needs an upgrade warning"
+        );
         assert!(
             identities.insert(identity),
             "different chains must not reuse an identity key"
         );
         assert!(key_path.is_file());
         let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+        let capture = zakura_test::log_capture::LogCapture::new();
         assert_eq!(restored.zakura_secret_key().unwrap().public(), identity);
+        assert!(!capture.contains("SLH custom-testnet identity path changed"));
     }
     for network in [
         Network::Mainnet,
@@ -2054,6 +2066,11 @@ fn experimental_slh_dsa_b128s_rejects_public_peer_aliases() {
             format!("{}:19933", address.ip()),
             format!("[::ffff:{}]:19933", address.ip()),
             format!("[::{}]:19933", address.ip()),
+            format!("[64:ff9b::{}]:19933", address.ip()),
+            format!(" {}:19933", address.ip()),
+            format!("{} :19933", address.ip()),
+            format!("{}\t:19933", address.ip()),
+            format!("{}:19933 ", address.ip()),
             format!("{}:19933", u32::from(ip)),
             format!("0x{:08x}:19933", u32::from(ip)),
             format!("{a}.{b}.{}:19933", (u16::from(c) << 8) | u16::from(d)),
@@ -2069,6 +2086,7 @@ fn experimental_slh_dsa_b128s_rejects_public_peer_aliases() {
             format!("{custom_id}@{}:19934", address.ip()),
             format!("{custom_id}@[::ffff:{}]:19934", address.ip()),
             format!("{custom_id}@[::{}]:19934", address.ip()),
+            format!("{custom_id}@[64:ff9b::{}]:19934", address.ip()),
         ]);
     }
     for (field, aliases) in [
@@ -2094,10 +2112,18 @@ fn experimental_slh_dsa_b128s_rejects_public_peer_aliases() {
             );
         }
     }
+    let custom_peers = [
+        "seed.devnet.example:19933",
+        "123.devnet.example:19933",
+        "[::1]:19933",
+        "127.0.0.1:19933",
+        "[64:ff9b::192.0.2.1]:19933",
+        "[2001:db8::165.22.54.66]:19933",
+    ];
     let custom = valid
         .replace(
             "initial_testnet_peers = []",
-        "initial_testnet_peers = ['seed.devnet.example:19933', '123.devnet.example:19933', '[::1]:19933', '127.0.0.1:19933']",
+            &format!("initial_testnet_peers = {custom_peers:?}"),
         )
         .replace(
             "bootstrap_peers = []",

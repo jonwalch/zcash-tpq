@@ -75,10 +75,13 @@ Set the launcher's own legacy and Zakura bootstrap peers. Clear unused peer list
 Configuration loading and startup reject known public seed host names regardless
 of port, letter case, or a final DNS dot. They also reject built-in native peer
 identities and IP addresses, including IPv4-mapped and IPv4-compatible IPv6 addresses.
+The check also recognizes the standard NAT64 prefix `64:ff9b::/96`
+defined in [RFC 6052](https://www.rfc-editor.org/rfc/rfc6052.html).
 Use canonical dotted-quad IPv4 or IPv6 addresses. SLH custom testnets reject
 integer, short, octal, and hexadecimal IPv4 forms that system resolvers can
-interpret differently.
-This check does not resolve DNS aliases or identify every public-network node.
+interpret differently. Peer addresses must not contain whitespace.
+This check does not resolve DNS aliases, inspect network-specific translation
+or tunnel routes, or identify every public-network node.
 Use the launcher's own peer inventory. For a private devnet, enforce its network
 access rules outside the node. Use separate listening ports, peer identity
 directories, cache paths, and data roots for each node.
@@ -129,6 +132,10 @@ Automatic native identity-key files also use the chain namespace under
 `network.identity_dir`. Existing keys named only by network name are left in
 place and are not reused for SLH custom testnets. The first start with this
 namespace creates a new identity, so update the launcher's bootstrap peer IDs.
+If an old name-only key exists, startup warns before it generates the new key.
+The node cannot determine which chain owns an old name-only key, so it does not
+copy that key into the new namespace. Back up the complete identity directory,
+including the fingerprinted files.
 An explicit `network.zakura_node_secret_key` still takes precedence. Each node
 on the same chain still needs its own identity directory or explicit key.
 Keep the saved chain definition with backups. Changing consensus settings starts
@@ -219,8 +226,10 @@ actual custom testnet. The existing Regtest drivers alone cannot establish that 
 The parameter and state changes extend the retained mechanisms in
 [`node-reuse.json`](node-reuse.json), pinned to research revision
 `85f75af3f70cc292918a013b280ed06426b6fa98`.
-The genesis helper and embedded lifecycle reuse pinned upstream Zakura
-`24a17b3f0e7d88513688d607054f018ab6f15af2`.
+The genesis helper and embedded lifecycle were first adapted from upstream Zakura
+`24a17b3f0e7d88513688d607054f018ab6f15af2`. The current upstream pin is
+`e33dc43089acca2fe2c6516927932f2b7618b8bc`. The merge preserves those mechanisms
+and uses the current native QUIC peer identity and address types.
 The fingerprint and optional rule diagnostics are product adaptations needed to
 identify separately configured SLH chains. They add no research runtime dependency.
 

@@ -258,9 +258,11 @@ pub struct Config {
     /// The directory for long-term network identity secrets.
     ///
     /// The auto-generated Zakura iroh identity key is stored under this
-    /// directory as `<network>.zakura-iroh-secret-key`. Keep this directory
-    /// outside state or cache snapshot paths, or snapshots can clone the node's
-    /// long-term P2P identity.
+    /// directory as `<network>.zakura-iroh-secret-key`. SLH custom testnets use
+    /// `<network>-slh-dsa-b128s-v1-<fingerprint>.zakura-iroh-secret-key` instead.
+    /// Back up this directory, including the fingerprinted files. Keep it outside
+    /// state or cache snapshot paths, or snapshots can clone the node's long-term
+    /// P2P identity.
     ///
     /// The default is `~/.zakura`.
     pub identity_dir: PathBuf,
@@ -822,6 +824,17 @@ impl Config {
         }
 
         let key_file = zakura_secret_key_file_path(&self.identity_dir, &self.network);
+        let legacy_key_file = self.identity_dir.join(format!(
+            "{}.zakura-iroh-secret-key",
+            self.network.lowercase_name()
+        ));
+        if key_file != legacy_key_file && !key_file.exists() && legacy_key_file.is_file() {
+            warn!(
+                old_key_file = %legacy_key_file.display(),
+                new_key_file = %key_file.display(),
+                "SLH custom-testnet identity path changed; creating a new node identity; update bootstrap peer IDs. The old key is not reused because its path does not identify the chain"
+            );
+        }
 
         Ok(load_or_generate_zakura_secret_key(&key_file))
     }
@@ -1494,6 +1507,9 @@ fn contains_default_initial_peers(initial_peers: &IndexSet<String>) -> bool {
 /// Compare known public hosts independent of ports, DNS case, or a final DNS dot.
 /// This is a configuration guard, not a DNS ownership or network-egress check.
 fn normalized_peer_host(peer: &str) -> Result<String, &'static str> {
+    if peer.bytes().any(|byte| byte.is_ascii_whitespace()) {
+        return Err("custom SLH Testnet peer addresses must not contain whitespace");
+    }
     if let Ok(addr) = peer.parse::<SocketAddr>() {
         return Ok(slh_peer_ip(addr.ip()).to_string());
     }
@@ -1525,9 +1541,15 @@ fn normalized_peer_host(peer: &str) -> Result<String, &'static str> {
     Ok(host)
 }
 
-/// Compare both IPv4-mapped and IPv4-compatible IPv6 forms with known public IPs.
+/// Compare IPv4-mapped, IPv4-compatible, and well-known NAT64 forms with public IPs.
 fn slh_peer_ip(ip: IpAddr) -> IpAddr {
     match ip {
+        // RFC 6052's well-known prefix translates the final 32 bits to IPv4.
+        // Network-specific NAT64 prefixes require external routing information.
+        IpAddr::V6(ipv6) if ipv6.segments()[..6] == [0x64, 0xff9b, 0, 0, 0, 0] => {
+            let [.., a, b, c, d] = ipv6.octets();
+            IpAddr::V4([a, b, c, d].into())
+        }
         IpAddr::V6(ipv6) => ipv6.to_ipv4().map_or(ip, IpAddr::V4),
         IpAddr::V4(_) => ip,
     }
