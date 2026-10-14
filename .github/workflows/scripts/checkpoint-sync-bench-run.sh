@@ -12,6 +12,7 @@
 # Config via /root/run.env (sourced by the caller before exec). Helper scripts
 # scp'd next to this one by the workflow:
 #   /root/checkpoint-sync-bench.sh
+#   /root/benchmark-snapshot.py
 #   /root/zakura-metrics-dashboard.py
 set -euo pipefail
 

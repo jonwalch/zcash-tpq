@@ -8,6 +8,7 @@
 # Primary CI path (checkpoint-sync-bench.yml): an ephemeral DigitalOcean droplet
 # mounts a baked sandblast volume and sets STATE_MASTER so no archive download is
 # needed. Local/manual runs can still stream-download a snapshot into BENCH_HOME.
+# Keep benchmark-snapshot.py beside this script; snapshot checks require Python 3.
 #
 # Binary source (pick one; BUILD_REF wins):
 #   BUILD_REF             git branch/tag/SHA to build ON THIS HOST, cached by commit
@@ -100,6 +101,9 @@ DASHBOARD="${DASHBOARD:-1}"
 DASHBOARD_ARCHIVE="${DASHBOARD_ARCHIVE:-$OUT_DIR/dashboard-runs}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DASHBOARD_PY="${DASHBOARD_PY:-$SCRIPT_DIR/zakura-metrics-dashboard.py}"
+SNAPSHOT_CHECK="$SCRIPT_DIR/benchmark-snapshot.py"
+[[ -f "$SNAPSHOT_CHECK" ]] || { echo "FATAL: missing $SNAPSHOT_CHECK" >&2; exit 1; }
+command -v python3 >/dev/null || { echo "FATAL: python3 is required for snapshot checks" >&2; exit 1; }
 GITHUB_RUN_URL="${GITHUB_RUN_URL:-}"
 if [[ -z "$GITHUB_RUN_URL" && -n "${GITHUB_RUN_ID:-}" ]]; then
   GITHUB_RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-$GH_REPO}/actions/runs/$GITHUB_RUN_ID"
@@ -478,26 +482,6 @@ PY
   log "Zakura traces zipped: $zip_path"
 }
 
-# Check the actual executable, including release downloads. A directory name or
-# source ref does not prove that this binary will open the restored snapshot.
-check_snapshot_height() {
-  local binary="$1" cache_dir="$2" config="$3" expected="${4:-}" output height
-  if ! output=$(timeout 120 "$binary" -c "$config" tip-height \
-    --cache-dir "$cache_dir" --network Mainnet 2>&1); then
-    printf 'FATAL: binary could not read the restored snapshot:\n%s\n' "$output" >&2
-    return 1
-  fi
-  # tip-height can log an error and exit zero: require one positive numeric line.
-  height=$(printf '%s\n' "$output" | awk '/^[0-9]+$/ { print }')
-  if [[ ! "$height" =~ ^[1-9][0-9]*$ ]] || [[ -n "$expected" && "$height" != "$expected" ]]; then
-    printf 'FATAL: restored snapshot height is missing or unexpected (expected %s):\n%s\n' \
-      "${expected:-a nonzero tip}" "$output" >&2
-    printf 'Use a snapshot compatible with this binary; moving or relabeling state/ does not migrate indexes.\n' >&2
-    return 1
-  fi
-  printf 'Verified restored snapshot height: %s\n' "$height"
-}
-
 # ---- 3-7. one benchmark run for a given tag ----------------------------------
 # usage: run_one TAG OUTPREFIX P2P_STACK ; sets RESULT_* globals
 run_one() {
@@ -590,12 +574,6 @@ run_one() {
     } > "$cfg"
   }
 
-  # Use a minimal config for old release tags that reject modern P2P fields.
-  # Snapshot benchmarks must not silently become genesis-sync benchmarks.
-  printf '[state]\n' > "$cfg"
-  check_snapshot_height "$zakurad" "$fork" "$cfg" "$START_HEIGHT" \
-    || die "snapshot is incompatible with $tag"
-
   local pid t0 mode="p2p_stack"
   log "starting zakurad ($tag), p2p_stack=$p2p_stack, verify=$VERIFY_MODE, stop_height=$STOP_HEIGHT, peer=${FEED_PEER:-DNS-seeders}, peerset=$PEERSET_SIZE, cap=${WALL_CAP}s, metrics=:$METRICS_PORT, listen=:$LISTEN_PORT"
   write_config "$mode"
@@ -628,9 +606,17 @@ run_one() {
     die "startup failure for $tag"
   fi
 
+  # Check what normal startup loaded, after writable reuse/upgrade. A read-only
+  # tip-height preflight would reject compatible snapshots from the previous major.
+  if ! python3 "$SNAPSHOT_CHECK" startup --log "$logf" --pid "$pid" \
+    --timeout "$WALL_CAP" --expected-height "$START_HEIGHT"; then
+    tail -20 "$logf" >&2
+    die "binary did not load the expected snapshot for $tag"
+  fi
+
   # Dashboard recorder sidecar: scrape this node's /metrics into a per-run series
   # copied into the CI artifact for local replay, and classified for the bottleneck
-  # verdict. Best-effort: a missing python3 never fails a bench.
+  # verdict. The optional recorder is independent of the required snapshot check.
   local rec_dir=""
   if [[ "$DASHBOARD" == "1" ]] && command -v python3 >/dev/null 2>&1 && [[ -f "$DASHBOARD_PY" ]]; then
     rec_dir="$DASHBOARD_ARCHIVE/$run_id"
@@ -774,6 +760,13 @@ if [[ -n "$BUILD_REF" ]]; then
   require_upstream_snapshot_layout "$PRIMARY_SPEC"
   if [[ -n "$BASELINE_SPEC" ]]; then
     require_upstream_snapshot_layout "$BASELINE_SPEC"
+  fi
+else
+  python3 "$SNAPSHOT_CHECK" release-layout --repo "$GH_REPO" --tag "$PRIMARY_SPEC" \
+    || die "primary release is incompatible with upstream snapshots"
+  if [[ -n "$BASELINE_SPEC" ]]; then
+    python3 "$SNAPSHOT_CHECK" release-layout --repo "$GH_REPO" --tag "$BASELINE_SPEC" \
+      || die "baseline release is incompatible with upstream snapshots"
   fi
 fi
 ensure_snapshot

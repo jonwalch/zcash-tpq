@@ -11,6 +11,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": ".github/workflows/checkpoint-sync-bench.yml",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Copy the shared snapshot checker with the existing benchmark script to the ephemeral runner; preserve all workflow triggers and invocation controls.",
+      "sha256": "751ce478460051d72b4a20dd89d3effe2d196d68f92491cd9c9be302ee4d5a31"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": ".github/workflows/coverage.yml",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
@@ -61,8 +71,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Reject state-tpq source refs before the upstream checkpoint snapshot benchmark build with explicit fresh-sync guidance.",
-      "sha256": "48f5cc89355d1cfb3d90e5ddfa2375c9c5439949b80286e38a16d7085039435e"
+      "reason": "PR #9 follow-up: Reject state-tpq source refs before the upstream checkpoint snapshot benchmark build with explicit fresh-sync guidance. PR #9 follow-up: Document the companion checker supplied by the workflow for snapshot benchmark validation.",
+      "sha256": "12f2cdc62ae183191c8cf530f7112af7c48d656956f5d039ea01726165fa0fe5"
     },
     {
       "disposition": "upstream-modification",
@@ -3317,8 +3327,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Require BENCH_DB_REL explicitly so snapshot paths are chosen to match the binary instead of silently assuming state/v27/mainnet. PR #9 follow-up: Check the cloned Mainnet snapshot with the actual binary before non-genesis benchmark starts; require a numeric tip even when tip-height logs an error with zero exit status.",
-      "sha256": "4306554797c197e932a841c32093bc2e95a988e1f2177d40cd01d96d4fe223ef"
+      "reason": "PR #9 follow-up: Require BENCH_DB_REL explicitly so snapshot paths are chosen to match the binary instead of silently assuming state/v27/mainnet. PR #9 follow-up: Check the cloned Mainnet snapshot with the actual binary before non-genesis benchmark starts; require a numeric tip even when tip-height logs an error with zero exit status. PR #9 follow-up: Replace the duplicated read-only Mainnet preflight with the shared initial-cache-report checker after normal startup, so supported version reuse and the configured network work; stop the owned process on rejection.",
+      "sha256": "cd9f377df209d440ac4c51d21acce66ef9cdcd33e00d566a3f6942768f9d4fbf"
     },
     {
       "disposition": "upstream-modification",
@@ -3327,8 +3337,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Document required BENCH_DB_REL, the binary snapshot preflight, the Mainnet-only cohort scope, and the incompatibility of upstream snapshot relabeling with wider fork indexes while preserving historical instructions.",
-      "sha256": "083e9153e66989fb2d764873d8cc76d2763161da4e68b645a88f3bb8080d744f"
+      "reason": "PR #9 follow-up: Document required BENCH_DB_REL, the binary snapshot preflight, the Mainnet-only cohort scope, and the incompatibility of upstream snapshot relabeling with wider fork indexes while preserving historical instructions. PR #9 follow-up: Document normal upgrade handling on the run clone, network-independent startup checking, the Python helper and required cache-event logging, while preserving historical upstream instructions.",
+      "sha256": "9a6454a5ffa7e48e57abc353977bd8e577d7dc6ed2370ce018e281649abba558"
     },
     {
       "disposition": "upstream-modification",
@@ -3376,8 +3386,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Describe the 20 MB devnet limit, wider indexes in a distinct cache, strict old-cache rejection with empty-start recovery, and separate buffer and sync budgets. PR #9 follow-up: Record actionable cache diagnostics, snapshot compatibility preflights, explicit feed snapshot selection, and removal of eager peer body reservations. PR #9 follow-up: Record fallible maintenance opens, binary snapshot checks, and native/legacy incremental buffer handling.",
-      "sha256": "660c6fcaa55d32c43d229c5d05cd7907ac197f8826768ac17a8289a3c261bdf9"
+      "reason": "PR #9: Describe the 20 MB devnet limit, wider indexes in a distinct cache, strict old-cache rejection with empty-start recovery, and separate buffer and sync budgets. PR #9 follow-up: Record actionable cache diagnostics, snapshot compatibility preflights, explicit feed snapshot selection, and removal of eager peer body reservations. PR #9 follow-up: Record fallible maintenance opens, binary snapshot checks, and native/legacy incremental buffer handling. PR #9 follow-up: Qualify interrupted-first-start recovery as requiring readable RocksDB metadata and record benchmark checks that preserve supported upstream upgrades and configured network selection.",
+      "sha256": "c0e8d5a40bfa54cd55a967829be4a6441401845820c6f87e2c4ae3eb61805984"
     },
     {
       "disposition": "new",
@@ -3675,8 +3685,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata.",
-      "sha256": "aff2809ce6cc64ca681a548ff6beb6f90187acff650af3099fa79f9f51e1e4ec"
+      "reason": "PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata. PR #9 follow-up: Describe early target/baseline source or release layout checks and a shared startup-cache guard that runs after normal database reuse, without a separate read-only network override.",
+      "sha256": "7b56e5544ae9c44953926078e823a65a8423153248d5da2c30526acd064fab4e"
     },
     {
       "disposition": "new",
@@ -3780,14 +3790,24 @@
       "sha256": "608dcec7de1db123bb98cdb400ba7c90936916bda5dc6b5a144aeafad8b58617"
     },
     {
+      "disposition": "new",
+      "path": "scripts/benchmark-snapshot.py",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/9.md"
+      ],
+      "reason": "PR #9 follow-up: Share bounded initial-cache-report validation based on pinned upstream StateService startup logging; reject empty/wrong tips before benchmark collection, and inspect release constants with a bounded read and timeout before snapshot downloads. This helper never opens or changes databases.",
+      "sha256": "1d733441fd00fb634c4e12d38d4060b579257dfb599bbcf4cfa1f7c9462a5850"
+    },
+    {
       "disposition": "upstream-modification",
       "path": "scripts/checkpoint-sync-bench.sh",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Inspect selected primary/baseline source layouts before snapshot download and inspect the exact build commit before cached-binary reuse; refuse incompatible fork layouts without changing upstream snapshot formats. PR #9 follow-up: Verify the exact restored tip with every resolved benchmark binary, including baseline and release downloads, before starting a node; reject missing or mismatched cache layouts without a genesis-sync fallback.",
-      "sha256": "18c481e0c98c88eab6d7cdc48b39d2e80cc77c20c56f1df226a383086298b9e9"
+      "reason": "PR #9 follow-up: Inspect selected primary/baseline source layouts before snapshot download and inspect the exact build commit before cached-binary reuse; refuse incompatible fork layouts without changing upstream snapshot formats. PR #9 follow-up: Verify the exact restored tip with every resolved benchmark binary, including baseline and release downloads, before starting a node; reject missing or mismatched cache layouts without a genesis-sync fallback. PR #9 follow-up: Replace the read-only preflight that blocked previous-major snapshot reuse with an initial cached-tip check after writable startup; check both release source layouts before expensive snapshot downloads or builds, retaining source-ref checks.",
+      "sha256": "86fdc157f74755f642f41d519b4e4bfe12bcd2dd2e18044cc36321ed563fd143"
     },
     {
       "disposition": "new",
@@ -3796,8 +3816,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9 follow-up: Exercise both actual shell snapshot guards with mocked binaries across successful, missing, zero, duplicated, mismatched, and failed tip results without running build or live-node wrappers.",
-      "sha256": "e7a437818c06697bcdb4164c734a807fd44cc951d16208137f19384eb852eb84"
+      "reason": "PR #9 follow-up: Exercise both actual shell snapshot guards with mocked binaries across successful, missing, zero, duplicated, mismatched, and failed tip results without running build or live-node wrappers. PR #9 follow-up: Replace obsolete duplicated-shell/read-only checks with 16 bounded tests for initial-cache reports, migration progress, configured-network independence, partial and invalid logs, process exit and deadlines, release layout checks, and actual target/baseline preflight ordering with all external work stubbed.",
+      "sha256": "860e526075641083e5939fb0f4a3b5926bb8aa53154a3e2fb02b8de2b640b186"
     },
     {
       "disposition": "attribution",

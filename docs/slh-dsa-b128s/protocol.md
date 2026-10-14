@@ -165,9 +165,15 @@ bake, source-build benchmark, and NU7 seed tools reject this fork's layout.
 They cannot convert upstream transaction indexes by moving directories.
 `deploy/runner/feed_run.sh` requires an explicit `BENCH_DB_REL` that matches its
 binary and snapshot, such as `state-tpq/v30/<network>` for this fork.
-Snapshot benchmarks also check the restored tip with each actual binary before
-starting a run. This includes baseline and release binaries. The feed runner's
-inherited cohort uses Mainnet parameters; see its [runbook](../../deploy/runner/runbook.md).
+Snapshot benchmarks use one shared checker for the initial cache report from
+each running binary. This check occurs after normal writable startup and any
+supported upstream database reuse or upgrade. It does not use a read-only open,
+override the configured network, or accept later sync heights as evidence of
+snapshot reuse. A failed check stops the run before it collects benchmark results.
+The checkpoint benchmark checks both source refs, or both release tags' source
+layouts, before it downloads a snapshot or builds a binary. The later startup
+check also covers cached binaries. These checks do not migrate upstream indexes
+to the fork format. See the feed runner's [runbook](../../deploy/runner/runbook.md).
 
 The classical block signature-operation limit deliberately remains 20,000,
 including legacy and P2SH operations. A transparent-payment workload can reach

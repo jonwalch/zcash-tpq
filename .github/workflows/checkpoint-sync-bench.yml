@@ -223,6 +223,7 @@ jobs:
             /tmp/run.env \
             .github/workflows/scripts/checkpoint-sync-bench-run.sh \
             scripts/checkpoint-sync-bench.sh \
+            scripts/benchmark-snapshot.py \
             scripts/zakura-metrics-dashboard.py \
             "root@${IP}:/root/"
           rm -f /tmp/run.env
