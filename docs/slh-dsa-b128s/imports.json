@@ -1,6 +1,15 @@
 {
   "files": [
     {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/15.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/README.md"
+      ],
+      "reason": "Record PR #15 custom-testnet wallet and standalone operations, Admin diagnostics, Docker context fix, and pending live qualification without claiming ZDN integration.",
+      "sha256": "9a9706930463fbedc8d31abaa35d92cfdfdc9972ad9eea1c186a9cf94e7081ff"
+    },
+    {
       "disposition": "upstream-modification",
       "path": ".dockerignore",
       "provenance": [
