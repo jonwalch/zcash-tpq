@@ -1298,7 +1298,7 @@ Supplied content type is not allowed. Content-Type: application/json is required
 
 === largest request
 POST content-type=Some("application/json")
-<4001024 bytes>
+<40001024 bytes>
 ---
 HTTP/1.1 200 OK
 content-type: application/json; charset=utf-8
@@ -1309,6 +1309,6 @@ content-length: 66
 
 === too large request
 POST content-type=Some("application/json")
-<4001025 bytes>
+<40001025 bytes>
 ---
 <connection closed>

@@ -2747,6 +2747,16 @@
     },
     {
       "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/server/tests/snapshots/json_rpc_requests.snap",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/16.md"
+      ],
+      "reason": "PR #16: adapt upstream's HTTP transcript request lengths to the 20 MB block limit: accept 40,001,024 bytes and reject one more byte. Preserve all response content and other upstream cases.",
+      "sha256": "09b24921f00482ad83d4ca195d02a4f97d6d567c4d3a5fa57666b2c53e59060e"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": "crates/zakura-rpc/src/server/tests/vectors.rs",
       "provenance": [
         "docs/slh-dsa-b128s/protocol.md",
