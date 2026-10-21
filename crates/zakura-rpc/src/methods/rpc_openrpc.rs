@@ -1,5 +1,17 @@
 /// JSON-RPC methods in declaration order.
 pub(crate) static METHODS: &[(&str, openrpc::RpcMethod)] = &[
+("getchainrules", openrpc::RpcMethod {
+    description: "Returns effective node-owned custom-Testnet consensus rules.",
+    params: |_g| vec![],
+    result: |g| g.result("getchainrules_result"),
+    deprecated: false,
+}),
+("inspectchainblock", openrpc::RpcMethod {
+    description: "Returns canonical block identity without submitting or validating it.",
+    params: |g| vec![g.param::<String>("block_hex", "Canonical hex-encoded block bytes.", true)],
+    result: |g| g.result("inspectchainblock_result"),
+    deprecated: false,
+}),
 ("getinfo", openrpc::RpcMethod {
     description: "Returns software information from the RPC server, as a\n[`GetInfoResponse`] JSON struct.\n\nzcashd reference: [`getinfo`](https://zcash.github.io/rpc/getinfo.html)\nmethod: post\ntags: control\n\n# Notes\n\n[The zcashd reference](https://zcash.github.io/rpc/getinfo.html) might not show some fields\nin Zebra's [`GetInfoResponse`]. Zebra uses the field names and formats\nfrom the [zcashd\ncode](https://github.com/zcash/zcash/blob/v4.6.0-1/src/rpc/misc.cpp#L86-L87).\n\nSome fields from the zcashd reference are missing from Zebra's\n[`GetInfoResponse`]. It only contains the fields\n[required for lightwalletd support.](https://github.com/zcash/lightwalletd/blob/v0.4.9/common/common.go#L91-L95)\n",
     params: |_g| vec![

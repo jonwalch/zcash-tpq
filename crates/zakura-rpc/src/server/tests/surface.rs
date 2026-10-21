@@ -72,6 +72,8 @@ fn restricted_surface_contains_only_unauthenticated_methods() {
     assert!(!actual.contains("stop"));
     assert!(!actual.contains("generate"));
     assert!(!actual.contains("addnode"));
+    assert!(!actual.contains("getchainrules"));
+    assert!(!actual.contains("inspectchainblock"));
 }
 
 #[test]
@@ -88,6 +90,8 @@ fn full_surface_retains_admin_and_test_methods() {
     assert!(actual.contains("stop"));
     assert!(actual.contains("generate"));
     assert!(actual.contains("addnode"));
+    assert!(actual.contains("getchainrules"));
+    assert!(actual.contains("inspectchainblock"));
 }
 
 #[test]
@@ -222,6 +226,27 @@ async fn segmented_listeners_enforce_methods_and_cookie_auth() {
     assert!(!restricted_methods.contains("reconsiderblock"));
     assert!(!restricted_methods.contains("preciousblock"));
 
+    for (method, params) in [
+        ("getchainrules", serde_json::json!([])),
+        ("inspectchainblock", serde_json::json!(["00"])),
+    ] {
+        let response = client
+            .post(format!("http://{restricted_addr}"))
+            .header("content-type", "application/json")
+            .body(
+                serde_json::json!({"jsonrpc":"2.0", "method":method, "params":params, "id":20})
+                    .to_string(),
+            )
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        let response: serde_json::Value = serde_json::from_str(&response).unwrap();
+        assert_eq!(response["error"]["code"], -32601);
+    }
+
     let blocked_call = client
         .post(format!("http://{restricted_addr}"))
         .header("content-type", "application/json")
@@ -293,6 +318,29 @@ async fn segmented_listeners_enforce_methods_and_cookie_auth() {
     assert!(admin_methods.contains("invalidateblock"));
     assert!(admin_methods.contains("reconsiderblock"));
     assert!(admin_methods.contains("preciousblock"));
+
+    for (method, params, code) in [
+        ("getchainrules", serde_json::json!([]), -8),
+        ("inspectchainblock", serde_json::json!(["00"]), -22),
+    ] {
+        assert!(admin_methods.contains(method));
+        let response = client
+            .post(format!("http://{admin_addr}"))
+            .basic_auth(username, Some(password))
+            .header("content-type", "application/json")
+            .body(
+                serde_json::json!({"jsonrpc":"2.0", "method":method, "params":params, "id":21})
+                    .to_string(),
+            )
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        let response: serde_json::Value = serde_json::from_str(&response).unwrap();
+        assert_eq!(response["error"]["code"], code);
+    }
 
     let admin_call = client
         .post(format!("http://{admin_addr}"))
