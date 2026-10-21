@@ -2733,7 +2733,17 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries. PR #9 review: Expose the actual listener address internally so HTTP regression tests can use OS-assigned ports without a reservation race; preserve public server APIs.",
-      "sha256": "36e0e877b33ecb52ae2db1c313713db863dd93403c6cadf5e56f94bcb4aa9dd7"
+      "sha256": "56e29c9fe604a549a24a6727598a7396495c12eb01a50483038f23f701fa22c8"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/server/http.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/unreleased/16.md"
+      ],
+      "reason": "PR #16: derive the new upstream HTTP service request cap from the fork's 20 MB block limit and share it with the compatibility middleware. The upstream 10 MiB cap rejects a valid maximum block encoded as hex. The existing full-size HTTP request and verbose-response regression exercises both layers without a live node.",
+      "sha256": "291ee6200ccf6ec60c6d5324daf1808c27c1ce28cb75ec4b770b95c3050b46e2"
     },
     {
       "disposition": "upstream-modification",
@@ -2742,8 +2752,8 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "PR #9: Keep OS-assigned ports and full-size HTTP request/verbose-response regressions, make ordinary startup/shutdown independent of large payloads, and borrow response hex instead of duplicating its JSON tree.",
-      "sha256": "e47f800583670ddb92703fabde0df7c5ad6e20d4a9e720ebf249324fcc8ce88b"
+      "reason": "PR #9: Keep OS-assigned ports and full-size HTTP request/verbose-response regressions, make ordinary startup/shutdown independent of large payloads, and borrow response hex instead of duplicating its JSON tree. PR #16: use upstream's HTTP/1.1 test client after upstream removed reqwest, retaining 30-second connection and response timeouts and both full-size assertions.",
+      "sha256": "638de09b6b16f84cfafd3da97b973b734f2fff7a87d5620ef314426342490116"
     },
     {
       "disposition": "upstream-modification",

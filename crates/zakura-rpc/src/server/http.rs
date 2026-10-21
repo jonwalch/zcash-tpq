@@ -33,8 +33,10 @@ pub type HttpResponse<B = HttpBody> = hyper::Response<B>;
 /// The largest request body this service reads.
 ///
 /// [`HttpRequestMiddleware`](super::http_request_compatibility::HttpRequestMiddleware) applies a
-/// smaller limit first.
-pub(super) const MAX_REQUEST_BODY_SIZE: u32 = 10 * 1024 * 1024;
+/// matching limit first. Allow a hex-encoded maximum block plus its JSON-RPC wrapper.
+// The 20 MB block limit, doubled for hex plus a 1024-byte wrapper, fits in u32.
+pub(super) const MAX_REQUEST_BODY_SIZE: u32 =
+    (zakura_chain::block::MAX_BLOCK_BYTES * 2 + 1024) as u32;
 
 /// The maximum number of requests a server handles at the same time.
 const MAX_CONCURRENT_REQUESTS: usize = 100;

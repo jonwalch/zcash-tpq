@@ -34,10 +34,7 @@ use tokio::{
 use tokio_rustls::{rustls::ServerConfig as RustlsServerConfig, server::TlsStream, TlsAcceptor};
 use tracing::*;
 
-use zakura_chain::{
-    block::MAX_BLOCK_BYTES, chain_sync_status::ChainSyncStatus, chain_tip::ChainTip,
-    parameters::Network,
-};
+use zakura_chain::{chain_sync_status::ChainSyncStatus, chain_tip::ChainTip, parameters::Network};
 use zakura_consensus::router::service_trait::BlockVerifierService;
 use zakura_network::AddressBookPeers;
 use zakura_node_services::mempool::MempoolService;
@@ -48,7 +45,7 @@ use crate::{
     config,
     methods::{rpc_method_access, RpcAccess, RpcImpl, RpcSurface, RPC_METHOD_ACCESS},
     server::{
-        http::{HttpBody, JsonRpcHttpService},
+        http::{HttpBody, JsonRpcHttpService, MAX_REQUEST_BODY_SIZE},
         http_request_compatibility::HttpRequestMiddlewareLayer,
         rpc_call_compatibility::FixRpcResponseMiddleware,
         rpc_logger::RpcLoggerMiddleware,
@@ -265,9 +262,9 @@ impl RpcServer {
         let rpc = rpc.with_rpc_surface(surface);
         let enabled_methods = enabled_rpc_methods(registered_methods(&rpc), surface)?;
 
-        // The largest RPC request is submitblock, which sends a full block
-        // as a hex string (2x MAX_BLOCK_BYTES) plus a small JSON-RPC wrapper.
-        let max_request_body_size = (MAX_BLOCK_BYTES as usize) * 2 + 1024;
+        // Both HTTP layers must accept a hex-encoded maximum block and its wrapper.
+        let max_request_body_size = usize::try_from(MAX_REQUEST_BODY_SIZE)
+            .expect("the RPC request limit fits in usize on supported platforms");
 
         let http_middleware_layer = if conf.enable_cookie_auth {
             let cookie = Cookie::default();

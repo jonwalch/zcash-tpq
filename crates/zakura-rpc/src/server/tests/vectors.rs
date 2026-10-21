@@ -163,27 +163,27 @@ async fn rpc_spawn_unallocated_port(probe_large_payloads: bool) {
     );
 
     if probe_large_payloads {
-        crate::indexer::server::install_tls_crypto_provider();
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(30))
-            .build()
-            .unwrap();
-        let response = client
-            .post(format!("http://{address}"))
-            .header("content-type", "application/json")
-            .body(
+        let mut client = tokio::time::timeout(
+            Duration::from_secs(30),
+            super::http_client::HttpConnection::connect(address),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        let (_, response) = tokio::time::timeout(
+            Duration::from_secs(30),
+            client.post_json(
                 serde_json::json!({
                     "jsonrpc": "2.0", "id": 1, "method": "block_size_probe",
                     "params": ["00".repeat(20_000_000)],
                 })
                 .to_string(),
-            )
-            .send()
-            .await
-            .unwrap()
-            .text()
-            .await
-            .unwrap();
+                None,
+            ),
+        )
+        .await
+        .unwrap()
+        .unwrap();
         let response: serde_json::Value = serde_json::from_str(&response).unwrap();
         // Method-not-found proves the request passed both HTTP byte limits.
         assert_eq!(response["error"]["code"], -32601);
@@ -202,22 +202,21 @@ async fn rpc_spawn_unallocated_port(probe_large_payloads: bool) {
         let transaction_size = transaction.size();
 
         let request = async {
-            client
-                .post(format!("http://{address}"))
-                .header("content-type", "application/json")
-                .body(
+            let (_, response) = tokio::time::timeout(
+                Duration::from_secs(30),
+                client.post_json(
                     serde_json::json!({
                         "jsonrpc": "2.0", "id": 2, "method": "getrawtransaction",
                         "params": [txid.to_string(), 1],
                     })
                     .to_string(),
-                )
-                .send()
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap()
+                    None,
+                ),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            response
         };
         let respond = async {
             mempool
