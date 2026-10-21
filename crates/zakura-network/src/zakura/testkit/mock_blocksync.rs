@@ -13,7 +13,7 @@ use tokio::{sync::watch, task::JoinHandle};
 use zakura_chain::{
     block,
     serialization::{ZcashDeserializeInto, ZcashSerialize},
-    transaction::Transaction,
+    transaction::{LockTime, Transaction},
     transparent,
 };
 use zakura_jsonl_trace::{JsonlTraceConfig, JsonlTraceGuard, JsonlTracer};
@@ -421,7 +421,6 @@ impl HarnessConfig {
 
     fn block_sync_config(&self) -> ZakuraBlockSyncConfig {
         ZakuraBlockSyncConfig {
-            max_blocks_per_response: self.max_blocks_per_response,
             max_inflight_requests: u32::from(self.max_inflight),
             max_inflight_block_bytes: u64::MAX,
             max_submitted_block_applies: usize::from(self.max_inflight)
@@ -530,7 +529,10 @@ impl BlockRangeSource for CorpusBlockSource {
                     break;
                 };
                 response_bytes = total;
-                blocks.push((height, block));
+                let bytes = block
+                    .zcash_serialize_to_vec()
+                    .expect("test block serializes");
+                blocks.push((height, bytes));
             }
             self.stats.record_request(blocks.len(), response_bytes);
         }
@@ -783,9 +785,24 @@ fn synthetic_block_at_height(
         _ => panic!("template block must start with a coinbase input"),
     }
 
+    // Each copy gets its own lock time, which keeps the serialized size but
+    // makes every transaction id unique, as a real block's must be.
     block.transactions.clear();
-    for _ in 0..tx_count {
-        block.transactions.push(coinbase.clone());
+    for index in 0..tx_count {
+        let mut transaction = coinbase.clone();
+        let lock_time = match Arc::make_mut(&mut transaction) {
+            Transaction::V1 { lock_time, .. }
+            | Transaction::V2 { lock_time, .. }
+            | Transaction::V3 { lock_time, .. }
+            | Transaction::V4 { lock_time, .. }
+            | Transaction::V5 { lock_time, .. }
+            | Transaction::V6 { lock_time, .. } => lock_time,
+        };
+        *lock_time = LockTime::Height(block::Height(
+            u32::try_from(index)
+                .expect("synthetic blocks hold far fewer than u32::MAX transactions"),
+        ));
+        block.transactions.push(transaction);
     }
 
     let merkle_root = block.transactions.iter().collect::<block::merkle::Root>();

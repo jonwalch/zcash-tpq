@@ -3,7 +3,7 @@
 #![allow(clippy::unwrap_in_result)]
 
 use chrono::DateTime;
-use color_eyre::eyre::{eyre, Report};
+use eyre::{eyre, Report};
 use tower::{buffer::Buffer, service_fn, util::BoxService, Service, ServiceExt};
 
 use zakura_chain::{amount::NegativeAllowed, ironwood};
@@ -58,7 +58,11 @@ fn prepared_test_verifier(
     let transaction =
         service_fn(|request| async move { Ok::<_, BoxError>(accept_block_transaction(request)) });
 
-    SemanticBlockVerifier::new(network, state, transaction)
+    SemanticBlockVerifier::new(
+        network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    )
 }
 
 #[tokio::test(start_paused = true)]
@@ -142,10 +146,14 @@ async fn missing_input_requires_committed_parent_evidence() {
             );
             Err::<tx::Response, BoxError>(TransactionError::TransparentInputNotFound.into())
         });
-        let error = SemanticBlockVerifier::new(&Network::Mainnet, state, transaction)
-            .oneshot(Request::Commit(block.clone()))
-            .await
-            .expect_err("the input cannot be resolved");
+        let error = SemanticBlockVerifier::new(
+            &Network::Mainnet,
+            crate::transaction::boxed_state(state),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        )
+        .oneshot(Request::Commit(block.clone()))
+        .await
+        .expect_err("the input cannot be resolved");
         assert_eq!(read_count.load(Ordering::SeqCst), reads.len(), "{reads:?}");
         match expected {
             Expected::Missing => {
@@ -282,7 +290,11 @@ async fn mined_orphan_replays_skip_transaction_verification() {
     let transaction = service_fn(|_| -> std::future::Ready<Result<tx::Response, BoxError>> {
         panic!("orphan replay must not reach transaction verification")
     });
-    let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+    let mut verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
     let result = verifier
         .ready()
         .await
@@ -467,7 +479,11 @@ async fn failed_preparation_does_not_populate_the_cache() {
             _ => panic!("failed-preparation test received an unexpected request: {request:?}"),
         }
     });
-    let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+    let mut verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
 
     let prepare_result = verifier
         .ready()
@@ -537,7 +553,11 @@ fn counting_prepared_test_verifier(
         }
     });
 
-    let verifier = SemanticBlockVerifier::new(network, state, transaction);
+    let verifier = SemanticBlockVerifier::new(
+        network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
     (verifier, transaction_calls, proposal_calls)
 }
 
@@ -665,7 +685,11 @@ async fn cache_eviction_between_resolution_and_commit_uses_full_verification() {
     });
     let transaction =
         service_fn(|request| async move { Ok::<_, BoxError>(accept_block_transaction(request)) });
-    let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+    let mut verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
     prepare_for_test(&mut verifier, candidate.clone()).await;
 
     let resolved = candidate.clone();
@@ -743,7 +767,11 @@ async fn proposal_validation_succeeds_when_cache_insertion_conflicts() {
         };
         Ok::<_, BoxError>(response)
     });
-    let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+    let mut verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
 
     prepare_for_test(&mut verifier, candidate).await;
     let proposal_result = verifier
@@ -823,8 +851,11 @@ async fn prepared_and_full_commits_produce_the_same_state_input() {
         service_fn(|request| async move { Ok::<_, BoxError>(accept_block_transaction(request)) })
     };
 
-    let mut full_verifier =
-        SemanticBlockVerifier::new(&network, state_service(full_commit.clone()), transaction());
+    let mut full_verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state_service(full_commit.clone())),
+        crate::transaction::boxed_transaction_verifier(transaction()),
+    );
     let full_hash = full_verifier
         .ready()
         .await
@@ -835,8 +866,8 @@ async fn prepared_and_full_commits_produce_the_same_state_input() {
 
     let mut prepared_verifier = SemanticBlockVerifier::new(
         &network,
-        state_service(prepared_commit.clone()),
-        transaction(),
+        crate::transaction::boxed_state(state_service(prepared_commit.clone())),
+        crate::transaction::boxed_transaction_verifier(transaction()),
     );
     prepare_for_test(&mut prepared_verifier, block.clone()).await;
     let prepared_hash = prepared_verifier
@@ -1390,8 +1421,11 @@ async fn block_rejects_transactions_failing_librustzcash_conversion() {
             .expect("genesis block should commit");
         let transaction = transaction::Verifier::new_for_tests(&network, state_service.clone());
         let transaction = Buffer::new(BoxService::new(transaction), 1);
-        let block_verifier =
-            SemanticBlockVerifier::new(&network, state_service.clone(), transaction);
+        let block_verifier = SemanticBlockVerifier::new(
+            &network,
+            crate::transaction::boxed_state(state_service.clone()),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        );
 
         let result = block_verifier
             .oneshot(Request::CheckProposal(Arc::new(block)))
@@ -2032,7 +2066,11 @@ async fn zip234_block_verification_checks_the_reissuance_bonus() {
             let transaction = service_fn(|request| async move {
                 Ok::<_, BoxError>(accept_block_transaction(request))
             });
-            let verifier = SemanticBlockVerifier::new(&network, state, transaction);
+            let verifier = SemanticBlockVerifier::new(
+                &network,
+                crate::transaction::boxed_state(state),
+                crate::transaction::boxed_transaction_verifier(transaction),
+            );
 
             verifier.oneshot(Request::Commit(Arc::new(block)))
         };
@@ -2177,8 +2215,12 @@ async fn derived_nsm_crossing_gates_block_verification() {
             });
             let result = tokio::time::timeout(
                 std::time::Duration::from_secs(10),
-                SemanticBlockVerifier::new(&network, state, transaction)
-                    .oneshot(Request::Commit(Arc::new(block))),
+                SemanticBlockVerifier::new(
+                    &network,
+                    crate::transaction::boxed_state(state),
+                    crate::transaction::boxed_transaction_verifier(transaction),
+                )
+                .oneshot(Request::Commit(Arc::new(block))),
             )
             .await
             .expect("semantic verification completes");
@@ -2235,7 +2277,11 @@ async fn zip234_proposal_with_committed_parent_checks_the_bonus_without_waiting(
             service_fn(
                 |request| async move { Ok::<_, BoxError>(accept_block_transaction(request)) },
             );
-        let verifier = SemanticBlockVerifier::new(&network, state, transaction);
+        let verifier = SemanticBlockVerifier::new(
+            &network,
+            crate::transaction::boxed_state(state),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        );
         let result = tokio::time::timeout(
             std::time::Duration::from_secs(10),
             verifier.oneshot(Request::CheckProposal(Arc::new(block))),
@@ -2286,7 +2332,11 @@ async fn zip234_proposal_with_uncommitted_parent_is_rejected_without_waiting() {
     });
     let transaction =
         service_fn(|request| async move { Ok::<_, BoxError>(accept_block_transaction(request)) });
-    let verifier = SemanticBlockVerifier::new(&network, state, transaction);
+    let verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
 
     let result = tokio::time::timeout(
         std::time::Duration::from_secs(10),
@@ -2430,7 +2480,11 @@ async fn server_template_error_waits_for_checks(slh_budget: bool) {
             }
         })
     };
-    let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+    let mut verifier = SemanticBlockVerifier::new(
+        &network,
+        crate::transaction::boxed_state(state),
+        crate::transaction::boxed_transaction_verifier(transaction),
+    );
 
     let preparation = tokio::spawn(verifier.ready().await.expect("the verifier is ready").call(
         Request::Prepare {
@@ -2607,7 +2661,11 @@ async fn pending_commit_retry_waits_for_state_outcome() {
         let transaction = service_fn(|_| -> std::future::Ready<Result<tx::Response, BoxError>> {
             panic!("duplicate and missing-height blocks cannot reach transaction verification")
         });
-        let verifier = SemanticBlockVerifier::new(&Network::Mainnet, state, transaction);
+        let verifier = SemanticBlockVerifier::new(
+            &Network::Mainnet,
+            crate::transaction::boxed_state(state),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        );
         let start = tokio::time::Instant::now();
         let error = tokio::time::timeout(
             std::time::Duration::from_secs(5),
@@ -2645,8 +2703,12 @@ async fn pending_commit_wait_reports_the_duplicate_after_its_limit() {
     let start = tokio::time::Instant::now();
     let error = tokio::time::timeout(
         super::PENDING_COMMIT_WAIT_LIMIT * 2,
-        SemanticBlockVerifier::new(&Network::Mainnet, state, transaction)
-            .oneshot(Request::Commit(Arc::new(block))),
+        SemanticBlockVerifier::new(
+            &Network::Mainnet,
+            crate::transaction::boxed_state(state),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        )
+        .oneshot(Request::Commit(Arc::new(block))),
     )
     .await
     .expect("the pending commit wait has a limit")
@@ -3049,7 +3111,11 @@ async fn malformed_headers_do_not_stop_buffered_verification() {
         panic!("malformed headers and committed duplicates stop before transaction verification")
     });
     let verifier = Buffer::new(
-        SemanticBlockVerifier::new(&Network::Mainnet, state, transaction),
+        SemanticBlockVerifier::new(
+            &Network::Mainnet,
+            crate::transaction::boxed_state(state),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        ),
         1,
     );
 
@@ -3156,7 +3222,11 @@ async fn receipt_order_precedes_polling_and_cached_mining_uses_solved_submission
                 async move { Ok::<_, BoxError>(accept_block_transaction(request)) }
             }
         });
-        let mut verifier = SemanticBlockVerifier::new(&network, state, transaction);
+        let mut verifier = SemanticBlockVerifier::new(
+            &network,
+            crate::transaction::boxed_state(state),
+            crate::transaction::boxed_transaction_verifier(transaction),
+        );
         if cache_hit {
             verifier
                 .call(Request::Prepare {
@@ -3222,7 +3292,11 @@ async fn duplicate_receipt_keeps_first_priority_through_real_state_deduplication
             let transaction = service_fn(|request| async move {
                 Ok::<_, BoxError>(accept_block_transaction(request))
             });
-            let mut verifier = SemanticBlockVerifier::new(&network, state.clone(), transaction);
+            let mut verifier = SemanticBlockVerifier::new(
+                &network,
+                crate::transaction::boxed_state(state.clone()),
+                crate::transaction::boxed_transaction_verifier(transaction),
+            );
             if cache_hit {
                 for block in [a.clone(), b.clone()] {
                     verifier

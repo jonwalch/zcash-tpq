@@ -46,6 +46,13 @@ signature placeholders, then checks decoding, public-note recovery and finalizat
 with current node types. It does not generate or verify a real proof. The dependency
 guard rejects the historical builder in default and SLH-enabled node graphs.
 
+With upstream Zakura at `3f36c35031126a8f8cd52865ef0be9e5dc494b8d`,
+the current fixture builders and `zakura-proofs` use Common 4. The optional
+host enables `zip32-addresses` for its fixed public Orchard and Sapling recipients;
+node dependency settings stay unchanged. The historical Orchard builder remains
+at 2.2.0. A compile check with
+`shielded-fixtures` checks this adaptation without generating real proofs.
+
 New narrow glue uses pinned `zakura-sapling-crypto =2.2.0` builders, note decryption,
 `CommitmentSum` binding verification and LocalTxProver, and
 `zakura-orchard =2.2.0` builders/note decryption/verifiers. No cryptography is

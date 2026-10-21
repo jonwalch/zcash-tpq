@@ -55,7 +55,7 @@ authenticated upstream entries.
 Deleted private files and unrelated repository history remain forbidden.
 Use `history_only` for former product changes that now match upstream.
 
-PR #12 imported the current upstream through a GitHub squash merge. Its commit
+PR #12 imported the previous upstream through a GitHub squash merge. Its commit
 has no upstream parent. The guard records this exact historical association:
 
 | Item | Pinned value |
@@ -71,8 +71,10 @@ history. The guard checks its tree, sole parent, and upstream pins. At that
 commit only, it exempts entries with the same mode, object kind, and bytes as
 the pinned upstream tree. Other entries still need a product disposition.
 An unrecorded commit cannot use this exception, even if its tree is identical.
-The record also establishes integration when later feature PRs are squashed
-onto this imported base and no upstream parent remains in the selected branch.
+The record also establishes integration of that recorded upstream when later
+feature PRs are squashed onto this imported base. It cannot establish integration
+of a newer upstream. The current update restores the recorded upstream ancestry
+with a tree-preserving merge, then merges the new upstream normally.
 Without that authenticated record, the upstream must be a real ancestor.
 Both paths require the exact upstream commit and tree as local audit inputs.
 Local Git tests cover changed entries, invalid records, unselected and later
@@ -105,10 +107,11 @@ After integration, check the merged result.
 Create an independent clone with `git clone --no-local --single-branch --no-tags`.
 Select the committed product branch.
 Squash merges can leave the pinned upstream object outside product ancestry.
-Before the offline audit, retrieve that exact public input:
+Before the offline audit, retrieve the current upstream and its history. This
+also supplies the previous upstream object needed to authenticate PR #12:
 
 ```sh
-git fetch --no-tags https://github.com/zakura-core/zakura.git e33dc43089acca2fe2c6516927932f2b7618b8bc
+git fetch --no-tags https://github.com/zakura-core/zakura.git 3f36c35031126a8f8cd52865ef0be9e5dc494b8d
 ```
 
 The content CI uses the same explicit input step. This adds no upstream branch

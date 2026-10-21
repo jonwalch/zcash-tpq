@@ -259,7 +259,7 @@ The parameter and state changes extend the retained mechanisms in
 `85f75af3f70cc292918a013b280ed06426b6fa98`.
 The genesis helper and embedded lifecycle were first adapted from upstream Zakura
 `24a17b3f0e7d88513688d607054f018ab6f15af2`. The current upstream pin is
-`e33dc43089acca2fe2c6516927932f2b7618b8bc`. The merge preserves those mechanisms
+`3f36c35031126a8f8cd52865ef0be9e5dc494b8d`. The merge preserves those mechanisms
 and uses the current native QUIC peer identity and address types.
 The fingerprint and optional rule diagnostics are product adaptations needed to
 identify separately configured SLH chains. They add no research runtime dependency.

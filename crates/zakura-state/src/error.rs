@@ -1038,7 +1038,7 @@ impl ValidateContextError {
                         BodyCommitmentKind::Other("chain_history_root")
                     }
                     CommitmentError::InvalidChainHistoryBlockTxAuthCommitment { .. } => {
-                        BodyCommitmentKind::Other("chain_history_block_tx_auth_commitment")
+                        BodyCommitmentKind::CHAIN_HISTORY_BLOCK_TX_AUTH_COMMITMENT
                     }
                     CommitmentError::InvalidPreNu5OrchardRoot { .. } => {
                         BodyCommitmentKind::Other("pre_nu5_orchard_root")
@@ -1296,6 +1296,10 @@ mod tests {
         };
         for error in [auth_commitment.clone(), prevalidated_root] {
             assert!(error.is_auth_commitment_mismatch());
+            assert!(matches!(
+                error.body_verification_class(),
+                BodyVerificationClass::PayloadMismatch(kind) if kind.proves_tampered_body()
+            ));
             let commit = CommitCheckpointVerifiedError::from(
                 CommitBlockError::ValidateContextError(Box::new(error)),
             );
@@ -1322,6 +1326,10 @@ mod tests {
             ValidateContextError::AncestorBodyRejected(block::Hash([9; 32])),
         ] {
             assert!(!error.is_auth_commitment_mismatch());
+            assert!(!matches!(
+                error.body_verification_class(),
+                BodyVerificationClass::PayloadMismatch(kind) if kind.proves_tampered_body()
+            ));
         }
     }
 
