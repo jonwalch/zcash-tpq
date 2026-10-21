@@ -74,6 +74,7 @@ impl Intent {
     }
 
     fn check_receiver_activation(&self, manifest: &Manifest, next: u32) -> Result<(), Error> {
+        Receiver::parse(&self.receiver)?.check_profile(&manifest.profile)?;
         let same_suite = Receiver::parse(&self.receiver)?.suite().byte() == manifest.suite;
         let height = match (same_suite, self.receiver_activation_height) {
             (true, None) => manifest.profile.pq_activation_height,

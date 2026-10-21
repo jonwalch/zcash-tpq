@@ -5,18 +5,46 @@ use crate::{
 use bech32::{primitives::decode::CheckedHrpstring, Bech32m, Hrp};
 use std::path::Path;
 
-/// Exact experimental Regtest receiver. Parsing never selects a legacy fallback.
-/// The payload is `01 || 02 || f7 || commitment`; every other suite is rejected.
+/// Exact experimental receiver. Parsing never selects a legacy fallback.
+/// Regtest retains v1; custom Testnet uses chain-bound v2 transport.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Receiver {
     suite: Suite,
     commitment: Hex<32>,
+    chain: Option<Hex<32>>,
 }
 
 impl Receiver {
     /// Construct a receiver for the explicit suite and public policy commitment.
     pub fn new(suite: Suite, commitment: Hex<32>) -> Self {
-        Self { suite, commitment }
+        Self {
+            suite,
+            commitment,
+            chain: None,
+        }
+    }
+
+    /// Construct transport bound to an independently approved chain profile.
+    pub fn for_profile(
+        suite: Suite,
+        commitment: Hex<32>,
+        profile: &crate::Profile,
+    ) -> Result<Self, Error> {
+        profile.validate()?;
+        Ok(Self {
+            suite,
+            commitment,
+            chain: profile.chain_fingerprint,
+        })
+    }
+
+    /// Reject transport from any other wallet network or custom chain.
+    pub fn check_profile(&self, profile: &crate::Profile) -> Result<(), Error> {
+        profile.validate()?;
+        if self.chain != profile.chain_fingerprint {
+            return Err(Error::UnsupportedContext);
+        }
+        Ok(())
     }
 
     /// The sole supported experimental suite.
@@ -31,25 +59,51 @@ impl Receiver {
 
     /// Parse exact lowercase Bech32m transport without normalization.
     pub fn parse(text: &str) -> Result<Self, Error> {
-        if text.len() != 69
-            || !text.starts_with("tpqreg1")
-            || text.bytes().any(|b| b.is_ascii_uppercase())
+        let custom = text.starts_with("tpqtest1");
+        if (if custom {
+            text.len() != 122
+        } else {
+            text.len() != 69 || !text.starts_with("tpqreg1")
+        }) || text.bytes().any(|b| b.is_ascii_uppercase())
         {
             return Err(Error::Encoding);
         }
         let decoded = CheckedHrpstring::new::<Bech32m>(text).map_err(|_| Error::Encoding)?;
         let payload: Vec<_> = decoded.byte_iter().collect();
-        if payload.len() != 35 || payload[..2] != [1, 2] {
+        if payload.len() != if custom { 67 } else { 35 }
+            || payload[..2] != if custom { [2, 1] } else { [1, 2] }
+        {
             return Err(Error::UnsupportedFormat);
         }
-        Ok(Self {
+        let receiver = Self {
             suite: Suite::from_byte(payload[2])?,
-            commitment: Hex(payload[3..].try_into().map_err(|_| Error::Encoding)?),
-        })
+            chain: if custom {
+                Some(Hex(payload[3..35]
+                    .try_into()
+                    .map_err(|_| Error::Encoding)?))
+            } else {
+                None
+            },
+            commitment: Hex(payload[if custom { 35 } else { 3 }..]
+                .try_into()
+                .map_err(|_| Error::Encoding)?),
+        };
+        // v2 has four padding bits. Reject nonzero padding, not just checksums.
+        if receiver.encode() != text {
+            return Err(Error::Encoding);
+        }
+        Ok(receiver)
     }
 
-    /// Encode the canonical 69-character Regtest receiver.
+    /// Encode canonical Regtest (69 characters) or custom Testnet (122 characters).
     pub fn encode(&self) -> String {
+        if let Some(chain) = self.chain {
+            let mut bytes = vec![2, 1, self.suite.byte()];
+            bytes.extend(chain.0);
+            bytes.extend(self.commitment.0);
+            return bech32::encode::<Bech32m>(Hrp::parse("tpqtest").expect("fixed HRP"), &bytes)
+                .expect("bounded receiver");
+        }
         let mut bytes = [0u8; 35];
         bytes[..3].copy_from_slice(&[1, 2, self.suite.byte()]);
         bytes[3..].copy_from_slice(&self.commitment.0);
@@ -68,6 +122,12 @@ impl Receiver {
 }
 
 impl Entry {
+    /// Encode a policy with the approved wallet chain identity.
+    pub fn receiver_for(&self, profile: &crate::Profile) -> Result<Receiver, Error> {
+        let policy = self.suite_policy()?;
+        Receiver::for_profile(policy.suite(), Hex(policy.commitment()), profile)
+    }
+
     /// Encode this complete policy as its public receiver.
     pub fn receiver(&self) -> Result<Receiver, Error> {
         let policy = self.suite_policy()?;

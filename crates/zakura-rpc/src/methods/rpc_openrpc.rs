@@ -14,6 +14,21 @@ pub(crate) static METHODS: &[(&str, openrpc::RpcMethod)] = &[
     result: |g| g.result("getdeprecationinfo_result"),
     deprecated: false,
 }),
+("getchainrules", openrpc::RpcMethod {
+    description: "Returns effective node-owned custom-Testnet consensus rules.\n",
+    params: |_g| vec![
+    ],
+    result: |g| g.result("getchainrules_result"),
+    deprecated: false,
+}),
+("inspectchainblock", openrpc::RpcMethod {
+    description: "Returns canonical block identity without submitting or validating it.\n",
+    params: |_g| vec![
+        _g.param::<String>("block_hex", crate::methods::PARAM_BLOCK_HEX_DESC, true),
+    ],
+    result: |g| g.result("inspectchainblock_result"),
+    deprecated: false,
+}),
 ("getblockchaininfo", openrpc::RpcMethod {
     description: "Returns blockchain state information, as a [`GetBlockchainInfoResponse`] JSON struct.\n\nzcashd reference: [`getblockchaininfo`](https://zcash.github.io/rpc/getblockchaininfo.html)\nmethod: post\ntags: blockchain\n\n# Notes\n\nSome fields from the zcashd reference are missing from Zebra's [`GetBlockchainInfoResponse`]. It only contains the fields\n[required for lightwalletd support.](https://github.com/zcash/lightwalletd/blob/v0.4.9/common/common.go#L72-L89)\n\nZebra includes an `ironwood` value pool entry. Like other value pool\nentries, it can be present with a zero balance.\n",
     params: |_g| vec![

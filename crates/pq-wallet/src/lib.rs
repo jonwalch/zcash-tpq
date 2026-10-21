@@ -1,4 +1,4 @@
-//! Experimental Regtest SLH wallet: backed enrollment, discovery and approved payments.
+//! Experimental isolated-chain SLH wallet: backed enrollment, discovery and approved payments.
 
 #![forbid(unsafe_code)]
 
@@ -77,7 +77,7 @@ mod suite;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 pub use receiving::Receiver;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
-pub use scan::{ChainSource, Checkpoint, Coin, NodeContext, Outpoint, ScanStatus};
+pub use scan::{ChainSource, Checkpoint, Coin, NodeContext, Outpoint, ScanStatus, SlhContext};
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "experimental-slh-dsa-b128s")]
@@ -201,7 +201,7 @@ impl Wallet {
         context: &InputSigningContext,
         path: KeyPath,
     ) -> Result<Record, Error> {
-        if context.network() != zakura_pq_tx_context::NetworkDomain::Regtest
+        if context.network() != self.manifest.profile.network_domain()
             || context.upgrade() != zakura_chain::parameters::NetworkUpgrade::Nu7
         {
             return Err(Error::UnsupportedContext);
@@ -314,7 +314,11 @@ impl Wallet {
         let root_hex = Zeroizing::new(hex::encode(&self.root[..]));
         canonical::encode(
             &Recovery {
-                format: "ZcashTransparentPQ/recovery/v1",
+                format: if self.manifest.profile.network == 1 {
+                    "ZcashTransparentPQ/recovery/v2"
+                } else {
+                    "ZcashTransparentPQ/recovery/v1"
+                },
                 manifest: self.manifest.clone(),
                 root_hex: &root_hex,
             },
@@ -323,7 +327,13 @@ impl Wallet {
     }
     fn from_plaintext(bytes: &[u8], profile: &Profile) -> Result<Self, Error> {
         let recovery: Recovery<'_> = canonical::decode(bytes, manifest::MAX_PLAINTEXT)?;
-        if recovery.format != "ZcashTransparentPQ/recovery/v1" {
+        if recovery.format
+            != if profile.network == 1 {
+                "ZcashTransparentPQ/recovery/v2"
+            } else {
+                "ZcashTransparentPQ/recovery/v1"
+            }
+        {
             return Err(Error::UnsupportedFormat);
         }
         recovery.manifest.validate()?;
@@ -355,7 +365,11 @@ impl Wallet {
         Ok(wallet)
     }
     fn key(&self, path: KeyPath) -> SigningKey {
-        SigningKey::from_seed(keys::derive_seed(&self.root, path))
+        SigningKey::from_seed(keys::derive_chain_seed(
+            &self.root,
+            path,
+            self.manifest.profile.chain_fingerprint,
+        ))
     }
 
     /// Derive this coordinate's public commitment without allocating or issuing it.

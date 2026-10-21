@@ -4125,6 +4125,7 @@ name = "zakura-pq-wallet"
 version = "0.1.0"
 dependencies = [
  "argon2",
+ "base64 0.22.1",
  "bech32",
  "chacha20poly1305 0.10.1",
  "hex",
@@ -4473,6 +4474,24 @@ dependencies = [
  "tower",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "zakura-tpq-devnet"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "hex",
+ "ripemd 0.1.3",
+ "secp256k1",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "toml 1.1.2+spec-1.1.0",
+ "zakura-chain",
+ "zakura-network",
+ "zakura-pq-wallet",
 ]
 
 [[package]]

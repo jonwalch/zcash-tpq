@@ -21,6 +21,11 @@
 !deploy
 !crates
 !crates/**
+!tests
+!tests/slh-dsa-b128s
+!tests/slh-dsa-b128s/fixtures
+!tests/slh-dsa-b128s/fixtures/host
+!tests/slh-dsa-b128s/fixtures/host/**
 !docker/entrypoint.sh
 !docker/default-zakura-config.toml
 !docker/ubuntu-package.Dockerfile

@@ -12,7 +12,10 @@ This support is for transparent SLH outputs. It preserves the
 [experimental v1 contract](protocol.md), NU7 signing context, classical checks,
 and shielded checks. SLH activation preserves the fork's 20 MB block limit
 and fee policy.
-The wallet CLI remains Regtest-only. Live devnet acceptance remains pending.
+The wallet CLI supports chain-bound custom-testnet profiles and receivers.
+The [standalone tool](devnet.md) prepares a local no-PoW cohort without a launcher.
+The [Admin RPC diagnostics](launcher-rpc.md) expose effective rules and block identities.
+ZDN integration and live devnet acceptance remain pending.
 
 ## Generate one chain definition
 

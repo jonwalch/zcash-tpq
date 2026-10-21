@@ -123,6 +123,23 @@ fn root_entropy_failure_returns_no_root() {
 }
 
 #[test]
+fn custom_derivation_matches_independent_python_hmac_and_separates_chains() {
+    let root: [u8; 32] = std::array::from_fn(|i| u8::try_from(i).unwrap());
+    let path = KeyPath {
+        role: Role::Receive,
+        index: 0,
+    };
+    let seed = derive_chain_seed(&root, path, Some(crate::Hex([0x31; 32])));
+    // Python stdlib hmac.digest/SHA-256, not the production HKDF backend.
+    assert_eq!(hex::encode(*seed), "2f47276b6e3b9279a54970935014b21699c2b3d1238daa5c6b9c2fc0c8dfd64c4e563c0d62bfc803911589fb40ae5698");
+    assert_ne!(*seed, *derive_seed(&root, path));
+    assert_ne!(
+        *seed,
+        *derive_chain_seed(&root, path, Some(crate::Hex([0x32; 32])))
+    );
+}
+
+#[test]
 fn operational_roots_are_independent() {
     let first = Root::generate().unwrap();
     let second = Root::generate().unwrap();

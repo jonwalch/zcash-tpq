@@ -7,6 +7,36 @@
   },
   "methods": [
     {
+      "name": "getchainrules",
+      "summary": "Returns effective node-owned custom-Testnet consensus rules.",
+      "description": "Returns effective node-owned custom-Testnet consensus rules.",
+      "params": [],
+      "result": {
+        "name": "getchainrules_result",
+        "summary": "An OpenRPC document.",
+        "description": "An OpenRPC document.",
+        "schema": {"$ref": "#/components/schemas/OpenRPC%20Schema"}
+      }
+    },
+    {
+      "name": "inspectchainblock",
+      "summary": "Returns canonical block identity without submitting or validating it.",
+      "description": "Returns canonical block identity without submitting or validating it.",
+      "params": [{
+        "name": "block_hex",
+        "summary": "Canonical hex-encoded block bytes.",
+        "description": "Canonical hex-encoded block bytes.",
+        "required": true,
+        "schema": {"type": "string"}
+      }],
+      "result": {
+        "name": "inspectchainblock_result",
+        "summary": "An OpenRPC document.",
+        "description": "An OpenRPC document.",
+        "schema": {"$ref": "#/components/schemas/OpenRPC%20Schema"}
+      }
+    },
+    {
       "name": "z_validateaddress",
       "summary": "Checks if a zcash address of type P2PKH, P2SH, TEX, SAPLING or UNIFIED is valid.",
       "description": "Checks if a zcash address of type P2PKH, P2SH, TEX, SAPLING or UNIFIED is valid.\nReturns information about the given address if valid.\n\nzcashd reference: [`z_validateaddress`](https://zcash.github.io/rpc/z_validateaddress.html)\nmethod: post\ntags: util\n\n# Parameters\n\n- `address`: (string, required) The zcash address to validate.\n\n# Notes\n\n- No notes",

@@ -28,6 +28,7 @@ const DISPOSABLE_PASSWORD: &[u8] = b"tpq-bench-disposable-offline-wallet-not-for
 
 pub fn profile() -> Profile {
     Profile {
+        chain_fingerprint: None,
         genesis_hash: Hex(regtest_genesis_block().hash().bytes_in_display_order()),
         max_block_pq_checks: 64,
         max_tx_pq_checks: 16,
@@ -257,6 +258,7 @@ impl ChainSource for OfflineSource {
             chain: "regtest".into(),
             next_branch_id: Hex([0x77, 0x19, 0x0a, 0xd9]),
             nu7_activation_height: 2,
+            slh: None,
             tip: Checkpoint {
                 height: TIP_HEIGHT,
                 hash: self.block_hash(TIP_HEIGHT)?,

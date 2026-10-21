@@ -48,19 +48,22 @@ pub(crate) fn decode_hex(text: &str, output: &mut [u8]) -> Result<(), Error> {
     hex::decode_to_slice(text, output).map_err(|_| Error::Encoding)
 }
 
-/// Explicitly approved Regtest configuration; never learned from a backup.
+/// Explicitly approved isolated-chain configuration; never learned from a backup.
 /// The activation height and check limits belong to the separately approved
 /// experimental SLH gate; node metadata never approves this profile.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-    /// Independently approved Regtest genesis hash.
+    /// Independently approved TPQ node identity, required only on custom Testnet.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chain_fingerprint: Option<Hex<32>>,
+    /// Independently approved genesis hash in RPC display order.
     pub genesis_hash: Hex<32>,
     /// Approved per-block signature-check allowance.
     pub max_block_pq_checks: u32,
     /// Approved per-transaction signature-check allowance.
     pub max_tx_pq_checks: u32,
-    /// Network byte, fixed to Regtest (2).
+    /// Regtest (2), or custom Testnet (1) with an approved fingerprint.
     pub network: u8,
     /// Independently approved NU7 activation height.
     pub nu7_activation_height: u32,
@@ -72,8 +75,10 @@ pub struct Profile {
 impl Profile {
     /// Validate all frozen context and structural invariants.
     pub fn validate(&self) -> Result<(), Error> {
-        if self.network != 2
-            || self.nu7_branch_id != "77190ad9"
+        if !matches!(
+            (self.network, self.chain_fingerprint),
+            (2, None) | (1, Some(_))
+        ) || self.nu7_branch_id != "77190ad9"
             || self.pq_activation_height <= self.nu7_activation_height
             || self.max_tx_pq_checks == 0
             || self.max_block_pq_checks < self.max_tx_pq_checks
@@ -81,6 +86,22 @@ impl Profile {
             return Err(Error::UnsupportedContext);
         }
         Ok(())
+    }
+    /// Consensus domain: chain binding affects wallet transport, not consensus hashes.
+    pub fn network_domain(&self) -> zakura_pq_tx_context::NetworkDomain {
+        if self.network == 1 {
+            zakura_pq_tx_context::NetworkDomain::Testnet
+        } else {
+            zakura_pq_tx_context::NetworkDomain::Regtest
+        }
+    }
+    /// Version of the wallet derivation and chain-bound transports.
+    pub fn wallet_version(&self) -> u8 {
+        if self.network == 1 {
+            2
+        } else {
+            1
+        }
     }
     /// Local issuance/signing guard, deliberately separate from decoding old
     /// inventory. A receiver commitment alone does not expose this policy.
@@ -174,7 +195,7 @@ pub struct Manifest {
     pub birthday_height: u32,
     /// Exclusive generated change range end.
     pub change_end: u64,
-    /// Frozen derivation layout version (1).
+    /// Regtest derivation layout (1), or chain-bound custom Testnet layout (2).
     pub derivation_version: u8,
     #[serde(deserialize_with = "entries")]
     /// Cumulative public inventory in local coordinate order.
@@ -217,7 +238,14 @@ impl Manifest {
     }
     /// Validate all frozen context and structural invariants.
     pub fn validate(&self) -> Result<(), Error> {
-        if self.format != FORMAT || self.derivation_version != 1 {
+        if self.format
+            != if self.profile.network == 1 {
+                "ZcashTransparentPQ/inventory/v2"
+            } else {
+                FORMAT
+            }
+            || self.derivation_version != self.profile.wallet_version()
+        {
             return Err(Error::UnsupportedFormat);
         }
         let suite = Suite::from_byte(self.suite)?;
@@ -298,9 +326,14 @@ impl Manifest {
             allocator_id,
             birthday_height,
             change_end: 0,
-            derivation_version: 1,
+            derivation_version: profile.wallet_version(),
             entries: vec![],
-            format: FORMAT.into(),
+            format: if profile.network == 1 {
+                "ZcashTransparentPQ/inventory/v2"
+            } else {
+                FORMAT
+            }
+            .into(),
             profile,
             receive_end: 0,
             retired_change_end: 0,

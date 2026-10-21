@@ -3,7 +3,7 @@
 This document specifies `slh-dsa-b-128s-exp-v1`.
 Support is off by default. The node permits Regtest and explicitly configured
 custom testnets with separate identities. Built-in Mainnet and public Testnet
-cannot activate it. The wallet CLI still supports Regtest only.
+cannot activate it. The wallet CLI supports Regtest and chain-bound custom testnets.
 SLH-DSA-B-128s uses BLAKE3. It is not a FIPS 205 profile.
 The node includes consensus, relay, mining, and state support behind the feature.
 Live acceptance and independent security review remain open.

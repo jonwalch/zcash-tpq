@@ -1,6 +1,6 @@
 # Wallet commands
 
-`pq-wallet` manages SLH wallets on Regtest.
+`pq-wallet` manages SLH wallets on Regtest and approved isolated custom Testnets.
 Package `zakura-pq-cli` requires `experimental-slh-dsa-b128s` for wallet operations.
 Without that feature, only help is available.
 The [acceptance guide](acceptance.md#build-receipts) gives build commands.
@@ -15,9 +15,22 @@ Arguments, environment variables, and stdin cannot supply passwords.
 Creation and rekeying require confirmation of the new password.
 
 Each operation uses an independently approved canonical `profile.json`.
-The profile fixes the Regtest genesis, activation heights, and signature limits.
+The profile fixes the chain genesis, activation heights, and signature limits.
 Check these values against the intended node configuration.
 RPC responses cannot approve or enable wallet rules.
+
+Custom Testnet requires `network:1` and `chain_fingerprint`, the 32-byte TPQ node
+fingerprint as lowercase hex. It is not a ZDN manifest hash. Regtest requires
+`network:2` and no fingerprint field. For example, this is canonical custom
+profile JSON (example hashes only; replace them with independently approved values):
+
+```json
+{"chain_fingerprint":"3131313131313131313131313131313131313131313131313131313131313131","genesis_hash":"4242424242424242424242424242424242424242424242424242424242424242","max_block_pq_checks":64,"max_tx_pq_checks":16,"network":1,"nu7_activation_height":100,"nu7_branch_id":"77190ad9","pq_activation_height":101}
+```
+
+Do not include the code block's final newline in a profile file.
+The node's effective fingerprint, genesis, NU7, SLH activation and budgets must
+match. Custom Testnet cannot fall back to missing diagnostics or Regtest addresses.
 
 Wallet JSON requires sorted fields and excludes extra fields, whitespace, and a final newline.
 The [wallet contract](wallet.md) specifies formats and limits.
@@ -30,6 +43,32 @@ Authenticate the local node and its configuration.
 For a remote node, use an authenticated local tunnel.
 The adapter checks block hashes, transaction inclusion, amounts, and unspent outputs.
 Its bounded HTTP transport rejects unsupported framing and server failures.
+
+Select cookie authentication explicitly with a global option before the command:
+
+```text
+pq-wallet --json --rpc-cookie /trusted/private/node/.cookie sync profile.json watch-directory 127.0.0.1:18232 100
+pq-wallet --json receive profile.json watch-directory
+pq-wallet --json --rpc-cookie /trusted/private/node/.cookie submit profile.json backup.tpq watch-directory 127.0.0.1:18232 APPROVED_PROPOSAL_ID
+```
+
+The cookie option names a file, not a credential. Never pass a cookie or password
+in argv. The adapter reopens the cookie for each request, so atomic node cookie
+rotation works. It requires a regular owner-only file owned by the current user.
+It rejects final symlinks, directories, oversized files and control characters.
+Parent directories must be trusted and stable. Authentication failures do not
+retry without credentials. Cookie transport is supported on Unix only.
+The CLI requires a cookie for custom Testnet RPC. Trusted local legacy Regtest
+can still use unauthenticated RPC when the option is absent.
+
+Use `--json` before the command for machine output. Existing structured command
+results remain structured; scalar receivers, transaction IDs and publication
+messages become JSON objects. `inspect` emits only its canonical inventory,
+without the human explanation. Errors are JSON objects on stderr with nonzero
+exit status. Passwords still require `/dev/tty`, with echo disabled, including
+in machine mode. Neither stdin nor environment variables supply passwords.
+Help remains human-readable. A successful command does not replace journal
+reconciliation or independently authenticated approvals.
 
 ## Commands
 

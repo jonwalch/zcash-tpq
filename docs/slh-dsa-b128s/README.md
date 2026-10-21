@@ -9,7 +9,9 @@ Node builds do not include the wallet signer.
 Support requires the `experimental-slh-dsa-b128s` feature.
 Regtest and isolated custom testnets must set SLH activation after NU7.
 The [devnet guide](devnets.md) describes the node APIs for launchers.
-The wallet CLI and its operational guides still use Regtest.
+The wallet CLI also supports chain-bound custom-testnet profiles and receivers.
+Use the [standalone preparation guide](devnet.md) for a local no-PoW cohort.
+Existing Regtest recipes retain their original scope.
 The BLAKE3 construction is experimental. It is not a FIPS 205 profile.
 The [protocol](protocol.md) specifies the source revisions and the
 `slh-dsa-b-128s-exp-v1` contract.
@@ -20,6 +22,8 @@ The [protocol](protocol.md) specifies the source revisions and the
 | --- | --- |
 | Configure a test node and identify its verifier | [Runtime](runtime.md) |
 | Integrate a public or private devnet launcher | [Custom devnets](devnets.md) |
+| Prepare, bootstrap, and fund a local no-PoW cohort | [Standalone devnet](devnet.md) |
+| Read effective rules and inspect canonical seed blocks | [Launcher RPC](launcher-rpc.md) |
 | Create a wallet, enroll cosigners, and make payments | [CLI commands](cli.md) |
 | Back up keys and payment history, then restore them | [Recovery](recovery.md) |
 | Understand finite address inventories and watch-only roles | [Wallet behavior](wallet.md#recovery-and-watch-only-behavior) |

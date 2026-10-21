@@ -104,11 +104,13 @@ use crate::{
     },
 };
 
+mod chain_diagnostics;
 pub(crate) mod hex_data;
 mod slh_dsa_b128s;
 pub(crate) mod trees;
 pub(crate) mod types;
 
+pub use chain_diagnostics::{GetChainRulesResponse, InspectChainBlockResponse};
 use hex_data::HexData;
 pub use slh_dsa_b128s::ExperimentalSlhDsaB128sInfo;
 use trees::{GetSubtreesByIndexResponse, GetTreestateResponse, SubtreeRpcData};
@@ -209,6 +211,8 @@ pub(crate) const RPC_METHOD_ACCESS: &[(&str, RpcAccess)] = &[
     ("getinfo", RpcAccess::Unauthenticated),
     ("getdeprecationinfo", RpcAccess::Unauthenticated),
     ("getblockchaininfo", RpcAccess::Unauthenticated),
+    ("getchainrules", RpcAccess::Admin),
+    ("inspectchainblock", RpcAccess::Admin),
     ("getaddressbalance", RpcAccess::Unauthenticated),
     ("sendrawtransaction", RpcAccess::Unauthenticated),
     ("getblock", RpcAccess::Unauthenticated),
@@ -277,6 +281,7 @@ pub(super) const PARAM_COMMAND_DESC: &str = "The command to execute.";
 #[allow(non_upper_case_globals)]
 pub(super) const PARAM__PARAMETERS_DESC: &str = "The parameters for the command.";
 pub(super) const PARAM_BLOCK_HASH_DESC: &str = "The hash of the block to return.";
+pub(super) const PARAM_BLOCK_HEX_DESC: &str = "Canonical hex-encoded block bytes.";
 pub(super) const PARAM_ADDRESS_DESC: &str = "The address to return.";
 pub(super) const PARAM_ADDRESS_STRINGS_DESC: &str = "The addresses to return.";
 pub(super) const PARAM_ADDR_DESC: &str = "The address to return.";
@@ -346,6 +351,14 @@ pub trait RpcServer {
     /// initial sync it is significantly overestimated.
     #[method(name = "getdeprecationinfo")]
     async fn get_deprecation_info(&self) -> Result<GetDeprecationInfoResponse>;
+
+    /// Returns effective node-owned custom-Testnet consensus rules.
+    #[method(name = "getchainrules")]
+    fn get_chain_rules(&self) -> Result<GetChainRulesResponse>;
+
+    /// Returns canonical block identity without submitting or validating it.
+    #[method(name = "inspectchainblock")]
+    async fn inspect_chain_block(&self, block_hex: String) -> Result<InspectChainBlockResponse>;
 
     /// Returns blockchain state information, as a [`GetBlockchainInfoResponse`] JSON struct.
     ///
@@ -2088,6 +2101,16 @@ where
             });
 
         Ok(GetDeprecationInfoResponse { end_of_service })
+    }
+
+    fn get_chain_rules(&self) -> Result<GetChainRulesResponse> {
+        chain_diagnostics::chain_rules(&self.network)
+    }
+
+    async fn inspect_chain_block(&self, block_hex: String) -> Result<InspectChainBlockResponse> {
+        tokio::task::spawn_blocking(move || chain_diagnostics::inspect_chain_block(&block_hex))
+            .await
+            .map_misc_error()?
     }
 
     #[allow(clippy::unwrap_in_result)]

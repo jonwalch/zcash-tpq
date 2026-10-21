@@ -154,7 +154,23 @@ fn retained_independent_v5_v6_partials_verify_and_reassemble() {
             &hex::decode(source["signature_hex"].as_str().unwrap()).unwrap(),
         )
         .unwrap();
-        let signer = InputSigner::new(&transaction, previous.clone(), 0, &policy).unwrap();
+        let signer = InputSigner::new(
+            &transaction,
+            previous.clone(),
+            0,
+            &policy,
+            NetworkDomain::Regtest,
+        )
+        .unwrap();
+        let testnet = InputSigner::new(
+            &transaction,
+            previous.clone(),
+            0,
+            &policy,
+            NetworkDomain::Testnet,
+        )
+        .unwrap();
+        assert!(testnet.verify_partial(&partial).is_err());
         signer.verify_partial(&partial).unwrap();
         let zakura_chain::transparent::Input::PrevOut { unlock_script, .. } =
             &transaction.inputs()[0]
@@ -173,16 +189,30 @@ fn retained_independent_v5_v6_partials_verify_and_reassemble() {
         assert!(signer
             .verify_partial(&SignerPartial::SlhDsaB128sExpV1(bad))
             .is_err());
-        verify_inputs(&transaction, previous.clone(), &[Suite::SlhDsaB128sExpV1]).unwrap();
+        verify_inputs(
+            &transaction,
+            previous.clone(),
+            &[Suite::SlhDsaB128sExpV1],
+            NetworkDomain::Regtest,
+        )
+        .unwrap();
+        assert!(verify_inputs(
+            &transaction,
+            previous.clone(),
+            &[Suite::SlhDsaB128sExpV1],
+            NetworkDomain::Testnet
+        )
+        .is_err());
         assert!(matches!(
-            verify_inputs(&transaction, previous.clone(), &[]),
+            verify_inputs(&transaction, previous.clone(), &[], NetworkDomain::Regtest),
             Err(Error::InputContext)
         ));
         assert!(matches!(
             verify_inputs(
                 &transaction,
                 previous.clone(),
-                &[Suite::SlhDsaB128sExpV1; 2]
+                &[Suite::SlhDsaB128sExpV1; 2],
+                NetworkDomain::Regtest
             ),
             Err(Error::InputContext)
         ));
@@ -190,9 +220,13 @@ fn retained_independent_v5_v6_partials_verify_and_reassemble() {
         changed[0].value = (input["spent_output"]["value_zat"].as_u64().unwrap() + 1)
             .try_into()
             .unwrap();
-        assert!(
-            verify_inputs(&transaction, Arc::new(changed), &[Suite::SlhDsaB128sExpV1]).is_err()
-        );
+        assert!(verify_inputs(
+            &transaction,
+            Arc::new(changed),
+            &[Suite::SlhDsaB128sExpV1],
+            NetworkDomain::Regtest
+        )
+        .is_err());
     }
 }
 
@@ -225,7 +259,13 @@ fn verification_rejects_a_bad_signature_in_each_input() {
         );
         assert_eq!(transaction.inputs().len(), 2);
         let suites = [Suite::SlhDsaB128sExpV1; 2];
-        verify_inputs(&transaction, previous.clone(), &suites).unwrap();
+        verify_inputs(
+            &transaction,
+            previous.clone(),
+            &suites,
+            NetworkDomain::Regtest,
+        )
+        .unwrap();
         for input_index in 0..2 {
             let mut changed = transaction.clone();
             let (Transaction::V5 { inputs, .. } | Transaction::V6 { inputs, .. }) = &mut changed
@@ -243,7 +283,7 @@ fn verification_rejects_a_bad_signature_in_each_input() {
             *unlock_script = Script::new(&authorization.encode());
             assert!(
                 matches!(
-                    verify_inputs(&changed, previous.clone(), &suites),
+                    verify_inputs(&changed, previous.clone(), &suites, NetworkDomain::Regtest),
                     Err(Error::Authorization(slh::Rejection::Signature))
                 ),
                 "v{version}, input {input_index}"

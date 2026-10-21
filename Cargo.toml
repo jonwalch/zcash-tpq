@@ -3,6 +3,7 @@ members = [
         "crates/pq-cli",
         "crates/pq-slh-dsa-b-sign",
         "crates/pq-wallet",
+        "crates/tpq-devnet",
         "tests/slh-dsa-b128s/fixtures/host",
         "crates/pq-slh-dsa-b-exp",
         "crates/pq-tx-context",

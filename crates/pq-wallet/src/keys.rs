@@ -70,11 +70,29 @@ impl Root {
 }
 
 pub(crate) fn derive_seed(root: &[u8; 32], path: KeyPath) -> Zeroizing<[u8; SEED_BYTES]> {
+    derive_chain_seed(root, path, None)
+}
+
+pub(crate) fn derive_chain_seed(
+    root: &[u8; 32],
+    path: KeyPath,
+    chain: Option<crate::Hex<32>>,
+) -> Zeroizing<[u8; SEED_BYTES]> {
     // Preserve the existing HKDF/HMAC limitation: the owned output clears,
     // but these pinned implementations do not expose internal-state clearing.
     let hkdf = Hkdf::<Sha256>::new(Some(b"ZcashTransparentPQ/wallet-root/v1\0"), root.as_ref());
-    let mut info = b"ZcashTransparentPQ/wallet-key/v1\0".to_vec();
-    info.extend([1, 2, 0xf7]);
+    let mut info = if chain.is_some() {
+        b"ZcashTransparentPQ/wallet-key/v2\0"
+    } else {
+        b"ZcashTransparentPQ/wallet-key/v1\0"
+    }
+    .to_vec();
+    if let Some(chain) = chain {
+        info.extend([2, 1, 0xf7]);
+        info.extend(chain.0);
+    } else {
+        info.extend([1, 2, 0xf7]);
+    }
     info.extend(0u32.to_le_bytes());
     // Role is repr(u8) with only 0 and 1, so this conversion is lossless.
     info.push(path.role as u8);

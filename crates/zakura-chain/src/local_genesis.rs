@@ -109,7 +109,7 @@ pub fn generate_local_testnet_with_funded_keys(
     miner_names: Vec<String>,
     options: LocalTestnetGenesisOptions,
 ) -> Result<GeneratedLocalTestnet, crate::BoxError> {
-    generate_local_testnet(miner_names, options, None)
+    generate_local_testnet(miner_names, options, None, false)
 }
 
 /// Generate an isolated testnet with experimental SLH rules after its seed chain.
@@ -133,13 +133,29 @@ pub fn generate_local_testnet_with_slh_dsa_b128s(
         );
     }
 
-    generate_local_testnet(miner_names, options, Some(limits))
+    generate_local_testnet(miner_names, options, Some(limits), false)
+}
+
+/// Opt-in SLH devnet recipe that permits transparent spends of mature coinbases.
+///
+/// This changes the native chain fingerprint. It does not change the 100-block
+/// coinbase maturity rule. Ordinary generators retain their existing behavior.
+pub fn generate_local_testnet_with_slh_dsa_b128s_funding(
+    miner_names: Vec<String>,
+    options: LocalTestnetGenesisOptions,
+    limits: ExperimentalSlhDsaB128sLimits,
+) -> Result<GeneratedLocalTestnet, crate::BoxError> {
+    if options.latest_network_upgrade != NetworkUpgrade::Nu7 {
+        return Err("an SLH funding testnet must explicitly select NU7".into());
+    }
+    generate_local_testnet(miner_names, options, Some(limits), true)
 }
 
 fn generate_local_testnet(
     miner_names: Vec<String>,
     options: LocalTestnetGenesisOptions,
     slh_limits: Option<ExperimentalSlhDsaB128sLimits>,
+    unshielded_funding: bool,
 ) -> Result<GeneratedLocalTestnet, crate::BoxError> {
     if options.target_spacing_secs == 0 {
         return Err("target_spacing_secs must be non-zero".into());
@@ -274,6 +290,7 @@ fn generate_local_testnet(
         magic_bytes,
         target_difficulty,
         slh_activation,
+        unshielded_funding,
     })?;
 
     Ok(GeneratedLocalTestnet {
@@ -397,6 +414,7 @@ struct BuildNetworkOptions<'a> {
     magic_bytes: [u8; 4],
     target_difficulty: ExpandedDifficulty,
     slh_activation: Option<(Height, ExperimentalSlhDsaB128sLimits)>,
+    unshielded_funding: bool,
 }
 
 /// Build a zakura-chain [`Network`] from the generated parameters.
@@ -411,6 +429,7 @@ fn build_network(options: BuildNetworkOptions<'_>) -> Result<Network, crate::Box
         magic_bytes,
         target_difficulty,
         slh_activation,
+        unshielded_funding,
     } = options;
 
     let activation_heights =
@@ -425,6 +444,7 @@ fn build_network(options: BuildNetworkOptions<'_>) -> Result<Network, crate::Box
         .with_network_magic(Magic(magic_bytes))?
         .with_target_difficulty_limit(target_difficulty)?
         .with_disable_pow(disable_pow)
+        .with_unshielded_coinbase_spends(unshielded_funding)
         .with_slow_start_interval(Height(0))
         .with_max_block_time_start_height(Height(activation_height))
         .with_activation_heights(activation_heights)?
@@ -817,6 +837,21 @@ mod tests {
             panic!("the non-SLH generator default must not enable SLH implicitly");
         };
         assert!(error.to_string().contains("explicitly select NU7"));
+    }
+
+    #[test]
+    fn transparent_coinbase_funding_is_explicit() {
+        let limits = ExperimentalSlhDsaB128sLimits::new(16, 64).unwrap();
+        let options = || LocalTestnetGenesisOptions {
+            latest_network_upgrade: NetworkUpgrade::Nu7,
+            ..Default::default()
+        };
+        let ordinary =
+            generate_local_testnet_with_slh_dsa_b128s(vec![], options(), limits).unwrap();
+        let funding =
+            generate_local_testnet_with_slh_dsa_b128s_funding(vec![], options(), limits).unwrap();
+        assert!(!ordinary.network.should_allow_unshielded_coinbase_spends());
+        assert!(funding.network.should_allow_unshielded_coinbase_spends());
     }
 
     #[test]

@@ -40,7 +40,15 @@ struct KeyExchange {
 impl KeyExchange {
     fn to_json(&self) -> Result<Vec<u8>> {
         self.profile.validate()?;
-        if self.format != FORMAT || self.role > 1 || self.suite != 0xf7 {
+        if self.format
+            != if self.profile.network == 1 {
+                "ZcashTransparentPQ/experimental/slh-dsa-b-128s/key-exchange/v2"
+            } else {
+                FORMAT
+            }
+            || self.role > 1
+            || self.suite != 0xf7
+        {
             return Err("unsupported public key exchange".into());
         }
         let bytes = serde_json::to_vec(self)?;
@@ -198,7 +206,12 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
             index: args[4].parse()?,
         };
         let exchange = KeyExchange {
-            format: FORMAT.into(),
+            format: if profile.network == 1 {
+                "ZcashTransparentPQ/experimental/slh-dsa-b-128s/key-exchange/v2"
+            } else {
+                FORMAT
+            }
+            .into(),
             index: path.index,
             profile,
             public_key_hex: Hex(wallet.public_key(path)),
