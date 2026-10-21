@@ -158,7 +158,7 @@ fn custom_chain_payments_recovery_and_context_fail_closed() {
                 .unwrap(),
             txid(&tx)
         );
-        assert_eq!(source.sent, [bytes.clone()]);
+        assert_eq!(source.sent.as_slice(), std::slice::from_ref(&bytes));
         if version == 6 {
             let snapshot = temp.path().join("snapshot");
             store

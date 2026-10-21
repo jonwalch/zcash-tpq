@@ -131,7 +131,7 @@ fn custom_derivation_matches_independent_python_hmac_and_separates_chains() {
     };
     let seed = derive_chain_seed(&root, path, Some(crate::Hex([0x31; 32])));
     // Python stdlib hmac.digest/SHA-256, not the production HKDF backend.
-    assert_eq!(hex::encode(&*seed), "2f47276b6e3b9279a54970935014b21699c2b3d1238daa5c6b9c2fc0c8dfd64c4e563c0d62bfc803911589fb40ae5698");
+    assert_eq!(hex::encode(*seed), "2f47276b6e3b9279a54970935014b21699c2b3d1238daa5c6b9c2fc0c8dfd64c4e563c0d62bfc803911589fb40ae5698");
     assert_ne!(*seed, *derive_seed(&root, path));
     assert_ne!(
         *seed,

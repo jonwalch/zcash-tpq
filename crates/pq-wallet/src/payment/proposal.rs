@@ -167,10 +167,7 @@ impl Proposal {
             match (record.kind.as_str(), &record.entry) {
                 ("payment", None) => (),
                 ("change", Some(entry))
-                    if entry.role == 1 && entry.receiver_for(&self.profile)? == receiver =>
-                {
-                    ()
-                }
+                    if entry.role == 1 && entry.receiver_for(&self.profile)? == receiver => {}
                 // Explicit policy replacement needs its own approval/recovery flow.
                 ("policy_transfer", Some(_)) => return Err(Error::UnsupportedContext),
                 _ => return Err(Error::ProposalMismatch),

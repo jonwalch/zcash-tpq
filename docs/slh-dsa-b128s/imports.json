@@ -16,7 +16,7 @@
         "docs/slh-dsa-b128s/wallet.md"
       ],
       "reason": "Exercise chain-bound custom Testnet payments, recovery, and cross-chain rejection through public wallet operations while preserving Regtest vectors.",
-      "sha256": "f99746f6b31b05c30be5113844b7362b40b119162e2dfb41fd04da6ab3738093"
+      "sha256": "465e27ac0cd6b326691f0f9f12e9969f70e1f07f799aedb8d8c3d63dcbbd4fed"
     },
     {
       "disposition": "new",
@@ -689,7 +689,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Adapt pinned wallet payment and watch tests into a bounded synthetic chain at the trusted-node interface. Use existing enrollment and backup APIs with private disposable keys and indexed prepared responses, without claiming consensus-valid funding or live acceptance.",
-      "sha256": "d64833da3d748851f83c71d49c9ad6aa5f52c18b0d93c15dff9483cb6fe0a5eb"
+      "sha256": "ebf921070804d80c3a9cb9da7cb5eb07fbd2dcf309ec3c7e1067014e91a2e091"
     },
     {
       "disposition": "new",
@@ -1721,7 +1721,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "e0dbe5139a55cc1ee482f255a932c727232f2c729e8d65538620685b0f30dc5d"
+      "sha256": "75107b71dcbdb236e537a65228bcb6f567261979ccbf3be5dc5f57d09a1788d9"
     },
     {
       "disposition": "adapted",
@@ -1787,7 +1787,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "1e4a6b291457beb98048a459228bc53c67706aa1eeda8b4862a75fb9e803854a"
+      "sha256": "713b1e33474af01d8e056208d470f4b7a36c88313b48231e76f3d9eff0e268a9"
     },
     {
       "disposition": "adapted",
