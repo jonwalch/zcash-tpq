@@ -12,8 +12,8 @@ Live acceptance and independent security review remain open.
 
 | Item | Pinned value |
 | --- | --- |
-| Zakura commit | `e33dc43089acca2fe2c6516927932f2b7618b8bc` |
-| Zakura tree | `88637ce09b0bbd5669b664e47b20b37b35523323` |
+| Zakura commit | `3f36c35031126a8f8cd52865ef0be9e5dc494b8d` |
+| Zakura tree | `578099c7ad85e1c4843261715a942429ab365ea9` |
 | `PQC-Suite-B/signatures` commit | `b392fe82d2d9770142477a576a758a233888bc0a` |
 | Algorithm | `Blake3_128s` |
 | Verifier and wallet signer hash dependency | BLAKE3 `=1.8.5`, without Rayon |
@@ -202,7 +202,16 @@ This separate window can retain 401 full blocks: 8.02 GB of serialized data and
 about 32.08 GB of estimated decoded copies. The 1.5 GiB setting is not a cap on
 total node memory and does not ensure that every workload fits a 4–8 GB machine.
 Requests without a body-size hint reserve 20 MB each, so a fixed request budget
-permits fewer concurrent requests. Legacy block and transaction messages can
+permits fewer concurrent requests.
+
+Above the last checkpoint, upstream now gates decoded submissions at 512 MiB.
+Later bodies stay raw until earlier submissions finish. One body can always
+progress when none is submitted. This gate is not a hard memory ceiling and does
+not limit the exempt checkpoint window described above.
+Native header sync now requires stream version 9. Native block sync requests
+and serves one block per request; `max_blocks_per_response` is accepted but ignored.
+
+Legacy block and transaction messages can
 carry up to 20 MiB each. The decoder does not reserve a full body from its header;
 the transport buffer grows as bytes arrive. Completed large messages release
 that buffer when the remaining bytes fit within 64 KiB. The native frame reader

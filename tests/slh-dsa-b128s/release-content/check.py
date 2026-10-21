@@ -23,8 +23,8 @@ from generate_transactions import canonical, strict_json  # noqa: E402
 
 FOUNDATION = "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
 FOUNDATION_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
-UPSTREAM = "e33dc43089acca2fe2c6516927932f2b7618b8bc"
-UPSTREAM_TREE = "88637ce09b0bbd5669b664e47b20b37b35523323"
+UPSTREAM = "3f36c35031126a8f8cd52865ef0be9e5dc494b8d"
+UPSTREAM_TREE = "578099c7ad85e1c4843261715a942429ab365ea9"
 # GitHub squashed PR #12, so its exact upstream entries have no upstream parent
 # at this historical commit. Its exact record also survives later feature squashes.
 RECORDED_SQUASH_IMPORTS = {
@@ -235,8 +235,11 @@ def authenticated_squash_imports(root):
     for revision, record in RECORDED_SQUASH_IMPORTS.items():
         if not ancestor(root, revision, "HEAD"):
             continue
-        require(record["upstream"] == UPSTREAM and record["upstream_tree"] == UPSTREAM_TREE,
-                "squash upstream pin mismatch")
+        # A historical squash authenticates only its recorded upstream entries,
+        # not a later baseline. Keep its exact tree and parent checks below.
+        require(ancestor(root, FOUNDATION, record["upstream"])
+                and ancestor(root, record["upstream"], UPSTREAM),
+                "squash upstream is outside pinned upstream ancestry")
         require(git(root, "rev-parse", record["upstream"] + "^{tree}").decode().strip()
                 == record["upstream_tree"], "squash upstream tree mismatch")
         require(git(root, "rev-parse", revision + "^{tree}").decode().strip() == record["tree"],
@@ -410,7 +413,7 @@ def validate_baselines(root):
             "foundation tree mismatch")
     require(git(root, "rev-parse", UPSTREAM + "^{tree}").decode().strip() == UPSTREAM_TREE, "upstream tree mismatch")
     require(ancestor(root, FOUNDATION, UPSTREAM), "upstream does not descend from foundation")
-    require(ancestor(root, UPSTREAM, "HEAD") or bool(authenticated_squash_imports(root)),
+    require(ancestor(root, UPSTREAM, "HEAD") or UPSTREAM in authenticated_squash_imports(root).values(),
             "current upstream is not integrated by ancestry or an authenticated squash import")
 
 

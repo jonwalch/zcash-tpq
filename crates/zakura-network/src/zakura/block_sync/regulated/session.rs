@@ -10,7 +10,9 @@ use super::{
 };
 use crate::zakura::{
     block_sync::{ZakuraBlockSyncConfig, MAX_BS_BLOCKS_PER_REQUEST, MAX_BS_RESPONSE_BYTES},
-    regulation::{sizing, CompletionId, Completions, Serve, ServeCapacity, ServeLimits},
+    regulation::{
+        sizing, CompletionId, Completions, OutputOrder, Serve, ServeCapacity, ServeLimits,
+    },
     FramedSend, SinkReject, ZakuraPeerId,
 };
 
@@ -30,17 +32,18 @@ const NODE_EXECUTION: usize = 24;
 /// Read-and-encode jobs for one peer: half the node, so a stalled peer cannot
 /// hold every slot. One peer's share still exceeds one connection's throughput.
 const PEER_EXECUTION: usize = NODE_EXECUTION / 2;
+// An honest server interleaves at most one body per running job, so keep the
+// owed-ending gate well above one peer's jobs (see `MAX_PENDING_ENDINGS`).
+const _: () = assert!(2 * PEER_EXECUTION <= super::live_requester::MAX_PENDING_ENDINGS);
 
 /// The production GetBlocks serving limits. Execution is fixed by
 /// [`NODE_EXECUTION`]; output sizing covers the largest possible response, so
 /// the response configuration cannot inflate execution concurrency.
 pub(crate) fn serving_limits() -> ServeLimits {
-    let largest = Range {
-        start: Height::MIN,
-        count: MAX_BS_BLOCKS_PER_REQUEST,
-    }
-    .response_cap(MAX_BS_RESPONSE_BYTES)
-    .output_bytes();
+    let largest = Range::new(Height::MIN, MAX_BS_BLOCKS_PER_REQUEST)
+        .expect("the protocol's largest range starts at height zero")
+        .response_cap(MAX_BS_RESPONSE_BYTES)
+        .output_bytes();
     ServeLimits {
         node_execution: NODE_EXECUTION,
         peer_execution: PEER_EXECUTION,
@@ -54,14 +57,14 @@ pub(crate) fn serving_limits() -> ServeLimits {
 /// session slots bound every session that can hold bookkeeping, including
 /// replacements still cleaning up. Each may hold `2 × limit` commitments (see
 /// `Serve`'s margin), so the limit is the configured advertisement capped at
-/// what fits [`BOOKKEEPING_BUDGET_BYTES`] across those sessions. Config
-/// validation rejects session counts that [`serving_sessions_fit_budget`]
-/// refuses; an unvalidated config keeps a limit of one and [`Serving::new`]
-/// warns. Local outbound sizing and older peers keep the configured value.
+/// what fits [`BOOKKEEPING_BUDGET_BYTES`] across those sessions. The reactor
+/// refuses to start with a config that [`serving_sessions_fit_budget`] rejects,
+/// so a served limit is never zero. Local outbound sizing and older peers keep
+/// the configured value.
 pub(crate) fn serving_max_inflight_requests(config: &ZakuraBlockSyncConfig) -> u32 {
     let configured = config.advertised_max_inflight_requests();
     budgeted_inflight_requests(serving_sessions(config))
-        .map_or(configured, |budget| configured.min(budget.max(1)))
+        .map_or(configured, |budget| configured.min(budget))
 }
 
 /// Whether even one request per session fits the bookkeeping budget, which
@@ -102,16 +105,11 @@ pub(crate) struct Serving {
 impl Serving {
     pub(crate) fn new(source: Arc<dyn Source>, config: &ZakuraBlockSyncConfig) -> Self {
         let limits = serving_limits();
+        debug_assert!(
+            serving_sessions_fit_budget(config),
+            "the reactor validates the config before serving",
+        );
         let advertised = serving_max_inflight_requests(config);
-        if !serving_sessions_fit_budget(config) {
-            tracing::warn!(
-                max_inbound_peers = config.peer_limits.max_inbound_peers,
-                max_outbound_peers = config.peer_limits.max_outbound_peers,
-                budget_bytes = BOOKKEEPING_BUDGET_BYTES,
-                "block-sync peer limits allow more serving sessions than the GetBlocks \
-                 bookkeeping budget covers; advertising one in-flight request per peer",
-            );
-        }
         Self {
             source,
             capacity: ServeCapacity::new("block-sync", &GET_BLOCKS, limits)
@@ -134,7 +132,10 @@ impl Serving {
             .expect("advertised serving limits are within the protocol bounds")
             .with_session(send.clone());
         ServingSession {
-            serve: self.capacity.session(
+            // The requester matches each block to the live range expecting its
+            // hash and each ending by start height, so ranges need no order.
+            serve: self.capacity.session_with_order(
+                OutputOrder::Ready,
                 Arc::new(producer),
                 peer,
                 self.advertised,
@@ -156,12 +157,12 @@ pub(crate) struct ServingSession {
 }
 
 impl ServingSession {
-    /// Admit without waiting for storage or output capacity. Only malformed,
-    /// overlapping, or excessive commitments are peer faults.
-    pub(crate) fn admit(&mut self, start: Height, count: u32) -> Result<(), SinkReject> {
-        let range = Range::new(start, count).map_err(SinkReject::protocol)?;
+    /// Admit a range that the stream-6 codec already checked, without waiting
+    /// for storage or output capacity. Only overlapping or excessive commitments
+    /// are peer faults here.
+    pub(crate) fn admit(&mut self, range: Range) -> Result<(), SinkReject> {
+        let (start, last) = (range.start(), range.last());
         self.remove_completed();
-        let last = Height(start.0 + count - 1);
         if self
             .ranges
             .range(..=last)
@@ -183,6 +184,8 @@ impl ServingSession {
     }
 
     /// Drain under the ending-publication lock before reusing any live range.
+    /// A drained range's ending is already in the session's shared output, so
+    /// a replacement's frames queue after it (see [`OutputOrder::Ready`]).
     fn remove_completed(&mut self) {
         self.completed.drain(|id| {
             let start =

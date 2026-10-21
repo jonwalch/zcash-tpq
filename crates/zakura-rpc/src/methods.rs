@@ -37,16 +37,13 @@ use std::{
     time::Duration,
 };
 
+use async_trait::async_trait;
 use chrono::Utc;
 use derive_new::new;
 use futures::{future::OptionFuture, stream::FuturesOrdered, StreamExt, TryFutureExt};
 use getset::{CopyGetters, Getters};
 use hex::{FromHex, ToHex};
 use indexmap::IndexMap;
-use jsonrpsee::core::{async_trait, RpcResult as Result};
-use jsonrpsee_proc_macros::rpc;
-use jsonrpsee_types::{ErrorCode, ErrorObject};
-use schemars::JsonSchema;
 use serde::Deserialize;
 use tokio::{
     sync::{broadcast, mpsc, watch},
@@ -84,6 +81,7 @@ use zakura_consensus::{
 };
 use zakura_network::{address_book_peers::AddressBookPeers, types::PeerServices, PeerSocketAddr};
 use zakura_node_services::mempool::{self, CreatedOrSpent, MempoolService};
+use zakura_node_services::task::spawn_erased;
 use zakura_state::{
     AnyTx, HashOrHeight, OutputLocation, ReadRequest, ReadResponse, ReadState as ReadStateService,
     State as StateService, TransactionLocation,
@@ -102,6 +100,7 @@ use crate::{
     server::{
         self,
         error::{MapError, OkOrError},
+        jsonrpc::{ErrorCode, ErrorObject, RpcResult as Result},
     },
 };
 
@@ -282,6 +281,7 @@ pub(super) const PARAM_COMMAND_DESC: &str = "The command to execute.";
 #[allow(non_upper_case_globals)]
 pub(super) const PARAM__PARAMETERS_DESC: &str = "The parameters for the command.";
 pub(super) const PARAM_BLOCK_HASH_DESC: &str = "The hash of the block to return.";
+pub(super) const PARAM_BLOCK_HEX_DESC: &str = "Canonical hex-encoded block bytes.";
 pub(super) const PARAM_ADDRESS_DESC: &str = "The address to return.";
 pub(super) const PARAM_ADDRESS_STRINGS_DESC: &str = "The addresses to return.";
 pub(super) const PARAM_ADDR_DESC: &str = "The address to return.";
@@ -304,9 +304,9 @@ mod unix;
 #[cfg(test)]
 mod tests;
 
-#[rpc(server)]
+server::jsonrpc::rpc_trait! {
 /// RPC method signatures.
-pub trait Rpc {
+pub trait RpcServer {
     /// Returns software information from the RPC server, as a
     /// [`GetInfoResponse`] JSON struct.
     ///
@@ -817,9 +817,7 @@ pub trait Rpc {
         &self,
         num_blocks: Option<i32>,
         height: Option<i32>,
-    ) -> Result<u64> {
-        self.get_network_sol_ps(num_blocks, height).await
-    }
+    ) -> Result<u64>;
 
     /// Returns an object containing various state info regarding P2P networking.
     ///
@@ -1030,6 +1028,7 @@ pub trait Rpc {
         n: u32,
         include_mempool: Option<bool>,
     ) -> Result<GetTxOutResponse>;
+}
 }
 
 /// RPC method implementations.
@@ -1446,7 +1445,7 @@ where
         };
 
         // run the process queue
-        let rpc_tx_queue_task_handle = tokio::spawn(
+        let rpc_tx_queue_task_handle = spawn_erased(
             runner
                 .run(mempool, read_state, latest_chain_tip, network)
                 .in_current_span(),
@@ -1618,10 +1617,9 @@ where
         }
 
         if state.saturated {
-            return Err(ErrorObject::owned(
+            return Err(ErrorObject::new(
                 0,
                 "template rejection limit reached; wait for a new tip",
-                None::<()>,
             ));
         }
 
@@ -1723,7 +1721,7 @@ where
                 Ok(None)
             }
             Ok(Ok(zakura_state::ReadResponse::Tip(_))) | Ok(Err(_)) | Err(_) => {
-                Err(ErrorObject::owned(0, error, None::<()>))
+                Err(ErrorObject::new(0, error))
             }
             Ok(Ok(_)) => unreachable!("unmatched response to a tip request"),
         }
@@ -1907,10 +1905,9 @@ where
         });
 
         let block_verifier_router_response = lifecycle.await.map_err(|error| {
-            ErrorObject::owned(
-                ErrorCode::InternalError.code(),
+            ErrorObject::new(
+                ErrorCode::InternalError,
                 format!("mined block lifecycle task failed: {error}"),
-                None::<()>,
             )
         })?;
 
@@ -2883,7 +2880,7 @@ where
                     .collect();
 
                 // Sort returned transaction IDs in numeric/string order.
-                tx_ids.sort();
+                tx_ids.sort_unstable();
 
                 Ok(GetRawMempoolResponse::TxIds(tx_ids))
             }
@@ -3257,10 +3254,9 @@ where
                 subtrees,
             })
         } else {
-            Err(ErrorObject::owned(
-                server::error::LegacyCode::Misc.into(),
+            Err(ErrorObject::new(
+                server::error::LegacyCode::Misc,
                 format!("invalid pool name, must be one of: {POOL_LIST:?}").as_str(),
-                None::<()>,
             ))
         }
     }
@@ -3381,24 +3377,21 @@ where
         if self.network.is_regtest() {
             match unix::raise_interrupt() {
                 Ok(_) => Ok("Zakura server stopping".to_string()),
-                Err(error) => Err(ErrorObject::owned(
-                    ErrorCode::InternalError.code(),
+                Err(error) => Err(ErrorObject::new(
+                    ErrorCode::InternalError,
                     format!("Failed to shut down: {error}").as_str(),
-                    None::<()>,
                 )),
             }
         } else {
-            Err(ErrorObject::borrowed(
-                ErrorCode::MethodNotFound.code(),
+            Err(ErrorObject::new(
+                ErrorCode::MethodNotFound,
                 "stop is only available on regtest networks",
-                None,
             ))
         }
         #[cfg(target_os = "windows")]
-        Err(ErrorObject::borrowed(
-            ErrorCode::MethodNotFound.code(),
+        Err(ErrorObject::new(
+            ErrorCode::MethodNotFound,
             "stop is not available in windows targets",
-            None,
         ))
     }
 
@@ -3420,10 +3413,9 @@ where
 
         match response {
             zakura_state::ReadResponse::BlockHash(Some(hash)) => Ok(GetBlockHashResponse(hash)),
-            zakura_state::ReadResponse::BlockHash(None) => Err(ErrorObject::borrowed(
-                server::error::LegacyCode::InvalidParameter.into(),
+            zakura_state::ReadResponse::BlockHash(None) => Err(ErrorObject::new(
+                server::error::LegacyCode::InvalidParameter,
                 "Block not found",
-                None,
             )),
             _ => unreachable!("unmatched response to a block request"),
         }
@@ -3647,7 +3639,7 @@ where
 
                     let _ = wait_for_new_tip.await;
 
-                    Ok::<_, ErrorObject<'static>>(precomputed_coinbase)
+                    Ok::<_, ErrorObject>(precomputed_coinbase)
                 };
 
                 // Wait for the template's time range to expire. On testnet, minimum difficulty
@@ -3834,11 +3826,7 @@ where
             }
         }
 
-        Err(ErrorObject::owned(
-            0,
-            "template parent changed; retry",
-            None::<()>,
-        ))
+        Err(ErrorObject::new(0, "template parent changed; retry"))
     }
 
     async fn submit_block(
@@ -3995,6 +3983,14 @@ where
         Ok(solution_rate.min(U256::from(u64::MAX)).as_u64())
     }
 
+    async fn get_network_hash_ps(
+        &self,
+        num_blocks: Option<i32>,
+        height: Option<i32>,
+    ) -> Result<u64> {
+        self.get_network_sol_ps(num_blocks, height).await
+    }
+
     async fn get_network_info(&self) -> Result<GetNetworkInfoResponse> {
         let version = GetInfoResponse::version_from_string(&self.build_version)
             .expect("invalid version string");
@@ -4106,10 +4102,9 @@ where
             )
             .await
             .map_err(|_| {
-                ErrorObject::owned(
-                    server::error::LegacyCode::Misc.into(),
+                ErrorObject::new(
+                    server::error::LegacyCode::Misc,
                     "timed out waiting for parent block information",
-                    None::<()>,
                 )
             })??
             else {
@@ -4148,7 +4143,7 @@ where
             });
 
         // Use the same funding stream order as zcashd
-        funding_streams.sort_by_key(|(receiver, _funding_stream)| {
+        funding_streams.sort_unstable_by_key(|(receiver, _funding_stream)| {
             ZCASHD_FUNDING_STREAM_ORDER
                 .iter()
                 .position(|zcashd_receiver| zcashd_receiver == receiver)
@@ -4280,10 +4275,9 @@ where
             Ok(zakura_state::Response::Precious) => Ok(()),
             Ok(_) => unreachable!("unmatched response to a precious block request"),
             Err(error) => match error.downcast_ref::<zakura_state::PreciousError>() {
-                Some(zakura_state::PreciousError::BlockNotFound(_)) => Err(ErrorObject::owned(
-                    server::error::LegacyCode::InvalidAddressOrKey.into(),
+                Some(zakura_state::PreciousError::BlockNotFound(_)) => Err(ErrorObject::new(
+                    server::error::LegacyCode::InvalidAddressOrKey,
                     "Block not found",
-                    None::<()>,
                 )),
                 _ => Err(error).map_misc_error(),
             },
@@ -4295,10 +4289,9 @@ where
         let network = self.network.clone();
 
         if !network.disable_pow() {
-            return Err(ErrorObject::borrowed(
+            return Err(ErrorObject::new(
                 0,
                 "generate is only supported on networks where PoW is disabled",
-                None,
             ));
         }
 
@@ -4312,11 +4305,7 @@ where
             let block_template = rpc.get_block_template(None).await.map_misc_error()?;
 
             let GetBlockTemplateResponse::TemplateMode(block_template) = block_template else {
-                return Err(ErrorObject::borrowed(
-                    0,
-                    "error generating block template",
-                    None,
-                ));
+                return Err(ErrorObject::new(0, "error generating block template"));
             };
 
             let proposal_block = proposal_block_from_template(
@@ -4336,10 +4325,9 @@ where
             match r {
                 SubmitBlockResponse::Accepted => { /* pass */ }
                 SubmitBlockResponse::ErrorResponse(response) => {
-                    return Err(ErrorObject::owned(
-                        server::error::LegacyCode::Misc.into(),
+                    return Err(ErrorObject::new(
+                        server::error::LegacyCode::Misc,
                         format!("block was rejected: {response:?}"),
-                        None::<()>,
                     ));
                 }
             }
@@ -4362,19 +4350,17 @@ where
                     if self.address_book.clone().add_peer(addr) {
                         Ok(())
                     } else {
-                        return Err(ErrorObject::owned(
-                            server::error::LegacyCode::ClientNodeAlreadyAdded.into(),
+                        return Err(ErrorObject::new(
+                            server::error::LegacyCode::ClientNodeAlreadyAdded,
                             format!("peer address was already present in the address book: {addr}"),
-                            None::<()>,
                         ));
                     }
                 }
             }
         } else {
-            return Err(ErrorObject::owned(
-                ErrorCode::InvalidParams.code(),
+            return Err(ErrorObject::new(
+                ErrorCode::InvalidParams,
                 "addnode command is only supported on regtest",
-                None::<()>,
             ));
         }
     }
@@ -4510,7 +4496,7 @@ where
 
 /// Response to a `getinfo` RPC request.
 ///
-/// See the notes for the [`Rpc::get_info` method].
+/// See the notes for the [`RpcServer::get_info` method].
 #[allow(clippy::too_many_arguments)]
 #[derive(
     Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, Getters, CopyGetters, new,
@@ -4777,7 +4763,7 @@ where
 
 /// Response to a `getblockchaininfo` RPC request.
 ///
-/// See the notes for the [`Rpc::get_blockchain_info` method].
+/// See the notes for the [`RpcServer::get_blockchain_info` method].
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, Getters, CopyGetters)]
 pub struct GetBlockchainInfoResponse {
     /// Current network name as defined in BIP70 (main, test, regtest)
@@ -5133,7 +5119,7 @@ impl GetBlockchainInfoResponse {
 }
 
 /// A request for [`RpcServer::get_address_balance`].
-#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Deserialize, serde::Serialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Deserialize, serde::Serialize)]
 #[serde(from = "DGetAddressBalanceRequest")]
 pub struct GetAddressBalanceRequest {
     /// A list of transparent address strings.
@@ -5154,7 +5140,7 @@ impl From<DGetAddressBalanceRequest> for GetAddressBalanceRequest {
 }
 
 /// An intermediate type used to deserialize [`GetAddressBalanceRequest`].
-#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Deserialize)]
 #[serde(untagged)]
 enum DGetAddressBalanceRequest {
     /// A list of address strings.
@@ -5226,16 +5212,7 @@ pub struct GetAddressBalanceResponse {
 
 /// Parameters of [`RpcServer::get_address_utxos`] RPC method.
 #[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    serde::Deserialize,
-    serde::Serialize,
-    Getters,
-    CopyGetters,
-    new,
-    JsonSchema,
+    Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize, Getters, CopyGetters, new,
 )]
 #[serde(from = "DGetAddressUtxosRequest")]
 pub struct GetAddressUtxosRequest {
@@ -5268,7 +5245,7 @@ impl From<DGetAddressUtxosRequest> for GetAddressUtxosRequest {
 }
 
 /// An intermediate type used to deserialize [`GetAddressUtxosRequest`].
-#[derive(Debug, serde::Deserialize, JsonSchema)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
 enum DGetAddressUtxosRequest {
     /// A single address string.
@@ -5394,7 +5371,7 @@ impl TipConsensusBranch {
 ///
 /// Contains the hex-encoded hash of the sent transaction.
 ///
-/// See the notes for the [`Rpc::send_raw_transaction` method].
+/// See the notes for the [`RpcServer::send_raw_transaction` method].
 #[derive(Copy, Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct SendRawTransactionResponse(#[serde(with = "hex")] transaction::Hash);
 
@@ -5783,7 +5760,7 @@ impl Default for GetBlockHashResponse {
 
 /// Response to a `getrawtransaction` RPC request.
 ///
-/// See the notes for the [`Rpc::get_raw_transaction` method].
+/// See the notes for the [`RpcServer::get_raw_transaction` method].
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum GetRawTransactionResponse {
@@ -5828,7 +5805,7 @@ pub struct GetAddressUtxosResponseObject {
 
 /// A UTXO returned by the `getaddressutxos` RPC request.
 ///
-/// See the notes for the [`Rpc::get_address_utxos` method].
+/// See the notes for the [`RpcServer::get_address_utxos` method].
 #[derive(
     Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, Getters, CopyGetters, new,
 )]
@@ -5905,9 +5882,7 @@ impl Utxo {
 /// Parameters of [`RpcServer::get_address_tx_ids`] RPC method.
 ///
 /// See [`RpcServer::get_address_tx_ids`] for more details.
-#[derive(
-    Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize, Getters, new, JsonSchema,
-)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize, Getters, new)]
 #[serde(from = "DGetAddressTxIdsRequest")]
 pub struct GetAddressTxIdsRequest {
     /// A list of addresses. The RPC method will get transactions IDs that sent or received
@@ -5955,7 +5930,7 @@ impl From<DGetAddressTxIdsRequest> for GetAddressTxIdsRequest {
 }
 
 /// An intermediate type used to deserialize [`GetAddressTxIdsRequest`].
-#[derive(Debug, serde::Deserialize, JsonSchema)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
 enum DGetAddressTxIdsRequest {
     /// A single address string.
@@ -6085,10 +6060,9 @@ fn build_height_range(
     };
 
     if start > end {
-        return Err(ErrorObject::owned(
-            ErrorCode::InvalidParams.code(),
+        return Err(ErrorObject::new(
+            ErrorCode::InvalidParams,
             format!("start {start:?} must be less than or equal to end {end:?}"),
-            None::<()>,
         ));
     }
 
@@ -6104,18 +6078,13 @@ fn build_height_range(
 // TODO: also use this function in `get_block` and `z_get_treestate`
 pub fn height_from_signed_int(index: i32, tip_height: Height) -> Result<Height> {
     if index >= 0 {
-        let height = index.try_into().map_err(|_| {
-            ErrorObject::borrowed(
-                ErrorCode::InvalidParams.code(),
-                "Index conversion failed",
-                None,
-            )
-        })?;
+        let height = index
+            .try_into()
+            .map_err(|_| ErrorObject::new(ErrorCode::InvalidParams, "Index conversion failed"))?;
         if height > tip_height.0 {
-            return Err(ErrorObject::borrowed(
-                ErrorCode::InvalidParams.code(),
+            return Err(ErrorObject::new(
+                ErrorCode::InvalidParams,
                 "Provided index is greater than the current tip",
-                None,
             ));
         }
         Ok(Height(height))
@@ -6123,42 +6092,31 @@ pub fn height_from_signed_int(index: i32, tip_height: Height) -> Result<Height> 
         // `index + 1` can't overflow, because `index` is always negative here.
         let height = i32::try_from(tip_height.0)
             .map_err(|_| {
-                ErrorObject::borrowed(
-                    ErrorCode::InvalidParams.code(),
-                    "Tip height conversion failed",
-                    None,
-                )
+                ErrorObject::new(ErrorCode::InvalidParams, "Tip height conversion failed")
             })?
             .checked_add(index + 1);
 
         let sanitized_height = match height {
             None => {
-                return Err(ErrorObject::borrowed(
-                    ErrorCode::InvalidParams.code(),
+                return Err(ErrorObject::new(
+                    ErrorCode::InvalidParams,
                     "Provided index is not valid",
-                    None,
                 ));
             }
             Some(h) => {
                 if h < 0 {
-                    return Err(ErrorObject::borrowed(
-                        ErrorCode::InvalidParams.code(),
+                    return Err(ErrorObject::new(
+                        ErrorCode::InvalidParams,
                         "Provided negative index ends up with a negative height",
-                        None,
                     ));
                 }
                 let h: u32 = h.try_into().map_err(|_| {
-                    ErrorObject::borrowed(
-                        ErrorCode::InvalidParams.code(),
-                        "Height conversion failed",
-                        None,
-                    )
+                    ErrorObject::new(ErrorCode::InvalidParams, "Height conversion failed")
                 })?;
                 if h > tip_height.0 {
-                    return Err(ErrorObject::borrowed(
-                        ErrorCode::InvalidParams.code(),
+                    return Err(ErrorObject::new(
+                        ErrorCode::InvalidParams,
                         "Provided index is greater than the current tip",
-                        None,
                     ));
                 }
 
@@ -6324,7 +6282,7 @@ where
 }
 
 /// Commands for the `addnode` RPC method.
-#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum AddNodeCommand {
     /// Add a node to the address book.
     #[serde(rename = "add")]
@@ -6333,7 +6291,7 @@ pub enum AddNodeCommand {
 
 /// Response to a `gettxout` RPC request.
 ///
-/// See the notes for the [`Rpc::get_tx_out` method].
+/// See the notes for the [`RpcServer::get_tx_out` method].
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct GetTxOutResponse(Option<types::transaction::OutputObject>);

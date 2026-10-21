@@ -303,8 +303,8 @@ class GitTests(unittest.TestCase):
     def test_recorded_squash_rejects_wrong_upstream_tree_or_parent(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
-            for field, value, reason in (("upstream", fixture.base, "upstream pin mismatch"),
-                                         ("upstream_tree", "00" * 20, "upstream pin mismatch"),
+            for field, value, reason in (("upstream", fixture.base, "squash upstream tree mismatch"),
+                                         ("upstream_tree", "00" * 20, "squash upstream tree mismatch"),
                                          ("tree", "00" * 20, "squash tree mismatch"),
                                          ("parent", fixture.base, "squash parent mismatch")):
                 modified = copy.deepcopy(pins)
@@ -319,6 +319,35 @@ class GitTests(unittest.TestCase):
             modified["RECORDED_SQUASH_IMPORTS"][revision]["upstream_tree"] = "00" * 20
             with patch.multiple(audit, **modified), \
                     self.assertRaisesRegex(ValueError, "squash upstream tree mismatch"):
+                audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+
+    def test_later_baseline_keeps_old_squash_bound_to_its_recorded_upstream(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture, upstream, revision, pins = self.squashed_fixture(Path(temporary))
+            product = fixture.run("branch", "--show-current")
+            fixture.run("checkout", "-qb", "later-upstream", upstream)
+            fixture.write("upstream.txt", "later upstream bytes\n")
+            later = fixture.commit("later upstream release")
+            fixture.run("checkout", "-q", product)
+            pins |= {"UPSTREAM": later, "UPSTREAM_TREE": fixture.run("rev-parse", later + "^{tree}")}
+            with patch.multiple(audit, **pins):
+                self.assertEqual(audit.authenticated_squash_imports(fixture.root), {revision: upstream})
+                # Authenticating an old import must not authorize the new baseline.
+                with self.assertRaisesRegex(ValueError, "not integrated"):
+                    audit.validate_baselines(fixture.root)
+            fixture.run("merge", "-q", "--no-ff", "-s", "ours", later, "-m", "retain later upstream ancestry")
+            with patch.multiple(audit, **pins):
+                audit.validate_baselines(fixture.root)
+                result = audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
+            self.assertEqual(result["authenticated_squash_imports"], {revision: upstream})
+            self.assertEqual(result["inherited_squash_entries"], 1)
+            # Rebinding the historical record to the later tree must not exempt
+            # the original imported bytes from review.
+            modified = copy.deepcopy(pins)
+            modified["RECORDED_SQUASH_IMPORTS"][revision].update(
+                upstream=later, upstream_tree=pins["UPSTREAM_TREE"])
+            with patch.multiple(audit, **modified), \
+                    self.assertRaisesRegex(ValueError, "unreviewed historical path: upstream.txt"):
                 audit.history(fixture.root, audit.tree(fixture.root, fixture.base), {"product.txt"})
 
     def test_recorded_squash_does_not_exempt_changed_bytes_modes_or_symlinks(self):

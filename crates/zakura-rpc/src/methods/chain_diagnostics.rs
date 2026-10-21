@@ -5,9 +5,6 @@
 
 use std::io::Cursor;
 
-use jsonrpsee::core::RpcResult;
-use jsonrpsee_types::ErrorObjectOwned;
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use zakura_chain::{
     block::{Block, MAX_BLOCK_BYTES},
@@ -16,10 +13,13 @@ use zakura_chain::{
     transparent::Address,
 };
 
-use crate::server::error::{LegacyCode, MapError, OkOrError};
+use crate::server::{
+    error::{LegacyCode, MapError, OkOrError},
+    jsonrpc::{ErrorObject, RpcResult},
+};
 
 /// Effective configured-Testnet rule report, independent of a config file or manifest.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GetChainRulesResponse {
     /// Version of this diagnostic schema.
@@ -33,7 +33,7 @@ pub struct GetChainRulesResponse {
 }
 
 /// Configurable consensus rules; no deployment names or claimed fingerprints.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ChainRules {
     /// Network magic bytes in wire order, as lowercase hex.
@@ -55,7 +55,7 @@ pub struct ChainRules {
 }
 
 /// A height and checkpoint hash in display order.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleCheckpoint {
     /// Checkpoint height.
@@ -65,7 +65,7 @@ pub struct RuleCheckpoint {
 }
 
 /// One entry in the effective network upgrade map.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleActivation {
     /// Activation height.
@@ -75,7 +75,7 @@ pub struct RuleActivation {
 }
 
 /// Effective configurable subsidy rules.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleSubsidy {
     /// Number of slow-start blocks.
@@ -97,7 +97,7 @@ pub struct RuleSubsidy {
 }
 
 /// One resolved funding period, with an exclusive end height.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleFundingStream {
     /// Inclusive start height.
@@ -109,7 +109,7 @@ pub struct RuleFundingStream {
 }
 
 /// Funding recipient and ordered address-period script identities.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleFundingRecipient {
     /// One of `ecc`, `zcash-foundation`, `major-grants`, or `deferred`.
@@ -121,7 +121,7 @@ pub struct RuleFundingRecipient {
 }
 
 /// One expected lockbox output.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleLockboxOutput {
     /// P2SH script hash in lowercase hex.
@@ -131,7 +131,7 @@ pub struct RuleLockboxOutput {
 }
 
 /// Effective difficulty policy.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleDifficulty {
     /// Canonical compact target, as eight lowercase display-order hex digits.
@@ -143,7 +143,7 @@ pub struct RuleDifficulty {
 }
 
 /// Disabled experiments are explicit rather than silently omitted.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleExperiments {
     /// This schema version accepts only `null`.
@@ -156,7 +156,7 @@ pub struct RuleExperiments {
 }
 
 /// Configured SLH rules and compiled support, independent of chain-tip state.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleSlhDsaB128s {
     /// Signing contract reported by the compiled verifier.
@@ -178,7 +178,7 @@ pub struct RuleSlhDsaB128s {
 }
 
 /// Structural identity of exact encoded bytes, not evidence of consensus acceptance.
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InspectChainBlockResponse {
     /// Version of this diagnostic schema.
@@ -193,8 +193,8 @@ pub struct InspectChainBlockResponse {
     pub bytes_length: u64,
 }
 
-fn unsupported(message: &str) -> ErrorObjectOwned {
-    ErrorObjectOwned::owned(LegacyCode::InvalidParameter.into(), message, None::<()>)
+fn unsupported(message: &str) -> ErrorObject {
+    ErrorObject::new(LegacyCode::InvalidParameter, message)
 }
 
 fn script_identity(address: &Address) -> RpcResult<String> {

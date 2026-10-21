@@ -67,7 +67,7 @@ class DevnetProducerTests(unittest.TestCase):
             self.assertEqual((receipt["key_count"], receipt["artifact_count"], receipt["signature_count"]), (1, 2, 2))
             self.assertEqual(receipt["kind"], "production-only-not-independent-acceptance")
             self.assertEqual(receipt["producer"]["zakura_revision"],
-                             "e33dc43089acca2fe2c6516927932f2b7618b8bc")
+                             "3f36c35031126a8f8cd52865ef0be9e5dc494b8d")
             for path in output.iterdir():
                 artifact = corpus.strict_json(path.read_bytes(), corpus.MAX_HOST)
                 self.assertEqual(artifact["producer"], receipt["producer"])
@@ -81,14 +81,15 @@ class DevnetProducerTests(unittest.TestCase):
         original = {"zakura_revision": corpus.UPSTREAM}
         with patch.object(corpus, "producer_identity", return_value=(copy.deepcopy(original), {})):
             producer, inventory = devnet.identity(corpus.ROOT, Path("host"), Path("signer"))
-        self.assertEqual(producer["zakura_revision"], "e33dc43089acca2fe2c6516927932f2b7618b8bc")
+        self.assertEqual(producer["zakura_revision"], "3f36c35031126a8f8cd52865ef0be9e5dc494b8d")
         self.assertEqual(original["zakura_revision"], "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc")
         self.assertIn(dict(path=devnet.PIN_PATH, sha256=corpus.digest((corpus.ROOT / devnet.PIN_PATH).read_bytes())),
                       inventory["devnet_generator"])
 
     def test_pin_drift_fails_before_any_production(self):
         for revision in ("9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
-                         "24a17b3f0e7d88513688d607054f018ab6f15af2", "11" * 20, None):
+                         "24a17b3f0e7d88513688d607054f018ab6f15af2",
+                         "e33dc43089acca2fe2c6516927932f2b7618b8bc", "11" * 20, None):
             with self.subTest(revision=revision), tempfile.TemporaryDirectory() as directory, \
                     patch.object(corpus, "producer_identity") as producer, \
                     patch.object(corpus, "host_call") as host, \

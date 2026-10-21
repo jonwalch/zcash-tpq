@@ -867,14 +867,14 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Identify narrowly extracted real shielded constructors and optional output-only controls, preserving independent synthetic references.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
-      "sha256": "040ca7e183868001b751d756259aa040ada70c12b4fd03fbc92ccd5ec2a0bd4e",
+      "sha256": "3bf194c2250137ade506651475ccca66d65bec5d77d056b3d3f8b79727461a30",
       "sources": []
     },
     {
       "adaptation": "Add only existing workspace secp256k1/ripemd dependency edges needed by extracted public classical helper. No registry identity/version or production graph change; coordinated root lock is separately bound by build receipts. Add optional shielded-fixtures dependencies on existing pinned workspace Orchard/Sapling/proofs/protocol/rand libraries; local-prover supplies explicit parameter loading. No download-params or bundled-prover feature requested. Cargo.lock adds only these host edges and three directory helper packages; existing package versions/checksums are unchanged. Reuse only the pinned optional incrementalmerkletree package for bounded genuine note recovery and witnesses; Sapling provides its existing decryption API, so no direct note-encryption dependency is added. The lock change is one host dependency edge only. Upstream refresh: bind the Common 3.0 fixture-only local-prover manifest; proof execution remains a separate approved check. Retain the previously pinned Orchard 2.2.0 graph behind the optional shielded-fixtures feature only, because Common 3 removed historical proof construction. Node graphs must exclude this version.",
       "classification": "existing workspace dependency reuse",
       "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
-      "sha256": "2c1d0764e4018a2bcdf362d9ea3471086ffa588cc15d4925c15385673ff4458e",
+      "sha256": "03d2d7c43117e472833ec5e945660b93edc368463c583227368a350d40b21fc7",
       "sources": []
     },
     {
@@ -895,7 +895,7 @@
       "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope. Record the Common 3 historical proving restriction, isolated compatibility dependency and exact compile/no-proof regression scope.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
-      "sha256": "355da936599d50efddae670a4a24ac1f59238868ac36b77e0fbc832f66230fb1",
+      "sha256": "65e8256c55044a2347c1b1b811a5cc28562eb4a8846f3abcf871f64c2225e0cb",
       "sources": []
     },
     {
@@ -930,7 +930,7 @@
       "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Register strict optional spend prepare/finalize/funding/block operations; default build has no proof/spend tooling.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
-      "sha256": "34d97a19aa271e38e7fe586b7921fa1097e54dcffee6de7f0a8b08b0db9df232",
+      "sha256": "b1c548f35603cb732f21373f64e171875f9e83ec72c7faf91597f8e45415b557",
       "sources": []
     },
     {
@@ -987,6 +987,6 @@
       "sources": []
     }
   ],
-  "upstream_zakura": "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+  "upstream_zakura": "3f36c35031126a8f8cd52865ef0be9e5dc494b8d",
   "validation_boundary": "Only offline/mock and bounded fixture-host checks were executed during preparation. All dedicated binary builds, node/wallet/terminal/signing live cases, proof generation and performance runs require human execution. See docs/slh-dsa-b128s/acceptance.md for prepared and missing driver scenarios."
 }
