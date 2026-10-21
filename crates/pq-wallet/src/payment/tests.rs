@@ -5,6 +5,7 @@ mod archive;
 mod capacity;
 mod change;
 mod counterexamples;
+mod custom;
 mod expiry;
 #[cfg(unix)]
 mod faults;
@@ -102,6 +103,7 @@ fn txid(tx: &Transaction) -> Hex<32> {
     Hex(tx.hash().bytes_in_display_order())
 }
 struct Source {
+    slh: Option<crate::SlhContext>,
     chain: Chain,
     pool: BTreeMap<Hex<32>, Arc<Transaction>>,
     sent: Vec<Vec<u8>>,
@@ -129,6 +131,17 @@ impl Source {
             None,
         );
         Self {
+            slh: wallet
+                .manifest()
+                .profile
+                .chain_fingerprint
+                .map(|chain_fingerprint| crate::SlhContext {
+                    chain_fingerprint: Some(chain_fingerprint),
+                    genesis_hash: wallet.manifest().profile.genesis_hash,
+                    activation_height: wallet.manifest().profile.pq_activation_height,
+                    max_tx_pq_checks: wallet.manifest().profile.max_tx_pq_checks,
+                    max_block_pq_checks: wallet.manifest().profile.max_block_pq_checks,
+                }),
             chain,
             pool: BTreeMap::new(),
             sent: vec![],
@@ -149,7 +162,9 @@ impl ChainSource for Source {
         if self.unavailable {
             return Err(Error::HistoryUnavailable);
         }
-        self.chain.context()
+        let mut context = self.chain.context()?;
+        context.slh = self.slh.clone();
+        Ok(context)
     }
     fn block_hash(&mut self, h: u32) -> Result<Hex<32>, Error> {
         self.chain.block_hash(h)

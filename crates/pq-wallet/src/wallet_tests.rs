@@ -54,6 +54,7 @@ impl RngCore for TestRng {
 
 fn profile() -> Profile {
     Profile {
+        chain_fingerprint: None,
         genesis_hash: Hex([0x42; 32]),
         max_block_pq_checks: 64,
         max_tx_pq_checks: 16,
@@ -251,7 +252,8 @@ fn operational_signing_requires_matching_enrolled_origin_profile_and_context() {
     commitments.push(commitment);
     let policy = SuitePolicy::new(wallet.suite(), 1, commitments).unwrap();
     let (mut tx, previous) = transaction(&policy);
-    let signer = InputSigner::new(&tx, previous.clone(), 0, &policy).unwrap();
+    let signer =
+        InputSigner::new(&tx, previous.clone(), 0, &policy, NetworkDomain::Regtest).unwrap();
     assert!(matches!(
         wallet.sign_input(&signer, path),
         Err(Error::Policy)
@@ -304,7 +306,14 @@ fn operational_signing_requires_matching_enrolled_origin_profile_and_context() {
     wallet.manifest.receive_end = 2;
     wallet.manifest.validate().unwrap();
     let (foreign_tx, foreign_previous) = transaction(&foreign);
-    let foreign_signer = InputSigner::new(&foreign_tx, foreign_previous, 0, &foreign).unwrap();
+    let foreign_signer = InputSigner::new(
+        &foreign_tx,
+        foreign_previous,
+        0,
+        &foreign,
+        NetworkDomain::Regtest,
+    )
+    .unwrap();
     let foreign_path = KeyPath {
         role: Role::Receive,
         index: 1,
@@ -356,8 +365,20 @@ fn operational_signing_requires_matching_enrolled_origin_profile_and_context() {
         unreachable!()
     };
     *unlock_script = script;
-    suite::verify_inputs(&tx, previous.clone(), &[wallet.suite()]).unwrap();
+    suite::verify_inputs(
+        &tx,
+        previous.clone(),
+        &[wallet.suite()],
+        NetworkDomain::Regtest,
+    )
+    .unwrap();
     let mut changed = previous.as_ref().clone();
     changed[0].value = 100_001.try_into().unwrap();
-    assert!(suite::verify_inputs(&tx, Arc::new(changed), &[wallet.suite()]).is_err());
+    assert!(suite::verify_inputs(
+        &tx,
+        Arc::new(changed),
+        &[wallet.suite()],
+        NetworkDomain::Regtest
+    )
+    .is_err());
 }

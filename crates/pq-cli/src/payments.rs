@@ -7,9 +7,7 @@ use std::{
 };
 use zakura_pq_wallet::{
     payment::{Intent, Partial, Proposal, MAX_INPUTS, MAX_PARTIAL, MAX_PROPOSAL},
-    read_transfer,
-    rpc::LocalRpc,
-    write_transfer, Hex, Profile, Wallet, WatchStore,
+    read_transfer, write_transfer, Hex, Profile, Wallet, WatchStore,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -74,8 +72,14 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
             let expected = id(&args[3])?;
             let record = store.payment_record(expected)?.ok_or("unknown proposal")?;
             write_transfer(Path::new(&args[4]), &record.proposal.to_json()?)?;
+            if crate::machine() {
+                crate::output(
+                    serde_json::json!({"proposal_id":expected,"payment_export_saved":true}),
+                    "",
+                )?;
+            }
         } else {
-            store.reconcile_payments(&mut LocalRpc::new(args[3].parse()?)?)?;
+            store.reconcile_payments(&mut crate::rpc(&args[3], &profile)?)?;
             let rows: Vec<_> = store
                 .payments()?
                 .iter()
@@ -94,7 +98,7 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
     let password = password("Backup password: ")?;
     let wallet = Wallet::load_backup(Path::new(&args[2]), password.as_bytes(), &profile)?;
     let mut store = WatchStore::open(Path::new(&args[3]), &profile)?;
-    let mut rpc = LocalRpc::new(args[4].parse()?)?;
+    let mut rpc = crate::rpc(&args[4], &profile)?;
     if matches!(args[0].as_str(), "payment-archive" | "payment-resume") {
         let expected = id(&args[5])?;
         if args[0] == "payment-archive" {
@@ -116,7 +120,8 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
     }
     if args[0] == "submit" {
         let txid = store.submit_payment(&wallet, &mut rpc, id(&args[5])?)?;
-        writeln!(io::stdout(), "{}", hex::encode(txid.0))?;
+        let txid = hex::encode(txid.0);
+        crate::output(serde_json::json!({"txid":txid}), &txid)?;
         return Ok(());
     }
     if args[0] == "refresh-propose" {
@@ -198,20 +203,24 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
                     .unwrap_or(Path::new(".")),
             )?
             .sync_all()?;
-            writeln!(
-                io::stdout(),
-                "Saved {} partials for the approved proposal.",
-                partials.len()
+            crate::output(
+                serde_json::json!({"partials_saved":partials.len(),"proposal_id":proposal.id()?}),
+                &format!(
+                    "Saved {} partials for the approved proposal.",
+                    partials.len()
+                ),
             )?;
         }
         "assemble" => {
             let partials = collect_partials(Path::new(&args[7]), &proposal)?;
             let bytes = store.assemble_payment(&wallet, &mut rpc, &proposal, &intent, &partials)?;
-            writeln!(
-                io::stdout(),
-                "Saved verified transaction ({} bytes). Submit using proposal {}.",
-                bytes.len(),
-                hex::encode(proposal.id()?.0)
+            crate::output(
+                serde_json::json!({"transaction_bytes":bytes.len(),"proposal_id":proposal.id()?}),
+                &format!(
+                    "Saved verified transaction ({} bytes). Submit using proposal {}.",
+                    bytes.len(),
+                    hex::encode(proposal.id()?.0)
+                ),
             )?;
         }
         _ => return Err("unknown payment command".into()),

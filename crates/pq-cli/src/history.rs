@@ -47,7 +47,10 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
         let proposal_id = id(&args[3])?;
         let mut store = WatchStore::open(Path::new(&args[2]), &profile)?;
         store.export_payment_history(proposal_id, Path::new(&args[4]))?;
-        writeln!(io::stdout(), "Saved payment export.")?;
+        crate::output(
+            serde_json::json!({"payment_export_saved":true}),
+            "Saved payment export.",
+        )?;
     }
     Ok(())
 }

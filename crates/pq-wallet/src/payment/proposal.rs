@@ -90,7 +90,13 @@ impl Proposal {
     }
     /// Structural validation only; this establishes no input provenance.
     pub fn transaction(&self) -> Result<Transaction, Error> {
-        if self.format != "ZcashTransparentPQ/proposal/v1" {
+        if self.format
+            != if self.profile.network == 1 {
+                "ZcashTransparentPQ/proposal/v2"
+            } else {
+                "ZcashTransparentPQ/proposal/v1"
+            }
+        {
             return Err(Error::UnsupportedFormat);
         }
         self.profile.validate()?;
@@ -154,12 +160,17 @@ impl Proposal {
         }
         for (output, record) in outputs.iter().zip(&self.outputs) {
             let receiver = Receiver::parse(&record.receiver)?;
+            receiver.check_profile(&self.profile)?;
             if output.lock_script.as_raw_bytes() != receiver.script() {
                 return Err(Error::ProposalMismatch);
             }
             match (record.kind.as_str(), &record.entry) {
                 ("payment", None) => (),
-                ("change", Some(entry)) if entry.role == 1 && entry.receiver()? == receiver => (),
+                ("change", Some(entry))
+                    if entry.role == 1 && entry.receiver_for(&self.profile)? == receiver =>
+                {
+                    ()
+                }
                 // Explicit policy replacement needs its own approval/recovery flow.
                 ("policy_transfer", Some(_)) => return Err(Error::UnsupportedContext),
                 _ => return Err(Error::ProposalMismatch),

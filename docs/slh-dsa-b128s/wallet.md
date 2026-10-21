@@ -4,7 +4,8 @@ This document specifies the wallet contract dated 2026-10-09.
 The wallet, payment, recovery, and CLI code implement this contract.
 Live node and terminal tests remain open.
 The [protocol](protocol.md) specifies consensus bytes and `slh-dsa-b-128s-exp-v1`.
-The wallet requires Regtest and `experimental-slh-dsa-b128s`, which is off by default.
+The wallet requires Regtest or an independently approved isolated custom Testnet,
+and `experimental-slh-dsa-b128s`, which is off by default.
 
 The implementation reuses canonical JSON, HKDF derivation, enrollment,
 approval, encryption, reservations, and journals from the Transparent PQ wallet.
@@ -23,7 +24,7 @@ Account is always zero. Receive role is `00`. Change role is `01`.
 The index is an unsigned 32-bit integer. Exhaustion never wraps the index.
 There is no public child derivation or xpub.
 
-The derivation version and domains remain unchanged.
+Regtest derivation version and domains remain unchanged.
 Each ASCII literal below includes one final zero byte:
 
 ```text
@@ -43,6 +44,29 @@ Restore reconstructs each local public root and key commitment.
 It checks each commitment against its sorted position in the inventory.
 Independent [wallet vectors](../../tests/slh-dsa-b128s/wallet/README.md)
 cover both blocks, full public keys, roles, and index boundaries.
+
+Custom Testnet uses derivation version 2. It keeps the root salt and 48-byte
+expansion above. It replaces `info` with:
+
+```text
+ASCII("ZcashTransparentPQ/wallet-key/v2\0")
+|| 02 || 01 || f7 || chain_fingerprint[32]
+|| LE32(0) || role || LE32(index)
+```
+
+The fingerprint is the TPQ node rule fingerprint, not a ZDN manifest hash.
+The operator must approve it independently, together with genesis, NU7, SLH
+activation and both signature-check budgets. RPC is an observation source only.
+The wallet checks effective observations before scanning or payment operations.
+Missing diagnostics fail on custom Testnet. Legacy trusted Regtest nodes can
+omit diagnostics; when present, their rules must match too.
+`getblockhash(0)` must also match the approved genesis.
+
+`Profile.chain_fingerprint` is public `Option<Hex<32>>`. It is required on
+network 1 and forbidden on network 2. Serde omits `None`, so existing Regtest
+JSON remains byte-for-byte unchanged. Network 0 is not supported.
+The wallet cannot determine whether a fingerprint was independently approved;
+the caller must supply the trusted profile, not copy values from RPC.
 
 ## Signer and approval
 
@@ -67,11 +91,21 @@ Only feature-enabled wallet builds can include the signer.
 
 ## Receivers and transport
 
-The receiver uses Bech32m, HRP `tpqreg`, and 69 lowercase characters.
+The Regtest receiver uses Bech32m, HRP `tpqreg`, and 69 lowercase characters.
 Its 35-byte payload is `01 || 02 || f7 || policy_commitment`.
 The output script is `53 || 20 || policy_commitment || c0`.
 The decoder rejects other HRPs, checksums, case, lengths, suites, and noncanonical encodings.
 This experimental prefix is not an assigned Unified Address receiver.
+
+Custom Testnet uses Bech32m HRP `tpqtest` and 122 lowercase characters.
+Its 67-byte payload is `02 || 01 || f7 || chain_fingerprint[32] || policy_commitment[32]`.
+The script template is unchanged. `Entry::receiver_for(profile)` issues the
+chain-bound transport. `Entry::receiver()` and `Receiver::new` retain their
+Regtest-only meanings. `Receiver::check_profile` rejects cross-chain transport,
+even when genesis or the policy commitment is identical.
+Wallet payment paths always check the receiver against the approved profile.
+Consensus still signs network domain 1 on Testnet and 2 on Regtest. There is no
+change to the consensus hash, Pure framing, or signing contract.
 
 Canonical JSON has these requirements:
 
@@ -83,7 +117,15 @@ Canonical JSON has these requirements:
 
 Readers check byte and collection limits before expensive work.
 They reject invalid encodings instead of normalizing them.
-Inventory, recovery, and proposal envelopes retain version 1 and the existing field meanings.
+Regtest inventory, recovery, proposal and public key-exchange envelopes retain
+version 1 and the existing field meanings. Custom Testnet uses `/v2` for these
+four envelopes, with `derivation_version:2` in its inventory. Readers reject
+a version/profile mismatch; they do not reinterpret v1 data as custom Testnet.
+The encrypted backup header and KDF are unchanged. Its authenticated plaintext
+contains the versioned recovery envelope and complete approved profile.
+Snapshot receipts and watch state bind the same profile through existing fields;
+the journal remains authoritative. Partial transport stays v1 because its
+proposal ID commits to the complete versioned proposal and profile.
 The suite byte selects the 48-byte derivation.
 It cannot reinterpret an object from another suite.
 

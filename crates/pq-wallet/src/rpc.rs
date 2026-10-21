@@ -1,7 +1,7 @@
 //! Bounded connection to an operator-trusted local Zakura RPC.
 //! Numeric loopback endpoints only; remote nodes require a trusted local tunnel.
-//! HTTP/1.0 close framing avoids adding an HTTP/TLS/authentication stack to the
-//! prototype. Unsupported HTTP framing fails; it never falls back to an index.
+//! HTTP/1.0 close framing with optional owner-only cookie authentication.
+//! Unsupported HTTP framing fails; it never falls back to an index.
 use crate::{manifest::decode_hex, ChainSource, Checkpoint, Error, Hex, NodeContext};
 use serde_json::{json, Value};
 use std::{
@@ -17,6 +17,7 @@ const MAX_HEADER: usize = 16_384;
 /// Bounded transport to an independently authenticated numeric loopback node.
 pub struct LocalRpc {
     address: SocketAddr,
+    cookie: Option<std::path::PathBuf>,
 }
 impl LocalRpc {
     /// Reject remote, unspecified, DNS and zero-port endpoints.
@@ -24,7 +25,61 @@ impl LocalRpc {
         if !address.ip().is_loopback() || address.port() == 0 {
             return Err(Error::UnsupportedContext);
         }
-        Ok(Self { address })
+        Ok(Self {
+            address,
+            cookie: None,
+        })
+    }
+    /// Use a private cookie file, reopened on every request to support rotation.
+    /// Parent directories must be operator-trusted and stable.
+    pub fn with_cookie(address: SocketAddr, path: &std::path::Path) -> Result<Self, Error> {
+        let mut rpc = Self::new(address)?;
+        rpc.cookie = Some(path.to_owned());
+        Ok(rpc)
+    }
+
+    fn authentication(&self) -> Result<zeroize::Zeroizing<String>, Error> {
+        let Some(path) = &self.cookie else {
+            return Ok(zeroize::Zeroizing::new(String::new()));
+        };
+        #[cfg(unix)]
+        {
+            use base64::{engine::general_purpose::STANDARD, Engine as _};
+            use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
+                .open(path)
+                .map_err(|_| Error::Authentication)?;
+            let metadata = file.metadata().map_err(|_| Error::Authentication)?;
+            if !metadata.is_file()
+                || metadata.mode() & 0o077 != 0
+                || metadata.uid() != rustix::process::geteuid().as_raw()
+            {
+                return Err(Error::Authentication);
+            }
+            let mut cookie = zeroize::Zeroizing::new(Vec::with_capacity(4097));
+            file.take(4097)
+                .read_to_end(&mut cookie)
+                .map_err(|_| Error::Authentication)?;
+            if cookie.is_empty()
+                || cookie.len() > 4096
+                || !cookie.contains(&b':')
+                || cookie.iter().any(|b| !(0x21..=0x7e).contains(b))
+            {
+                return Err(Error::Authentication);
+            }
+            let mut header = zeroize::Zeroizing::new(String::with_capacity(5500));
+            header.push_str("Authorization: Basic ");
+            STANDARD.encode_string(&*cookie, &mut header);
+            header.push_str("\r\n");
+            Ok(header)
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = path;
+            Err(Error::Authentication)
+        }
     }
     fn call(&self, method: &str, params: Value) -> Result<Value, Error> {
         let value = self.call_nullable(method, params, false)?;
@@ -47,7 +102,8 @@ impl LocalRpc {
         stream
             .set_write_timeout(Some(Duration::from_secs(5)))
             .map_err(|_| Error::HistoryUnavailable)?;
-        write!(stream, "POST / HTTP/1.0\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", self.address, body.len()).map_err(|_| Error::HistoryUnavailable)?;
+        let authentication = self.authentication()?;
+        write!(stream, "POST / HTTP/1.0\r\nHost: {}\r\n{}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", self.address, authentication.as_str(), body.len()).map_err(|_| Error::HistoryUnavailable)?;
         stream
             .write_all(&body)
             .map_err(|_| Error::HistoryUnavailable)?;
@@ -162,7 +218,31 @@ fn bytes<const N: usize>(value: &Value) -> Result<Hex<N>, Error> {
 impl ChainSource for LocalRpc {
     fn context(&mut self) -> Result<NodeContext, Error> {
         let value = self.call("getblockchaininfo", json!([]))?;
+        let info = &value["experimental_slh_dsa_b128s"];
+        let slh = if !info.is_null() {
+            if info["schema_version"] != json!(1)
+                || info["contract"] != json!("slh-dsa-b-128s-exp-v1")
+                || info["runtime_supported"] != json!(true)
+                || info["verifier_compiled"] != json!(true)
+            {
+                return Err(Error::UnsupportedContext);
+            }
+            Some(crate::scan::SlhContext {
+                chain_fingerprint: if info["chain_fingerprint"].is_null() {
+                    None
+                } else {
+                    Some(bytes(&info["chain_fingerprint"])?)
+                },
+                genesis_hash: bytes(&info["genesis_hash"])?,
+                activation_height: number(&info["activation_height"])?,
+                max_tx_pq_checks: number(&info["max_checks_per_transaction"])?,
+                max_block_pq_checks: number(&info["max_checks_per_block"])?,
+            })
+        } else {
+            None
+        };
         Ok(NodeContext {
+            slh,
             chain: value["chain"]
                 .as_str()
                 .ok_or(Error::HistoryUnavailable)?
@@ -332,6 +412,85 @@ mod tests {
     mod discovery;
     mod payment;
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn cookie_rotation_and_unsafe_files_fail_closed() {
+        use std::{
+            io::{BufRead, BufReader},
+            net::TcpListener,
+            os::unix::fs::{symlink, PermissionsExt},
+        };
+        let temp = tempfile::tempdir().unwrap();
+        let cookie = temp.path().join("cookie");
+        std::fs::write(&cookie, b"u:a").unwrap();
+        std::fs::set_permissions(&cookie, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let mut rpc = LocalRpc::with_cookie(listener.local_addr().unwrap(), &cookie).unwrap();
+        let server = std::thread::spawn(move || {
+            for expected in ["dTph", "dTpi"] {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let mut reader = BufReader::new(stream.try_clone().unwrap());
+                let mut line = String::new();
+                let mut auth = None;
+                let mut length = 0;
+                loop {
+                    line.clear();
+                    assert!(reader.read_line(&mut line).unwrap() > 0);
+                    if line == "\r\n" {
+                        break;
+                    }
+                    if let Some(value) = line.strip_prefix("Authorization: Basic ") {
+                        auth = Some(value.trim().to_owned());
+                    }
+                    if let Some(value) = line.strip_prefix("Content-Length: ") {
+                        length = value.trim().parse::<usize>().unwrap();
+                    }
+                }
+                assert_eq!(auth.as_deref(), Some(expected));
+                let mut body = vec![0; length];
+                reader.read_exact(&mut body).unwrap();
+                write!(
+                    stream,
+                    "HTTP/1.0 200 OK\r\n\r\n{{\"id\":1,\"result\":\"{}\"}}",
+                    "00".repeat(32)
+                )
+                .unwrap();
+            }
+        });
+        rpc.block_hash(0).unwrap();
+        let next = temp.path().join("new-cookie");
+        std::fs::write(&next, b"u:b").unwrap();
+        std::fs::set_permissions(&next, std::fs::Permissions::from_mode(0o600)).unwrap();
+        std::fs::rename(&next, &cookie).unwrap();
+        rpc.block_hash(0).unwrap();
+        server.join().unwrap();
+        assert_eq!(
+            rpc.authentication().unwrap().as_str(),
+            "Authorization: Basic dTpi\r\n"
+        );
+        std::fs::set_permissions(&cookie, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(rpc.authentication().is_err());
+        std::fs::remove_file(&cookie).unwrap();
+        symlink(&next, &cookie).unwrap();
+        assert!(rpc.authentication().is_err());
+        std::fs::remove_file(&cookie).unwrap();
+        for invalid in [
+            &b"u:b\r\nInjected: value"[..],
+            &b"missing-colon"[..],
+            &b""[..],
+        ] {
+            std::fs::write(&cookie, invalid).unwrap();
+            std::fs::set_permissions(&cookie, std::fs::Permissions::from_mode(0o600)).unwrap();
+            assert!(rpc.authentication().is_err());
+        }
+        std::fs::remove_file(&cookie).unwrap();
+        std::fs::create_dir(&cookie).unwrap();
+        assert!(rpc.authentication().is_err());
+    }
     #[test]
     fn twenty_mb_block_response_fits_but_oversized_response_is_rejected() {
         let mut response = b"HTTP/1.0 200 OK\r\n\r\n{\"id\":1,\"result\":\"".to_vec();

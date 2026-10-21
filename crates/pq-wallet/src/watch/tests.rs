@@ -17,6 +17,7 @@ use zakura_pq_slh_dsa_b_exp::Policy;
 
 pub(crate) fn profile() -> Profile {
     Profile {
+        chain_fingerprint: None,
         genesis_hash: Hex(regtest_genesis_block().hash().bytes_in_display_order()),
         max_block_pq_checks: 42,
         max_tx_pq_checks: 15,
@@ -166,6 +167,7 @@ impl ChainSource for Chain {
     fn context(&mut self) -> Result<NodeContext, Error> {
         let height = self.blocks.len() as u32 - 1;
         Ok(NodeContext {
+            slh: None,
             chain: "test".into(),
             next_branch_id: if height + 1 >= 2 {
                 Hex([0x77, 0x19, 0x0a, 0xd9])

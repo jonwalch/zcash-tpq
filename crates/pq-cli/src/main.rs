@@ -24,7 +24,41 @@ use zakura_pq_wallet::{KeyPath, Profile, Role, Wallet};
 use zeroize::Zeroizing;
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
-const USAGE: &str = "Experimental Regtest PQ wallet keys and backups\n\
+static MACHINE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+static COOKIE: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+fn machine() -> bool {
+    MACHINE.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+fn output(value: serde_json::Value, human: &str) -> io::Result<()> {
+    if machine() {
+        serde_json::to_writer(io::stdout(), &value)?;
+        writeln!(io::stdout())
+    } else {
+        writeln!(io::stdout(), "{human}")
+    }
+}
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+fn rpc(
+    endpoint: &str,
+    profile: &Profile,
+) -> Result<zakura_pq_wallet::rpc::LocalRpc, Box<dyn std::error::Error>> {
+    use zakura_pq_wallet::rpc::LocalRpc;
+    match COOKIE.get() {
+        Some(path) => Ok(LocalRpc::with_cookie(endpoint.parse()?, path)?),
+        None if profile.network == 2 => Ok(LocalRpc::new(endpoint.parse()?)?),
+        None => Err("custom Testnet requires --rpc-cookie <private-cookie-file>".into()),
+    }
+}
+
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+const USAGE: &str = "Experimental isolated-chain PQ wallet keys and backups\n\
+Global options before the command: --json --rpc-cookie <private-cookie-file>\n\
 Usage:\n\
   pq-wallet create-slh-exp <trusted-profile.json> <new-backup-file> <birthday-height>\n\
   pq-wallet inspect <trusted-profile.json> <backup-file>\n\
@@ -98,9 +132,9 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         let password = new_password()?;
         let wallet = Wallet::create(profile, birthday)?;
         wallet.save_backup(path, password.as_bytes())?;
-        writeln!(
-            io::stdout(),
-            "Created verified backup with empty inventory. No receivers issued."
+        output(
+            serde_json::json!({"backup_saved":true,"receivers_issued":0}),
+            "Created verified backup with empty inventory. No receivers issued.",
         )?;
     } else {
         let old_password = password("Backup password: ")?;
@@ -108,7 +142,9 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         match command {
             "inspect" => {
                 io::stdout().write_all(&wallet.manifest().to_json()?)?;
-                writeln!(io::stdout(), "\nAuthenticated inventory; freshness and chain history require reconciliation.")?;
+                if !machine() {
+                    writeln!(io::stdout(), "\nAuthenticated inventory; freshness and chain history require reconciliation.")?;
+                }
             }
             "pubkey" => {
                 let role = match args[3].as_str() {
@@ -129,9 +165,9 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             "rekey" => {
                 let password = new_password()?;
                 wallet.save_backup(Path::new(&args[3]), password.as_bytes())?;
-                writeln!(
-                    io::stdout(),
-                    "Created verified backup generation. Previous backup retained."
+                output(
+                    serde_json::json!({"backup_saved":true,"previous_backup_retained":true}),
+                    "Created verified backup generation. Previous backup retained.",
                 )?;
             }
             _ => unreachable!("command checked before reading credentials"),
@@ -165,10 +201,39 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() -> std::process::ExitCode {
-    match run(&std::env::args().skip(1).collect::<Vec<_>>()) {
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
+    let mut args = args;
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
+    while let Some(option) = args.first().map(String::as_str) {
+        match option {
+            "--json" if !machine() => {
+                MACHINE.store(true, std::sync::atomic::Ordering::Relaxed);
+                args.remove(0);
+            }
+            "--rpc-cookie" if COOKIE.get().is_none() && args.len() >= 2 => {
+                let path = std::path::PathBuf::from(&args[1]);
+                let _ = COOKIE.set(path);
+                args.drain(..2);
+            }
+            _ => break,
+        }
+    }
+    match run(&args) {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(error) => {
             // Display only deliberately sanitized wallet errors, not their sources.
+            #[cfg(feature = "experimental-slh-dsa-b128s")]
+            if machine() {
+                let _ = serde_json::to_writer(
+                    io::stderr(),
+                    &serde_json::json!({"error":error.to_string()}),
+                );
+                let _ = writeln!(io::stderr());
+            } else {
+                let _ = writeln!(io::stderr(), "{error}");
+            }
+            #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
             let _ = writeln!(io::stderr(), "{error}");
             std::process::ExitCode::FAILURE
         }

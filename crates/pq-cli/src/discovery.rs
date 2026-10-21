@@ -4,8 +4,7 @@ use std::{
     path::Path,
 };
 use zakura_pq_wallet::{
-    export_inventory, read_inventory, rpc::LocalRpc, Hex, Manifest, Profile, Wallet, WatchMode,
-    WatchStore,
+    export_inventory, read_inventory, Hex, Manifest, Profile, Wallet, WatchMode, WatchStore,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -67,12 +66,14 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
                 )?,
                 _ => export_inventory(wallet.manifest(), Path::new(&args[3]))?,
             }
-            writeln!(
-                io::stdout(),
-                "Inventory fingerprint: {}",
-                hex::encode(wallet.manifest().fingerprint()?.0)
+            let fingerprint = hex::encode(wallet.manifest().fingerprint()?.0);
+            crate::output(
+                serde_json::json!({"inventory_fingerprint":fingerprint}),
+                &format!("Inventory fingerprint: {fingerprint}"),
             )?;
-            writeln!(io::stdout(), "Keep a verified external backup before transferring this inventory or issuing receivers.")?;
+            if !crate::machine() {
+                writeln!(io::stdout(), "Keep a verified external backup before transferring this inventory or issuing receivers.")?;
+            }
         }
         "watch-create" => {
             let mode = match args[5].as_str() {
@@ -97,11 +98,12 @@ pub fn run(args: &[String], profile: Profile) -> Result<()> {
                     fingerprint(&args[4])?,
                 )?,
                 "receive" => {
-                    writeln!(io::stdout(), "{}", store.receive()?.encode())?;
+                    let receiver = store.receive()?.encode();
+                    crate::output(serde_json::json!({"receiver":receiver}), &receiver)?;
                     return Ok(());
                 }
                 "sync" => {
-                    store.sync(&mut LocalRpc::new(args[3].parse()?)?, args[4].parse()?)?;
+                    store.sync(&mut crate::rpc(&args[3], &profile)?, args[4].parse()?)?;
                 }
                 "status" => (),
                 _ => return Err("unknown discovery command".into()),

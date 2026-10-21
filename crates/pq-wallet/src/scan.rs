@@ -34,8 +34,27 @@ pub struct NodeContext {
     pub next_branch_id: Hex<4>,
     /// Trusted node NU7 activation height.
     pub nu7_activation_height: u32,
+    /// Observed effective SLH rules, never an approval source.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slh: Option<SlhContext>,
     /// Observed trusted node tip.
     pub tip: Checkpoint,
+}
+
+/// Effective node observations matched against an independent profile.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SlhContext {
+    /// First SLH block.
+    pub activation_height: u32,
+    /// Node chain fingerprint (not a deployment manifest hash).
+    pub chain_fingerprint: Option<Hex<32>>,
+    /// RPC display-order genesis hash.
+    pub genesis_hash: Hex<32>,
+    /// Per-block budget.
+    pub max_block_pq_checks: u32,
+    /// Per-transaction budget.
+    pub max_tx_pq_checks: u32,
 }
 impl NodeContext {
     pub(crate) fn validate(&self, manifest: &Manifest) -> Result<(), Error> {
@@ -44,6 +63,20 @@ impl NodeContext {
             .height
             .checked_add(1)
             .ok_or(Error::UnsupportedContext)?;
+        if manifest.profile.network == 1 && (self.slh.is_none() || self.chain != "test") {
+            return Err(Error::UnsupportedContext);
+        }
+        if let Some(observed) = &self.slh {
+            let approved = &manifest.profile;
+            if observed.chain_fingerprint != approved.chain_fingerprint
+                || observed.genesis_hash != approved.genesis_hash
+                || observed.activation_height != approved.pq_activation_height
+                || observed.max_tx_pq_checks != approved.max_tx_pq_checks
+                || observed.max_block_pq_checks != approved.max_block_pq_checks
+            {
+                return Err(Error::UnsupportedContext);
+            }
+        }
         // This Zakura pin reports Regtest through its BIP70 "test" alias. The
         // scanner also MUST match getblockhash(0) to the approved profile; this
         // label alone cannot distinguish Testnet from a private Regtest chain.
@@ -60,7 +93,7 @@ impl NodeContext {
 
 /// A trusted, fully validating node connection, not a light-client proof source.
 /// Missing/pruned blocks MUST be errors. PQ configuration is independently
-/// approved by the operator because the existing RPC does not advertise it.
+/// approved by the operator; effective node observations cannot authorize rules.
 pub trait ChainSource {
     /// Read the trusted node tip and upgrade context.
     fn context(&mut self) -> Result<NodeContext, Error>;

@@ -199,10 +199,11 @@ impl InputSigner {
         previous: Arc<Vec<Output>>,
         input_index: usize,
         policy: &SuitePolicy,
+        network: NetworkDomain,
     ) -> Result<Self, Error> {
         Ok(Self::SlhDsaB128sExpV1(slh::InputSigningContext::new(
             transaction,
-            NetworkDomain::Regtest,
+            network,
             NetworkUpgrade::Nu7,
             previous,
             input_index,
@@ -238,16 +239,13 @@ pub(crate) fn verify_inputs(
     transaction: &Transaction,
     previous: Arc<Vec<Output>>,
     suites: &[Suite],
+    network: NetworkDomain,
 ) -> Result<(), Error> {
     if suites.len() != transaction.inputs().len() {
         return Err(Error::InputContext);
     }
-    let context = slh::TransactionContext::new(
-        transaction,
-        NetworkDomain::Regtest,
-        NetworkUpgrade::Nu7,
-        previous,
-    )?;
+    let context =
+        slh::TransactionContext::new(transaction, network, NetworkUpgrade::Nu7, previous)?;
     for index in 0..suites.len() {
         context.verify_input(index)?;
     }

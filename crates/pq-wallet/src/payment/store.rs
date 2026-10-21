@@ -435,11 +435,16 @@ impl WatchStore {
                     outputs.push(OutputRecord {
                         entry: Some(change.clone()),
                         kind: "change".into(),
-                        receiver: change.receiver()?.encode(),
+                        receiver: change.receiver_for(&self.state.manifest.profile)?.encode(),
                     });
                 }
                 let proposal = Proposal {
-                    format: "ZcashTransparentPQ/proposal/v1".into(),
+                    format: if self.state.manifest.profile.network == 1 {
+                        "ZcashTransparentPQ/proposal/v2"
+                    } else {
+                        "ZcashTransparentPQ/proposal/v1"
+                    }
+                    .into(),
                     inputs: selected.clone(),
                     outputs,
                     profile: self.manifest().profile.clone(),
@@ -587,7 +592,13 @@ impl WatchStore {
             if usize::from(partial.signer_index) != entry.local(self.manifest().wallet_id)?.0 {
                 return Err(Error::ProposalMismatch);
             }
-            let context = InputSigner::new(&checked.tx, previous.clone(), input_index, &policy)?;
+            let context = InputSigner::new(
+                &checked.tx,
+                previous.clone(),
+                input_index,
+                &policy,
+                self.state.manifest.profile.network_domain(),
+            )?;
             context.verify_partial(&partial.authorization()?)?;
         }
         if let Some(raw) = &record.signed_transaction_hex {
@@ -809,8 +820,13 @@ impl WatchStore {
                 let mut partials = Vec::new();
                 for (input_index, record) in proposal.inputs.iter().enumerate() {
                     let policy = record.entry.suite_policy()?;
-                    let context =
-                        InputSigner::new(&checked.tx, previous.clone(), input_index, &policy)?;
+                    let context = InputSigner::new(
+                        &checked.tx,
+                        previous.clone(),
+                        input_index,
+                        &policy,
+                        self.state.manifest.profile.network_domain(),
+                    )?;
                     let (slot, origin) = record.entry.local(wallet.manifest().wallet_id)?;
                     if !saved.is_empty() {
                         let partial = saved
@@ -902,7 +918,13 @@ impl WatchStore {
         for (input_index, (record, signatures)) in proposal.inputs.iter().zip(by_input).enumerate()
         {
             let policy = record.entry.suite_policy()?;
-            let context = InputSigner::new(&checked.tx, previous.clone(), input_index, &policy)?;
+            let context = InputSigner::new(
+                &checked.tx,
+                previous.clone(),
+                input_index,
+                &policy,
+                self.state.manifest.profile.network_domain(),
+            )?;
             let auth = context.assemble(signatures)?;
             let Input::PrevOut { unlock_script, .. } =
                 &mut review::inputs_mut(&mut signed)?[input_index]
@@ -1256,5 +1278,10 @@ fn verify_signed(proposal: &Proposal, tx: &Transaction, checked: &Checked) -> Re
         .iter()
         .map(|input| Ok(input.entry.suite_policy()?.suite()))
         .collect::<Result<Vec<_>, Error>>()?;
-    suite::verify_inputs(tx, Arc::new(checked.previous.clone()), &suites)
+    suite::verify_inputs(
+        tx,
+        Arc::new(checked.previous.clone()),
+        &suites,
+        proposal.profile.network_domain(),
+    )
 }

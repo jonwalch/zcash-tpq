@@ -255,7 +255,7 @@ impl WatchStore {
         self.manifest()
             .profile
             .check_policy(&entry.suite_policy()?)?;
-        let receiver = entry.receiver()?;
+        let receiver = entry.receiver_for(&self.state.manifest.profile)?;
         let mut candidate = self.state.clone();
         candidate.receive_next = candidate
             .receive_next
