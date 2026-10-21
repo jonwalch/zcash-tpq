@@ -95,7 +95,7 @@
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
       "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Restore only the previous pinned Orchard 2.2.0 dependency graph for optional historical fixture generation; preserve all upstream Common 3 identities and exclude legacy Orchard from nodes.",
-      "sha256": "651bfa5036a3ea90b180cfb978fc2eae7520a920f4f770904169a6b3b8e21589"
+      "sha256": "833db269caf1f32dd48ec7c100047b4cb22240154f6fb3b731425f64a99d7585"
     },
     {
       "disposition": "upstream-modification",
@@ -140,7 +140,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Lock the isolated primitive and wallet payment benchmark dependencies, including classical controls and disposable storage; keep the executable outside node graphs and publication. Upstream refresh e33dc4308: Resolve the isolated benchmark against the updated product Common 3.0 dependencies; preserve the explicit BLAKE3 and wallet cryptography pins.",
-      "sha256": "5a4c7cda9859812988f3324c6f520fae16b0aa2a7ff0314ff5b897d1b4a11f0c"
+      "sha256": "5d9f4f54ac986073a31a40c59e1fb970c4820707ae9b1fadae935f550a184f43"
     },
     {
       "disposition": "new",
@@ -2346,7 +2346,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. Reject ambiguous numeric IP forms before DNS and recognize IPv4-compatible IPv6; initialize the known peer inventory once. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Require native-only peering for SLH custom chains so a failed fingerprint check cannot fall back to the legacy magic-only handshake. Reuse the native parser strictly, rejecting malformed entries instead of silently skipping them. TOML, direct-config, and startup tests cover both restrictions.",
-      "sha256": "f879b8ceedcdab18c2b0b0e31431803ea4122ef23004e263d2722675f8bd87f0"
+      "sha256": "50d0f2a1f0de4dbc86b577653ea2328ace7e70614711bd6ca55968a33ecf5c60"
     },
     {
       "disposition": "upstream-modification",
@@ -2377,7 +2377,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Share the custom-network fixture with handshake tests. Check native-only defaults and explicit-stack rejection, valid and malformed native peers, and public network initialization refusal before I/O.",
-      "sha256": "13d20361d00b6d8125f7942fd374d5d8abbbaa828a36d99c71219ed448cce367"
+      "sha256": "520869b81511d807e11cd40653ba24451bb248621518c8b9bfeaa5bbbe251ed0"
     },
     {
       "disposition": "upstream-modification",
@@ -4175,7 +4175,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "a3a0a5aebc09c2e8c65c16a45c6033059d3ff26a84429016f76c922f4fd3f236"
+      "sha256": "c5b4cc11ecac916d427f5be9443086bd1726b9aabc6dcc7bf369f70d2028cca3"
     },
     {
       "disposition": "new",
@@ -4437,7 +4437,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "23cabdcfb2a8e10713451b1e9984bd94d569ca85ab5209a298848dc5072e1fa7"
+      "sha256": "4976d11187d925859be34a4d94862e0813264b0ea720a81e772c7ffc71611ab8"
     },
     {
       "disposition": "new",
@@ -4758,7 +4758,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. Require acceptance with one signature check for each original devnet fixture so expected rejections cannot count as positives. Regressions reject either or both corrupted originals before reference verification or receipt creation, and require actual verifier acceptance for declared positives.",
-      "sha256": "1304f3ada4182e6205a125553e080dfd91b7e18ff5fdb7327f411d3383a149c8"
+      "sha256": "398e9f1a4830e4412d02fe8738fdb1ddf08be7ef3d3cf81f26e6d4201273294a"
     },
     {
       "disposition": "public-fixture",
@@ -4788,7 +4788,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
-      "sha256": "9d98a3c647066d6eeb37d6370e6aaa7b4cca70ab3b5c04ca813884bf5960037d"
+      "sha256": "db7a08b85aafbc3e001b6c880cdbcd4178091c56976d0e1a8073d49700442f42"
     },
     {
       "disposition": "new",
@@ -4808,7 +4808,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "040ca7e183868001b751d756259aa040ada70c12b4fd03fbc92ccd5ec2a0bd4e"
+      "sha256": "3bf194c2250137ade506651475ccca66d65bec5d77d056b3d3f8b79727461a30"
     },
     {
       "disposition": "new",
@@ -4817,8 +4817,8 @@
         "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
-      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Upstream refresh e33dc4308: Keep the optional local Sapling prover at Common 3.0 in the fixture package after upstream removed it from node dependencies. Do not enable bundled proving parameters. Retain the previously pinned Orchard 2.2.0 graph behind the optional shielded-fixtures feature only, because Common 3 removed historical proof construction. Node graphs must exclude this version.",
-      "sha256": "2c1d0764e4018a2bcdf362d9ea3471086ffa588cc15d4925c15385673ff4458e"
+      "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Upstream refresh e33dc4308: Keep the optional local Sapling prover at Common 3.0 in the fixture package after upstream removed it from node dependencies. Do not enable bundled proving parameters. Retain the previously pinned Orchard 2.2.0 graph behind the optional shielded-fixtures feature only, because Common 3 removed historical proof construction. Node graphs must exclude this version. PR #16: advance the optional prover to Common 4 and enable zip32-addresses only for the fixture host's fixed public recipients. The feature-enabled compile check and 33 proof-free host tests cover this adaptation; the dependency guard checks node isolation.",
+      "sha256": "03d2d7c43117e472833ec5e945660b93edc368463c583227368a350d40b21fc7"
     },
     {
       "disposition": "new",
@@ -4846,7 +4846,7 @@
         "tests/slh-dsa-b128s/acceptance/sources.json"
       ],
       "reason": "Selectively reuse pinned research genuine note/witness recovery and spend proof/authorization controls through existing crypto APIs; fixed public identities, canonical trusted node history and explicit parameter hashes. No upstream runtime or independent corpus change. Record the Common 3 historical proving restriction, isolated compatibility dependency and exact compile/no-proof regression scope.",
-      "sha256": "355da936599d50efddae670a4a24ac1f59238868ac36b77e0fbc832f66230fb1"
+      "sha256": "65e8256c55044a2347c1b1b811a5cc28562eb4a8846f3abcf871f64c2225e0cb"
     },
     {
       "disposition": "new",
@@ -4887,7 +4887,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Reuse existing block/classical context for bounded explicit transparent controls; ordinary operation defaults remain unchanged. Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
-      "sha256": "d40ed556b13652ffb51f8b27f9f9d2c772817027b84acd107c8a26b2cd8bf1e9"
+      "sha256": "b1c548f35603cb732f21373f64e171875f9e83ec72c7faf91597f8e45415b557"
     },
     {
       "disposition": "new",
@@ -4963,7 +4963,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
-      "sha256": "96b36cad7c6e37b3e91a93422eacb4aad010d67444a394a71b05c9bd064a74c0"
+      "sha256": "e10442afa7815062e0e2ed78ac0654fcf05daa50fa4e4a4e92d3bac68f1ad3c0"
     },
     {
       "disposition": "new",
@@ -5357,7 +5357,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
-      "sha256": "79f32cbc918eaaee2b2900290c8040ac6ff5be606ad7294693ee3c6a6fea068e"
+      "sha256": "3a591e98108375a9b84da7937a55eabc6325f30474fb74136a99d6e3cf5d3578"
     },
     {
       "disposition": "public-fixture",
@@ -5404,7 +5404,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Add two bounded Testnet-domain public SLH controls using the existing producer, isolated signer and independent oracle. Preserve the original 18-case corpus and historical receipts; accept only the recorded foundation/current upstream pins. Regressions cover wrong-network messages, signature mutation and tool failures. New devnet production reports current upstream e33dc4308 and checks the authoritative source ledger before host or signer calls. Bind that ledger in the source inventory to detect drift. Preserve historical fixtures, original producer and receipts; both schema validators accept the current and two recorded historical pins and reject unknown pins. Mocked output and pin-drift tests exercise this association without signing.",
-      "sha256": "3672e82436bde7ccb7ff291d508c88d7159a550e09ce6ec2761d64931128c9c2"
+      "sha256": "ec7d5c7b04809f834f9fbd2e1470718abb22cc762402db1a7ba77dca448006ad"
     },
     {
       "disposition": "new",

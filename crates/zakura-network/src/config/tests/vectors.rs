@@ -1526,9 +1526,12 @@ fn experimental_slh_dsa_b128s_config_requires_all_three_fields_on_regtest() {
             let error = toml::from_str::<Config>(&text).unwrap_err().to_string();
             assert!(error.contains("must be configured together"), "{error}");
         }
-        // The untagged inline Regtest form must not swallow misplaced fields.
+        // The inline Regtest form must not swallow misplaced SLH fields.
         let text = format!("network = {{ params = {{}}, {field} }}");
-        assert!(toml::from_str::<Config>(&text).is_err());
+        assert!(toml::from_str::<Config>(&text)
+            .unwrap_err()
+            .to_string()
+            .contains("must be inside network.params"));
     }
     // Regtest rejects the overlay field even when it is explicitly disabled.
     for inherit in [false, true] {

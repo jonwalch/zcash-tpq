@@ -174,7 +174,8 @@ def validate_schema(a):
     hexadecimal(p["algorithm_revision"], size=20)
     require(p["zakura_revision"] in {"9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
                                      "24a17b3f0e7d88513688d607054f018ab6f15af2",
-                                     "e33dc43089acca2fe2c6516927932f2b7618b8bc"}
+                                     "e33dc43089acca2fe2c6516927932f2b7618b8bc",
+                                     "3f36c35031126a8f8cd52865ef0be9e5dc494b8d"}
             and p["algorithm_revision"] == "b392fe82d2d9770142477a576a758a233888bc0a"
             and p["blake3_version"] == "1.8.5", "schema", "producer_pin")
     for name in p:

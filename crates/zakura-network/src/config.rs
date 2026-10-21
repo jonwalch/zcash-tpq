@@ -1172,9 +1172,20 @@ impl<'de> Deserialize<'de> for DNetwork {
             fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<DNetwork, A::Error> {
                 let mut table = DTestnetParameters::deserialize(MapAccessDeserializer::new(map))?;
                 match table.params.take() {
-                    // Like the former untagged variant, other parameters next to `params` are
-                    // ignored.
                     Some(params) => {
+                        if table.experimental_slh_dsa_b128s_activation_height.is_some()
+                            || table
+                                .experimental_slh_dsa_b128s_max_checks_per_transaction
+                                .is_some()
+                            || table
+                                .experimental_slh_dsa_b128s_max_checks_per_block
+                                .is_some()
+                        {
+                            return Err(de::Error::custom(
+                                "experimental SLH settings must be inside network.params, not next to it",
+                            ));
+                        }
+                        // Preserve upstream's handling of other parameters next to `params`.
                         params.reject_regtest_form_keys()?;
                         Ok(DNetwork::ConfiguredRegtest {
                             params,
