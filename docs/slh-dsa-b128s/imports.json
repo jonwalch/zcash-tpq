@@ -2570,7 +2570,7 @@
         "docs/slh-dsa-b128s/protocol.md",
         "docs/changelog/unreleased/9.md"
       ],
-      "reason": "Retain upstream v9 header wire validation tests and move the oversized body-size hint mutation to 20,000,001 bytes, one byte above this fork's 20 MB block ceiling. Preserve the other wire mutations and canonical encoding checks.",
+      "reason": "Retain upstream v9 header wire validation tests, extend valid property inputs through 20 MB, check full-size hint round trips on each network, and move the oversized hint mutation to 20,000,001 bytes. Preserve the other wire mutations and canonical encoding checks.",
       "sha256": "c8609132ec26e8a3a707e49e81db38e5a51a205bb2eecedaaa92f5adf27dcd48"
     },
     {
@@ -3508,6 +3508,16 @@
       ],
       "reason": "PR #12 operator-facing release note for the pinned upstream update, retained SLH/devnet behavior and fork v30-to-v31 cache reuse. Preserve inherited upstream release notes and fragments.",
       "sha256": "241e34dd064122df375bfca2b961a37a9763c7662965c8f3a51ef8bd9b1076c0"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/changelog/unreleased/16.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/protocol.md",
+        "docs/changelog/guidelines.md"
+      ],
+      "reason": "Record PR #16's upstream update and operator-visible native sync compatibility changes while retaining the fork's SLH rules and devnet limits.",
+      "sha256": "c902f1e4a18bd5b4c7180ce9f5895e42bc60f1ef7a7391995a163c6f73dbcc9b"
     },
     {
       "disposition": "new",
