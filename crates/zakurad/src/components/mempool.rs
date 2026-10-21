@@ -30,12 +30,7 @@ use std::{
 
 use futures::{future::FutureExt, stream::Stream};
 use tokio::sync::{broadcast, mpsc, oneshot};
-use tower::{
-    buffer::Buffer,
-    timeout::Timeout,
-    util::{BoxCloneService, BoxService},
-    Service, ServiceExt,
-};
+use tower::{buffer::Buffer, timeout::Timeout, util::BoxCloneService, Service, ServiceExt};
 
 use zakura_chain::{
     block::{self, Height},
@@ -50,6 +45,7 @@ use zakura_node_services::mempool::{
     CreatedOrSpent, Gossip, MempoolChange, MempoolDisabledError, MempoolTxSubscriber, QueueSource,
     Request, Response,
 };
+use zakura_node_services::task::spawn_erased;
 use zakura_state as zs;
 use zakura_state::{ChainTipChange, TipAction};
 
@@ -123,12 +119,14 @@ fn transaction_error_peer_log_label(
     }
 }
 
-type Outbound = Buffer<BoxService<zn::Request, zn::Response, zn::BoxError>, zn::Request>;
-type State = Buffer<BoxService<zs::Request, zs::Response, zs::BoxError>, zs::Request>;
+type Outbound =
+    Buffer<zn::Request, futures::future::BoxFuture<'static, Result<zn::Response, zn::BoxError>>>;
+type State =
+    Buffer<zs::Request, futures::future::BoxFuture<'static, Result<zs::Response, zs::BoxError>>>;
 type ReadState = BoxCloneService<zs::ReadRequest, zs::ReadResponse, zs::BoxError>;
 type TxVerifier = Buffer<
-    BoxService<transaction::Request, transaction::Response, TransactionError>,
     transaction::Request,
+    futures::future::BoxFuture<'static, Result<transaction::Response, TransactionError>>,
 >;
 type InboundTxDownloads = TxDownloads<Timeout<Outbound>, Timeout<TxVerifier>, ReadState>;
 
@@ -496,7 +494,7 @@ fn start_peer_cooldown(
             .clone()
             .oneshot(zn::Request::DisconnectPeer(peer))
             .boxed();
-        tokio::spawn(async move {
+        spawn_erased(async move {
             let result = tokio::time::timeout(DISCONNECT_TIMEOUT, disconnect).await;
             if !matches!(result, Ok(Ok(_))) {
                 tracing::debug!("could not disconnect a peer after repeated transaction failures");

@@ -47,11 +47,11 @@ The [packaging guide](docs/slh-dsa-b128s/packaging.md) describes source attribut
 and checks before publication.
 The [writing guide](docs/slh-dsa-b128s/writing.md) describes the plain-English style and technical terms.
 
-The upstream base is Zakura commit `e33dc43089acca2fe2c6516927932f2b7618b8bc`.
+The upstream base is Zakura commit `3f36c35031126a8f8cd52865ef0be9e5dc494b8d`.
 Zakura derives from [Zebra](https://github.com/ZcashFoundation/zebra).
 The inherited documents remain in this repository.
 Their installation instructions and performance results apply to upstream releases.
-The [pinned upstream README](https://github.com/zakura-core/zakura/blob/e33dc43089acca2fe2c6516927932f2b7618b8bc/README.md)
+The [pinned upstream README](https://github.com/zakura-core/zakura/blob/3f36c35031126a8f8cd52865ef0be9e5dc494b8d/README.md)
 contains the upstream project information.
 
 ## Security and licenses

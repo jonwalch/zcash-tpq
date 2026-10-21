@@ -242,7 +242,7 @@ impl Codec {
     /// Write the body of the message into the given writer. This allows writing
     /// the message body prior to writing the header, so that the header can
     /// contain a checksum of the message body.
-    fn write_body<W: Write>(&self, msg: &Message, mut writer: W) -> Result<(), Error> {
+    fn write_body<W: Write + ?Sized>(&self, msg: &Message, writer: &mut W) -> Result<(), Error> {
         match msg {
             Message::Version(VersionMessage {
                 version,
@@ -262,8 +262,8 @@ impl Codec {
                 // serialization can not error.
                 writer.write_i64::<LittleEndian>(timestamp.timestamp())?;
 
-                address_recv.zcash_serialize(&mut writer)?;
-                address_from.zcash_serialize(&mut writer)?;
+                address_recv.zcash_serialize(writer)?;
+                address_from.zcash_serialize(writer)?;
 
                 writer.write_u64::<LittleEndian>(nonce.0)?;
 
@@ -274,7 +274,7 @@ impl Codec {
                     ));
                 }
 
-                user_agent.zcash_serialize(&mut writer)?;
+                user_agent.zcash_serialize(writer)?;
                 writer.write_u32::<LittleEndian>(start_height.0)?;
                 writer.write_u8(*relay as u8)?;
             }
@@ -298,7 +298,7 @@ impl Codec {
                     ));
                 }
 
-                message.zcash_serialize(&mut writer)?;
+                message.zcash_serialize(writer)?;
 
                 writer.write_u8(*ccode as u8)?;
 
@@ -308,7 +308,7 @@ impl Codec {
                     ));
                 }
 
-                reason.zcash_serialize(&mut writer)?;
+                reason.zcash_serialize(writer)?;
                 if let Some(data) = data {
                     writer.write_all(data)?;
                 }
@@ -330,27 +330,27 @@ impl Codec {
                 // Regardless of the way we received the address,
                 // Zebra always sends `addr` messages
                 let v1_addrs: Vec<AddrV1> = addrs.iter().map(|addr| AddrV1::from(*addr)).collect();
-                v1_addrs.zcash_serialize(&mut writer)?
+                v1_addrs.zcash_serialize(writer)?
             }
             Message::GetAddr => { /* Empty payload -- no-op */ }
-            Message::Block(block) => block.zcash_serialize(&mut writer)?,
+            Message::Block(block) => block.zcash_serialize(writer)?,
             Message::GetBlocks { known_blocks, stop } => {
                 writer.write_u32::<LittleEndian>(self.builder.version.0)?;
-                known_blocks.zcash_serialize(&mut writer)?;
+                known_blocks.zcash_serialize(writer)?;
                 stop.unwrap_or(block::Hash([0; 32]))
-                    .zcash_serialize(&mut writer)?;
+                    .zcash_serialize(writer)?;
             }
             Message::GetHeaders { known_blocks, stop } => {
                 writer.write_u32::<LittleEndian>(self.builder.version.0)?;
-                known_blocks.zcash_serialize(&mut writer)?;
+                known_blocks.zcash_serialize(writer)?;
                 stop.unwrap_or(block::Hash([0; 32]))
-                    .zcash_serialize(&mut writer)?;
+                    .zcash_serialize(writer)?;
             }
-            Message::Headers(headers) => headers.zcash_serialize(&mut writer)?,
-            Message::Inv(hashes) => hashes.zcash_serialize(&mut writer)?,
-            Message::GetData(hashes) => hashes.zcash_serialize(&mut writer)?,
-            Message::NotFound(hashes) => hashes.zcash_serialize(&mut writer)?,
-            Message::Tx(transaction) => transaction.transaction().zcash_serialize(&mut writer)?,
+            Message::Headers(headers) => headers.zcash_serialize(writer)?,
+            Message::Inv(hashes) => hashes.zcash_serialize(writer)?,
+            Message::GetData(hashes) => hashes.zcash_serialize(writer)?,
+            Message::NotFound(hashes) => hashes.zcash_serialize(writer)?,
+            Message::Tx(transaction) => transaction.transaction().zcash_serialize(writer)?,
             Message::Mempool => { /* Empty payload -- no-op */ }
         }
         Ok(())

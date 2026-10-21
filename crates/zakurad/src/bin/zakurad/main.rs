@@ -1,6 +1,6 @@
 //! Main entry point for zakurad
 
-use zakurad::application::{boot, APPLICATION};
+use zakurad::application::boot;
 
 mod slh_identity_args;
 
@@ -54,5 +54,5 @@ fn main() {
             std::env::set_var("RUST_LIB_BACKTRACE", "0");
         }
     }
-    boot(&APPLICATION);
+    boot();
 }

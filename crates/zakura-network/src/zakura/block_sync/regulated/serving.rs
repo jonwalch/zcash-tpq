@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use zakura_chain::{block, diagnostic::task::CheckForPanics, serialization::ZcashSerialize};
+use zakura_chain::{block, diagnostic::task::CheckForPanics};
 
-use super::wire::{Message, Range};
+use super::wire::{Message, Range, RangeEnding};
 use crate::zakura::{
     block_sync::{MAX_BS_BLOCKS_PER_REQUEST, MAX_BS_RESPONSE_BYTES},
     regulation::{
@@ -58,11 +58,9 @@ impl<S: Source + ?Sized> Produce for Server<S> {
     type Message = Message;
 
     fn response_cap(&self, range: &Range) -> ResponseCap {
-        Range {
-            count: range.count.min(self.max_blocks),
-            ..*range
-        }
-        .response_cap(self.max_body_bytes)
+        range
+            .truncated(self.max_blocks)
+            .response_cap(self.max_body_bytes)
     }
 
     async fn produce(
@@ -74,15 +72,12 @@ impl<S: Source + ?Sized> Produce for Server<S> {
         if lease.is_cancelled() {
             return Err(ServeEnd::Cancelled);
         }
-        let read_range = Range {
-            count: range.count.min(self.max_blocks),
-            ..*range
-        };
+        let read_range = range.truncated(self.max_blocks);
         let result = self
             .source
             .read(Read {
-                start_height: read_range.start,
-                count: read_range.count,
+                start_height: read_range.start(),
+                count: read_range.count(),
                 max_body_bytes: self.max_body_bytes,
                 lease: BlockRangeReadLease {
                     work: lease,
@@ -93,10 +88,11 @@ impl<S: Source + ?Sized> Produce for Server<S> {
             .map_err(|error| ServeEnd::LocalFault(error.to_string()))?;
         let requested = *range;
         let max_body_bytes = self.max_body_bytes;
-        // Encoding can be expensive. Await the actual job, even after session
-        // cancellation, and keep the source's lease with its retained blocks.
+        // Copying up to the response cap into frames can still take a while.
+        // Await the actual job, even after session cancellation, and keep the
+        // source's lease with its retained blocks.
         tokio::task::spawn_blocking(move || {
-            encode_response(requested, read_range.count, max_body_bytes, result, sink)
+            encode_response(requested, read_range.count(), max_body_bytes, result, sink)
         })
         .await
         .check_for_panics_with(false)
@@ -108,6 +104,8 @@ impl<S: Source + ?Sized> Produce for Server<S> {
     }
 }
 
+/// Send the source's serialized blocks unchanged as a contiguous prefix of
+/// `requested`, within `max_blocks` and `max_body_bytes`, then end the response.
 fn encode_response(
     requested: Range,
     max_blocks: u32,
@@ -115,18 +113,18 @@ fn encode_response(
     result: ReadResult,
     mut sink: ResponseSink<Message>,
 ) -> Result<Responded, ServeEnd> {
+    let ReadResult { blocks, lease } = result;
     let mut returned = 0;
     let mut body_bytes = 0_u64;
-    for (height, block) in &result.blocks {
-        if result.lease.is_cancelled() {
+    // Consuming the blocks drops each one once it is framed, and any unsent
+    // remainder when the loop ends, all before `lease` is released.
+    for (height, bytes) in blocks {
+        if lease.is_cancelled() {
             return Err(ServeEnd::Cancelled);
         }
-        if returned == max_blocks || height.0 != requested.start.0 + returned {
+        if returned == max_blocks || height.0 != requested.start().0 + returned {
             break;
         }
-        let bytes = block
-            .zcash_serialize_to_vec()
-            .map_err(|error| ServeEnd::LocalFault(error.to_string()))?;
         // usize fits u64 on the supported 64-bit targets.
         let len = bytes.len() as u64;
         if len > block::MAX_BLOCK_BYTES {
@@ -143,7 +141,7 @@ fn encode_response(
         body_bytes += len;
         returned += 1;
     }
-    if result.lease.is_cancelled() {
+    if lease.is_cancelled() {
         return Err(ServeEnd::Cancelled);
     }
     sink.finish(&ending(requested, returned))
@@ -151,12 +149,9 @@ fn encode_response(
 }
 
 fn ending(range: Range, returned: u32) -> Message {
-    if returned == 0 {
-        Message::RangeUnavailable(range)
+    Message::End(if returned == 0 {
+        RangeEnding::unavailable(range.start(), range.count())
     } else {
-        Message::BlocksDone {
-            start: range.start,
-            returned,
-        }
-    }
+        RangeEnding::done(range.start(), returned)
+    })
 }
