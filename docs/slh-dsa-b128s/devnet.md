@@ -40,7 +40,7 @@ Preparation writes these public files:
 | `chain.json` | Exact canonical seed bytes, full supported rules, native fingerprint |
 | `node-network.toml` | Node network configuration fragment with the exact rules |
 | `network.json` | The same network fragment as JSON for callers |
-| `wallet-profile.json` | Custom wallet profile input, without keys |
+| `wallet-profile.json` | Canonical custom wallet profile accepted by `Profile::from_json`, without keys |
 
 Only the native fingerprint goes to preparation stdout. The public files do
 not contain a private key. Authenticate the public artifact and fingerprint
@@ -127,10 +127,10 @@ nu7_activation_height=102, nu7_branch_id="77190ad9",
 pq_activation_height=103, chain_fingerprint=<native hex32>
 ```
 
-This tool currently takes the wallet's exact 35-byte native SLH locking script:
-`53 20 <commitment:32> c0`. It does not interpret a receiver as an address from
-another chain. Receiver decoding is left to the wallet integration. A future
-`tpqtest` Bech32m receiver must bind the fingerprint before extracting its script.
+This tool takes a `tpqtest` Bech32m receiver from the wallet. It uses the wallet's
+public receiver API to check the native chain fingerprint before it extracts
+the 35-byte SLH locking script. Receivers for another chain, Regtest receivers,
+and raw script hex are rejected before key access, signing, or RPC calls.
 Do not pass a PQ secret or root to this tool.
 
 After bootstrap, use the existing block producer to produce the NU7 block at
@@ -143,7 +143,7 @@ Funding is permitted only when SLH governs the next block.
 target/debug/tpq-devnet fund-draft /srv/tpq/cohort-public/chain.json \
   127.0.0.1:18232 /srv/tpq/node-private/.cookie \
   /srv/tpq/cohort-private/funder.json /srv/tpq/cohort-private/payment.json \
-  "$SLH_SCRIPT_HEX" 100000000 10000
+  "$TPQTEST_RECEIVER" 100000000 10000
 ```
 
 The bounded first version spends only seed block 1, output 0. It authenticates
@@ -206,15 +206,21 @@ The implementation starts from product commit
 New orchestration code is necessary because a custom Testnet does not self-seed,
 and fixture-only funding does not own real keys or authenticate live UTXOs.
 The package adds bounded file/HTTP storage and transport, not chain consensus.
+It serializes the wallet's public `Profile` type in compact field order and uses
+`Receiver::{parse,check_profile,script}` rather than a second receiver decoder.
+The wallet dependency belongs only to this standalone utility; nodes must not
+depend on it or acquire its signing features.
 
 Focused tests cover random real-key signature verification and output mutation,
 wrong ownership, maturity, checked fee/change arithmetic, saved-byte retries,
 lost block replies, prefix restarts, wrong genesis/fingerprint, bootstrap
 conflicts, create-new separation, and authenticated bounded loopback HTTP.
-At lane handoff these tests are **written but not executed**: Rust compilation
-is reserved for the coordinator's serialized integrated checks. Formatting and
-offline source/document checks do not establish target execution. Run after
-workspace and lockfile integration:
+Regression tests also parse the emitted profile through the wallet public API,
+parse both config fragments through `zakura_network::Config`, and reject funding
+receivers from another custom chain or Regtest.
+Integrated checks with Rust 1.97.1 passed all seven standalone-tool tests and
+all fourteen focused genesis-generator tests. These are local library and
+authenticated HTTP-double tests, not live-node qualification. Repeat them with:
 
 ```sh
 cargo test --locked -p zakura-tpq-devnet

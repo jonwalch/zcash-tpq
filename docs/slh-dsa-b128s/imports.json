@@ -2,6 +2,168 @@
   "files": [
     {
       "disposition": "upstream-modification",
+      "path": ".dockerignore",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Include only the fixture-host workspace member needed for Cargo to load the release source context; covered by the reconstructed Docker workspace regression.",
+      "sha256": "74a920f333d3af30247ac0ed1d983b293493a5254803308aa56c19b5df727fb5"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/pq-wallet/src/payment/tests/custom.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/wallet.md"
+      ],
+      "reason": "Exercise chain-bound custom Testnet payments, recovery, and cross-chain rejection through public wallet operations while preserving Regtest vectors.",
+      "sha256": "f99746f6b31b05c30be5113844b7362b40b119162e2dfb41fd04da6ab3738093"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/Cargo.toml",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Declare a separate unpublished standalone preparation and funding utility, outside node dependency graphs.",
+      "sha256": "176e4eedfe166ee41329c4489ea5c3940ca4a24a91349a769422031a8d882a28"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/bootstrap.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Reuse node-owned identity and submitblock workflows with bounded saved-prefix reconciliation, without database writes or checkpoint expansion.",
+      "sha256": "da5f392243c906a4762aa656f8802cb642e97b9eba25a3eb51975572a0d6946c"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/funding.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Adapt existing real P2PKH signing and trusted-output resolution for a single generated seed outpoint, durable reviewed bytes, and explicit hash approval.",
+      "sha256": "ae74ba525eacf8b3d4512979ef903f9e1f3166a403979f45099f99da6f17c0a0"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/lib.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Reuse the native SLH genesis generator and rules builder to save one validated chain definition with separate private funding storage.",
+      "sha256": "d49e23e1255c69d8a10daf054d6d9186509f690d66fddf6e23303b664ffa4ac9"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/main.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Expose explicit standalone prepare, bootstrap, funding draft and approved submission commands; do not modify ZDN.",
+      "sha256": "e40eb90545ebd87d562a359a4e21ba2b918c7d244d88bb12a5f004c046b3aa28"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/rpc.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Provide bounded authenticated literal-loopback HTTP for the separate standalone utility, with no proxy, DNS or redirect fallback.",
+      "sha256": "4db0c6d2d97de231ec68e4d72dc58122357ce7270adb8c850bb8e207b63f1ed0"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/storage.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Create new private Unix files and bounded public inputs for saved seed keys and approved transaction bytes; no encryption claim.",
+      "sha256": "82319707cc5c8d40d54404c60413da58e9de1e5c12837d192b302cfa05248a3d"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/tests/operations.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Check saved chain identities, real classical funding signatures, wrong-chain rejection, arithmetic, retries, private storage and authenticated HTTP without a live node.",
+      "sha256": "95407a60a44993f81903b3d770a123c0b3b821f92f8600b6c5a15fa829e6bb98"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/zakura-rpc/src/methods/chain_diagnostics.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/launcher-rpc.md"
+      ],
+      "reason": "Adapt pinned research node-owned rule projection and canonical block inspection, remove absent alternate backends, and version SLH rules separately from ordinary v1.",
+      "sha256": "aace42e5f0be0a18e748ad682caa9aed0d2c26983c0c07bcc3f19945c518b33b"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/zakura-rpc/src/methods/chain_diagnostics/tests.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/launcher-rpc.md"
+      ],
+      "reason": "Adapt pinned research diagnostic tests with independent expected ordinary rules, SLH v2 support and the product block-byte limit.",
+      "sha256": "ce1d5196c3f27834f477999cf2591930541ffe326ef583b489846dc58445980e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/rpc_openrpc.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/launcher-rpc.md"
+      ],
+      "reason": "Document the two Admin-only launcher diagnostics in OpenRPC with their actual parameter and result schemas.",
+      "sha256": "5e45441491e87288e06688686d8cfb8beeb45172742766dedd32d8006d893370"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/methods/tests/openrpc.json",
+      "provenance": [
+        "docs/slh-dsa-b128s/launcher-rpc.md"
+      ],
+      "reason": "Update the deterministic full Admin discovery fixture for getchainrules and inspectchainblock; restricted discovery remains unchanged.",
+      "sha256": "cad92f9b99b47b6308c1d6487b4d3bbcafaa9a565cc3948d981b971ccf8ff99d"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-rpc/src/server/tests/surface.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/launcher-rpc.md"
+      ],
+      "reason": "Verify launcher diagnostics are absent from restricted dispatch and discovery and available only on authenticated full Admin surfaces.",
+      "sha256": "e8746a85bc0825d7fc04615baa1cbe9e0bf06c9581cfa2ad6cdd6ad1ee72f195"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "docker/Dockerfile",
+      "provenance": [
+        "docs/slh-dsa-b128s/packaging.md"
+      ],
+      "reason": "Mount all existing SLH and standalone tool workspace members so the release-stage Cargo invocation can load the workspace; node binary selection is unchanged.",
+      "sha256": "0df553ee90bcff49b023f69e8d7a6a2f7bd420d1ac22298bbdcbb412b8c78ce8"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/devnet.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/README.md"
+      ],
+      "reason": "Document standalone local-cohort preparation, bootstrap, approved funding, attributable reuse and pending live qualification.",
+      "sha256": "321b0436a70e7e45f8b7bcf21c98ed44a7f85b8fcad1db2543c9190b3b6f8cdc"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/launcher-rpc.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/README.md"
+      ],
+      "reason": "Specify Admin diagnostic schemas, strict consumer version boundaries, canonical inspection limits and pinned research source mappings.",
+      "sha256": "23085fd5282cfb5d723e0d500fc1f8623437a4349f7aa17f1bcca185769f6c77"
+    },
+    {
+      "disposition": "upstream-modification",
       "path": ".github/CODEOWNERS",
       "provenance": [
         "docs/slh-dsa-b128s/packaging.md"
@@ -185,7 +347,7 @@
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
       "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Restore only the previous pinned Orchard 2.2.0 dependency graph for optional historical fixture generation; preserve all upstream Common 3 identities and exclude legacy Orchard from nodes.",
-      "sha256": "6306e2b33aa64082d05201d317123351a7f01c66f41ad203406147d77d36c405"
+      "sha256": "7cd38f1f33917989be794e12b4597856eff6d076f20aa90f16a08d5080bbcc1f"
     },
     {
       "disposition": "upstream-modification",
@@ -195,7 +357,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies.",
-      "sha256": "17b0fa8dc9541bd27b176a84c2315b4701478e5280a505e4f0ff4d62c40b4b3e"
+      "sha256": "6410a1dfd0d3edb839696cc32f9424427f0578ab689dcaafae73372e7e56b011"
     },
     {
       "disposition": "upstream-modification",
@@ -208,7 +370,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Describe the experimental SLH product, link its guides, and distinguish its build and validation status from inherited upstream releases. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: State the user-approved fork-wide 20 MB devnet scope, public-network incompatibility, and the separate state-tpq cache with a fresh sync requirement.",
-      "sha256": "da5ce79df73debcb82152148e891e7080a55495e55b62a1f8b0cf99bea5c1afd"
+      "sha256": "5d6dbec2639eed0fb741caa55c6f1c53eb243ea13790e14230aa546f35875c5f"
     },
     {
       "disposition": "new",
@@ -230,7 +392,7 @@
         "docs/slh-dsa-b128s/benchmarking.md"
       ],
       "reason": "Lock the isolated primitive and wallet payment benchmark dependencies, including classical controls and disposable storage; keep the executable outside node graphs and publication. Upstream refresh e33dc4308: Resolve the isolated benchmark against the updated product Common 3.0 dependencies; preserve the explicit BLAKE3 and wallet cryptography pins.",
-      "sha256": "5a4c7cda9859812988f3324c6f520fae16b0aa2a7ff0314ff5b897d1b4a11f0c"
+      "sha256": "76bdd19d6cf34c7747c685c6b8ce5cba8b4f00621aa9f12c0a6eaa5f559e68b6"
     },
     {
       "disposition": "new",
@@ -706,7 +868,7 @@
         "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
       ],
       "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
-      "sha256": "ae163fe45eb458b021264893cc95c8da4779851a3d549d694953b5c5a222afaa"
+      "sha256": "c0916104a8145d2845f89d5287a34ea509b9ebeae59b12f6799f658998ab7d94"
     },
     {
       "disposition": "adapted",
@@ -715,7 +877,7 @@
         "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
       ],
       "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
-      "sha256": "98ac73d4cf3de48fdd72b44dfb153030e03b7b35a4b04ecece432648f4234e13"
+      "sha256": "56642edc786ff8e4fe78b0676f7cd716478f70b52fde80df3e83a5b3bc49eaed"
     },
     {
       "disposition": "adapted",
@@ -724,7 +886,7 @@
         "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
       ],
       "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
-      "sha256": "50d96272ab420c7bcdc033c1b39b81ee1604b30df03cf5c897d802558ba7262d"
+      "sha256": "1c9fb706ec8742fe7dced5207ef3d190f9ddf1f33d3854da148b6e252f7a53e8"
     },
     {
       "disposition": "adapted",
@@ -733,7 +895,7 @@
         "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
       ],
       "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
-      "sha256": "9383db08fe387a049e429d2ac59d4ea715d4c9e115e14f5f2b67dd49b979c1a3"
+      "sha256": "1fa77dcfb54a7092f5bb17b3bc010d6965830f7846cfec24d84102735d89c02f"
     },
     {
       "disposition": "adapted",
@@ -751,7 +913,7 @@
         "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
       ],
       "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
-      "sha256": "675396be987f407cbe1a972ac377e4aafcd156d87cbf091d06b10558040587b7"
+      "sha256": "c0f46dfabb240455ce3cecf87a87c2ecb70dcab6aaa2bc1cddc5ed2666effd63"
     },
     {
       "disposition": "adapted",
@@ -1361,7 +1523,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "a0d68ec13e75d40624b62a01e8e6c3ab51c3e170955d1a144379685ee399617e"
+      "sha256": "43965d2f97c4b781ae0a1a46dff8e5baa26a49f22f06a787cb50646eec76e66e"
     },
     {
       "disposition": "attribution",
@@ -1548,7 +1710,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "64a9b0ec556fbae23bdd955daf80be9b4c9449498377b661f017123e9e5d605d"
+      "sha256": "95b65e3ef552b99b39464d99df863457a651f913a44740dd8fcf756b6feac5b9"
     },
     {
       "disposition": "adapted",
@@ -1559,7 +1721,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "03b485063d6218092cd65e920722a943d5e3e435fdf79f392f6f8415a5e331b9"
+      "sha256": "e0dbe5139a55cc1ee482f255a932c727232f2c729e8d65538620685b0f30dc5d"
     },
     {
       "disposition": "adapted",
@@ -1570,7 +1732,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "7c7d50aa3bb7456663c68716bc12504402902f65638929ddc4cbd0522feffc45"
+      "sha256": "3d6a737a7fe2f40c23e7a7ba38103bc1e2e527c22c92a426c68f643c7991be71"
     },
     {
       "disposition": "adapted",
@@ -1581,7 +1743,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "bcf13aae244cebe64b123163b690510bbed53f2f861112f888cb94f204b1a324"
+      "sha256": "a984cd884b3734db3eed55856312bbc5d469155434dbb458b9f4fbc17a809300"
     },
     {
       "disposition": "adapted",
@@ -1625,7 +1787,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "0b8287b5aff2fd9782617b97aa760a35fa71aa3be145829a4628961f1427c448"
+      "sha256": "1e4a6b291457beb98048a459228bc53c67706aa1eeda8b4862a75fb9e803854a"
     },
     {
       "disposition": "adapted",
@@ -1636,7 +1798,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "e18ae2bc64efb1f399ff261da884e8446c18efb4abbfe8c77cc041f01a405f61"
+      "sha256": "4e8a67d9fa8db9ac8b929fc34d0f1c0be630175088461797df65fa73870e17b8"
     },
     {
       "disposition": "adapted",
@@ -1647,7 +1809,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "a56ab6905cfc3f76a3aae450634ffb2d6ae0da3c5a35c8477f03680cba3714ef"
+      "sha256": "9df2e5d09100f01b7ceb2beef88fb39907552e1df2b49fa1b9f7fb97d2caba6d"
     },
     {
       "disposition": "adapted",
@@ -1658,7 +1820,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "9433729715bc80320e8e3247954343176caf9cba8d49ed570622f21914dfbd9d"
+      "sha256": "6d7ac0400dc45d67b710f1199fdcef78c68331f54413de49adf217d85f5cb97a"
     },
     {
       "disposition": "adapted",
@@ -1843,7 +2005,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "72c9949de4d6a3f240e9a49ad4c81fc96008beb41b0efab6dfb3228fd4ebd4d3"
+      "sha256": "e9a352cf09b6c58d5049773c825babc86ecad17b5b113690fd488c9861195a2d"
     },
     {
       "disposition": "adapted",
@@ -1878,7 +2040,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "e76d01e4a2b16398b816aaf5b42dbb39fbf3b9a0f95dcdddb34b432200ee8480"
+      "sha256": "95866cf2841d1b3af8aaec76d1dc2aca7bbe03d6ea3429c282266dbc1e4a645b"
     },
     {
       "disposition": "adapted",
@@ -1911,7 +2073,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "2ccc5bf6db7e5307b6e835f946d3630545202000191cd74d4bbe8d539dddbbce"
+      "sha256": "e7db54cc1b9a4c9e8422088e2484a5ba098257498494a809fcc763f46f42dbae"
     },
     {
       "disposition": "adapted",
@@ -1933,7 +2095,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "018c588287cb4d108e1ec7b6a0a2339b5180e5c7c74363228a356c6c7e0a470a"
+      "sha256": "0c8b523bb702f162e8b0ec147e86a7dd7ad3a8b838ac19dd6413c7a084d9c41e"
     },
     {
       "disposition": "adapted",
@@ -1944,7 +2106,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. Reuse retained signed v5/v6 two-input fixtures to require wallet verification of both inputs, including their last signer, without mocked crypto.",
-      "sha256": "d88409db285ccd063fae10a86272b181c06cd01a2d557a05f5ad91baf31ca614"
+      "sha256": "edf5c74bbccde57e00c63b55a693a86fa856083638f52c8dfd94357a16e64126"
     },
     {
       "disposition": "adapted",
@@ -1955,7 +2117,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "78b9f4be7c8c7aaa4d1a3b248e93e47702ac9c98b8a5bfd80f05044566b699db"
+      "sha256": "6b949169374c55b6aea8011704925510ae3db2c9780dd1003cfd7c00425044d1"
     },
     {
       "disposition": "adapted",
@@ -1966,7 +2128,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. A cfg(test,unix) delegation exposes the existing private receive-stage hook only to the ignored human fault driver; production issuance is unchanged.",
-      "sha256": "5ab333db8ce5033df2eeb3bbc072129dd6045ec353a3e256d90a4011af0d62dc"
+      "sha256": "35a2464b1890d4627d8c822b5e88b8ccc2e9d2dc282a65a5c2677290c19ea3bf"
     },
     {
       "disposition": "adapted",
@@ -2021,7 +2183,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "a4b95d5ddbd15028b16b72fb5784e495f616e2f709e72a61767b1347456384f3"
+      "sha256": "78f3a7dd00387a21fe33041cbfdfa47a044f246f1a33e41588f2ef39758786f7"
     },
     {
       "disposition": "adapted",
@@ -2081,7 +2243,7 @@
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
       "reason": "Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 peer-isolation review: The SLH shared generator intentionally replaces saturating seed-count arithmetic with checked addition and rejects invalid upgrade/SLH heights before generation. This also changes overflowing ordinary-generator requests to early errors; bounded ordinary and SLH regression tests cover height and count overflow without generating blocks.",
-      "sha256": "e39f1eb93275c2ff64e94caf3d5a514b058193bf48aa931a9768aecacc61434d"
+      "sha256": "b0c3e5562d6053df8315105d549d1a6ce147cef2050db49cdae629ed316f8324"
     },
     {
       "disposition": "upstream-modification",
@@ -2712,7 +2874,7 @@
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
       "reason": "Expose optional effective SLH chain diagnostics and apply the same compiled-support and bootstrap-peer refusal to configured and embedded nodes. Preserve non-SLH RPC serialization and startup behavior; add focused generator, startup and serialization controls. Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
-      "sha256": "086403c08ba8deb794f8fd1fa7f65a96fb188b45bad53d54240f684e4d79f8e5"
+      "sha256": "d0f97d39ef2ff194ad6870273f2ba1654e24c698c849b6c62ba7b804e130ade4"
     },
     {
       "disposition": "new",
@@ -3658,7 +3820,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "db0f3b6e40b667584dc7c238719736d95c418a679e834548f68d44169908510d"
+      "sha256": "024e576dc3cd95b05eb1a31fd2de80b7a9c23c4eafe48c252bff58bed8d71361"
     },
     {
       "disposition": "new",
@@ -3687,7 +3849,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "ea6884867a362a12ce6487cf5970accc7552e284e130d713283b33641e1ec51c"
+      "sha256": "6c89c277bc6c5a37b3d851d05d6c2d3c5ea04bf7c5b65655bf48eda3867b09b5"
     },
     {
       "disposition": "new",
@@ -3715,7 +3877,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "e05c1d73c4f150f32eb5234adb0c25953ff0af2242895dda46f351c4bd65b95e"
+      "sha256": "43447160516a380279db8a6787fc9adef324af49c046c09e0d93a6c5719c66b0"
     },
     {
       "disposition": "new",
@@ -3947,7 +4109,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
-      "sha256": "6e56b7807971b27366ef1aae2b3b2f0cefdb288b166b2e3f86105870e5e8722e"
+      "sha256": "89c9924d038bc765d022e0115a81566c9c7b714e67642a7c0aa59df1b69f64ef"
     },
     {
       "disposition": "new",
@@ -3959,7 +4121,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage. PR #9: Maintain the SLH contract and user-approved devnet-only binary scope; document the unchanged 20,000 classical sigop budget, state-tpq layout and recovery checks, per-command peer limits, and unresolved checkpoint/RPC concurrency memory risks. PR #9 follow-up: Document cache preservation, unsupported upstream snapshot workflows, explicit feed snapshot paths, consistent marker parsing, read-only initialization errors, and peer buffers that grow with arriving bytes. PR #9 follow-up: Document incremental native reads and large legacy buffer release, benchmark binary checks, maintenance errors, and fail-closed recovery when an unversioned cache lacks readable RocksDB metadata. PR #9 follow-up: Describe early target/baseline source or release layout checks and a shared startup-cache guard that runs after normal database reuse, without a separate read-only network override.",
-      "sha256": "ebd1d71ddf0893a2ce60b68f0063d8d1da51e36e34b1fa5b714453b213dd6e5f"
+      "sha256": "2f41f15290cfab5ca4be8e9a9ad372999ddbc5105d650effb8ef46cb992b1161"
     },
     {
       "disposition": "new",
@@ -4053,7 +4215,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain the experimental SLH contract, operator documentation or bounded verification tooling.",
-      "sha256": "e56b21874cab7fa224b706889a8b783c61d7e02b40f77e365abfcfab51c5de3f"
+      "sha256": "dd2665acc63f878e680442047e716614e6b7baf5bcb2a0a275aa53734a867f7b"
     },
     {
       "disposition": "new",
@@ -4527,7 +4689,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Map all twelve node boundaries and sixty-three subcontrols to source, historical evidence or explicit preparation gaps. Document launcher-created SLH custom Testnets, integration boundaries and pending live acceptance. Keep historical evidence and experimental v1 encoding unchanged; record source mappings and focused regression coverage.",
-      "sha256": "23cabdcfb2a8e10713451b1e9984bd94d569ca85ab5209a298848dc5072e1fa7"
+      "sha256": "852819e9bddb5d77ddceffdbb1f3e6f36fef48ebdb1a226e93ffa9e71b91fb02"
     },
     {
       "disposition": "new",
@@ -5289,7 +5451,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Register/document the isolated benchmark framework and preserve its exclusion from product runtime dependencies. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
-      "sha256": "1799a2bab9f5b926921580fe604b1107476b24e4c77928282d417239bd2e0d29"
+      "sha256": "a5ad8f6535be55ccca9ed50577a875405910adbc732196325afcdfa9519d316d"
     },
     {
       "disposition": "new",
@@ -5300,7 +5462,7 @@
         "docs/slh-dsa-b128s/packaging.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. PR #11 integration: authenticate the exact PR #12 squash commit de7880372 and its e33dc4308 upstream association before exempting matching historical entries. Reuse exact non-first product-parent entries while auditing every originating commit. Retain exact upstream pins, offline operation and all private-path checks; bounded Git tests cover invalid records, unrecorded or unselected imports, changed bytes/modes/resolutions, and deleted private history. PR #11 follow-up: support later product squash merges through the authenticated exact import as an alternative integration proof. Keep ancestry mandatory without that record. Supply only literal pinned official upstream commit e33dc4308 in existing content CI; preserve triggers and the offline checker. A clean-clone Git test covers missing then explicitly supplied upstream input after feature and fix squashes, with unrecorded/unselected and invalid-record controls.",
-      "sha256": "9755285bb67c88f5923bc55d6349878a6e4cbaec151b80bbe1685d69f3226604"
+      "sha256": "ef3e24ecc4fdf094ba67f5ad9ee9f166c100061648c7686e31e1b256eb833199"
     },
     {
       "disposition": "new",

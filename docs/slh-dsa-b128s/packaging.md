@@ -1,7 +1,7 @@
 # Source, builds, and packaging
 
 The distribution unit is the full checkout or source archive.
-The seven added product crates and two fixture packages have `publish = false`.
+The eight added product crates and two fixture packages have `publish = false`.
 They are not standalone crates.io releases.
 Some tests use files elsewhere in the checkout.
 Upstream packages retain their release process.
@@ -35,6 +35,32 @@ The guard checks these properties:
 It does not compile, publish, or run a node or signer.
 Dependencies and registry metadata must already be available.
 The separate [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) checks resolved feature graphs.
+
+## Experimental node images
+
+The default Docker feature set does not enable SLH. An explicitly selected
+experimental node image uses the repository runtime target and these features:
+
+```sh
+docker build --target runtime \
+  --build-arg FEATURES=default-release-binaries,experimental-slh-dsa-b128s \
+  -f docker/Dockerfile .
+```
+
+This is a dedicated container build and requires explicit approval before an
+agent runs it. The command is not a live qualification receipt.
+
+The release stage mounts every Cargo workspace member, including the wallet
+and fixture manifests. Cargo needs those manifests even when it only builds
+the node package. The narrow fixture exception in `.dockerignore` provides
+that member's source; it does not enable its optional proof-generation feature.
+Only node executables are copied into the runtime image. The node dependency
+guard remains responsible for excluding wallet signing and fixture dependencies
+from the node runtime graph.
+
+The release-content unit suite reconstructs this mounted workspace and runs
+offline Cargo metadata without compiling. This catches missing source mounts,
+but does not qualify Docker execution, image provenance or running-node support.
 
 Missing Git objects cause failure. The guard disables lazy fetches.
 It identifies canonical upstream refs separately and excludes them from the product release.
@@ -157,8 +183,9 @@ Build receipts record compiler versions, dependencies, features, flags, binaries
 
 ## Publication controls
 
-The source repository, [jonwalch/zcash-tpq](https://github.com/jonwalch/zcash-tpq), is private.
-GitHub Actions is disabled in this repository, including inherited scheduled jobs.
+The source repository, [jonwalch/zcash-tpq](https://github.com/jonwalch/zcash-tpq), is public.
+Its workflow definitions are active. A branch push or pull request can start
+automatic CI; this does not authorize manual heavy workflow dispatch or reruns.
 Binary and package releases are not configured.
 Inherited package names do not select publication destinations.
 

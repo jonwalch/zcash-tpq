@@ -1,4 +1,4 @@
-//! Experimental Regtest SLH wallet: backed enrollment, discovery and approved payments.
+//! Experimental isolated-chain SLH wallet: backed enrollment, discovery and approved payments.
 
 #![forbid(unsafe_code)]
 

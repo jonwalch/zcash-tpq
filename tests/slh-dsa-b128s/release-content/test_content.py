@@ -3,6 +3,7 @@ import copy
 import importlib.util
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -37,6 +38,29 @@ class GitFixture:
 
 
 class PathTests(unittest.TestCase):
+    def test_runtime_build_inputs_form_a_complete_cargo_workspace(self):
+        root = Path(__file__).resolve().parents[3]
+        dockerfile = (root / "docker/Dockerfile").read_text()
+        release = dockerfile.split("FROM deps AS release\n", 1)[1].split("\nFROM ", 1)[0]
+        mounts = re.findall(r"--mount=type=bind,source=([^,\s]+),target=([^\s]+)", release)
+        self.assertTrue(mounts)
+        with tempfile.TemporaryDirectory() as temporary:
+            staged = Path(temporary)
+            for source, target in mounts:
+                destination = staged / target
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                if (root / source).is_dir():
+                    shutil.copytree(root / source, destination, dirs_exist_ok=True)
+                else:
+                    shutil.copyfile(root / source, destination)
+            metadata = subprocess.check_output(
+                ["cargo", "metadata", "--no-deps", "--locked", "--offline", "--format-version", "1"],
+                cwd=staged, stderr=subprocess.PIPE, timeout=60,
+            )
+            self.assertIn(b"zakura-pq-wallet", metadata)
+        # Cargo reads the fixture member's manifest even for a node-only build.
+        self.assertIn("!tests/slh-dsa-b128s/fixtures/host/**", (root / ".dockerignore").read_text())
+
     def test_relative_parent_paths_stay_within_tracked_checkout(self):
         manifest = b'[package]\nname="zakura-pq-wallet"\npublish=false\n[dependencies]\nx={path="../pq-cli"}\n'
         names = {"crates/pq-cli/Cargo.toml"}

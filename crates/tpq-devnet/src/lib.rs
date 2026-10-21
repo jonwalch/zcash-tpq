@@ -130,6 +130,33 @@ pub struct Chain {
 }
 
 impl Chain {
+    /// Wallet transport identity derived from the validated native chain rules.
+    pub fn wallet_profile(&self) -> Result<zakura_pq_wallet::Profile> {
+        self.validate()?;
+        let profile = zakura_pq_wallet::Profile {
+            chain_fingerprint: Some(zakura_pq_wallet::Hex(
+                hex::decode(&self.chain_fingerprint)?
+                    .try_into()
+                    .map_err(|_| "fingerprint length")?,
+            )),
+            genesis_hash: zakura_pq_wallet::Hex(
+                hex::decode(&self.rules.genesis_hash)?
+                    .try_into()
+                    .map_err(|_| "genesis hash length")?,
+            ),
+            max_block_pq_checks: self.rules.experimental_slh_dsa_b128s_max_checks_per_block,
+            max_tx_pq_checks: self
+                .rules
+                .experimental_slh_dsa_b128s_max_checks_per_transaction,
+            network: 1,
+            nu7_activation_height: self.rules.activation_heights.nu7.ok_or("missing NU7")?,
+            nu7_branch_id: "77190ad9".into(),
+            pq_activation_height: self.rules.experimental_slh_dsa_b128s_activation_height,
+        };
+        profile.validate()?;
+        Ok(profile)
+    }
+
     /// Decode and bind all saved blocks to the native rules and checkpoints.
     pub fn validate(&self) -> Result<Vec<Block>> {
         require(
@@ -292,19 +319,10 @@ pub fn prepare(public_dir: &Path, private_dir: &Path, name: String) -> Result<Ch
         &public_dir.join("chain.json"),
         &serde_json::to_vec_pretty(&chain)?,
     )?;
-    storage::write_new(
-        &public_dir.join("wallet-profile.json"),
-        &serde_json::to_vec_pretty(&serde_json::json!({
-            "genesis_hash":chain.rules.genesis_hash,
-            "max_block_pq_checks":chain.rules.experimental_slh_dsa_b128s_max_checks_per_block,
-            "max_tx_pq_checks":chain.rules.experimental_slh_dsa_b128s_max_checks_per_transaction,
-            "network":1,
-            "nu7_activation_height":chain.rules.activation_heights.nu7,
-            "nu7_branch_id":"77190ad9",
-            "pq_activation_height":chain.rules.experimental_slh_dsa_b128s_activation_height,
-            "chain_fingerprint":chain.chain_fingerprint,
-        }))?,
-    )?;
+    // The wallet's typed field order and compact serializer are canonical.
+    let profile_bytes = serde_json::to_vec(&chain.wallet_profile()?)?;
+    zakura_pq_wallet::Profile::from_json(&profile_bytes)?;
+    storage::write_new(&public_dir.join("wallet-profile.json"), &profile_bytes)?;
     storage::write_new(
         &public_dir.join("network.json"),
         &serde_json::to_vec_pretty(&serde_json::json!({

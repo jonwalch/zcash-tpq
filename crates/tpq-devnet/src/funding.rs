@@ -268,10 +268,13 @@ pub fn draft(
     chain: &Chain,
     key_path: &Path,
     review_path: &Path,
-    destination: Vec<u8>,
+    receiver: &str,
     amount: u64,
     fee: u64,
 ) -> Result<Review> {
+    let receiver = zakura_pq_wallet::Receiver::parse(receiver)?;
+    receiver.check_profile(&chain.wallet_profile()?)?;
+    let destination = receiver.script().to_vec();
     let funder: Funder = serde_json::from_slice(&storage::read_private(key_path, 4096)?)?;
     require(
         funder.schema == 1 && funder.chain_fingerprint == chain.chain_fingerprint,

@@ -39,7 +39,7 @@ LEDGER = "docs/slh-dsa-b128s/imports.json"
 KINDS = {"adapted", "new", "upstream-modification", "public-fixture", "attribution"}
 PRODUCT_PACKAGES = {"zakura-pq-cli", "zakura-pq-wallet", "zakura-pq-slh-dsa-b-sign",
     "zakura-pq-slh-dsa-b-verify", "zakura-pq-slh-dsa-b-exp", "zakura-pq-tx-context",
-    "zakura-pq-test-support", "slh-dsa-b128s-fixture-host", "slh-dsa-b128s-public-fixture", "tpq-bench"}
+    "zakura-pq-test-support", "zakura-tpq-devnet", "slh-dsa-b128s-fixture-host", "slh-dsa-b128s-public-fixture", "tpq-bench"}
 ALTERNATE = re.compile(r"(?:ml[-_]?dsa|sqisign|falcon|fips20[45])", re.I)
 FORBIDDEN_PARTS = {".context", "experiments", "node_modules", "__pycache__", "target"}
 PUBLICATION_GATE = "vars.SLH_RELEASE_PUBLICATION == 'enabled'"

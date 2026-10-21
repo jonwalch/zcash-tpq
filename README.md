@@ -6,7 +6,8 @@ It includes a command-line wallet, multisig policies through 15-of-15,
 encrypted backups, recovery, and watch-only monitoring.
 
 **SLH support is off by default.** The node supports Regtest and explicitly
-configured custom testnets for devnet launchers. The wallet CLI still uses Regtest.
+configured custom testnets for devnet launchers. The wallet CLI supports both,
+with chain-bound profiles and receivers for custom testnets.
 Live tests and performance tests
 remain pending. Agents must obtain user approval before running them under
 [AGENTS.md](AGENTS.md). The BLAKE3 construction is experimental.
@@ -27,6 +28,7 @@ The [SLH guide](docs/slh-dsa-b128s/README.md) contains these instructions:
 
 - [Configure a node](docs/slh-dsa-b128s/runtime.md).
 - [Configure a launcher-created devnet](docs/slh-dsa-b128s/devnets.md).
+- [Prepare and fund a standalone local devnet](docs/slh-dsa-b128s/devnet.md).
 - [Use the wallet](docs/slh-dsa-b128s/cli.md).
 - [Save and restore backups](docs/slh-dsa-b128s/recovery.md).
 - [Build the software and run acceptance tests](docs/slh-dsa-b128s/acceptance.md).

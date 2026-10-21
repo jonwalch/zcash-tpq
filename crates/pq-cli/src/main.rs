@@ -1,4 +1,4 @@
-//! Experimental Regtest wallet keys, discovery and explicitly approved payments.
+//! Experimental isolated-chain wallet keys, discovery and explicitly approved payments.
 #![forbid(unsafe_code)]
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod discovery;
@@ -194,7 +194,7 @@ fn expected(command: &str) -> Option<std::ops::RangeInclusive<usize>> {
 #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
 fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     if args.is_empty() || matches!(args[0].as_str(), "--help" | "-h") {
-        writeln!(io::stdout(), "Experimental SLH wallet support is disabled. Build with experimental-slh-dsa-b128s to enable Regtest commands.")?;
+        writeln!(io::stdout(), "Experimental SLH wallet support is disabled. Build with experimental-slh-dsa-b128s to enable isolated-chain commands.")?;
         return Ok(());
     }
     Err("experimental SLH wallet support is disabled".into())

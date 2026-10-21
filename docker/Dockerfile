@@ -149,6 +149,15 @@ ARG CARGO_TARGET_DIR
 RUN --mount=type=bind,source=crates/tower-batch-control,target=crates/tower-batch-control \
     --mount=type=bind,source=crates/tower-fallback,target=crates/tower-fallback \
     --mount=type=bind,source=crates/xtask,target=crates/xtask \
+    --mount=type=bind,source=crates/pq-cli,target=crates/pq-cli \
+    --mount=type=bind,source=crates/pq-wallet,target=crates/pq-wallet \
+    --mount=type=bind,source=crates/pq-slh-dsa-b-sign,target=crates/pq-slh-dsa-b-sign \
+    --mount=type=bind,source=crates/pq-slh-dsa-b-verify,target=crates/pq-slh-dsa-b-verify \
+    --mount=type=bind,source=crates/pq-slh-dsa-b-exp,target=crates/pq-slh-dsa-b-exp \
+    --mount=type=bind,source=crates/pq-tx-context,target=crates/pq-tx-context \
+    --mount=type=bind,source=crates/pq-test-support,target=crates/pq-test-support \
+    --mount=type=bind,source=crates/tpq-devnet,target=crates/tpq-devnet \
+    --mount=type=bind,source=tests/slh-dsa-b128s/fixtures/host,target=tests/slh-dsa-b128s/fixtures/host \
     --mount=type=bind,source=crates/zakura-chain,target=crates/zakura-chain \
     --mount=type=bind,source=crates/zakura-mmr-tree,target=crates/zakura-mmr-tree \
     --mount=type=bind,source=crates/zakura-header-chain,target=crates/zakura-header-chain \

@@ -155,5 +155,8 @@ The consumer comparison was inspected read-only in ZDN's
 Focused tests cover complete ordinary rules, effective mutations, sorting and
 multiplicity, unsupported networks, SLH version and build status, exact genesis
 identity, malformed and noncanonical input, and HTTP listener access policy.
-Rust execution is pending coordinator serialization; this worker does not start
-Rust builds. No live node tests, dedicated builds, or proof generation were run.
+Integrated checks with Rust 1.97.1 passed all seven diagnostic tests with and
+without the experimental feature. The enabled RPC library suite passed 256
+tests, with two proof-related tests left ignored. This includes authenticated
+and restricted HTTP listener checks. These are library checks, not live-node
+qualification. No dedicated node builds or proof generation were run.

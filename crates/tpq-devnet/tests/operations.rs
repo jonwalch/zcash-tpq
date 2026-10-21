@@ -141,6 +141,16 @@ fn prepared() -> (tempfile::TempDir, Chain) {
     (dir, chain)
 }
 
+fn receiver(chain: &Chain) -> String {
+    zakura_pq_wallet::Receiver::for_profile(
+        zakura_pq_wallet::Suite::SlhDsaB128sExpV1,
+        zakura_pq_wallet::Hex([9; 32]),
+        &chain.wallet_profile().unwrap(),
+    )
+    .unwrap()
+    .encode()
+}
+
 #[test]
 fn prepare_saves_exact_public_rules_and_separate_create_new_private_key() {
     let (dir, chain) = prepared();
@@ -164,13 +174,37 @@ fn prepare_saves_exact_public_rules_and_separate_create_new_private_key() {
     )
     .is_err());
     assert!(storage::write_new(&dir.path().join("private/funder.json"), b"overwrite").is_err());
-    let config: toml::Value = toml::from_str(
+    let profile = zakura_pq_wallet::Profile::from_json(
+        &std::fs::read(dir.path().join("public/wallet-profile.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(profile, chain.wallet_profile().unwrap());
+    #[derive(serde::Deserialize)]
+    struct Config {
+        network: zakura_network::Config,
+    }
+    let config: Config = toml::from_str(
         &std::fs::read_to_string(dir.path().join("public/node-network.toml")).unwrap(),
     )
     .unwrap();
+    config
+        .network
+        .validate_experimental_slh_dsa_b128s_peers()
+        .unwrap();
     assert_eq!(
-        config["network"]["network"]["genesis_hash"].as_str(),
-        Some(chain.rules.genesis_hash.as_str())
+        config
+            .network
+            .network
+            .experimental_slh_dsa_b128s_chain_fingerprint()
+            .map(hex::encode),
+        Some(chain.chain_fingerprint.clone())
+    );
+    let config: Config =
+        serde_json::from_slice(&std::fs::read(dir.path().join("public/network.json")).unwrap())
+            .unwrap();
+    assert_eq!(
+        config.network.network.genesis_hash().to_string(),
+        chain.rules.genesis_hash
     );
 }
 
@@ -223,18 +257,22 @@ fn funding_saves_before_submit_and_retries_only_saved_bytes() {
     let mut node = Node::new(chain.clone());
     node.tip = Some(102);
     let path = dir.path().join("private/review.json");
-    let destination = [vec![0x53, 0x20], vec![9; 32], vec![0xc0]].concat();
+    let destination = receiver(&chain);
     let review = funding::draft(
         &mut node,
         &chain,
         &dir.path().join("private/funder.json"),
         &path,
-        destination,
+        &destination,
         100_000_000,
         10_000,
     )
     .unwrap();
     assert_eq!(review.change_zat, 899_990_000);
+    assert_eq!(
+        review.destination_script_hex,
+        hex::encode([vec![0x53, 0x20], vec![9; 32], vec![0xc0]].concat())
+    );
     assert!(node.sent.is_empty());
     // Check the exported real-key authorization directly, without calling the
     // tool's signature-check helper. Mutation must invalidate the signature.
@@ -325,13 +363,13 @@ fn funding_rejects_foreign_keys_immaturity_and_bad_payment_arithmetic() {
     node.tip = Some(102);
     let review = dir.path().join("private/rejected.json");
     let key = dir.path().join("private/funder.json");
-    let destination = [vec![0x53, 0x20], vec![9; 32], vec![0xc0]].concat();
+    let destination = receiver(&chain);
     assert!(funding::draft(
         &mut node,
         &chain,
         &wrong,
         &review,
-        destination.clone(),
+        &destination,
         100_000_000,
         10_000
     )
@@ -344,7 +382,7 @@ fn funding_rejects_foreign_keys_immaturity_and_bad_payment_arithmetic() {
         &chain,
         &key,
         &review,
-        destination.clone(),
+        &destination,
         100_000_000,
         10_000
     )
@@ -356,18 +394,39 @@ fn funding_rejects_foreign_keys_immaturity_and_bad_payment_arithmetic() {
         (100_000_000, 9_999),
         (2402, 10_000),
     ] {
+        assert!(
+            funding::draft(&mut node, &chain, &key, &review, &destination, amount, fee).is_err()
+        );
+    }
+    assert!(!review.exists());
+    assert!(node.sent.is_empty());
+}
+
+#[test]
+fn funding_rejects_other_chain_regtest_and_raw_script_receivers() {
+    let (dir, chain) = prepared();
+    let (_, other) = prepared();
+    let mut node = Node::new(chain.clone());
+    node.tip = Some(102);
+    let review = dir.path().join("private/rejected.json");
+    let regtest = zakura_pq_wallet::Receiver::new(
+        zakura_pq_wallet::Suite::SlhDsaB128sExpV1,
+        zakura_pq_wallet::Hex([9; 32]),
+    )
+    .encode();
+    for destination in [receiver(&other), regtest, hex::encode([0; 35])] {
         assert!(funding::draft(
             &mut node,
             &chain,
-            &key,
+            &dir.path().join("private/funder.json"),
             &review,
-            destination.clone(),
-            amount,
-            fee
+            &destination,
+            100_000_000,
+            10_000
         )
         .is_err());
+        assert!(!review.exists());
     }
-    assert!(!review.exists());
     assert!(node.sent.is_empty());
 }
 

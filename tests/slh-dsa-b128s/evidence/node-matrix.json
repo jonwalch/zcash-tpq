@@ -141,7 +141,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-chain/src/local_genesis.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "e39f1eb93275c2ff64e94caf3d5a514b058193bf48aa931a9768aecacc61434d"
+      "sha256": "b0c3e5562d6053df8315105d549d1a6ce147cef2050db49cdae629ed316f8324"
     },
     "devnet-handshake": {
       "anchor": "experimental_slh_dsa_b128s_handshake_binds_consensus_rules",
