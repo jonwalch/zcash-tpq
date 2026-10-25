@@ -133,6 +133,7 @@ fn producer(value: &Producer) -> Result<()> {
                 | "24a17b3f0e7d88513688d607054f018ab6f15af2"
                 | "e33dc43089acca2fe2c6516927932f2b7618b8bc"
                 | "3f36c35031126a8f8cd52865ef0be9e5dc494b8d"
+                | "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73"
         ) && value.algorithm_revision == "b392fe82d2d9770142477a576a758a233888bc0a"
             && value.blake3_version == "1.8.5",
         "schema",
@@ -1083,6 +1084,7 @@ mod tests {
             "24a17b3f0e7d88513688d607054f018ab6f15af2",
             "e33dc43089acca2fe2c6516927932f2b7618b8bc",
             "3f36c35031126a8f8cd52865ef0be9e5dc494b8d",
+            "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73",
         ] {
             identity.zakura_revision = revision.to_owned();
             assert!(producer(&identity).is_ok());

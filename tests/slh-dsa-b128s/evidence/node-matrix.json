@@ -148,7 +148,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/zakura/handshake.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "872e3e592e97ae8c5b2759964aad14d5addad796a1689ae26d2d42512bb896c9"
+      "sha256": "3534979833168782690e1ca7ef2dbcab740acc823e07b9f06560eb11fe58f883"
     },
     "devnet-independent": {
       "anchor": "def controls(",
@@ -183,7 +183,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakura-network/src/zakura/handler.rs",
       "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
-      "sha256": "fae222137f3622f2640337d315ca5252e922abba47e0bcab634fba018021e742"
+      "sha256": "0465b7041875c910c6a4219787e2bbcb20b702e8e82f4b08f3c10a36e10873d5"
     },
     "devnet-native-registry": {
       "anchor": "fresh_native_peers_are_visible_and_generation_guarded",
@@ -204,7 +204,7 @@
       "kind": "bounded_test_source",
       "path": "tests/slh-dsa-b128s/fixtures/test_generate_devnet_transactions.py",
       "scope": "Source control only; execution is not asserted. Mocked diagnostics and source identity do not establish live node or signed-fixture acceptance.",
-      "sha256": "e10442afa7815062e0e2ed78ac0654fcf05daa50fa4e4a4e92d3bac68f1ad3c0"
+      "sha256": "0478d530f30bce000f573f6f5c470c711969a3bee85910c008de9f4b59471146"
     },
     "devnet-rpc": {
       "anchor": "slh_info_reports_rules_without_claiming_tip_readiness",
@@ -218,7 +218,7 @@
       "kind": "bounded_test_source",
       "path": "crates/zakurad/src/commands/start.rs",
       "scope": "Custom Testnet source control. This index does not assert execution, launcher readiness or live node acceptance.",
-      "sha256": "a31387121718be7c79c242ce240466f4c3efad046271a2b06dc9f99faee087ea"
+      "sha256": "b6abfe81de42374eebf1c9541a7132ef0bbd15527928789169522e866a500399"
     },
     "domains": {
       "anchor": "commitment_known_answers_and_exact_template_are_domain_separated",
@@ -568,14 +568,14 @@
       "kind": "bounded_test_source",
       "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "ec7d5c7b04809f834f9fbd2e1470718abb22cc762402db1a7ba77dca448006ad"
+      "sha256": "27a9a9c8ec98d457a009a83601829245471e57486d14043a8748857910ffca29"
     },
     "oracle-mutants": {
       "anchor": "test_typed_mutations_precede_crypto_where_required",
       "kind": "bounded_test_source",
       "path": "tests/slh-dsa-b128s/transactions/test_oracle.py",
       "scope": "Source present; execution is not asserted by this matrix.",
-      "sha256": "ec7d5c7b04809f834f9fbd2e1470718abb22cc762402db1a7ba77dca448006ad"
+      "sha256": "27a9a9c8ec98d457a009a83601829245471e57486d14043a8748857910ffca29"
     },
     "ordering": {
       "anchor": "descriptors_and_signer_order_are_rejected_without_normalizing",

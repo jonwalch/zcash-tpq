@@ -867,7 +867,7 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Identify narrowly extracted real shielded constructors and optional output-only controls, preserving independent synthetic references.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
-      "sha256": "3bf194c2250137ade506651475ccca66d65bec5d77d056b3d3f8b79727461a30",
+      "sha256": "7a5ad8c85c534ca5e9b302aa570eb28c55b09b938af82eed067bcc5a770cf486",
       "sources": []
     },
     {
@@ -930,7 +930,7 @@
       "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Register strict optional spend prepare/finalize/funding/block operations; default build has no proof/spend tooling.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
-      "sha256": "b1c548f35603cb732f21373f64e171875f9e83ec72c7faf91597f8e45415b557",
+      "sha256": "09273bee4062f63663116a7a8c4d66ac41d7e381d35e6c6dacc5143b4d15a3e8",
       "sources": []
     },
     {
@@ -987,6 +987,6 @@
       "sources": []
     }
   ],
-  "upstream_zakura": "3f36c35031126a8f8cd52865ef0be9e5dc494b8d",
+  "upstream_zakura": "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73",
   "validation_boundary": "Only offline/mock and bounded fixture-host checks were executed during preparation. All dedicated binary builds, node/wallet/terminal/signing live cases, proof generation and performance runs require human execution. See docs/slh-dsa-b128s/acceptance.md for prepared and missing driver scenarios."
 }
