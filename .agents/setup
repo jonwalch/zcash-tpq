@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd -- "$repo_root"
+
+step() {
+    local label="$1" start=$SECONDS
+    shift
+    printf '\n==> %s\n' "$label"
+    "$@"
+    printf '==> %s finished in %ss\n' "$label" "$((SECONDS - start))"
+}
+
+# Do not update apt or reinstall packages restored from a project snapshot.
+# Use the bundled Zakura RocksDB fork, not Debian's different RocksDB version.
+missing=()
+for package in build-essential pkg-config clang libclang-dev cmake libssl-dev \
+    protobuf-compiler ca-certificates curl python3 python3-venv; do
+    if [[ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != 'install ok installed' ]]; then
+        missing+=("$package")
+    fi
+done
+if ((${#missing[@]})); then
+    step 'Refresh system package lists' sudo apt-get -o Acquire::Retries=3 \
+        -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+    step 'Install missing build prerequisites' sudo env DEBIAN_FRONTEND=noninteractive \
+        apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
+        -o Acquire::https::Timeout=30 install -y --no-install-recommends "${missing[@]}"
+fi
+
+export PATH="$HOME/.cargo/bin:$PATH"
+if ! command -v rustup >/dev/null 2>&1; then
+    installer="$(mktemp)"
+    trap 'rm -f -- "$installer"' EXIT
+    step 'Download rustup' curl --proto '=https' --tlsv1.2 -fsSL \
+        --retry 3 --connect-timeout 30 --max-time 120 https://sh.rustup.rs -o "$installer"
+    step 'Install rustup' sh "$installer" -y --no-modify-path --default-toolchain none
+    rm -f -- "$installer"
+    trap - EXIT
+fi
+
+# Follow the repository's channel rather than adding a second Rust version pin.
+toolchain="$(python3 -c 'import tomllib; print(tomllib.load(open("rust-toolchain.toml", "rb"))["toolchain"]["channel"])')"
+step 'Install repository Rust toolchain and lint tools' rustup toolchain install \
+    "$toolchain" --profile minimal --component rustfmt --component clippy
+step 'Cache locked Cargo dependencies (no compilation)' cargo fetch --locked
+
+# Keep the independent Python backup oracle outside the product dependency graph.
+venv="$HOME/.cache/zcash-tpq/oracle-venv"
+if [[ ! -x "$venv/bin/python" ]]; then
+    step 'Create Python oracle environment' python3 -m venv "$venv"
+fi
+step 'Install pinned Python oracle dependency' "$venv/bin/python" -m pip \
+    --disable-pip-version-check install \
+    -r tests/slh-dsa-b128s/wallet/formats/requirements.txt
+
+# Amp and supervised services start new non-interactive login shells. rustup's
+# default profile hook alone is not read when the orb has a .bash_profile.
+marker='# zcash-tpq orb environment'
+if ! grep -Fqx "$marker" "$HOME/.bash_profile" 2>/dev/null; then
+    cat >> "$HOME/.bash_profile" <<EOF
+
+$marker
+if [[ "\$PWD" == "$repo_root" || "\$PWD" == "$repo_root/"* ]]; then
+    . "$HOME/.cargo/env"
+    . "$venv/bin/activate"
+fi
+EOF
+fi
+
+printf '\nOrb dependencies ready. No node builds, live tests, or services were started.\n'

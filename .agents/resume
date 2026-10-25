@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# No services or per-user authentication are needed for offline development.
+# Installation belongs in setup, never in the wake-up path.
+export PATH="$HOME/.cargo/bin:$PATH"
+for tool in cargo rustc clang protoc; do
+    command -v "$tool" >/dev/null
+done
+printf 'Orb build tools available; no services to reconnect.\n'
