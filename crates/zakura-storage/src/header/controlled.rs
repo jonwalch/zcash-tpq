@@ -11,31 +11,45 @@
 //!
 //! Dropping a call's future cancels only the caller. The operation stays
 //! pending with its inputs, so a locator's permit stays held, and its reply is
-//! dropped when it completes.
+//! dropped when it completes. A reply nobody takes, at completion or because
+//! the caller drops it unread, is abandoned: an `Acquired` reply's lease
+//! ends, as zakura-state's `PendingRetainedPathAcquisition` ends it.
+//!
+//! Every submission, caller drop, completion, abandoned reply and shutdown
+//! goes on an event queue, in order, which [`ControlledPort::take_events`]
+//! drains.
 
 use std::{
     collections::BTreeMap,
     fmt,
     future::Future,
     marker::PhantomData,
+    mem,
     pin::Pin,
     sync::{Mutex, MutexGuard, PoisonError},
     task::{Context, Poll, Waker},
     time::Duration,
 };
 
+use sha2::{Digest, Sha256};
 use zakura_chain::block;
-use zakura_header_chain::{BodyWorkOwner, EngineSnapshot, HeaderLocator};
+use zakura_header_chain::{
+    BodyWorkOwner, EngineSnapshot, HeaderLocator, HeaderSyncWorkOwner, SourceId,
+};
 use zakura_node_services::header_chain::{
-    AcquirePath, AcquirePathReply, ApplyHeaderTargetReply, HeaderChainFuture, LocatorReadPermit,
-    Port, PortError, PrepareHeaderTarget, PrepareHeaderTargetReply, PreparedHeaderTarget, ReadPath,
-    ReadPathReply, RetainedHeaderPath, SelectedChainMembership, VctRepairContextReply,
+    AcquirePath, AcquirePathReply, AdapterKey, ApplyHeaderTargetReply, HeaderChainFuture,
+    LocatorReadPermit, Port, PortError, PrepareHeaderTarget, PrepareHeaderTargetReply,
+    PreparedHeaderTarget, ReadPath, ReadPathReply, RetainedHeaderPath, SelectedChainMembership,
+    VctRepairContextReply,
 };
 use zakura_rt::{sync::watch, time::Instant};
 
 use super::{
-    adapter::EnginePort, fixture::HeaderFixture, FaultGate, FromReply, HeaderOp, HeaderReply,
-    HeaderRequest, IllegalOutcome, Outcome, ADAPTER_DEADLINE,
+    adapter::EnginePort,
+    fixture::HeaderFixture,
+    lease::{Effects, LeaseEnd},
+    FaultGate, FromReply, HeaderOp, HeaderReply, HeaderRequest, IllegalOutcome, Outcome,
+    ADAPTER_DEADLINE,
 };
 
 /// A pending operation's ID, unique within its port. IDs count up from 1 in
@@ -56,6 +70,18 @@ pub struct PendingOp {
     pub caller_waiting: bool,
 }
 
+/// Whose work an operation is, as far as its request says.
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+pub struct Attribution {
+    /// A prepare's or apply's work owner.
+    pub owner: Option<HeaderSyncWorkOwner>,
+    /// The peer: an acquire's source, a path's holder when this port issued
+    /// the path, or a prepare's source.
+    pub peer: Option<SourceId>,
+    /// The peer's session, where the request names one.
+    pub session_id: Option<u64>,
+}
+
 /// What [`ControlledPort::complete`] did.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Completion {
@@ -63,11 +89,59 @@ pub struct Completion {
     pub id: OpId,
     /// The operation.
     pub op: HeaderOp,
+    /// Whose work it was.
+    pub attribution: Attribution,
+    /// A digest of its request, the same as at submission.
+    pub request_digest: [u8; 32],
     /// The outcome it completed with.
     pub outcome: Outcome,
     /// Whether the reply went to a waiting caller. `false` if the caller had
-    /// dropped its future, so the reply was dropped.
+    /// dropped its future, so the reply was abandoned.
     pub delivered: bool,
+    /// The leases that ended in this completion, in order: those the
+    /// operation swept, consumed or released, and an abandoned acquire's.
+    pub lease_ends: Vec<LeaseEnd>,
+    /// [`EnginePort::state_digest`] once the completion finished.
+    pub state_digest: [u8; 32],
+}
+
+/// One lifecycle event, in the order [`ControlledPort::take_events`] gives
+/// them.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StorageEvent {
+    /// A call's first poll submitted an operation.
+    Submitted {
+        /// The new operation's ID.
+        id: OpId,
+        /// The operation.
+        op: HeaderOp,
+        /// Whose work it is.
+        attribution: Attribution,
+        /// A digest of its request.
+        request_digest: [u8; 32],
+    },
+    /// A caller dropped its future while its operation was pending. The
+    /// operation stays pending.
+    CallerDropped {
+        /// The operation.
+        id: OpId,
+    },
+    /// The run completed an operation.
+    Completed(Completion),
+    /// A caller dropped a delivered reply without taking it.
+    ReplyDropped {
+        /// The operation.
+        id: OpId,
+        /// The lease an abandoned `Acquired` reply ended, if any.
+        lease_ends: Vec<LeaseEnd>,
+    },
+    /// The port shut down.
+    ShutDown {
+        /// The operations it dropped, pending or with an untaken reply.
+        dropped: Vec<OpId>,
+        /// Every lease that was still live.
+        lease_ends: Vec<LeaseEnd>,
+    },
 }
 
 /// Why [`ControlledPort::complete`] refused a completion. A refusal changes
@@ -103,7 +177,9 @@ pub struct ControlledPort {
     /// block the run's only thread: no `zakura_rt` call or engine call runs
     /// under it, and a removed slot or replaced waker drops only after it's
     /// released, since a reply can hold the last sender of a capacity signal,
-    /// whose drop is a scheduling point.
+    /// whose drop is a scheduling point. It may be taken under the engine's
+    /// lease lock, to record an event with the change it records, but never
+    /// the other way round.
     ops: Mutex<Ops>,
 }
 
@@ -113,6 +189,10 @@ struct Ops {
     /// The last ID handed out.
     last: u64,
     slots: BTreeMap<OpId, Slot>,
+    /// Events not yet taken.
+    events: Vec<StorageEvent>,
+    /// Set by shutdown, after which nothing is submitted.
+    shut_down: bool,
 }
 
 /// One submitted operation.
@@ -121,6 +201,8 @@ struct Slot {
     stage: Stage,
     /// The caller's waker, or `None` once the caller dropped its future.
     caller: Option<Waker>,
+    attribution: Attribution,
+    request_digest: [u8; 32],
     /// Whether the request fails an adapter-side input check. Those checks
     /// read only a handle's or a target's seal, which can't change after
     /// submission, so they run once, there, rather than on every listing.
@@ -162,7 +244,9 @@ impl ControlledPort {
     }
 
     /// The engine port underneath. Its own `Port` methods run at once, which
-    /// suits setting up a chain before the run starts.
+    /// suits setting up a chain before the run starts. A task in the run
+    /// must not call them: an apply can suspend under the engine lock, which
+    /// the run takes to complete operations.
     pub fn engine(&self) -> &EnginePort {
         &self.engine
     }
@@ -271,39 +355,99 @@ impl ControlledPort {
         let op = request.op();
         // Runs without the bookkeeping lock, since the engine and a dropped
         // permit wake watchers and capacity waiters.
-        let reply = match early {
+        let (reply, effects) = match early {
             Some(reply) => {
                 drop(request);
-                reply
+                (reply, Effects::default())
             }
             None => self.engine.execute(request),
         };
-        let (caller, removed) = {
+        let mut lease_ends = effects.fire();
+        let (caller, abandoned, attribution, request_digest) = {
             let mut ops = self.ops();
             let slot = ops
                 .slots
                 .get_mut(&id)
                 .expect("a running operation keeps its slot until it replies");
+            let (attribution, request_digest) = (slot.attribution, slot.request_digest);
             match slot.caller.take() {
                 Some(waker) => {
                     slot.stage = Stage::Replied(reply);
-                    (Some(waker), None)
+                    (Some(waker), None, attribution, request_digest)
                 }
-                None => (None, Some((ops.slots.remove(&id), reply))),
+                None => {
+                    let removed = ops.slots.remove(&id);
+                    (None, Some((removed, reply)), attribution, request_digest)
+                }
             }
         };
-        drop(removed);
-        let delivered = caller.is_some();
+        if let Some((_, reply)) = &abandoned {
+            // The completion's own record carries the ends.
+            lease_ends.extend(self.abandon(reply, |_| {}).fire());
+        }
+        drop(abandoned);
+        let completion = Completion {
+            id,
+            op,
+            attribution,
+            request_digest,
+            outcome,
+            delivered: caller.is_some(),
+            lease_ends,
+            state_digest: self.engine.state_digest(),
+        };
+        self.ops()
+            .events
+            .push(StorageEvent::Completed(completion.clone()));
         // Woken outside the lock, since a waker can run scheduler code.
         if let Some(waker) = caller {
             waker.wake();
         }
-        Ok(Completion {
-            id,
-            op,
-            outcome,
-            delivered,
-        })
+        Ok(completion)
+    }
+
+    /// Ends the lease an `Acquired` reply carries, since nobody will take
+    /// it, and returns the effects to fire once no lock is held. Other
+    /// replies own nothing. Calls `record` with the lease ends as the lease
+    /// ends, as [`EnginePort::abandon`] does.
+    fn abandon(&self, reply: &HeaderReply, record: impl FnOnce(&[LeaseEnd])) -> Effects {
+        match reply {
+            HeaderReply::AcquireHeaderPath(Ok(AcquirePathReply::Acquired(path))) => {
+                self.engine.abandon(path, record)
+            }
+            _ => {
+                record(&[]);
+                Effects::default()
+            }
+        }
+    }
+
+    /// The events since the last call, in order.
+    pub fn take_events(&self) -> Vec<StorageEvent> {
+        mem::take(&mut self.ops().events)
+    }
+
+    /// Shuts the service down, as the end of a run does. Drops every pending
+    /// operation unrun, with its inputs, and every untaken reply, then ends
+    /// every lease and closes the selected-chain watch. No caller is woken,
+    /// and a call polled afterwards never completes. A repeat does nothing.
+    pub fn shut_down(&self) {
+        let slots = {
+            let mut ops = self.ops();
+            if mem::replace(&mut ops.shut_down, true) {
+                return;
+            }
+            mem::take(&mut ops.slots)
+        };
+        let dropped = slots.keys().copied().collect();
+        // Dropped outside the lock, since a request's permit wakes waiters.
+        drop(slots);
+        let lease_ends = self.engine.shut_down_leases().fire();
+        self.engine.close_selected_chain();
+        self.ops().events.push(StorageEvent::ShutDown {
+            dropped,
+            lease_ends,
+        });
     }
 
     /// A future that submits `request` on its first poll and resolves to its
@@ -329,6 +473,8 @@ enum CallState {
     Unsubmitted(Option<Box<HeaderRequest>>),
     /// Submitted as this operation.
     Submitted(OpId),
+    /// Polled after shutdown, so never submitted. It never completes.
+    Orphaned,
     /// The reply was taken.
     Done,
 }
@@ -346,33 +492,52 @@ impl<T: FromReply> Future for Call<'_, T> {
                 let request = request
                     .take()
                     .expect("an unsubmitted call holds its request");
+                // Inspected without the lock, since digesting an apply walks
+                // its whole insertion.
+                drop(ops);
+                let key = port.engine.adapter_key();
+                let (request, request_digest, rejected) = inspect(*request, key);
+                let mut ops = port.ops();
+                if ops.shut_down {
+                    drop(ops);
+                    self.state = CallState::Orphaned;
+                    return Poll::Pending;
+                }
                 ops.last = ops
                     .last
                     .checked_add(1)
                     .expect("a run submits fewer than 2^64 operations");
                 let id = OpId(ops.last);
-                let rejected = request.rejected_by(port.engine.adapter_key()).is_some();
+                let (op, attribution) = (request.op(), attribution(&request, key));
                 ops.slots.insert(
                     id,
                     Slot {
                         stage: Stage::Pending {
-                            request: *request,
+                            request,
                             submitted: Instant::now(),
                         },
                         caller: Some(cx.waker().clone()),
+                        attribution,
+                        request_digest,
                         rejected,
                     },
                 );
+                ops.events.push(StorageEvent::Submitted {
+                    id,
+                    op,
+                    attribution,
+                    request_digest,
+                });
                 drop(ops);
                 self.state = CallState::Submitted(id);
                 Poll::Pending
             }
             CallState::Submitted(id) => {
                 let id = *id;
-                let slot = ops
-                    .slots
-                    .get_mut(&id)
-                    .expect("a submitted call's slot lives until the call takes its reply");
+                // Only shutdown removes a slot before its call takes the reply.
+                let Some(slot) = ops.slots.get_mut(&id) else {
+                    return Poll::Pending;
+                };
                 if matches!(slot.stage, Stage::Replied(_)) {
                     let Some(Slot {
                         stage: Stage::Replied(reply),
@@ -391,6 +556,7 @@ impl<T: FromReply> Future for Call<'_, T> {
                     Poll::Pending
                 }
             }
+            CallState::Orphaned => Poll::Pending,
             CallState::Done => panic!("a header port call was polled after it returned"),
         }
     }
@@ -405,15 +571,99 @@ impl<T> Drop for Call<'_, T> {
         let Some(slot) = ops.slots.get_mut(&id) else {
             return;
         };
-        let (removed, caller) = if matches!(slot.stage, Stage::Replied(_)) {
-            (ops.slots.remove(&id), None)
-        } else {
+        if !matches!(slot.stage, Stage::Replied(_)) {
             // Accepted work outlives its caller.
-            (None, slot.caller.take())
+            let caller = slot.caller.take();
+            ops.events.push(StorageEvent::CallerDropped { id });
+            drop(ops);
+            drop(caller);
+            return;
+        }
+        let Some(Slot {
+            stage: Stage::Replied(reply),
+            ..
+        }) = ops.slots.remove(&id)
+        else {
+            unreachable!("the stage was checked above under the same lock");
         };
         drop(ops);
-        drop((removed, caller));
+        let effects = self.port.abandon(&reply, |lease_ends| {
+            self.port.ops().events.push(StorageEvent::ReplyDropped {
+                id,
+                lease_ends: lease_ends.to_vec(),
+            });
+        });
+        effects.fire();
     }
+}
+
+/// Whose work `request` is, for the adapter holding `key`.
+fn attribution(request: &HeaderRequest, key: &AdapterKey) -> Attribution {
+    let owner = request.owner();
+    let (peer, session_id) = match request {
+        HeaderRequest::AcquireHeaderPath(acquire) => {
+            (Some(acquire.source), Some(acquire.session_id))
+        }
+        HeaderRequest::ReadHeaderPath { path, .. } | HeaderRequest::ReleaseHeaderPath { path } => {
+            path.adapter_identity(key)
+                .map_or((None, None), |(_, peer, session)| {
+                    (Some(peer), Some(session))
+                })
+        }
+        HeaderRequest::PrepareHeaderTarget(prepare) => (Some(prepare.source), None),
+        HeaderRequest::ApplyHeaderTarget { target } => (Some(target.source()), None),
+        _ => (None, None),
+    };
+    Attribution {
+        owner,
+        peer,
+        session_id: session_id.or(owner.map(|owner| owner.session_id())),
+    }
+}
+
+/// Digests `request` and runs its adapter-side input checks, for the
+/// adapter holding `key`, and gives the request back. It takes the request
+/// by value so it can open a sealed target and seal it again, rather than
+/// clone it.
+///
+/// Path and target handles redact their identity and contents from
+/// `Debug`. So a path this port issued adds its lease, peer and session,
+/// and a target this port sealed adds its insertion: supplier, parent,
+/// target, completion, each header's hash and each auxiliary delivery.
+fn inspect(request: HeaderRequest, key: &AdapterKey) -> (HeaderRequest, [u8; 32], bool) {
+    let mut hasher = Sha256::new();
+    hasher.update(b"zakura-storage-header-request-v2");
+    hasher.update(format!("{request:?}").as_bytes());
+    let (request, rejected) = match request {
+        HeaderRequest::ApplyHeaderTarget { target } => match target.into_insert(key) {
+            Ok(insert) => {
+                hasher.update(insert.source.digest());
+                hasher.update(insert.parent_hash.0);
+                hasher.update(insert.target_tip_hash.0);
+                hasher.update(format!("{:?}", insert.completion).as_bytes());
+                for header in insert.batch.headers() {
+                    hasher.update(header.hash.0);
+                }
+                for aux in &insert.aux {
+                    hasher.update(format!("{aux:?}").as_bytes());
+                }
+                let target = PreparedHeaderTarget::from_insert(key, insert);
+                (HeaderRequest::ApplyHeaderTarget { target }, false)
+            }
+            Err(target) => (HeaderRequest::ApplyHeaderTarget { target }, true),
+        },
+        request => {
+            if let HeaderRequest::ReadHeaderPath { path, .. }
+            | HeaderRequest::ReleaseHeaderPath { path } = &request
+            {
+                hasher.update(format!("{:?}", path.adapter_identity(key)).as_bytes());
+            }
+            // No other request's input checks open a sealed target.
+            let rejected = request.rejected_by(key).is_some();
+            (request, rejected)
+        }
+    };
+    (request, hasher.finalize().into(), rejected)
 }
 
 impl Port for ControlledPort {

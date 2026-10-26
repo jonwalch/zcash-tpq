@@ -15,7 +15,7 @@
 //! narrower than production: it always answers `Stale`, since a simulation
 //! has no repair to resolve. Retained paths follow [`super::lease`].
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as StdMutex};
 
 use sha2::{Digest, Sha256};
 use zakura_chain::block;
@@ -43,8 +43,8 @@ use zakura_rt::{
 
 use super::{
     fixture::{HeaderFixture, ScenarioClock},
-    lease::{Capacity, Position, Registry, Spec, MAX_HEADER_SYNC_HEIGHT_RANGE},
-    FromReply, HeaderReply, HeaderRequest,
+    lease::{Capacity, Effects, LeaseEnd, Position, Registry, Spec, MAX_HEADER_SYNC_HEIGHT_RANGE},
+    FromReply, HeaderReply, HeaderRequest, Release,
 };
 
 /// A header-chain port over one in-memory engine. A requester and a
@@ -55,10 +55,13 @@ pub struct EnginePort {
     config: EngineConfig,
     engine: Mutex<HeaderChainEngine>,
     leases: Mutex<Registry>,
-    /// The committed snapshot. Apply sends on it while it holds the
-    /// engine lock, so no consumer may hold a borrow of this watch while it
-    /// takes the engine lock, or the two would deadlock.
-    selected: watch::Sender<Option<EngineSnapshot>>,
+    /// The committed snapshot's watch, until shutdown closes it. Apply
+    /// sends on it while it holds the engine lock, so no consumer may hold
+    /// a borrow of this watch while it takes the engine lock, or the two
+    /// would deadlock. A std lock, held only to clone or take the sender:
+    /// sending and subscribing are scheduling points in a simulator run, so
+    /// they use a clone after the lock is released.
+    selected: StdMutex<Option<watch::Sender<Option<EngineSnapshot>>>>,
 }
 
 impl EnginePort {
@@ -122,7 +125,7 @@ impl EnginePort {
             config,
             engine: Mutex::new(engine),
             leases: Mutex::new(Registry::default()),
-            selected,
+            selected: StdMutex::new(Some(selected)),
         }
     }
 
@@ -172,7 +175,34 @@ impl EnginePort {
 
     /// Leases the path toward `request`'s target, as
     /// `HeaderChainReader::acquire_retained_path` does above finality.
-    fn acquire(&self, request: AcquirePath) -> Result<AcquirePathReply, PortError> {
+    /// Returns the reply and the registry's effects, for the caller to fire
+    /// once every lock is released.
+    fn acquire(&self, request: AcquirePath) -> (Result<AcquirePathReply, PortError>, Effects) {
+        // Checked before the registry, so a bad request sweeps nothing.
+        if request.locator_hashes.is_empty()
+            || request.locator_hashes.len() > zakura_header_chain::MAX_HEADER_LOCATOR_HASHES
+        {
+            let error = unavailable(StoreError::Incoherent(
+                "retained path locator count is outside protocol bounds",
+            ));
+            return (Err(error), Effects::default());
+        }
+        let now = Instant::now();
+        let engine = self.engine();
+        let mut leases = self.leases();
+        let reply = self.acquire_locked(&engine, &mut leases, request, now);
+        (reply, leases.take_effects())
+    }
+
+    /// [`Self::acquire`] once its input check passed, under the engine and
+    /// lease locks.
+    fn acquire_locked(
+        &self,
+        engine: &HeaderChainEngine,
+        leases: &mut Registry,
+        request: AcquirePath,
+        now: Instant,
+    ) -> Result<AcquirePathReply, PortError> {
         let AcquirePath {
             source: peer,
             session_id,
@@ -180,17 +210,6 @@ impl EnginePort {
             target_tip_hash,
             locator_hashes,
         } = request;
-        // Checked before the registry, so a bad request sweeps nothing.
-        if locator_hashes.is_empty()
-            || locator_hashes.len() > zakura_header_chain::MAX_HEADER_LOCATOR_HASHES
-        {
-            return Err(unavailable(StoreError::Incoherent(
-                "retained path locator count is outside protocol bounds",
-            )));
-        }
-        let now = Instant::now();
-        let engine = self.engine();
-        let mut leases = self.leases();
         let capacity = match leases.admit(peer, now, Capacity::Bounded) {
             Ok(capacity) => capacity,
             Err(refusal) => return Ok(refusal),
@@ -213,8 +232,8 @@ impl EnginePort {
         if let Some(cursor) = continuation {
             leases.record_continuation();
             return Ok(self.commit_lease(
-                &engine,
-                &mut leases,
+                engine,
+                leases,
                 peer,
                 Spec {
                     session_id,
@@ -237,7 +256,7 @@ impl EnginePort {
         let Some(target_node) = engine.graph().header_node(target_tip_hash) else {
             return Ok(AcquirePathReply::TargetNotRetained);
         };
-        let mut path = match ancestry(&engine, target_node, finalized, locators, max_depth)? {
+        let mut path = match ancestry(engine, target_node, finalized, locators, max_depth)? {
             Ancestry::Path(path) => path,
             Ancestry::Pruned => return Ok(AcquirePathReply::HistoryPruned),
             Ancestry::BeyondReserve => return Ok(leases.beyond_reserve()),
@@ -276,8 +295,8 @@ impl EnginePort {
             Position::Retained { next: 0 }
         };
         Ok(self.commit_lease(
-            &engine,
-            &mut leases,
+            engine,
+            leases,
             peer,
             Spec {
                 session_id,
@@ -334,25 +353,62 @@ impl EnginePort {
     /// Reads one page of a leased path, as `HeaderChainReader::read_retained_path`
     /// and the production adapter do. A served page consumes the lease. A
     /// simulation commits no block bodies and nothing below the anchor, so
-    /// every body size and finalized tree root is unknown.
+    /// every body size and finalized tree root is unknown. Returns the reply
+    /// and the registry's effects, as [`Self::acquire`] does.
     fn read(
         &self,
         path: RetainedHeaderPath,
         request: ReadPath,
-    ) -> Result<ReadPathReply, PortError> {
+    ) -> (Result<ReadPathReply, PortError>, Effects) {
         let Some((lease_id, peer, session_id)) = path.adapter_identity(&self.key) else {
-            return Err(PortError::Unavailable { source: None });
+            return (
+                Err(PortError::Unavailable { source: None }),
+                Effects::default(),
+            );
         };
         let max_count = request.max_header_count;
         // Checked before the registry, so a bad request sweeps nothing.
         if max_count == 0 || max_count > MAX_HEADER_SYNC_HEIGHT_RANGE {
-            return Err(unavailable(StoreError::Incoherent(
+            let error = unavailable(StoreError::Incoherent(
                 "retained path page count is outside protocol bounds",
-            )));
+            ));
+            return (Err(error), Effects::default());
         }
         let now = Instant::now();
         let engine = self.engine();
         let mut leases = self.leases();
+        let reply = self.read_locked(
+            &engine,
+            &mut leases,
+            Lease {
+                id: lease_id,
+                peer,
+                session_id,
+            },
+            &path,
+            request,
+            now,
+        );
+        (reply, leases.take_effects())
+    }
+
+    /// The page of [`Self::read`] once its input checks passed, under the
+    /// engine and lease locks.
+    fn read_locked(
+        &self,
+        engine: &HeaderChainEngine,
+        leases: &mut Registry,
+        lease: Lease,
+        path: &RetainedHeaderPath,
+        request: ReadPath,
+        now: Instant,
+    ) -> Result<ReadPathReply, PortError> {
+        let Lease {
+            id: lease_id,
+            peer,
+            session_id,
+        } = lease;
+        let max_count = request.max_header_count;
         let Some(cursor) = leases.get(peer, session_id, lease_id, now) else {
             return Ok(ReadPathReply::Unavailable);
         };
@@ -428,14 +484,24 @@ impl EnginePort {
     }
 
     /// Ends a leased path, as `HeaderChainReader::release_retained_path`
-    /// does. A repeat, or a lease that already ended, does nothing.
-    fn release(&self, path: RetainedHeaderPath) -> Result<(), PortError> {
+    /// does. A repeat, or a lease that already ended, does nothing. Returns
+    /// the reply and the registry's effects, as [`Self::acquire`] does.
+    fn release(&self, path: RetainedHeaderPath) -> (Result<(), PortError>, Effects) {
         let Some((lease_id, peer, session_id)) = path.adapter_identity(&self.key) else {
-            return Err(PortError::Unavailable { source: None });
+            return (
+                Err(PortError::Unavailable { source: None }),
+                Effects::default(),
+            );
         };
-        self.leases()
-            .release(peer, session_id, lease_id, path.scope);
-        Ok(())
+        let mut leases = self.leases();
+        leases.release(
+            peer,
+            session_id,
+            lease_id,
+            path.scope,
+            Release::LeaseReleased,
+        );
+        (Ok(()), leases.take_effects())
     }
 
     /// The selected-path locator, as `HeaderChainReader::committed_selected_locator`
@@ -655,8 +721,14 @@ impl EnginePort {
         // uncommitted snapshot, and still under the engine lock, as
         // production publishes under its writer lock. Dropping the lock first
         // would let a later commit publish before this one, leaving the watch
-        // behind the engine for good.
-        self.selected.send_replace(Some(after));
+        // behind the engine for good. Publishing is a scheduling point under
+        // a lock a `ControlledPort`'s run takes, which is safe only because
+        // that run applies outside any task, where points do nothing. Tasks
+        // may apply through this port directly only when no `ControlledPort`
+        // drives it, so they meet only each other here, and park.
+        if let Some(selected) = self.selected_sender() {
+            selected.send_replace(Some(after));
+        }
         drop(engine);
         Ok(match stalled {
             Some(receipt) => ApplyHeaderTargetOutcome::ResourceStalled(receipt),
@@ -695,11 +767,13 @@ impl EnginePort {
 }
 
 impl EnginePort {
-    /// Runs `request` against the engine now and returns its reply. Both
-    /// this port and [`ControlledPort`](super::controlled::ControlledPort)
-    /// run every operation through here.
-    pub(crate) fn execute(&self, request: HeaderRequest) -> HeaderReply {
-        match request {
+    /// Runs `request` against the engine now and returns its reply, with the
+    /// lease registry's effects for the caller to fire once it holds no
+    /// lock. Both this port and
+    /// [`ControlledPort`](super::controlled::ControlledPort) run every
+    /// operation through here.
+    pub(crate) fn execute(&self, request: HeaderRequest) -> (HeaderReply, Effects) {
+        let reply = match request {
             HeaderRequest::ContinuationLocator { permit } => {
                 let locator = self.locator().map(Some);
                 // The permit is held until the read finishes.
@@ -710,13 +784,16 @@ impl EnginePort {
                 HeaderReply::VctRepairContext(Ok(VctRepairContextReply::Stale))
             }
             HeaderRequest::AcquireHeaderPath(request) => {
-                HeaderReply::AcquireHeaderPath(self.acquire(request))
+                let (reply, effects) = self.acquire(request);
+                return (HeaderReply::AcquireHeaderPath(reply), effects);
             }
             HeaderRequest::ReadHeaderPath { path, request } => {
-                HeaderReply::ReadHeaderPath(self.read(path, request))
+                let (reply, effects) = self.read(path, request);
+                return (HeaderReply::ReadHeaderPath(reply), effects);
             }
             HeaderRequest::ReleaseHeaderPath { path } => {
-                HeaderReply::ReleaseHeaderPath(self.release(path))
+                let (reply, effects) = self.release(path);
+                return (HeaderReply::ReleaseHeaderPath(reply), effects);
             }
             HeaderRequest::PrepareHeaderTarget(request) => {
                 HeaderReply::PrepareHeaderTarget(self.prepare(request))
@@ -727,12 +804,89 @@ impl EnginePort {
             HeaderRequest::SelectedChainContains { hash } => {
                 HeaderReply::SelectedChainContains(self.membership(hash))
             }
-        }
+        };
+        (reply, Effects::default())
     }
 
-    /// A future that runs `request` when first polled.
+    /// A future that runs `request` when first polled. Nothing reads this
+    /// port's lease ends, so they're dropped.
     fn run_on_poll<T: FromReply>(&self, request: HeaderRequest) -> HeaderChainFuture<'_, T> {
-        Box::pin(async move { T::from_reply(self.execute(request)) })
+        Box::pin(async move {
+            let (reply, effects) = self.execute(request);
+            effects.fire();
+            T::from_reply(reply)
+        })
+    }
+
+    /// Ends the lease `path` names, if it's still live, because nobody
+    /// received the `Acquired` reply that carried it, and returns the
+    /// effects to fire once no lock is held. A path another adapter issued
+    /// names nothing here. Calls `record` with the lease ends before
+    /// releasing the lease lock, so nothing can see the lease gone before
+    /// its record. `record` must not reach a scheduling point.
+    pub(crate) fn abandon(
+        &self,
+        path: &RetainedHeaderPath,
+        record: impl FnOnce(&[LeaseEnd]),
+    ) -> Effects {
+        let mut leases = self.leases();
+        if let Some((lease_id, peer, session_id)) = path.adapter_identity(&self.key) {
+            leases.release(
+                peer,
+                session_id,
+                lease_id,
+                path.scope,
+                Release::LeaseAbandonedAcquire,
+            );
+        }
+        let effects = leases.take_effects();
+        record(effects.ends());
+        effects
+    }
+
+    /// Ends every lease, as service shutdown does, and returns the effects
+    /// to fire.
+    pub(crate) fn shut_down_leases(&self) -> Effects {
+        let mut leases = self.leases();
+        leases.shut_down();
+        leases.take_effects()
+    }
+
+    /// A clone of the selected-chain watch's sender, or `None` once
+    /// shutdown closed it.
+    fn selected_sender(&self) -> Option<watch::Sender<Option<EngineSnapshot>>> {
+        self.selected
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+
+    /// Closes the selected-chain watch, as service shutdown does: every
+    /// receiver sees it closed once no clone of the sender is left.
+    pub(crate) fn close_selected_chain(&self) {
+        let selected = self
+            .selected
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take();
+        // Dropped after the lock, since the last sender's drop is a
+        // scheduling point.
+        drop(selected);
+    }
+
+    /// A digest of the committed snapshot, the live leases and the
+    /// continuation cache. Equal histories give equal digests, in any
+    /// process.
+    pub fn state_digest(&self) -> [u8; 32] {
+        let engine = self.engine();
+        let leases = self.leases();
+        let mut hasher = Sha256::new();
+        hasher.update(b"zakura-storage-header-state-v1");
+        // Every snapshot field is a plain value, so its `Debug` text is a
+        // complete encoding.
+        hasher.update(format!("{:?}", engine.snapshot()).as_bytes());
+        leases.digest_into(&mut |bytes| hasher.update(bytes));
+        hasher.finalize().into()
     }
 }
 
@@ -788,8 +942,12 @@ impl Port for EnginePort {
         self.run_on_poll(HeaderRequest::ApplyHeaderTarget { target })
     }
 
+    /// The committed snapshot's watch, or after shutdown a closed one.
     fn selected_chain(&self) -> watch::Receiver<Option<EngineSnapshot>> {
-        self.selected.subscribe()
+        match self.selected_sender() {
+            Some(selected) => selected.subscribe(),
+            None => watch::channel(None).1,
+        }
     }
 
     fn selected_chain_contains(
@@ -1021,4 +1179,12 @@ fn classify_apply_failure(
         }
         failure => local_resource(owner, Some(Box::new(failure))),
     }
+}
+
+/// A lease a path handle names: its ID, holder and session.
+#[derive(Copy, Clone)]
+struct Lease {
+    id: u64,
+    peer: SourceId,
+    session_id: u64,
 }
