@@ -271,6 +271,7 @@ impl Subsystem for Storage {
             &ports.fixture,
             scenario.node.tip(&ports.fixture),
             dispatch.clone(),
+            None,
         )];
         for (index, ((spec, port), seed)) in scenario
             .mirrors
@@ -287,6 +288,7 @@ impl Subsystem for Storage {
                 &ports.fixture,
                 spec.chain.tip(&ports.fixture),
                 dispatch.clone(),
+                None,
             ));
         }
         let topology = Rc::new(Topology::new(nodes, effects));
