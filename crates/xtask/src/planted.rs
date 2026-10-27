@@ -35,13 +35,20 @@
 //! on a run that fails, ends at a harness failure, violates another
 //! property, doesn't report the case's property, or violates it without its
 //! trigger history, so the gate stays the committed input.
+//!
+//! `--changed-since <rev>` runs only the cases a change since `rev` can
+//! affect: those whose patch, case file, input, patched files or listed
+//! checks changed, or every case if the shared machinery changed: this
+//! runner, the simulator that records and judges each run, its scheduler
+//! and runtime, or the build configuration. A renamed file counts as a
+//! change to its old and its new path.
 
 use std::{
     collections::BTreeMap,
     env,
     ffi::OsString,
     fmt, fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     process::Command,
 };
 
@@ -53,6 +60,22 @@ use crate::{run_command, sim::SIM_RUSTFLAGS, BoxError};
 
 /// Where the planted cases live, relative to the repository root.
 const PLANTED_DIR: &str = "qa/planted";
+
+/// What every case runs on, relative to the repository root: xtask, which
+/// holds this runner and the flags and arguments it runs with, the
+/// simulator that records each run and judges it with the property engine,
+/// the scheduler and runtime it runs on, and the build configuration. A
+/// change to any of them affects every case.
+const SHARED: &[&str] = &[
+    "crates/xtask",
+    "crates/zakura-sim",
+    "crates/zakura-scheduler",
+    "crates/zakura-rt",
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    ".cargo",
+];
 
 /// Fuzz inputs the short campaign records after the committed input.
 const CAMPAIGN_INPUTS: usize = 32;
@@ -70,6 +93,9 @@ struct Case {
     /// The committed fuzz input that must find it, relative to the
     /// repository root.
     input: PathBuf,
+    /// Other paths whose change can break the catch, relative to the
+    /// repository root.
+    checks: Vec<PathBuf>,
 }
 
 /// A case's `<name>.toml`.
@@ -78,6 +104,11 @@ struct Case {
 struct CaseFile {
     /// The committed fuzz input, relative to the repository root.
     input: PathBuf,
+    /// Files or directories, relative to the repository root, whose change
+    /// can break the catch besides the files the patch changes and
+    /// [`SHARED`], such as the rest of the patched module.
+    #[serde(default)]
+    checks: Vec<PathBuf>,
 }
 
 /// A committed fuzz input's sidecar, as `zakura-sim`'s tests check it.
@@ -206,8 +237,13 @@ impl fmt::Display for Verdict {
 }
 
 /// Runs every planted case, or only `property`'s, and fails unless each is
-/// caught.
-pub(super) fn run(repo_root: &Path, property: Option<&str>) -> Result<(), BoxError> {
+/// caught. With `changed_since`, it runs only the cases a change since that
+/// revision affects, and passes if none is.
+pub(super) fn run(
+    repo_root: &Path,
+    property: Option<&str>,
+    changed_since: Option<&str>,
+) -> Result<(), BoxError> {
     let cases: Vec<Case> = cases(repo_root)?
         .into_iter()
         .filter(|case| property.is_none_or(|p| case.property == p))
@@ -218,6 +254,23 @@ pub(super) fn run(repo_root: &Path, property: Option<&str>) -> Result<(), BoxErr
             None => format!("no planted cases under {PLANTED_DIR}").into(),
         });
     }
+    let cases = match changed_since {
+        Some(rev) => {
+            let changed = changed_since_rev(repo_root, rev)?;
+            let mut affected = Vec::new();
+            for case in cases {
+                if is_affected(&watched(repo_root, &case)?, &changed) {
+                    affected.push(case);
+                }
+            }
+            if affected.is_empty() {
+                println!("no planted case is affected by the changes since {rev}");
+                return Ok(());
+            }
+            affected
+        }
+        None => cases,
+    };
     let work = repo_root.join("target").join("planted");
     let mut failed = 0;
     for (index, case) in cases.iter().enumerate() {
@@ -250,18 +303,136 @@ fn cases(repo_root: &Path) -> Result<Vec<Case>, BoxError> {
                 .ok_or_else(|| format!("{} isn't under a property", patch.display()))?
                 .to_owned();
             let case_file = patch.with_extension("toml");
-            let CaseFile { input } = toml::from_str(
+            let CaseFile { input, checks } = toml::from_str(
                 &fs::read_to_string(&case_file)
                     .map_err(|error| format!("{}: {error}", case_file.display()))?,
             )
             .map_err(|error| format!("{}: {error}", case_file.display()))?;
+            for path in std::iter::once(&input).chain(&checks) {
+                if !is_plain_relative(path) {
+                    return Err(format!(
+                        "{}: {} isn't a plain path relative to the repository root",
+                        case_file.display(),
+                        path.display()
+                    )
+                    .into());
+                }
+            }
             Ok(Case {
                 property,
                 patch,
                 input,
+                checks,
             })
         })
         .collect()
+}
+
+/// True if `path` is non-empty and made only of ordinary names, so that it
+/// compares with `git diff`'s repository-relative paths component by
+/// component.
+fn is_plain_relative(path: &Path) -> bool {
+    path.components().next().is_some()
+        && path
+            .components()
+            .all(|component| matches!(component, Component::Normal(_)))
+}
+
+/// The paths `git diff` reports changed between `rev`'s merge base with
+/// `HEAD` and `HEAD`, relative to the repository root. `rev` must name a
+/// commit. Without rename detection, a renamed file shows up as its deleted
+/// old path and its added new one, so a case watching the old path sees the
+/// rename.
+fn changed_since_rev(repo_root: &Path, rev: &str) -> Result<Vec<PathBuf>, BoxError> {
+    // Resolving `rev` first keeps git from reading it as an option, a
+    // pathspec or a range.
+    let resolved = git(repo_root)
+        .args([
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            "--end-of-options",
+            &format!("{rev}^{{commit}}"),
+        ])
+        .output()?;
+    if !resolved.status.success() {
+        return Err(format!("`{rev}` doesn't name a commit").into());
+    }
+    let base = String::from_utf8(resolved.stdout)?.trim().to_owned();
+    let output = git(repo_root)
+        .args([
+            "diff",
+            "--name-only",
+            "--no-renames",
+            "-z",
+            &format!("{base}...HEAD"),
+            "--",
+        ])
+        .output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "`git diff {base}...HEAD` failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        )
+        .into());
+    }
+    // `-z` ends each path with a NUL and leaves it unquoted.
+    Ok(String::from_utf8(output.stdout)?
+        .split_terminator('\0')
+        .map(PathBuf::from)
+        .collect())
+}
+
+/// Every path whose change can break `case`'s catch, relative to
+/// `repo_root`: the patch and its case file, the input and its sidecar, the
+/// files the patch changes, the case's checks, and [`SHARED`].
+fn watched(repo_root: &Path, case: &Case) -> Result<Vec<PathBuf>, BoxError> {
+    let relative = |path: &Path| {
+        path.strip_prefix(repo_root)
+            .map(Path::to_path_buf)
+            .map_err(|_| format!("{} isn't under the repository", path.display()))
+    };
+    let mut watched = vec![
+        relative(&case.patch)?,
+        relative(&case.patch.with_extension("toml"))?,
+        case.input.clone(),
+        case.input.with_extension("toml"),
+    ];
+    watched.extend(SHARED.iter().map(PathBuf::from));
+    watched.extend(patched_files(repo_root, &case.patch)?);
+    watched.extend(case.checks.iter().cloned());
+    Ok(watched)
+}
+
+/// The files `patch` changes, as `git apply --numstat` lists them without
+/// applying it.
+fn patched_files(repo_root: &Path, patch: &Path) -> Result<Vec<PathBuf>, BoxError> {
+    let output = git(repo_root)
+        .args(["apply", "--numstat"])
+        .arg(patch)
+        .output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "{}: {}",
+            patch.display(),
+            String::from_utf8_lossy(&output.stderr).trim()
+        )
+        .into());
+    }
+    // Each line is `<added>\t<deleted>\t<path>`.
+    Ok(String::from_utf8(output.stdout)?
+        .lines()
+        .filter_map(|line| line.splitn(3, '\t').nth(2))
+        .map(PathBuf::from)
+        .collect())
+}
+
+/// True if a path in `changed` is a watched path, or lies in a watched
+/// directory.
+fn is_affected(watched: &[PathBuf], changed: &[PathBuf]) -> bool {
+    changed
+        .iter()
+        .any(|path| watched.iter().any(|w| path.starts_with(w)))
 }
 
 /// Appends every `.patch` file under `dir` to `patches`.
@@ -829,6 +1000,167 @@ mod tests {
             .to_string(),
             "caught; the campaign caught it on 5 of 32 inputs; the others: 25 held, 2 not-applicable"
         );
+    }
+
+    /// A case is affected by a change to its patch's files, its checks, its
+    /// own files, or the runner, and not by an unrelated change.
+    #[test]
+    fn planted_runs_only_affected_cases() {
+        let watched = [
+            PathBuf::from("crates/x/src/lib.rs"),
+            PathBuf::from("crates/zakura-sim/src/domain"),
+            PathBuf::from(SHARED[0]),
+        ];
+        let affected = |path: &str| is_affected(&watched, &[PathBuf::from(path)]);
+        assert!(affected("crates/x/src/lib.rs"));
+        assert!(affected("crates/zakura-sim/src/domain/discovery.rs"));
+        assert!(affected("crates/xtask/src/planted.rs"));
+        assert!(!affected("crates/x/src/other.rs"));
+        assert!(!affected("crates/zakura-sim/src/domainx.rs"));
+        assert!(!is_affected(&watched, &[]));
+    }
+
+    /// A change to the shared machinery affects the committed case, though
+    /// it touches none of the case's own files.
+    #[test]
+    fn shared_changes_affect_the_committed_case() {
+        let repo_root = crate::repo_root().expect("xtask lives in the workspace");
+        let cases = cases(&repo_root).expect("the planted cases parse");
+        let case = cases.first().expect("a committed case");
+        let watched = watched(&repo_root, case).expect("the case's files exist");
+        for path in [
+            "crates/xtask/src/sim.rs",
+            "crates/xtask/src/main.rs",
+            "crates/zakura-sim/src/property/registry.rs",
+            "crates/zakura-sim/src/sim.rs",
+            "crates/zakura-scheduler/src/lib.rs",
+            "crates/zakura-rt/src/sim/sync/notify.rs",
+            "Cargo.lock",
+            ".cargo/config.toml",
+        ] {
+            assert!(is_affected(&watched, &[PathBuf::from(path)]), "{path}");
+        }
+        // The harness also drives the transport under discovery, which the
+        // case's checks cover.
+        for path in [
+            "crates/zakura-network/src/zakura/transport/io.rs",
+            "crates/zakura-network/src/zakura/wire_codec/message.rs",
+        ] {
+            assert!(is_affected(&watched, &[PathBuf::from(path)]), "{path}");
+        }
+    }
+
+    /// Runs `git` in `dir` with a fixed identity, and expects it to pass.
+    fn git_ok(dir: &Path, args: &[&str]) {
+        let status = git(dir)
+            .args(["-c", "user.name=planted", "-c", "user.email=planted@test"])
+            .args(args)
+            .status()
+            .expect("git runs");
+        assert!(status.success(), "git {args:?}");
+    }
+
+    /// A renamed file or directory reports its old paths and its new ones,
+    /// so a case watching the old path sees the move.
+    #[test]
+    fn renames_report_the_old_path() {
+        let repo = tempfile::tempdir().expect("a temporary repository");
+        let root = repo.path();
+        for (path, text) in [("a/service.rs", "service"), ("b/one.rs", "one")] {
+            fs::create_dir_all(root.join(path).parent().expect("a parent"))
+                .expect("the directory is created");
+            fs::write(root.join(path), text).expect("the file is written");
+        }
+        git_ok(root, &["init", "-q"]);
+        git_ok(root, &["add", "."]);
+        git_ok(root, &["commit", "-q", "-m", "base"]);
+        git_ok(root, &["mv", "a/service.rs", "a/renamed_service.rs"]);
+        git_ok(root, &["mv", "b", "c"]);
+        git_ok(root, &["commit", "-q", "-m", "move"]);
+
+        let mut changed = changed_since_rev(root, "HEAD^1").expect("the diff runs");
+        changed.sort();
+        assert_eq!(
+            changed,
+            [
+                "a/renamed_service.rs",
+                "a/service.rs",
+                "b/one.rs",
+                "c/one.rs"
+            ]
+            .map(PathBuf::from)
+        );
+        assert!(is_affected(&[PathBuf::from("a/service.rs")], &changed));
+        assert!(is_affected(&[PathBuf::from("b")], &changed));
+    }
+
+    /// A revision git can't resolve fails the run instead of selecting no
+    /// case.
+    #[test]
+    fn an_unknown_revision_fails() {
+        let repo_root = crate::repo_root().expect("xtask lives in the workspace");
+        let error = changed_since_rev(&repo_root, "no-such-revision")
+            .expect_err("the revision doesn't exist");
+        assert!(error.to_string().contains("no-such-revision"), "{error}");
+    }
+
+    /// An empty revision, an option, a path and a range each fail instead
+    /// of reaching `git diff` as something other than a commit.
+    #[test]
+    fn a_revision_that_isnt_a_commit_fails() {
+        let repo_root = crate::repo_root().expect("xtask lives in the workspace");
+        for rev in ["", "--output=/dev/null", "crates", "HEAD^1..HEAD", "-z"] {
+            let error =
+                changed_since_rev(&repo_root, rev).expect_err("the revision doesn't name a commit");
+            assert!(
+                error.to_string().contains("doesn't name a commit"),
+                "{rev}: {error}"
+            );
+        }
+    }
+
+    /// Case paths must be plain repository-relative names, so they compare
+    /// with `git diff`'s paths.
+    #[test]
+    fn case_paths_must_be_plain() {
+        for path in ["a/b", "a", "crates/zakura-network/src/zakura/discovery"] {
+            assert!(is_plain_relative(Path::new(path)), "{path}");
+        }
+        for path in [
+            "",
+            "/a",
+            "./a",
+            "a/../a",
+            "crates/zakura-network/src/zakura/discovery/../discovery",
+        ] {
+            assert!(!is_plain_relative(Path::new(path)), "{path}");
+        }
+    }
+
+    /// Each committed case watches its patch's production files and its
+    /// listed checks, which all exist.
+    #[test]
+    fn committed_cases_watch_existing_files() {
+        let repo_root = crate::repo_root().expect("xtask lives in the workspace");
+        for case in cases(&repo_root).expect("the planted cases parse") {
+            let watched = watched(&repo_root, &case).expect("the case's files exist");
+            for path in &watched {
+                assert!(
+                    repo_root.join(path).exists(),
+                    "{}: {} doesn't exist",
+                    case.patch.display(),
+                    path.display()
+                );
+            }
+            assert!(!case.checks.is_empty(), "{}", case.patch.display());
+            assert!(
+                watched
+                    .iter()
+                    .any(|path| path.starts_with("crates/zakura-network")),
+                "{} watches the production file it patches",
+                case.patch.display()
+            );
+        }
     }
 
     /// The committed cases parse, and each names an input with a sidecar.
