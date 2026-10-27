@@ -31,7 +31,10 @@ fn lost_wakeup(input: PlanInput) -> WitnessScenario<WaitComplete> {
 }
 
 /// S4.7: with the fix, the source wakes even when the final mark lands
-/// while it sits at its `notified`.
+/// while it's preempted in the waiting code. `cargo xtask planted
+/// discovery/wait-complete-wakes` checks that the same input violates the
+/// property with `qa/planted/discovery/wait-complete-wakes/lost-wakeup.patch`
+/// applied.
 #[test]
 fn discovery_wait_complete_lost_wakeup() {
     check_witness(
@@ -41,22 +44,7 @@ fn discovery_wait_complete_lost_wakeup() {
     );
 }
 
-/// The regression, checked against the bug. CI's `sim-build` job applies
-/// `fixtures/discovery-wait-complete-revert.patch`, which puts the old
-/// `wait_complete` back, then runs this test by name. Unpatched, it fails,
-/// so it's ignored.
-#[test]
-#[ignore = "needs fixtures/discovery-wait-complete-revert.patch applied"]
-fn discovery_wait_complete_lost_wakeup_reverted() {
-    check_witness(
-        lost_wakeup(Plan::from_fuzz(INPUT)),
-        WAIT_COMPLETE_WAKES,
-        Expect::Violated,
-    );
-}
-
-/// Without the patch, the fixed code holds, so a test that expects the
-/// violation fails.
+/// The fixed code holds, so a test that expects the violation fails.
 #[test]
 fn violated_witness_fails_while_fixed() {
     assert_eq!(
@@ -330,4 +318,57 @@ fn no_trigger_history_fails() {
         witness(probe(Behavior::Sleep), NO_HISTORY, Expect::Holds),
         Err(WitnessError::NoTriggerHistory)
     );
+}
+
+/// Recording a witness test writes the trace of the run it judged, and
+/// judges it with the same rule as `witness`: the fixed code passes Holds
+/// and fails Violated, and either way the trace is complete.
+#[test]
+fn recorded_witness_judges_its_own_trace() {
+    let entry = harness::find(WaitComplete::NAME).expect("S4.7's harness is registered");
+    let dir = tempfile::tempdir().expect("a temporary directory");
+
+    let (trace, result) = harness::record_witness(
+        entry,
+        harness::RecordInput::Input(INPUT),
+        &dir.path().join("holds"),
+        WAIT_COMPLETE_WAKES,
+        Expect::Holds,
+    )
+    .expect("the trace is written");
+    assert_eq!(result, Ok(()));
+    assert!(trace.end.is_some());
+
+    let (trace, result) = harness::record_witness(
+        entry,
+        harness::RecordInput::Input(INPUT),
+        &dir.path().join("violated"),
+        WAIT_COMPLETE_WAKES,
+        Expect::Violated,
+    )
+    .expect("a failed witness test still writes its trace");
+    assert_eq!(
+        result,
+        Err(WitnessError::Outcome(PropertyOutcome::Held {
+            applicable: 1
+        }))
+    );
+    assert!(trace.end.is_some());
+
+    let error = harness::record_witness(
+        entry,
+        harness::RecordInput::Input(INPUT),
+        &dir.path().join("unregistered"),
+        "discovery/no-such-property",
+        Expect::Holds,
+    )
+    .expect_err("an unregistered property has no witness test");
+    assert!(
+        matches!(
+            error,
+            harness::RecordError::Witness(WitnessError::Unregistered)
+        ),
+        "{error}"
+    );
+    assert!(!dir.path().join("unregistered").exists());
 }
