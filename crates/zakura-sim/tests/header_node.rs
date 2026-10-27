@@ -14,12 +14,16 @@ use zakura_rt::sync::mpsc;
 use zakura_scheduler::SimInstant;
 use zakura_sim::{
     harness::{
-        header_node::{guard_dispatch, Chain, ControlAction, ControlStep, DispatchFlag, Fork},
+        header_node::{
+            guard_dispatch,
+            policy::{Allow, Hold, OpKind, Select, Trigger},
+            Chain, ControlAction, ControlStep, DispatchFlag, Fork, Policy,
+        },
         header_sync::{
             storage_properties, storage_sources, Dialer, MirrorSpec, Ports, Storage,
             StorageScenario, StorageView, DIRECT_DISPATCH, OPERATION_IDS,
         },
-        run_harness, run_prepared, Subsystem,
+        run_harness, run_prepared, HarnessError, Subsystem,
     },
     observe::{StorageFact, StorageRequest, StorageResult},
     property::{HasView, Property, Sources},
@@ -451,6 +455,7 @@ fn control_closes_and_relinks_a_mirror() {
             .map(|action| ControlStep {
                 peer: "mirror-0".to_owned(),
                 action,
+                when: None,
             })
             .collect(),
         ..StorageScenario::default()
@@ -481,6 +486,7 @@ fn control_close_ends_both_sides_of_the_session() {
         controls: vec![ControlStep {
             peer: "mirror-0".to_owned(),
             action: ControlAction::Close,
+            when: None,
         }],
         ..StorageScenario::default()
     };
@@ -513,4 +519,265 @@ fn control_close_ends_both_sides_of_the_session() {
             "after the close at step {close}: {pipes:?}"
         );
     }
+}
+
+/// Each storage fact of the node's for operations of `kind`, with the virtual
+/// time it was logged at in nanoseconds and its step.
+fn facts_of(report: &RunReport, kind: fn(&StorageRequest) -> bool) -> Vec<(u64, u64, StorageFact)> {
+    let (mut now, mut ids) = (0, std::collections::BTreeSet::new());
+    let mut out = Vec::new();
+    for entry in report.log.entries() {
+        match &entry.obs {
+            Observation::TimeAdvanced { to_ns, .. } => now = *to_ns,
+            Observation::Storage {
+                instance: 0, fact, ..
+            } => {
+                let id = match fact {
+                    StorageFact::Submitted { id, request, .. } if kind(request) => {
+                        ids.insert(*id);
+                        *id
+                    }
+                    StorageFact::Submitted { .. } => continue,
+                    StorageFact::Completed { id, .. } => *id,
+                    _ => continue,
+                };
+                if ids.contains(&id) {
+                    out.push((now, entry.step, fact.clone()));
+                }
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+/// The node's first apply, held for 10 s of virtual time, completes no sooner
+/// than that, while every other operation follows the 5 s bound.
+#[test]
+fn held_apply_waits_for_its_virtual_time() {
+    let scenario = StorageScenario {
+        policy: Policy {
+            holds: vec![Hold {
+                select: Select::nth(OpKind::Apply, 1),
+                until: Trigger::VirtualTime(10_000),
+                then: vec![Allow::Engine],
+                deadline_ms: None,
+            }],
+            ..Policy::converging()
+        },
+        ..StorageScenario::default()
+    };
+    for input in inputs(8, 256) {
+        let (report, ports) = run(&scenario, input);
+        let applies = facts_of(&report, |request| {
+            matches!(request, StorageRequest::ApplyHeaderTarget { .. })
+        });
+        let [(submitted, _, StorageFact::Submitted { .. }), (completed, _, StorageFact::Completed { .. }), ..] =
+            applies.as_slice()
+        else {
+            panic!("the apply is submitted and completes: {applies:?}");
+        };
+        assert!(
+            completed - submitted >= 10_000_000_000,
+            "held from {submitted} ns to {completed} ns"
+        );
+        assert_eq!(
+            ports.node.engine().snapshot().frontiers.header_best,
+            Chain::main(5).tip(&ports.fixture)
+        );
+    }
+}
+
+/// A `Control` step gated on the node's first apply completing is never picked
+/// before that completion.
+#[test]
+fn control_step_waits_for_its_trigger() {
+    let scenario = StorageScenario {
+        controls: vec![ControlStep {
+            peer: "mirror-0".to_owned(),
+            action: ControlAction::Close,
+            when: Some(Trigger::Completed(Select::nth(OpKind::Apply, 1))),
+        }],
+        ..StorageScenario::default()
+    };
+    for input in inputs(8, 256) {
+        let (report, _) = run(&scenario, input);
+        let applies = facts_of(&report, |request| {
+            matches!(request, StorageRequest::ApplyHeaderTarget { .. })
+        });
+        let completed = applies.iter().find_map(|(_, step, fact)| {
+            matches!(fact, StorageFact::Completed { .. }).then_some(*step)
+        });
+        let close = report
+            .picks
+            .iter()
+            .find(|pick| pick.identity == "peer:mirror-0:close")
+            .expect("the close opens and is picked")
+            .step;
+        // An early close can also stop the sync, so no apply completes.
+        assert!(
+            completed.is_some_and(|completed| close > completed),
+            "close at {close}, apply completed at {completed:?}"
+        );
+    }
+}
+
+/// A `Control` step on `peer`.
+fn step(action: ControlAction, when: Option<Trigger>) -> ControlStep {
+    ControlStep {
+        peer: "mirror-0".to_owned(),
+        action,
+        when,
+    }
+}
+
+/// `Closed` counts connections, not close calls. Closing `mirror-0`'s link twice
+/// closes one connection, so a relink gated on two closures never opens.
+/// Closing a second, relinked connection does open it.
+#[test]
+fn closing_twice_counts_one_closure() {
+    let closures = |n| {
+        Some(Trigger::Count(
+            n,
+            Box::new(Trigger::Closed("mirror-0".to_owned())),
+        ))
+    };
+    let links = |n| {
+        Some(Trigger::Count(
+            n,
+            Box::new(Trigger::Linked("mirror-0".to_owned())),
+        ))
+    };
+    let twice = StorageScenario {
+        controls: vec![
+            step(ControlAction::Close, None),
+            step(ControlAction::Close, None),
+            step(ControlAction::Relink, closures(2)),
+        ],
+        ..StorageScenario::default()
+    };
+    let distinct = StorageScenario {
+        controls: vec![
+            step(ControlAction::Close, None),
+            step(ControlAction::Relink, closures(1)),
+            step(ControlAction::Close, links(2)),
+            step(ControlAction::Relink, closures(2)),
+        ],
+        ..StorageScenario::default()
+    };
+    for input in inputs(4, 256) {
+        let (report, _) = run(&twice, input.clone());
+        let picks: Vec<&str> = report.picks.iter().map(|p| p.identity.as_str()).collect();
+        let count = |action| picks.iter().filter(|pick| **pick == action).count();
+        assert_eq!(count("peer:mirror-0:close"), 2);
+        assert_eq!(count("peer:mirror-0:relink"), 0, "one connection closed");
+
+        let (report, _) = run(&distinct, input);
+        let relinks = report
+            .picks
+            .iter()
+            .filter(|pick| pick.identity == "peer:mirror-0:relink")
+            .count();
+        assert_eq!(relinks, 2, "two connections closed");
+    }
+}
+
+/// `mirror-0` grows to A6 mid-run, through its own port. Once the growth is
+/// witnessed, `Control` closes its link and relinks it, and the node follows
+/// it to the new tip.
+#[test]
+fn a_grown_mirror_leads_the_node_to_its_new_tip() {
+    let mirror = || "mirror-0".to_owned();
+    let scenario = StorageScenario {
+        controls: vec![
+            step(ControlAction::Grow { len: 1 }, None),
+            step(ControlAction::Close, Some(Trigger::Grown(mirror()))),
+            step(ControlAction::Relink, Some(Trigger::Closed(mirror()))),
+        ],
+        ..StorageScenario::default()
+    };
+    for input in inputs(8, 256) {
+        let (report, ports) = run(&scenario, input);
+        let relinked = report
+            .picks
+            .iter()
+            .any(|pick| pick.identity == "peer:mirror-0:relink");
+        assert!(relinked, "the growth, close and relink all happened");
+        let a6 = Chain::main(6).tip(&ports.fixture);
+        assert_eq!(ports.mirrors[0].snapshot().frontiers.header_best, a6);
+        assert_eq!(
+            ports.node.engine().snapshot().frontiers.header_best,
+            a6,
+            "the node reaches mirror-0's new tip"
+        );
+    }
+}
+
+/// A `Grow` that storage can't admit fails the run instead of counting as
+/// grown. `mirror-0` starts 64,000 headers past A5 with finality at genesis,
+/// so growing it by 4,000 more passes the 65,536 retained-header limit, and
+/// the apply stalls without admitting the target.
+#[test]
+fn a_stalled_growth_fails_the_run() {
+    use zakura_header_chain::Frontier;
+    use zakura_node_services::header_chain::Port;
+
+    /// Polls `future` once, outside a run.
+    fn ready<F: std::future::Future>(future: F) -> F::Output {
+        let waker = std::task::Waker::noop();
+        match std::pin::pin!(future).poll(&mut std::task::Context::from_waker(waker)) {
+            std::task::Poll::Ready(output) => output,
+            std::task::Poll::Pending => panic!("an engine port finishes on its first poll"),
+        }
+    }
+
+    let scenario = StorageScenario {
+        controls: vec![
+            step(ControlAction::Grow { len: 4_000 }, None),
+            step(
+                ControlAction::Close,
+                Some(Trigger::Grown("mirror-0".to_owned())),
+            ),
+        ],
+        ..StorageScenario::default()
+    };
+    let ports = Storage::prepare(&scenario);
+    let mirror = &ports.mirrors[0];
+    for request_id in 1..=16 {
+        let tip: Frontier = mirror.snapshot().frontiers.header_best;
+        let headers = ports.fixture.extend(tip, 4_000, 0);
+        let request = ports
+            .fixture
+            .target_request(&mirror.snapshot(), tip, &headers, request_id);
+        let prepared = ready(mirror.prepare_header_target(request)).expect("a batch prepares");
+        ready(mirror.apply_header_target(prepared)).expect("a batch applies");
+    }
+    let before = mirror.snapshot().frontiers.header_best;
+    assert_eq!(before.height.0, 64_005);
+
+    let error = run_prepared::<Storage>(
+        &scenario,
+        ports.clone(),
+        inputs(1, 0).remove(0),
+        &mut MemorySink::default(),
+        None,
+    )
+    .expect_err("the stalled growth fails the run");
+    let HarnessError::Run { failure, report } = error else {
+        panic!("{error}");
+    };
+    assert!(failure.to_string().contains("ControlFailed"), "{failure}");
+    assert!(failure.to_string().contains("ResourceStalled"), "{failure}");
+    assert_eq!(
+        mirror.snapshot().frontiers.header_best,
+        before,
+        "mirror-0 didn't grow"
+    );
+    assert!(
+        !report
+            .picks
+            .iter()
+            .any(|pick| pick.identity == "peer:mirror-0:close"),
+        "the gated close never opened"
+    );
 }

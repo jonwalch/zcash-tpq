@@ -19,8 +19,8 @@ use zakura_storage::header::{
 
 use super::{
     header_node::{
-        preload, Chain, Control, ControlStep, DispatchFlag, HeaderNode, Policy, PolicySource,
-        Topology,
+        preload, Chain, Control, ControlStep, DispatchFlag, Effects, HeaderNode, Policy,
+        PolicySource, Topology,
     },
     Subsystem,
 };
@@ -254,7 +254,14 @@ impl Subsystem for Storage {
     /// `Control` source.
     fn build(sim: &mut Sim, scenario: &StorageScenario, ports: Ports) -> Self {
         let dispatch = DispatchFlag::default();
-        let storage = PolicySource::new(sim, ports.node.clone(), scenario.policy);
+        let effects = Effects::default();
+        let storage = PolicySource::new(
+            sim,
+            ports.node.clone(),
+            scenario.policy.clone(),
+            effects.clone(),
+        );
+        let predicates = storage.predicates();
         sim.add_source(Box::new(storage));
         let mut nodes = vec![HeaderNode::spawn(
             sim,
@@ -282,14 +289,20 @@ impl Subsystem for Storage {
                 dispatch.clone(),
             ));
         }
-        let topology = Rc::new(Topology::new(nodes));
+        let topology = Rc::new(Topology::new(nodes, effects));
         for (index, spec) in (1..).zip(&scenario.mirrors) {
             match spec.dialer {
                 Dialer::Mirror => topology.link(index, 0),
                 Dialer::Node => topology.link(0, index),
             };
         }
-        let control = Control::new(sim, topology.clone(), scenario.controls.clone());
+        let control = Control::new(
+            sim,
+            topology.clone(),
+            ports.fixture.clone(),
+            scenario.controls.clone(),
+            predicates,
+        );
         sim.add_source(Box::new(control));
         Storage {
             port: ports.node,
