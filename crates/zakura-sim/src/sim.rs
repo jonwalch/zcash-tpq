@@ -149,6 +149,12 @@ impl Sim {
         SourceId(self.sources.len() - 1)
     }
 
+    /// The run's harness failure cell, which a source sets for a failure
+    /// it finds while observing. The run checks it after every step.
+    pub(crate) fn failure(&self) -> Failure {
+        self.failure.clone()
+    }
+
     /// Holds `checkpoint` for an evidence source being created. At setup
     /// and after every step, the run ends with
     /// [`HarnessFailure::SourceEvidence`] unless it names that step and the
@@ -505,16 +511,23 @@ impl Sim {
 
     /// Lets every source append what happened inside it to the current
     /// step, then requires every evidence source's checkpoint to name it.
+    /// A source that fails doesn't stop the later ones observing, so a
+    /// failure one of them records in the run's failure cell, such as a
+    /// reactor port panic, still outranks it. The first failure is returned.
     fn observe_sources(&mut self, st: &mut State) -> Result<(), HarnessFailure> {
+        let mut failed = None;
         for (index, source) in self.sources.iter_mut().enumerate() {
-            source
-                .observe(&mut st.log)
-                .map_err(|detail| HarnessFailure::SourceEvidence {
+            if let Err(detail) = source.observe(&mut st.log) {
+                failed.get_or_insert(HarnessFailure::SourceEvidence {
                     source: format!("source {index}"),
                     detail,
-                })?;
+                });
+            }
         }
-        self.check_evidence(st)
+        match failed {
+            Some(failure) => Err(failure),
+            None => self.check_evidence(st),
+        }
     }
 
     /// The evidence failure that ends a run which `end` didn't already end

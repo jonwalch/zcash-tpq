@@ -24,7 +24,7 @@ use zakura_sim::{
         },
         run_prepared, Subsystem,
     },
-    observe::{Exit, StorageFact, StorageRequest},
+    observe::{Exit, ReactorFact, StorageFact, StorageRequest},
     Checker, MemorySink, Observation, PlanInput, PropertyOutcome, RunReport,
 };
 use zakura_storage::header::{
@@ -127,11 +127,13 @@ fn facts(report: &RunReport) -> Vec<(u64, &StorageFact)> {
 /// Under every outcome and no bound, the node's operation IDs rise by one per
 /// submission, and each completes at most once, after its submission.
 /// The harness checks that after every step, and some plan completes an
-/// operation with a fault, so faults are exercised.
+/// operation with a fault, so faults are exercised. The harness taps the
+/// node's reactor, so every run also logs its calls, paired with its storage
+/// receipts, and some plan pairs a call that ended with a port error.
 #[test]
 fn operation_ids_are_unique_and_complete_once() {
     let scenario = worked_example(any());
-    let mut faulted = false;
+    let (mut faulted, mut paired_error) = (false, false);
     for input in sweep() {
         let (report, _) = run(&scenario, input);
         let ids = report
@@ -146,8 +148,28 @@ fn operation_ids_are_unique_and_complete_once() {
         faulted |= facts(&report).iter().any(|(_, fact)| {
             matches!(fact, StorageFact::Completed { outcome, .. } if outcome != "engine")
         });
+        let ends: Vec<(&str, Option<u64>)> = report
+            .log
+            .entries()
+            .iter()
+            .filter_map(|entry| match &entry.obs {
+                Observation::Reactor {
+                    event: ReactorFact::CallEnded { end, op, .. },
+                    ..
+                } => Some((end.as_str(), *op)),
+                _ => None,
+            })
+            .collect();
+        assert!(!ends.is_empty(), "the node's tap logs its calls");
+        paired_error |= ends
+            .iter()
+            .any(|(end, op)| *end == "port-error" && op.is_some());
     }
     assert!(faulted, "no plan completed an operation with a fault");
+    assert!(
+        paired_error,
+        "no plan paired a call that ended with a port error"
+    );
 }
 
 /// The node's storage history: every storage observation, as text, with its

@@ -1,6 +1,7 @@
 //! Header-sync harnesses. `header-sync/smoke` runs the reactor on the step
 //! loop with inert storage and no peers. `header-sync/storage` runs a node
-//! on controlled storage with mirror peers (M4).
+//! on controlled storage with mirror peers (M4), with the node's reactor
+//! tapped.
 
 use std::{any::Any, collections::BTreeSet, rc::Rc, sync::Arc};
 
@@ -19,8 +20,8 @@ use zakura_storage::header::{
 
 use super::{
     header_node::{
-        preload, Chain, Control, ControlStep, DispatchFlag, Effects, HeaderNode, Policy,
-        PolicySource, Topology,
+        preload, tap::ReactorTap, Chain, Control, ControlStep, DispatchFlag, Effects, HeaderNode,
+        Policy, PolicySource, Topology,
     },
     Subsystem,
 };
@@ -250,8 +251,8 @@ impl Subsystem for Storage {
     }
 
     /// Spawns the node on its controlled port under the scenario's policy,
-    /// then each mirror, links each mirror to the node once, and adds the
-    /// `Control` source.
+    /// with its reactor tapped, then each mirror, links each mirror to the
+    /// node once, and adds the `Control` source. Only the node is tapped.
     fn build(sim: &mut Sim, scenario: &StorageScenario, ports: Ports) -> Self {
         let dispatch = DispatchFlag::default();
         let effects = Effects::default();
@@ -261,6 +262,8 @@ impl Subsystem for Storage {
             scenario.policy.clone(),
             effects.clone(),
         );
+        let (observer, tap) = ReactorTap::new(sim, &ports.node, "node");
+        let storage = storage.with_tap(tap);
         let predicates = storage.predicates();
         sim.add_source(Box::new(storage));
         let mut nodes = vec![HeaderNode::spawn(
@@ -271,7 +274,7 @@ impl Subsystem for Storage {
             &ports.fixture,
             scenario.node.tip(&ports.fixture),
             dispatch.clone(),
-            None,
+            Some(observer),
         )];
         for (index, ((spec, port), seed)) in scenario
             .mirrors
