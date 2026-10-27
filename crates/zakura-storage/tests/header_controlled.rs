@@ -21,10 +21,13 @@ use zakura_node_services::header_chain::{
     SelectedChainMembership,
 };
 use zakura_rt::sync::Semaphore;
+#[cfg(not(zakura_sim))]
+use zakura_storage::header::controlled::BindError;
 use zakura_storage::header::{
     controlled::{CompleteError, Completion, ControlledPort, FactKind, OpId},
     evidence::{
-        CapacityClass, LeaseFact, LeaseKey, RequestIdentity, ResultIdentity, RetentionEnd,
+        CallerPresence, CapacityClass, ClassWaiters, ContinuationState, LeaseFact, LeaseKey,
+        LeaseState, OperationStage, PathPosition, RequestIdentity, ResultIdentity, RetentionEnd,
         SignalClass, Waiter,
     },
     fixture::HeaderFixture,
@@ -1302,6 +1305,7 @@ fn acquire_read_and_release_paths_publish_their_lease_facts() {
             scope: first.scope,
             target: chain[2],
             common_ancestor: anchor,
+            position: PathPosition::Retained { next: 0 },
             capacity: CapacityClass::General,
             continued_from: None,
         }
@@ -1370,6 +1374,7 @@ fn acquire_read_and_release_paths_publish_their_lease_facts() {
             LeaseFact::RetentionCached {
                 lease: l2,
                 last_frontier: chain[0],
+                position: PathPosition::Retained { next: 1 },
             },
         ]
     );
@@ -1405,6 +1410,7 @@ fn acquire_read_and_release_paths_publish_their_lease_facts() {
                 scope: third.scope,
                 target: chain[2],
                 common_ancestor: chain[0],
+                position: PathPosition::Retained { next: 1 },
                 capacity: CapacityClass::General,
                 continued_from: Some(l2.lease_id),
             },
@@ -1558,6 +1564,7 @@ fn a_full_continuation_cache_evicts_before_caching() {
             LeaseFact::RetentionCached {
                 lease: newest,
                 last_frontier: chain[0],
+                position: PathPosition::Retained { next: 1 },
             },
         ]
     );
@@ -1707,6 +1714,352 @@ fn an_abandoned_reply_with_a_waiter_fires_it_in_its_transaction() {
             FactKind::ReplyDropped { id: OpId(1) },
         ]]
     ));
+}
+
+/// B3 and B6: the snapshot reads each container. Here that's a pending
+/// locator holding its permit, an unread refusal, a pending read whose
+/// caller left, a live lease with a waiter, a cached continuation, and the
+/// counters. A stored reply keeps the identity captured when it was made,
+/// even after the registry changes (C4).
+#[test]
+fn owner_state_reads_every_container() {
+    let (port, chain) = chain(3);
+    let anchor = HeaderFixture::regtest().anchor();
+    let semaphore = Arc::new(Semaphore::new(1));
+    let (reply, leased) = run(
+        &port,
+        port.acquire_header_path(acquire(&port, peer(1), 1, chain[2])),
+    );
+    let live = acquired(reply);
+    let (reply, _) = run(
+        &port,
+        port.acquire_header_path(acquire(&port, peer(2), 1, chain[2])),
+    );
+    let cached = acquired(reply);
+    complete(
+        &port,
+        port.read_header_path(cached.clone(), page_after(anchor, 1)),
+    );
+    let mut refused = port.acquire_header_path(acquire(&port, peer(1), 1, chain[2]));
+    submit(&mut refused);
+    let refused_id = port.pending()[0].id;
+    port.complete(refused_id, ENGINE)
+        .expect("the refusal completes");
+    let mut locator = port.continuation_locator(permit(&semaphore));
+    submit(&mut locator);
+    let mut left = port.selected_chain_contains(chain[0].hash);
+    submit(&mut left);
+    drop(left);
+    let last_seq = port.take_facts().last().expect("facts were published").seq;
+
+    let state = port.owner_state();
+    assert_eq!(state.through_seq, last_seq);
+    let (locator_id, left_id) = (OpId(refused_id.0 + 1), OpId(refused_id.0 + 2));
+    assert_eq!(
+        state
+            .operations
+            .iter()
+            .map(|op| (op.id, op.stage.clone()))
+            .collect::<Vec<_>>(),
+        [
+            (
+                refused_id,
+                OperationStage::Replied {
+                    result: ResultIdentity::CapacityBusy(SignalClass::Peer),
+                }
+            ),
+            (
+                locator_id,
+                OperationStage::Pending {
+                    caller_waiting: true
+                }
+            ),
+            (
+                left_id,
+                OperationStage::Pending {
+                    caller_waiting: false
+                }
+            ),
+        ]
+    );
+    assert_eq!(state.permits, [locator_id]);
+    assert_eq!(
+        state.leases,
+        [LeaseState {
+            lease: key(peer(1), 1, &live),
+            scope: live.scope,
+            target: chain[2],
+            last_frontier: anchor,
+            position: PathPosition::Retained { next: 0 },
+            capacity: CapacityClass::General,
+            waiter: true,
+            leased_txn: Some(leased.txn),
+        }]
+    );
+    assert_eq!(
+        state.continuations,
+        [ContinuationState {
+            lease: key(peer(2), 1, &cached),
+            scope: cached.scope,
+            target: chain[2],
+            last_frontier: chain[0],
+            position: PathPosition::Retained { next: 1 },
+            retained: 3,
+        }]
+    );
+    assert_eq!(state.class_waiters, ClassWaiters::default());
+    assert_eq!((state.last_lease_id, state.continuation_hits), (2, 0));
+
+    complete(&port, port.release_header_path(live));
+    let state = port.owner_state();
+    assert!(state.leases.is_empty());
+    assert_eq!(
+        state.operations[0].stage,
+        OperationStage::Replied {
+            result: ResultIdentity::CapacityBusy(SignalClass::Peer),
+        },
+        "the stored refusal keeps the signal it handed out"
+    );
+    drop((refused, locator));
+}
+
+/// C4: an unread locator reply keeps the generation it was read at, after
+/// an apply moves the engine on.
+#[test]
+fn a_stored_locator_reply_keeps_its_generation() {
+    let (port, chain) = chain(1);
+    let semaphore = Arc::new(Semaphore::new(1));
+    let before = port.engine().snapshot().header_generation;
+    let mut locator = port.continuation_locator(permit(&semaphore));
+    submit(&mut locator);
+    port.complete(OpId(1), ENGINE)
+        .expect("the locator completes");
+    let next = HeaderFixture::regtest().extend(chain[0], 1, 0);
+    complete(
+        &port,
+        port.apply_header_target(prepared(&port, chain[0], &next, 2)),
+    );
+    assert_ne!(port.engine().snapshot().header_generation, before);
+    let state = port.owner_state();
+    assert!(matches!(
+        &state.operations[0].stage,
+        OperationStage::Replied {
+            result: ResultIdentity::Locator { header_generation, .. },
+        } if *header_generation == before
+    ));
+    drop(locator);
+}
+
+/// B-acc1: a replaced lease leaves exactly the replacement in the
+/// snapshot, with its own session and lease ID.
+#[test]
+fn a_replacement_lease_keeps_its_exact_identity() {
+    let (port, chain) = chain(1);
+    let (reply, _) = run(
+        &port,
+        port.acquire_header_path(acquire(&port, peer(1), 1, chain[0])),
+    );
+    let old = acquired(reply);
+    complete(&port, port.release_header_path(old.clone()));
+    let (reply, _) = run(
+        &port,
+        port.acquire_header_path(acquire(&port, peer(1), 2, chain[0])),
+    );
+    let new = acquired(reply);
+    let leases: Vec<_> = port
+        .owner_state()
+        .leases
+        .into_iter()
+        .map(|lease| lease.lease)
+        .collect();
+    assert_eq!(leases, [key(peer(1), 2, &new)]);
+    assert_ne!(old.handle_id(), new.handle_id());
+}
+
+/// B-acc2: an old session's unread `Acquired` reply, dropped after its
+/// lease expired and the peer's new session took a lease, ends nothing:
+/// its transaction is the bare `ReplyDropped`, and the snapshot keeps the
+/// replacement lease.
+#[tokio::test(start_paused = true)]
+async fn a_stale_abandoned_acquire_leaves_the_replacement_lease() {
+    let (port, chain) = chain(1);
+    let mut old = port.acquire_header_path(acquire(&port, peer(1), 1, chain[0]));
+    submit(&mut old);
+    port.complete(OpId(1), ENGINE)
+        .expect("the old acquire completes");
+    tokio::time::advance(Duration::from_secs(30)).await;
+    let (reply, _) = run(
+        &port,
+        port.acquire_header_path(acquire(&port, peer(1), 2, chain[0])),
+    );
+    let replacement = key(peer(1), 2, &acquired(reply));
+    transactions(&port);
+    drop(old);
+    assert!(matches!(
+        slices(&transactions(&port)).as_slice(),
+        [[FactKind::ReplyDropped { id: OpId(1) }]]
+    ));
+    let state = port.owner_state();
+    assert!(state.operations.is_empty());
+    assert_eq!(
+        state
+            .leases
+            .iter()
+            .map(|lease| lease.lease)
+            .collect::<Vec<_>>(),
+        [replacement]
+    );
+}
+
+/// C2: a port binds to its run only while pristine. A committed setup
+/// chain is fine, any operation or lease isn't, and a second bind is
+/// refused. The simulator build has no run here, so it checks binding in
+/// `tests/header_scheduled.rs`.
+#[test]
+fn only_a_pristine_port_binds() {
+    let (port, headers) = chain(1);
+    assert!(port.is_pristine(), "a committed chain isn't owner state");
+    let (used, _) = chain(1);
+    let mut call = used.selected_chain_contains(headers[0].hash);
+    submit(&mut call);
+    assert!(!used.is_pristine());
+    let (leased, leased_headers) = chain(1);
+    acquired(ready(leased.engine().acquire_header_path(acquire(
+        &leased,
+        peer(1),
+        1,
+        leased_headers[0],
+    ))));
+    assert!(!leased.is_pristine(), "a setup lease is owner state");
+
+    #[cfg(not(zakura_sim))]
+    {
+        assert_eq!(port.bind_to_run(), Ok(()));
+        assert_eq!(port.bind_to_run(), Err(BindError::AlreadyBound));
+        assert_eq!(used.bind_to_run(), Err(BindError::NotPristine));
+        assert_eq!(leased.bind_to_run(), Err(BindError::NotPristine));
+    }
+}
+
+/// `last_seq` names the last fact published, whether or not it was taken,
+/// and agrees with the owner state's watermark.
+#[test]
+fn last_seq_follows_publication() {
+    let (port, chain) = chain(1);
+    assert_eq!(port.last_seq(), 0);
+    complete(&port, port.selected_chain_contains(chain[0].hash));
+    let published = port.last_seq();
+    assert_eq!(published, port.owner_state().through_seq);
+    let facts = port.take_facts();
+    assert_eq!(facts.last().map(|fact| fact.seq), Some(published));
+    assert_eq!(port.last_seq(), published, "taking facts doesn't change it");
+}
+
+/// Submits `call`, drops it, and completes it with `outcome`, so the reply
+/// goes to nobody. Returns the completion.
+fn complete_abandoned<F: Future + Unpin>(
+    port: &ControlledPort,
+    mut call: F,
+    outcome: Outcome,
+) -> Completion {
+    submit(&mut call);
+    drop(call);
+    let id = port.pending().last().expect("the call is pending").id;
+    port.complete(id, outcome).expect("the outcome is legal")
+}
+
+/// Every completion whose caller is gone removes its slot, whatever the
+/// operation returned, not only an abandoned `Acquired`: a membership, a
+/// locator, a prepare, a refusal, a page and a release, and a fault and a
+/// rejection.
+#[test]
+fn an_undelivered_completion_leaves_no_operation() {
+    let (port, chain) = chain(3);
+    let semaphore = Arc::new(Semaphore::new(1));
+    let (reply, _) = run(
+        &port,
+        port.acquire_header_path(acquire(&port, peer(1), 1, chain[2])),
+    );
+    let held = acquired(reply);
+    let next = HeaderFixture::regtest().extend(chain[2], 1, 0);
+    let request =
+        HeaderFixture::regtest().target_request(&port.engine().snapshot(), chain[2], &next, 9);
+    let anchor = HeaderFixture::regtest().anchor();
+
+    let completions = [
+        complete_abandoned(&port, port.selected_chain_contains(chain[0].hash), ENGINE),
+        complete_abandoned(&port, port.continuation_locator(permit(&semaphore)), ENGINE),
+        complete_abandoned(&port, port.prepare_header_target(request), ENGINE),
+        complete_abandoned(
+            &port,
+            port.acquire_header_path(acquire(&port, peer(1), 1, chain[2])),
+            ENGINE,
+        ),
+        complete_abandoned(
+            &port,
+            port.read_header_path(held.clone(), page_after(anchor, 1)),
+            ENGINE,
+        ),
+        complete_abandoned(&port, port.release_header_path(held), ENGINE),
+        complete_abandoned(
+            &port,
+            port.selected_chain_contains(chain[0].hash),
+            UNAVAILABLE,
+        ),
+        complete_abandoned(
+            &port,
+            port.release_header_path(foreign_path(&port, chain[2])),
+            Outcome::Rejected,
+        ),
+    ];
+    for completion in &completions {
+        assert!(!completion.delivered);
+        assert!(
+            !matches!(completion.result, ResultIdentity::Acquired { .. }),
+            "{:?} isn't an abandoned lease",
+            completion.op
+        );
+    }
+    assert!(port.owner_state().operations.is_empty());
+    assert!(port.pending().is_empty());
+}
+
+/// D14: the snapshot reads each caller's presence from a token its call
+/// owns. A pending call is alive until dropped. A replied call is alive
+/// while it waits, although the port gave up its waker at the completion.
+#[test]
+fn caller_presence_is_read_from_the_call() {
+    let (port, chain) = chain(1);
+    let presence = |port: &ControlledPort| {
+        port.owner_state()
+            .operations
+            .into_iter()
+            .map(|op| (op.id, op.caller))
+            .collect::<Vec<_>>()
+    };
+    let mut pending = port.selected_chain_contains(chain[0].hash);
+    let mut replied = port.selected_chain_contains(chain[0].hash);
+    submit(&mut pending);
+    submit(&mut replied);
+    assert_eq!(
+        presence(&port),
+        [
+            (OpId(1), CallerPresence::Alive),
+            (OpId(2), CallerPresence::Alive)
+        ]
+    );
+    port.complete(OpId(2), ENGINE)
+        .expect("membership completes");
+    drop(pending);
+    assert_eq!(
+        presence(&port),
+        [
+            (OpId(1), CallerPresence::Gone),
+            (OpId(2), CallerPresence::Alive)
+        ]
+    );
+    ready(replied).expect("membership reads");
+    assert_eq!(presence(&port), [(OpId(1), CallerPresence::Gone)]);
 }
 
 /// Two applies of the same headers with the same owner, supplier and

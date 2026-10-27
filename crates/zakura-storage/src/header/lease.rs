@@ -17,7 +17,10 @@ use zakura_header_chain::{Frontier, HeaderWorkAuthority, SourceId};
 use zakura_node_services::header_chain::{AcquirePathReply, ServingCapacitySignal};
 
 use super::{
-    evidence::{CapacityClass, LeaseFact, LeaseKey, RetentionEnd, SignalClass, Waiter},
+    evidence::{
+        CapacityClass, ClassWaiters, ContinuationState, LeaseFact, LeaseKey, LeaseState,
+        OwnerState, PathPosition, RetentionEnd, SignalClass, Waiter,
+    },
     Release,
 };
 use zakura_rt::time::Instant;
@@ -71,6 +74,17 @@ pub(super) enum Position {
     Complete,
 }
 
+impl Position {
+    /// This position as evidence reports it.
+    fn evidence(self) -> PathPosition {
+        match self {
+            // usize always fits in u64 on supported targets.
+            Position::Retained { next } => PathPosition::Retained { next: next as u64 },
+            Position::Complete => PathPosition::Complete,
+        }
+    }
+}
+
 /// One peer's lease, or a consumed lease kept for continuation.
 #[derive(Clone, Debug)]
 pub(super) struct Cursor {
@@ -86,6 +100,8 @@ pub(super) struct Cursor {
     pub(super) retained_path: Arc<[block::Hash]>,
     idle_deadline: Instant,
     pub(super) capacity: Capacity,
+    /// The controlled transaction that created the lease, if one did.
+    leased_txn: Option<u64>,
 }
 
 /// What a new lease covers.
@@ -98,6 +114,8 @@ pub(super) struct Spec {
     pub(super) position: Position,
     pub(super) retained_path: Arc<[block::Hash]>,
     pub(super) capacity: Capacity,
+    /// The controlled transaction creating the lease, if one is.
+    pub(super) leased_txn: Option<u64>,
 }
 
 /// A lease that ended, and why.
@@ -383,6 +401,7 @@ impl Registry {
             scope: spec.scope,
             target: spec.target,
             common_ancestor: spec.common_ancestor,
+            position: spec.position.evidence(),
             capacity: match spec.capacity {
                 Capacity::General => CapacityClass::General,
                 Capacity::Bounded => CapacityClass::Bounded,
@@ -402,6 +421,7 @@ impl Registry {
                 retained_path: spec.retained_path,
                 idle_deadline: now + RETAINED_PATH_LEASE_IDLE,
                 capacity: spec.capacity,
+                leased_txn: spec.leased_txn,
             },
         );
         Some(lease_id)
@@ -483,6 +503,7 @@ impl Registry {
             self.effects.facts.push(LeaseFact::RetentionCached {
                 lease,
                 last_frontier: cursor.last_frontier,
+                position: cursor.position.evidence(),
             });
             self.continuations.insert(peer, cursor);
         }
@@ -556,6 +577,72 @@ impl Registry {
                 .as_bytes());
             }
         }
+    }
+
+    /// Fills the registry's part of `state`: the live leases, the cached
+    /// continuations, the class waiters and the counters.
+    pub(super) fn fill(&self, state: &mut OwnerState) {
+        let projected = |peer: &SourceId, cursor: &Cursor| {
+            (
+                Self::key(*peer, cursor),
+                cursor.scope,
+                cursor.target,
+                cursor.last_frontier,
+            )
+        };
+        state.leases = self
+            .by_peer
+            .iter()
+            .map(|(peer, cursor)| {
+                let (lease, scope, target, last_frontier) = projected(peer, cursor);
+                LeaseState {
+                    lease,
+                    scope,
+                    target,
+                    last_frontier,
+                    position: cursor.position.evidence(),
+                    capacity: match cursor.capacity {
+                        Capacity::General => CapacityClass::General,
+                        Capacity::Bounded => CapacityClass::Bounded,
+                    },
+                    waiter: cursor.capacity_signal.is_some(),
+                    leased_txn: cursor.leased_txn,
+                }
+            })
+            .collect();
+        state.continuations = self
+            .continuations
+            .iter()
+            .map(|(peer, cursor)| {
+                let (lease, scope, target, last_frontier) = projected(peer, cursor);
+                ContinuationState {
+                    lease,
+                    scope,
+                    target,
+                    last_frontier,
+                    position: cursor.position.evidence(),
+                    // usize always fits in u64 on supported targets.
+                    retained: cursor.retained_path.len() as u64,
+                }
+            })
+            .collect();
+        state.class_waiters = ClassWaiters {
+            general: self.general_capacity.is_some(),
+            fallback: self.fallback_capacity.is_some(),
+        };
+        state.last_lease_id = self.next_lease_id;
+        state.continuation_hits = self.continuation_hits;
+    }
+
+    /// Whether the registry has never held anything: no lease issued, no
+    /// continuation, no waiter and no hit.
+    pub(super) fn is_pristine(&self) -> bool {
+        self.next_lease_id == 0
+            && self.by_peer.is_empty()
+            && self.continuations.is_empty()
+            && self.general_capacity.is_none()
+            && self.fallback_capacity.is_none()
+            && self.continuation_hits == 0
     }
 
     /// How many leases are live.

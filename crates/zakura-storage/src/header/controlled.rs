@@ -34,7 +34,7 @@ use std::{
     marker::PhantomData,
     mem,
     pin::Pin,
-    sync::{Mutex, MutexGuard, PoisonError},
+    sync::{Arc, Mutex, MutexGuard, PoisonError, Weak},
     task::{Context, Poll, Waker},
     time::Duration,
 };
@@ -53,7 +53,9 @@ use zakura_rt::{sync::watch, time::Instant};
 use super::{
     adapter::{EnginePort, Executed},
     evidence::LeaseFact,
-    evidence::{RequestIdentity, ResultIdentity},
+    evidence::{
+        CallerPresence, OperationStage, OperationState, OwnerState, RequestIdentity, ResultIdentity,
+    },
     fixture::HeaderFixture,
     lease::{Effects, LeaseEnd},
     FaultGate, FromReply, HeaderOp, HeaderReply, HeaderRequest, IllegalOutcome, Outcome,
@@ -185,6 +187,30 @@ impl FactKind {
     }
 }
 
+/// Why [`ControlledPort::bind_to_run`] refused.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum BindError {
+    /// No simulator run is active on this thread.
+    NotInRun,
+    /// The port already published a fact or holds owner state, so some of
+    /// it may carry instants from outside the run.
+    NotPristine,
+    /// The port is already bound.
+    AlreadyBound,
+}
+
+impl fmt::Display for BindError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            BindError::NotInRun => "no simulator run is active",
+            BindError::NotPristine => "the port has activity from before the run",
+            BindError::AlreadyBound => "the port is already bound to a run",
+        })
+    }
+}
+
+impl std::error::Error for BindError {}
+
 /// Why [`ControlledPort::complete`] refused a completion. A refusal changes
 /// nothing.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -194,6 +220,9 @@ pub enum CompleteError {
     NotPending(OpId),
     /// The contract doesn't allow this outcome for the operation now.
     Illegal(IllegalOutcome),
+    /// The port is bound to another run. See
+    /// [`ControlledPort::refused_outside_run`].
+    OutsideRun,
 }
 
 impl fmt::Display for CompleteError {
@@ -201,6 +230,7 @@ impl fmt::Display for CompleteError {
         match self {
             CompleteError::NotPending(id) => write!(f, "no header operation {} is pending", id.0),
             CompleteError::Illegal(illegal) => illegal.fmt(f),
+            CompleteError::OutsideRun => f.write_str("the port is bound to another run"),
         }
     }
 }
@@ -241,6 +271,14 @@ struct Ops {
     facts: Vec<Fact>,
     /// Set by shutdown, after which nothing is submitted.
     shut_down: bool,
+    /// Set once the port is bound to a run.
+    bound: bool,
+    /// The run it's bound to.
+    #[cfg(zakura_sim)]
+    run: Option<zakura_rt::sim::RunId>,
+    /// Set when something used the port outside that run.
+    #[cfg(zakura_sim)]
+    refused: bool,
 }
 
 /// One submitted operation.
@@ -249,6 +287,9 @@ struct Slot {
     stage: Stage,
     /// The caller's waker, or `None` once the caller dropped its future.
     caller: Option<Waker>,
+    /// The call's token, which dies with the call, whatever this
+    /// bookkeeping says.
+    presence: Weak<CallerToken>,
     identity: RequestIdentity,
     request_digest: [u8; 32],
     /// Whether the request fails an adapter-side input check. Those checks
@@ -278,11 +319,33 @@ enum Stage {
     },
     /// Taken by `complete`, which is running it.
     Running,
-    /// Completed, with the reply its caller hasn't polled yet.
-    Replied { reply: HeaderReply },
+    /// Completed, with the reply its caller hasn't polled yet and that
+    /// reply's identity, captured when it was made. A later read of the
+    /// registry can't rebuild it: a refusal's signal or a locator's
+    /// generation may have changed since.
+    Replied {
+        reply: HeaderReply,
+        result: ResultIdentity,
+    },
 }
 
 impl Ops {
+    /// Whether the port is bound to a run that isn't the one active now,
+    /// which also marks it. The caller then refuses its change, before it
+    /// changes owner state or publishes. Never true for an unbound port, or
+    /// outside the simulator build.
+    fn refuse_outside_run(&mut self) -> bool {
+        #[cfg(zakura_sim)]
+        if self
+            .run
+            .is_some_and(|run| zakura_rt::sim::run_id() != Some(run))
+        {
+            self.refused = true;
+            return true;
+        }
+        false
+    }
+
     /// Publishes `kinds` as one transaction at `at`, in order, and returns
     /// its facts.
     fn publish(&mut self, at: Instant, kinds: Vec<FactKind>) -> Vec<Fact> {
@@ -329,8 +392,116 @@ impl ControlledPort {
     /// suits setting up a chain before the run starts. A task in the run
     /// must not call them: an apply can suspend under the engine lock, which
     /// the run takes to complete operations.
+    ///
+    /// Setup before the run may only commit headers with fixed historical
+    /// timestamps, as [`HeaderFixture::extend`] builds them. Validation reads
+    /// [`ScenarioClock`](super::fixture::ScenarioClock), which reads the host
+    /// clock outside a run, and only times far in the past validate the same
+    /// in every process. Setup leaves no owner state, or the port can't bind
+    /// to its run ([`Self::bind_to_run`]).
     pub fn engine(&self) -> &EnginePort {
         &self.engine
+    }
+
+    /// The port's actual owner state, read fresh from its bookkeeping and the
+    /// lease registry, with the registry locked first, as every path that
+    /// takes both does. Every fact up to `through_seq` is reflected and none
+    /// after, since each transaction publishes under these locks or where no
+    /// task can run.
+    pub fn owner_state(&self) -> OwnerState {
+        self.engine.with_registry(|registry| {
+            let ops = self.ops();
+            let mut state = OwnerState {
+                through_seq: ops.last_seq,
+                operations: ops
+                    .slots
+                    .iter()
+                    .map(|(id, slot)| OperationState {
+                        id: *id,
+                        request: slot.identity.clone(),
+                        caller: if slot.presence.strong_count() > 0 {
+                            CallerPresence::Alive
+                        } else {
+                            CallerPresence::Gone
+                        },
+                        stage: match &slot.stage {
+                            Stage::Pending { .. } => OperationStage::Pending {
+                                caller_waiting: slot.caller.is_some(),
+                            },
+                            Stage::Running => OperationStage::Running,
+                            Stage::Replied { result, .. } => OperationStage::Replied {
+                                result: result.clone(),
+                            },
+                        },
+                    })
+                    .collect(),
+                permits: ops.permits.keys().copied().collect(),
+                ..OwnerState::default()
+            };
+            registry.fill(&mut state);
+            state
+        })
+    }
+
+    /// Whether the port has never published a fact and holds no owner state:
+    /// no operation, permit, lease, continuation, waiter or lease counter.
+    /// Its committed chain may hold anything.
+    pub fn is_pristine(&self) -> bool {
+        self.engine.with_registry(|registry| {
+            let ops = self.ops();
+            registry.is_pristine()
+                && ops.last_seq == 0
+                && ops.last == 0
+                && ops.slots.is_empty()
+                && ops.permits.is_empty()
+        })
+    }
+
+    /// Binds the port to the active simulator run, so every later fact is
+    /// stamped with the run's virtual time. Refuses if no run is active, if
+    /// the port isn't pristine, since earlier activity would carry instants
+    /// from outside the run, or if it's already bound. Outside the
+    /// simulator build there's no run to check, so only pristineness counts.
+    ///
+    /// Once bound, a submission, reply take, caller drop or completion made
+    /// outside that run, after it ended or in a later one, is refused: it
+    /// changes nothing and publishes nothing, and
+    /// [`Self::refused_outside_run`] reports it. Shutdown is exempt, since
+    /// it's cleanup that a run does after it ends, and its facts are never
+    /// observed.
+    pub fn bind_to_run(&self) -> Result<(), BindError> {
+        #[cfg(zakura_sim)]
+        if zakura_rt::sim::executor().is_none() {
+            return Err(BindError::NotInRun);
+        }
+        if self.ops().bound {
+            return Err(BindError::AlreadyBound);
+        }
+        if !self.is_pristine() {
+            return Err(BindError::NotPristine);
+        }
+        let mut ops = self.ops();
+        ops.bound = true;
+        #[cfg(zakura_sim)]
+        {
+            ops.run = zakura_rt::sim::run_id();
+        }
+        Ok(())
+    }
+
+    /// Whether something used the port outside the run it's bound to. That
+    /// use was refused before it changed owner state or published a fact,
+    /// so the port's evidence doesn't cover it. Always `false` outside the
+    /// simulator build.
+    pub fn refused_outside_run(&self) -> bool {
+        #[cfg(zakura_sim)]
+        {
+            self.ops().refused
+        }
+        #[cfg(not(zakura_sim))]
+        {
+            false
+        }
     }
 
     /// Locks the bookkeeping. Every change to it completes under the lock, so
@@ -398,11 +569,25 @@ impl ControlledPort {
     ///
     /// Refuses, changing nothing, if `id` isn't pending or the contract
     /// doesn't allow `outcome` now.
+    ///
+    /// Only the run completes operations, outside any task: the engine's
+    /// locks, the permit drop and the waiter signals are scheduling points
+    /// between the change and its publish, which a task could interleave.
     pub fn complete(&self, id: OpId, outcome: Outcome) -> Result<Completion, CompleteError> {
+        #[cfg(zakura_sim)]
+        debug_assert!(
+            zakura_rt::sim::executor()
+                .and_then(|executor| executor.current_task())
+                .is_none(),
+            "only the run completes a controlled port's operations"
+        );
         let now = Instant::now();
         let key = self.engine.adapter_key();
-        let (request, early, permit) = {
+        let (request, early, permit, txn) = {
             let mut ops = self.ops();
+            if ops.refuse_outside_run() {
+                return Err(CompleteError::OutsideRun);
+            }
             let slot = ops
                 .slots
                 .get_mut(&id)
@@ -436,7 +621,13 @@ impl ControlledPort {
             else {
                 unreachable!("the stage was checked above under the same lock");
             };
-            (request, early, ops.permits.remove(&id))
+            // Only the run completes operations, outside any task, so no
+            // other transaction publishes before this one does.
+            let txn = ops
+                .last_txn
+                .checked_add(1)
+                .expect("a run publishes fewer than 2^64 transactions");
+            (request, early, ops.permits.remove(&id), txn)
         };
         let op = request.op();
         // Runs without the bookkeeping lock, since the engine and a dropped
@@ -455,7 +646,7 @@ impl ControlledPort {
                     reply,
                     effects,
                     result,
-                } = self.engine.execute(request);
+                } = self.engine.execute(request, Some(txn));
                 (reply, effects, result)
             }
         };
@@ -476,7 +667,10 @@ impl ControlledPort {
             let (identity, request_digest) = (slot.identity.clone(), slot.request_digest);
             match slot.caller.take() {
                 Some(waker) => {
-                    slot.stage = Stage::Replied { reply };
+                    slot.stage = Stage::Replied {
+                        reply,
+                        result: result.clone(),
+                    };
                     (Some(waker), None, identity, request_digest)
                 }
                 None => {
@@ -502,8 +696,8 @@ impl ControlledPort {
         let state_digest = self.engine.state_digest();
         let completion = {
             let mut ops = self.ops();
-            let mut completion = Completion {
-                txn: 0,
+            let completion = Completion {
+                txn,
                 id,
                 op,
                 request: identity,
@@ -515,9 +709,12 @@ impl ControlledPort {
                 generation,
                 state_digest,
             };
-            completion.txn = ops.last_txn.saturating_add(1);
             kinds.push(FactKind::Completed(Box::new(completion.clone())));
-            ops.publish(now, kinds);
+            let published = ops.publish(now, kinds);
+            assert_eq!(
+                published[0].txn, txn,
+                "only the run publishes between reserving the number and here"
+            );
             completion
         };
         // Woken outside the lock, since a waker can run scheduler code.
@@ -542,6 +739,13 @@ impl ControlledPort {
             }
             _ => (record(&[]), Effects::default()),
         }
+    }
+
+    /// The sequence number of the last fact published, 0 before any. A
+    /// cheap read for a checker that needs to know only whether facts were
+    /// published since it last looked.
+    pub fn last_seq(&self) -> u64 {
+        self.ops().last_seq
     }
 
     /// The facts published since the last call, in order.
@@ -601,6 +805,7 @@ impl ControlledPort {
         Box::pin(Call {
             port: self,
             state: CallState::Unsubmitted(Some(Box::new(Submission { request, permit }))),
+            token: None,
             reply: PhantomData,
         })
     }
@@ -610,8 +815,16 @@ impl ControlledPort {
 struct Call<'a, T> {
     port: &'a ControlledPort,
     state: CallState,
+    /// Held from submission until the call returns its reply or is
+    /// dropped. Its slot holds a `Weak` to it.
+    token: Option<Arc<CallerToken>>,
     reply: PhantomData<fn() -> T>,
 }
+
+/// The token a submitted call owns, so the port can read whether the call
+/// still exists.
+#[derive(Debug)]
+struct CallerToken;
 
 /// A call's request, and storage's clone of a locator's permit, until the
 /// call's first poll submits them.
@@ -655,7 +868,7 @@ impl<T: FromReply> Future for Call<'_, T> {
                     rejected,
                 } = inspect(request, key);
                 let mut ops = port.ops();
-                if ops.shut_down {
+                if ops.shut_down || ops.refuse_outside_run() {
                     drop(ops);
                     // Dropped outside the lock, with its permit.
                     drop((request, permit));
@@ -667,6 +880,7 @@ impl<T: FromReply> Future for Call<'_, T> {
                     .checked_add(1)
                     .expect("a run submits fewer than 2^64 operations");
                 let id = OpId(ops.last);
+                let token = Arc::new(CallerToken);
                 ops.slots.insert(
                     id,
                     Slot {
@@ -675,6 +889,7 @@ impl<T: FromReply> Future for Call<'_, T> {
                             submitted: Instant::now(),
                         },
                         caller: Some(cx.waker().clone()),
+                        presence: Arc::downgrade(&token),
                         identity: identity.clone(),
                         request_digest,
                         rejected,
@@ -693,10 +908,14 @@ impl<T: FromReply> Future for Call<'_, T> {
                 ops.publish(Instant::now(), kinds);
                 drop(ops);
                 self.state = CallState::Submitted(id);
+                self.token = Some(token);
                 Poll::Pending
             }
             CallState::Submitted(id) => {
                 let id = *id;
+                if ops.refuse_outside_run() {
+                    return Poll::Pending;
+                }
                 // Only shutdown removes a slot before its call takes the reply.
                 let Some(slot) = ops.slots.get_mut(&id) else {
                     return Poll::Pending;
@@ -712,6 +931,7 @@ impl<T: FromReply> Future for Call<'_, T> {
                     ops.publish(Instant::now(), vec![FactKind::ReplyTaken { id }]);
                     drop(ops);
                     self.state = CallState::Done;
+                    self.token = None;
                     Poll::Ready(T::from_reply(reply))
                 } else {
                     let replaced = slot.caller.replace(cx.waker().clone());
@@ -733,12 +953,16 @@ impl<T> Drop for Call<'_, T> {
         };
         let port = self.port;
         let mut ops = port.ops();
+        if ops.refuse_outside_run() {
+            return;
+        }
         let Some(slot) = ops.slots.get_mut(&id) else {
             return;
         };
         let acquired = match &slot.stage {
             Stage::Replied {
                 reply: HeaderReply::AcquireHeaderPath(Ok(AcquirePathReply::Acquired(path))),
+                ..
             } => Some((**path).clone()),
             Stage::Replied { .. } => None,
             Stage::Pending { .. } | Stage::Running => {
@@ -912,5 +1136,45 @@ impl Port for ControlledPort {
         hash: block::Hash,
     ) -> HeaderChainFuture<'_, Result<SelectedChainMembership, PortError>> {
         self.submit(HeaderRequest::SelectedChainContains { hash }, None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// D14: a call that returns its reply gives up its token at once, even
+    /// while its future stays allocated, so nothing reads it as present.
+    #[test]
+    fn a_call_drops_its_token_when_it_returns() {
+        let fixture = HeaderFixture::regtest();
+        let port = ControlledPort::new(&fixture);
+        let mut call: Call<'_, Result<SelectedChainMembership, PortError>> = Call {
+            port: &port,
+            state: CallState::Unsubmitted(Some(Box::new(Submission {
+                request: HeaderRequest::SelectedChainContains {
+                    hash: fixture.anchor().hash,
+                },
+                permit: None,
+            }))),
+            token: None,
+            reply: PhantomData,
+        };
+        let mut cx = Context::from_waker(Waker::noop());
+        assert!(Pin::new(&mut call).poll(&mut cx).is_pending());
+        let token = Arc::downgrade(
+            call.token
+                .as_ref()
+                .expect("a submitted call holds its token"),
+        );
+        port.complete(OpId(1), Outcome::Engine)
+            .expect("membership completes");
+        assert!(
+            token.upgrade().is_some(),
+            "an unread reply's caller is present"
+        );
+
+        assert!(Pin::new(&mut call).poll(&mut cx).is_ready());
+        assert!(token.upgrade().is_none());
     }
 }

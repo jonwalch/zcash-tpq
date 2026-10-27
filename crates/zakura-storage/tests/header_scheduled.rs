@@ -20,7 +20,8 @@ use zakura_node_services::header_chain::{
 };
 use zakura_scheduler::{At, Op, RunOutcome, Scheduler, SchedulerConfig, SimInstant, TaskId};
 use zakura_storage::header::{
-    controlled::{ControlledPort, Fact, FactKind, OpId},
+    controlled::{BindError, CompleteError, ControlledPort, Fact, FactKind, OpId},
+    evidence::ResultIdentity,
     fixture::HeaderFixture,
     lease::LeaseEnd,
     HeaderOp, Outcome, Release,
@@ -194,7 +195,8 @@ fn spawn_competing(sched: &mut Scheduler, port: &Arc<ControlledPort>, target: Fr
 }
 
 /// A task drops an unread `Acquired` reply, after another acquire for the
-/// same peer registered a capacity waiter if `with_waiter`. At every
+/// same peer, completed through the controlled port, registered a capacity
+/// waiter if `with_waiter`. At every
 /// scheduling point the drop reaches, acts as the run may there: takes the
 /// lease lock, checks that a lease already gone has its `ReplyDropped`
 /// recorded, lists pending operations, and completes a competing
@@ -205,14 +207,23 @@ fn abandon_with_probes(with_waiter: bool) -> (Vec<String>, Vec<Fact>) {
     spawn_competing(&mut sched, &port, target);
     let task = spawn_unread_acquire(&mut sched, &port, target);
     let unread = OpId(COMPETING + 1);
-    assert!(
-        port.complete(unread, Outcome::Engine)
-            .expect("completes")
-            .delivered
-    );
+    let completion = port.complete(unread, Outcome::Engine).expect("completes");
+    assert!(completion.delivered);
+    let ResultIdentity::Acquired {
+        lease: unread_lease,
+        ..
+    } = completion.result
+    else {
+        panic!("expected a lease, got {:?}", completion.result);
+    };
     let waiter = with_waiter.then(|| {
-        match ready(port.engine().acquire_header_path(acquire(&port, target))) {
-            Ok(AcquirePathReply::CapacityBusy(signal)) => signal,
+        let mut call = port.acquire_header_path(acquire(&port, target));
+        let mut cx = Context::from_waker(Waker::noop());
+        assert!(call.as_mut().poll(&mut cx).is_pending());
+        port.complete(OpId(COMPETING + 2), Outcome::Engine)
+            .expect("the refusal completes");
+        match call.as_mut().poll(&mut cx) {
+            Poll::Ready(Ok(AcquirePathReply::CapacityBusy(signal))) => signal,
             other => panic!("expected CapacityBusy, got {other:?}"),
         }
     });
@@ -226,6 +237,14 @@ fn abandon_with_probes(with_waiter: bool) -> (Vec<String>, Vec<Fact>) {
             problems.push(format!("the lease lock was held at {at}"));
             return;
         };
+        let state = port.owner_state();
+        let slot_held = state.operations.iter().any(|op| op.id == unread);
+        let lease_held = state.leases.iter().any(|lease| lease.lease == unread_lease);
+        if slot_held != lease_held {
+            problems.push(format!(
+                "the reply's slot and its lease changed apart at {at}"
+            ));
+        }
         events.extend(port.take_facts());
         let recorded = events
             .iter()
@@ -277,6 +296,88 @@ fn reply_dropped_ends(facts: &[Fact]) -> Vec<LeaseEnd> {
             _ => None,
         })
         .collect()
+}
+
+/// C2: a port binds only inside an active run, here the scheduler's, only
+/// while pristine, and only once.
+#[test]
+fn binding_needs_an_active_run() {
+    let (port, target) = chain();
+    let (leased, _) = chain();
+    acquired(
+        ready(
+            leased
+                .engine()
+                .acquire_header_path(acquire(&leased, target)),
+        )
+        .expect("acquires"),
+    );
+    assert_eq!(port.bind_to_run(), Err(BindError::NotInRun));
+    let sched = scheduler();
+    assert_eq!(port.bind_to_run(), Ok(()));
+    assert_eq!(port.bind_to_run(), Err(BindError::AlreadyBound));
+    assert_eq!(leased.bind_to_run(), Err(BindError::NotPristine));
+    drop(sched);
+}
+
+/// A port bound to a run refuses use outside it, after that run ends or in
+/// a later run: a call polled then submits and publishes nothing, a
+/// completion is refused, and the port reports the refusal, so its
+/// evidence never carries another clock's instants.
+#[test]
+fn a_bound_port_refuses_use_outside_its_run() {
+    for later in [false, true] {
+        let (port, target) = chain();
+        let sched = scheduler();
+        assert_eq!(port.bind_to_run(), Ok(()));
+        drop(sched);
+        let other = later.then(scheduler);
+        assert!(!port.refused_outside_run());
+        let mut call = port.selected_chain_contains(target.hash);
+        assert!(pin!(&mut call)
+            .poll(&mut Context::from_waker(Waker::noop()))
+            .is_pending());
+        assert!(port.take_facts().is_empty(), "later run: {later}");
+        assert!(port.pending().is_empty());
+        assert!(port.refused_outside_run());
+        assert_eq!(
+            port.complete(OpId(1), Outcome::Engine),
+            Err(CompleteError::OutsideRun)
+        );
+        drop(call);
+        drop(other);
+    }
+}
+
+/// A call submitted and completed during its run, then taken or dropped
+/// after that run ends or in a later run, is refused too: taking returns
+/// nothing, dropping leaves the reply, and neither publishes.
+#[test]
+fn a_bound_port_refuses_a_reply_outside_its_run() {
+    for later in [false, true] {
+        for take in [false, true] {
+            let (port, target) = chain();
+            let sched = scheduler();
+            assert_eq!(port.bind_to_run(), Ok(()));
+            let mut call = port.selected_chain_contains(target.hash);
+            assert!(pin!(&mut call)
+                .poll(&mut Context::from_waker(Waker::noop()))
+                .is_pending());
+            assert!(port.complete(OpId(1), Outcome::Engine).is_ok());
+            assert!(!port.take_facts().is_empty());
+            drop(sched);
+            let other = later.then(scheduler);
+            if take {
+                assert!(pin!(&mut call)
+                    .poll(&mut Context::from_waker(Waker::noop()))
+                    .is_pending());
+            }
+            drop(call);
+            assert!(port.take_facts().is_empty(), "later {later}, take {take}");
+            assert!(port.refused_outside_run(), "later {later}, take {take}");
+            drop(other);
+        }
+    }
 }
 
 /// #1721 review P1: abandoning an unread `Acquired` reply fires the capacity

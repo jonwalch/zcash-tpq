@@ -15,7 +15,7 @@ use zakura_node_services::header_chain::{
     SelectedChainMembership, VctRepairContextReply,
 };
 
-use super::{Fault, HeaderOp, HeaderReply, HeaderRequest};
+use super::{controlled::OpId, Fault, HeaderOp, HeaderReply, HeaderRequest};
 
 /// One retained-path lease: the peer holding it, that peer's session, and
 /// the lease ID the registry issued.
@@ -390,6 +390,19 @@ pub enum Waiter {
     Fallback,
 }
 
+/// Where a retained path's next page starts.
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum PathPosition {
+    /// At this index of the retained hashes, counted from the one above the
+    /// common ancestor.
+    Retained {
+        /// The index.
+        next: u64,
+    },
+    /// Every header has been served.
+    Complete,
+}
+
 /// Why a retained path stopped being held.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum RetentionEnd {
@@ -424,6 +437,8 @@ pub enum LeaseFact {
         target: Frontier,
         /// Where its next page starts.
         common_ancestor: Frontier,
+        /// The cursor's index into the retained path.
+        position: PathPosition,
         /// Its slot class.
         capacity: CapacityClass,
         /// The cached lease it continued from, if any.
@@ -443,6 +458,8 @@ pub enum LeaseFact {
         lease: LeaseKey,
         /// The last header served.
         last_frontier: Frontier,
+        /// The cursor's index into the retained path.
+        position: PathPosition,
     },
     /// A retained path stopped being held.
     RetentionEnded {
@@ -455,4 +472,119 @@ pub enum LeaseFact {
     WaiterSet(Waiter),
     /// A capacity signal fired and was cleared.
     WaiterFired(Waiter),
+}
+
+/// The port's actual owner state, read fresh from the containers that hold
+/// it: the operation slots and permit container in the port's bookkeeping,
+/// and the lease registry. Collections are in key order.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct OwnerState {
+    /// The last fact published when this state was read. The state reflects
+    /// every fact up to it and none after.
+    pub through_seq: u64,
+    /// Every operation not yet taken or dropped by its caller.
+    pub operations: Vec<OperationState>,
+    /// The operations whose permit is in storage's container.
+    pub permits: Vec<OpId>,
+    /// Every live lease.
+    pub leases: Vec<LeaseState>,
+    /// Every cached continuation.
+    pub continuations: Vec<ContinuationState>,
+    /// Whether each capacity class has a waiting signal.
+    pub class_waiters: ClassWaiters,
+    /// The last lease ID the registry issued.
+    pub last_lease_id: u64,
+    /// How many acquires continued from a cached path.
+    pub continuation_hits: u64,
+}
+
+/// One operation in the port's bookkeeping.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct OperationState {
+    /// Its ID.
+    pub id: OpId,
+    /// What it asked for.
+    pub request: RequestIdentity,
+    /// Where it is.
+    pub stage: OperationStage,
+    /// Whether its caller's call still exists, read from a token the call
+    /// owns, not from the port's bookkeeping.
+    pub caller: CallerPresence,
+}
+
+/// Whether a caller's call still exists. A call drops its token when it
+/// returns its reply or is dropped, whatever the port's bookkeeping did.
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum CallerPresence {
+    /// The call is still waiting for its reply.
+    Alive,
+    /// The call took its reply or was dropped.
+    Gone,
+}
+
+/// Where an operation is.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum OperationStage {
+    /// Waiting for the run to complete it.
+    Pending {
+        /// Whether the port still holds the caller's waker.
+        caller_waiting: bool,
+    },
+    /// Being completed by the run. Never seen at a step boundary.
+    Running,
+    /// Completed, with a reply its caller hasn't taken, and that reply's
+    /// identity as captured when it was made.
+    Replied {
+        /// The stored reply's identity.
+        result: ResultIdentity,
+    },
+}
+
+/// One live lease in the registry.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LeaseState {
+    /// Its key.
+    pub lease: LeaseKey,
+    /// Its work scope.
+    pub scope: HeaderWorkAuthority,
+    /// Its target.
+    pub target: Frontier,
+    /// The last header served, or where the path starts.
+    pub last_frontier: Frontier,
+    /// The cursor's index into the retained path.
+    pub position: PathPosition,
+    /// Its slot class.
+    pub capacity: CapacityClass,
+    /// Whether its peer has a refused acquire waiting on it.
+    pub waiter: bool,
+    /// The transaction that created it, as the registry stored it. `None`
+    /// for a lease made through the engine port directly, outside any
+    /// controlled transaction.
+    pub leased_txn: Option<u64>,
+}
+
+/// One consumed lease's path, cached for its peer's next page.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContinuationState {
+    /// The consumed lease's key.
+    pub lease: LeaseKey,
+    /// Its work scope.
+    pub scope: HeaderWorkAuthority,
+    /// Its target.
+    pub target: Frontier,
+    /// The last header served.
+    pub last_frontier: Frontier,
+    /// The cursor's index into the retained path.
+    pub position: PathPosition,
+    /// How many hashes the path retains above its common ancestor.
+    pub retained: u64,
+}
+
+/// Whether each capacity class has a waiting signal.
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+pub struct ClassWaiters {
+    /// The ordinary class.
+    pub general: bool,
+    /// The reserve class.
+    pub fallback: bool,
 }
