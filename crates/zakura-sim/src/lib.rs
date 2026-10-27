@@ -12,6 +12,7 @@
 
 pub mod action;
 pub mod check;
+pub mod domain;
 mod draws;
 pub mod end;
 mod evidence;

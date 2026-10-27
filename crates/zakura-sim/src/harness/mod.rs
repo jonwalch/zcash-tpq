@@ -6,10 +6,9 @@
 //! scenario, so [`find`] and [`HarnessEntry::run`] can rerun any trace
 //! without knowing its type.
 //!
-//! Every harness checks its properties with the registry
-//! ([`registry_checker`]), plus the step loop's own: [`NO_TASK_PANIC`]
-//! always, and [`NO_LIVELOCK`] while the scenario's
-//! [`Assume::BoundedAdversary`] holds ([`run_config`]).
+//! Every harness checks its properties with the registry, plus the step
+//! loop's own: [`NO_TASK_PANIC`] always, and [`NO_LIVELOCK`] while the
+//! scenario's [`Assume::BoundedAdversary`] holds ([`run_config`]).
 
 pub mod coverage;
 pub mod discovery;
@@ -92,19 +91,6 @@ pub trait Subsystem: HasView + Sized + 'static {
         Assumptions::none()
     }
 
-    /// The run's checker, over the [`Subsystem::assumptions`] that
-    /// [`run_harness`] read once for the run: [`registry_checker`] by
-    /// default. A harness overrides it only to run a checker for properties
-    /// the registry can't express yet after the registry's, and lists those
-    /// properties in [`Subsystem::UNREGISTERED`].
-    fn checker(this: &Rc<Self>, assumptions: Assumptions<Self>) -> Box<dyn Checker> {
-        registry_checker(this, assumptions)
-    }
-
-    /// The properties an overridden [`Subsystem::checker`] reports outside
-    /// the registry, with their statuses, in report order. None by default.
-    const UNREGISTERED: &'static [(&'static str, Status)] = &[];
-
     /// Decodes a scenario from exactly [`Subsystem::SCENARIO_BYTES`] bytes of
     /// fuzz input.
     fn draw(prefix: &[u8]) -> Self::Scenario;
@@ -161,7 +147,7 @@ pub fn run_harness<S: Subsystem>(
     let config = limit_livelock(S::config(scenario), &assumptions);
     let mut sim = Sim::new(config, input);
     let this = Rc::new(S::build(&mut sim, scenario));
-    let mut checker = S::checker(&this, assumptions);
+    let mut checker = registry_checker(&this, assumptions);
     let report = match extra {
         Some(extra) => sim.run(&mut Tee(Dyn(&mut *checker), Dyn(extra)), sink),
         None => sim.run(&mut *checker, sink),
@@ -227,12 +213,9 @@ fn limit_livelock<S>(mut config: RunConfig, assumptions: &Assumptions<S>) -> Run
     config
 }
 
-/// The checker [`Subsystem::checker`] returns by default: the registry of
-/// the step loop's properties and `S`'s.
-pub fn registry_checker<S: Subsystem>(
-    this: &Rc<S>,
-    assumptions: Assumptions<S>,
-) -> Box<dyn Checker> {
+/// The run's checker: the registry of the step loop's properties and `S`'s,
+/// over the assumptions [`run_harness`] read once for the run.
+fn registry_checker<S: Subsystem>(this: &Rc<S>, assumptions: Assumptions<S>) -> Box<dyn Checker> {
     Box::new(RegistryChecker::new(
         registry::<S>(),
         Rc::clone(this),
@@ -303,32 +286,14 @@ fn live_step<S: HasView>(cx: &mut CheckCtx<'_, S>) -> Verdict {
 }
 
 /// Every property `S` checks, in report order, for `meta.properties`: the
-/// registry's, then [`Subsystem::UNREGISTERED`].
+/// registry's.
 fn registered<S: Subsystem>() -> Vec<PropertyRef> {
-    let mut registered = registry_refs::<S>();
-    registered.extend(unregistered_refs::<S>());
-    registered
-}
-
-/// The registry's properties.
-fn registry_refs<S: Subsystem>() -> Vec<PropertyRef> {
     registry::<S>()
         .properties()
         .iter()
         .map(|property| PropertyRef {
             id: property.id.to_string(),
             status: property.status,
-        })
-        .collect()
-}
-
-/// [`Subsystem::UNREGISTERED`].
-fn unregistered_refs<S: Subsystem>() -> Vec<PropertyRef> {
-    S::UNREGISTERED
-        .iter()
-        .map(|&(id, status)| PropertyRef {
-            id: id.to_owned(),
-            status,
         })
         .collect()
 }
