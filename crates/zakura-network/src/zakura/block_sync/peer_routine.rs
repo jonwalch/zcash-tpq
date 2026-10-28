@@ -434,6 +434,13 @@ pub(super) struct PeerRoutine {
     /// The routine then exits and its `Drop` guard returns work.
     cancel: CancellationToken,
     trace: ZakuraTrace,
+    /// Receives the routine's events and snapshots, in test and simulator
+    /// builds.
+    #[cfg(any(test, zakura_sim))]
+    observer: super::block_sync_observe::ObserverSlot,
+    /// Frames taken from `recv` so far.
+    #[cfg(any(test, zakura_sim))]
+    frames_judged: u64,
 }
 
 impl PeerRoutine {
@@ -525,7 +532,49 @@ impl PeerRoutine {
             outbound_full_since: None,
             cancel,
             trace,
+            #[cfg(any(test, zakura_sim))]
+            observer: Default::default(),
+            #[cfg(any(test, zakura_sim))]
+            frames_judged: 0,
         }
+    }
+
+    /// This routine, reporting to `observer`.
+    #[cfg(any(test, zakura_sim))]
+    pub(super) fn with_observer(
+        mut self,
+        observer: super::block_sync_observe::ObserverSlot,
+    ) -> Self {
+        self.observer = observer;
+        self
+    }
+
+    /// Reports the routine's owner state and the work queue's items, if an
+    /// observer is installed.
+    #[cfg(any(test, zakura_sim))]
+    fn observe_owners(&self) {
+        use super::block_sync_observe::{BlockEvent, RegistryClaim, RoutineSnapshot};
+        observe!(
+            self.observer,
+            BlockEvent::Routine(RoutineSnapshot {
+                peer: self.peer.clone(),
+                conn_id: self.conn_id,
+                generation: self.generation,
+                requests: self.window.outstanding.ownership(),
+                claims: self
+                    .registry
+                    .outstanding_snapshot(&self.peer, self.generation)
+                    .into_iter()
+                    .map(|(height, meta)| RegistryClaim {
+                        height,
+                        owner: meta.owner,
+                        estimated_bytes: meta.estimated_bytes,
+                    })
+                    .collect(),
+                serving: self.serving.admitted_ranges(),
+            })
+        );
+        self.work.observe_items();
     }
 
     /// Run the pipe-routine until stream close, cancellation, or a protocol
@@ -640,6 +689,10 @@ impl PeerRoutine {
             let outbound_queue_poll = time::sleep(OUTBOUND_FULL_POLL_INTERVAL);
             zakura_rt::pin!(outbound_queue_poll);
 
+            // After the fill, so the snapshot holds the requests and
+            // reservations it made while the routine parks.
+            #[cfg(any(test, zakura_sim))]
+            self.observe_owners();
             zakura_rt::select! {
                 biased;
                 _ = self.cancel.cancelled() => return Ok(()),
@@ -695,6 +748,22 @@ impl PeerRoutine {
         guard: &mut crate::zakura::SessionGuard,
         frame: crate::zakura::Frame,
     ) -> Result<(), SinkReject> {
+        #[cfg(any(test, zakura_sim))]
+        {
+            self.frames_judged += 1;
+            observe!(
+                self.observer,
+                super::block_sync_observe::BlockEvent::FrameJudged {
+                    peer: self.peer.clone(),
+                    conn_id: self.conn_id,
+                    generation: self.generation,
+                    seq: self.frames_judged,
+                    message_type: frame.message_type,
+                    flags: frame.flags,
+                    payload_len: frame.payload.len(),
+                }
+            );
+        }
         self.gc_skipped_outstanding();
         match guard.admit(&frame) {
             Admit::Pass => {}
@@ -2086,6 +2155,8 @@ impl PeerRoutine {
             raw_block_payload,
             decoded_attributed_memory_size_bytes,
         );
+        #[cfg(any(test, zakura_sim))]
+        self.observe_handoff_started(outstanding_owner, height, reserved_estimate);
         self.forward_body_to_sequencer(
             outstanding_owner,
             height,
@@ -2097,9 +2168,70 @@ impl PeerRoutine {
             body_permit,
         )
         .await;
+        #[cfg(not(any(test, zakura_sim)))]
         self.budget.release(reserved_estimate);
+        #[cfg(any(test, zakura_sim))]
+        self.release_handoff(outstanding_owner, height, reserved_estimate);
         // This body opened only this peer's slots; the want-work loop runs at the
         // top of the next iteration.
+    }
+
+    /// Reports that the routine is about to send the body at `height` to the
+    /// sequencer while its request still charges `charge` to the budget. The
+    /// report comes before the send, because the sequencer can dequeue the
+    /// body as soon as the send succeeds. Reports nothing when `charge` is 0,
+    /// because then the budget never counted the body.
+    ///
+    /// A cancelled `send().await` on the `None`-permit path would leave this
+    /// handoff without its end. Production always passes a permit.
+    #[cfg(any(test, zakura_sim))]
+    fn observe_handoff_started(
+        &self,
+        owner: zakura_header_chain::BodyWorkOwner,
+        height: block::Height,
+        charge: u64,
+    ) {
+        if charge == 0 {
+            return;
+        }
+        observe!(
+            self.observer,
+            super::block_sync_observe::BlockEvent::HandoffStarted {
+                peer: self.peer.clone(),
+                owner,
+                height,
+                charge,
+            }
+        );
+    }
+
+    /// Releases the request charge of the body at `height`, which the routine
+    /// just sent to the sequencer, and reports `HandoffEnded` after the
+    /// counter changes and before the release wakes any waiter. Reports
+    /// nothing when `charge` is 0, like [`Self::observe_handoff_started`].
+    #[cfg(any(test, zakura_sim))]
+    fn release_handoff(
+        &mut self,
+        owner: zakura_header_chain::BodyWorkOwner,
+        height: block::Height,
+        charge: u64,
+    ) {
+        use super::block_sync_observe::BlockEvent;
+        if charge == 0 {
+            return;
+        }
+        let (observer, peer) = (&self.observer, &self.peer);
+        self.budget.release_then(charge, || {
+            observe!(
+                observer,
+                BlockEvent::HandoffEnded {
+                    peer: peer.clone(),
+                    owner,
+                    height,
+                    charge,
+                }
+            );
+        });
     }
 
     // ===================== unmatched fallthroughs (ported) ==================
@@ -2133,6 +2265,33 @@ impl PeerRoutine {
             self.sequencer_input_decoded_attributed_memory_bytes.clone(),
         );
 
+        // The input queue holds the body from the send on. Report that before
+        // the send, because the sequencer can dequeue it before this task runs
+        // again, and report its release if the send fails.
+        #[cfg(any(test, zakura_sim))]
+        let queued = {
+            use super::block_sync_observe::{BlockEvent, HeldBody, Holder, HolderChange};
+            let queued = (
+                HeldBody {
+                    height,
+                    owner,
+                    bytes: serialized_bytes,
+                },
+                Holder::Queued {
+                    allocation: body.body.allocation(),
+                },
+            );
+            let (body, holder) = queued;
+            observe!(
+                self.observer,
+                BlockEvent::Holder {
+                    body,
+                    holder,
+                    change: HolderChange::Retained,
+                }
+            );
+            queued
+        };
         let ok = if let Some(permit) = body_permit {
             permit.send(body);
             true
@@ -2141,6 +2300,22 @@ impl PeerRoutine {
             let send_result = self.sequencer_input.send(body).await;
             send_result.is_ok()
         };
+        // Only the `None`-permit path can fail, and production always passes a
+        // permit, so this branch is unreachable today. A cancelled
+        // `send().await` on that path would also leave the `Queued` retain
+        // above without its release.
+        #[cfg(any(test, zakura_sim))]
+        if !ok {
+            let (body, holder) = queued;
+            observe!(
+                self.observer,
+                super::block_sync_observe::BlockEvent::Holder {
+                    body,
+                    holder,
+                    change: super::block_sync_observe::HolderChange::Released,
+                }
+            );
+        }
 
         self.trace_body_sequencer_sent(height, sequencer_send_started.elapsed(), ok);
     }
@@ -2270,6 +2445,8 @@ impl PeerRoutine {
             raw_block_payload,
             decoded_attributed_memory_size_bytes,
         );
+        #[cfg(any(test, zakura_sim))]
+        self.observe_handoff_started(owner, height, ended_reservation);
         self.forward_body_to_sequencer(
             owner,
             height,
@@ -2285,7 +2462,10 @@ impl PeerRoutine {
         // `sequencer_input_bytes`, mirroring the matched receipt path above, so
         // the bytes are never invisible to both the limiter and the resident
         // snapshot.
+        #[cfg(not(any(test, zakura_sim)))]
         self.budget.release(ended_reservation);
+        #[cfg(any(test, zakura_sim))]
+        self.release_handoff(owner, height, ended_reservation);
         true
     }
 
@@ -2656,6 +2836,9 @@ impl Drop for PeerRoutine {
     /// admission-reject); see `handle_peer_disconnected`.
     fn drop(&mut self) {
         self.return_unreceived_requests("peer_routine_drop");
+        // The routine's last snapshot, after it returned its work.
+        #[cfg(any(test, zakura_sim))]
+        self.observe_owners();
     }
 }
 
@@ -2728,6 +2911,7 @@ mod tests {
         );
         let serving = Serving::new(Arc::new(EmptyBlockRangeSource), config).session(
             session.peer_id(),
+            super::super::block_sync_observe::SessionKey::default(),
             session.request_sender(),
             session.cancel_token(),
             connection.clone(),
@@ -3627,10 +3811,16 @@ mod tests {
             })
             .collect();
         let from_registry: BTreeMap<_, _> = registry
-            .outstanding_snapshot(&routine.peer)
+            .outstanding_snapshot(&routine.peer, routine.generation)
             .into_iter()
             .map(|(height, meta)| (height, (meta.owner, meta.estimated_bytes)))
             .collect();
+        assert!(
+            registry
+                .outstanding_snapshot(&routine.peer, routine.generation + 1)
+                .is_empty(),
+            "another generation's routine sees none of these claims"
+        );
         let from_queue: BTreeMap<_, _> = work
             .ownership_snapshot()
             .into_iter()
@@ -3666,14 +3856,53 @@ mod tests {
             .iter()
             .all(|request| request.write == RequestWritePhase::Written));
 
-        let peer = routine.peer.clone();
+        let (peer, generation) = (routine.peer.clone(), routine.generation);
         drop(routine);
-        assert!(registry.outstanding_snapshot(&peer).is_empty());
+        assert!(registry.outstanding_snapshot(&peer, generation).is_empty());
         assert!(work
             .ownership_snapshot()
             .iter()
             .all(|item| item.place == WorkItemPlace::Pending && item.reserved_bytes == 0));
         assert_eq!(budget.reserved(), 0);
+    }
+
+    /// A handoff that ends no reservation reports nothing, so each reported
+    /// handoff pairs with one budget release.
+    #[tokio::test]
+    async fn a_handoff_without_a_charge_reports_nothing() {
+        use super::super::block_sync_observe::{BlockEvent, BlockSyncObserver, ObserverSlot};
+
+        #[derive(Debug, Default)]
+        struct Log(Mutex<Vec<BlockEvent>>);
+        impl BlockSyncObserver for Log {
+            fn observe(&self, event: BlockEvent) {
+                self.0.lock().unwrap().push(event);
+            }
+        }
+
+        let budget = ByteBudget::new(1_000_000);
+        let work = Arc::new(WorkQueue::new(block::Height(0)));
+        work.extend(
+            super::super::test_work_scope(),
+            [(
+                block::Height(1),
+                block::Hash([1; 32]),
+                BlockSizeEstimate::Advertised(1_000),
+            )],
+        );
+        let registry = Arc::new(PeerRegistry::new());
+        let (_view_tx, view_rx) = watch::channel(initial_view(genesis_frontiers()));
+        let (routine, _out_recv) = shared_floor_routine(7, &budget, &work, &registry, view_rx);
+        let log = Arc::new(Log::default());
+        let mut routine = routine.with_observer(ObserverSlot(Some(log.clone())));
+        let _ = routine.try_fill().await;
+        let owner = routine.window.outstanding.ownership()[0].owner;
+        log.0.lock().unwrap().clear();
+
+        routine.observe_handoff_started(owner, block::Height(1), 0);
+        routine.release_handoff(owner, block::Height(1), 0);
+        let events = std::mem::take(&mut *log.0.lock().unwrap());
+        assert_eq!(events, []);
     }
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]

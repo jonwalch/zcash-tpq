@@ -32,6 +32,11 @@ use zakura_header_chain::{
 };
 use zakura_network::{
     zakura::{
+        block_sync_observe::{
+            BlockEvent, BlockSyncObserver, BudgetChange, BudgetChangeKind, HeldBody, Holder,
+            HolderChange, LeaseStep, ObserverSlot, RequestStep, RequestWritePhase, RoutineSnapshot,
+            WorkItemPlace,
+        },
         framed_channel, spawn_block_sync_reactor, BlockRangeRead, BlockRangeReadResult,
         BlockRangeSource, BlockSizeEstimate, BlockSyncAction, BlockSyncBlockMeta, BlockSyncEvent,
         BlockSyncFrontiers, BlockSyncHandle, BlockSyncMessage, BlockSyncService, BlockSyncStartup,
@@ -648,6 +653,19 @@ impl BlockRangeSource for FixtureSource {
     }
 }
 
+/// Fails every read, as storage that can't read a stored block would.
+#[derive(Debug)]
+struct FailingSource;
+
+impl BlockRangeSource for FailingSource {
+    fn read(
+        &self,
+        _request: BlockRangeRead,
+    ) -> BoxFuture<'static, Result<BlockRangeReadResult, BoxError>> {
+        Box::pin(async { Err("the stored block can't be read".into()) })
+    }
+}
+
 /// How long a run of linked nodes may take in virtual time.
 const MAX_NET_TIME: Duration = Duration::from_secs(600);
 
@@ -660,6 +678,10 @@ struct Node {
     _views: watch::Sender<Option<CommittedHeaderChainView>>,
     service: BlockSyncService,
     submitted: Rc<RefCell<Vec<block::Height>>>,
+    /// Each height submitted before its sequencer reported the submission as
+    /// a holder.
+    unreported_submissions: Rc<RefCell<Vec<block::Height>>>,
+    events: Recorder,
 }
 
 /// Block-sync nodes on one scheduler, linked by in-memory streams.
@@ -704,12 +726,24 @@ impl Net {
         chain: &[Arc<block::Block>],
     ) -> usize {
         let verified = view.frontiers.verified_best.height.0 as usize;
+        let source = Arc::new(FixtureSource(chain[..verified].to_vec()));
+        self.spawn_with_source(name, view, chain, source)
+    }
+
+    /// [`Net::spawn`], serving from `source` instead of the stored chain.
+    fn spawn_with_source(
+        &mut self,
+        name: &'static str,
+        view: CommittedHeaderChainView,
+        chain: &[Arc<block::Block>],
+        source: Arc<dyn BlockRangeSource>,
+    ) -> usize {
         let (views, views_rx) = watch::channel(Some(view.clone()));
-        let source = FixtureSource(chain[..verified].to_vec());
-        let (handle, mut actions, reactor) = spawn_block_sync_reactor(
-            startup(&view, views_rx, self.shutdown.clone()).with_range_source(Arc::new(source)),
-        )
-        .expect("block sync starts");
+        let events = Recorder::default();
+        let mut startup = startup(&view, views_rx, self.shutdown.clone()).with_range_source(source);
+        startup.observer = ObserverSlot(Some(Arc::new(events.clone())));
+        let (handle, mut actions, reactor) =
+            spawn_block_sync_reactor(startup).expect("block sync starts");
         let service = BlockSyncService::new_with_handle(handle.clone());
 
         let exits = Rc::clone(&self.exits);
@@ -723,6 +757,7 @@ impl Net {
 
         let handle = Rc::new(RefCell::new(Some(handle)));
         let submitted = Rc::new(RefCell::new(Vec::new()));
+        let unreported_submissions = Rc::new(RefCell::new(Vec::new()));
         let metas: Vec<_> = chain
             .iter()
             .map(|block| BlockSyncBlockMeta {
@@ -737,6 +772,7 @@ impl Net {
             .collect();
         {
             let (handle, submitted) = (Rc::clone(&handle), Rc::clone(&submitted));
+            let (unreported, events) = (Rc::clone(&unreported_submissions), events.clone());
             // The scheduler takes a `'static` label; the test leaks one per node.
             let label: &'static str = Box::leak(format!("{name}-actions").into_boxed_str());
             self.sched.spawn_root(label, async move {
@@ -764,11 +800,27 @@ impl Net {
                                 });
                             }
                         }
-                        BlockSyncAction::SubmitBlock { block, .. } => submitted.borrow_mut().push(
-                            block
+                        BlockSyncAction::SubmitBlock { block, token, .. } => {
+                            let height = block
                                 .coinbase_height()
-                                .expect("a submitted block has a height"),
-                        ),
+                                .expect("a submitted block has a height");
+                            // The sequencer reports a submission's holder before
+                            // it sends the action.
+                            let reported = events.events().iter().any(|event| {
+                                matches!(
+                                    event,
+                                    BlockEvent::Holder {
+                                        body,
+                                        holder: Holder::Submitted { token: held },
+                                        change: HolderChange::Retained,
+                                    } if *held == token && body.height == height
+                                )
+                            });
+                            if !reported {
+                                unreported.borrow_mut().push(height);
+                            }
+                            submitted.borrow_mut().push(height);
+                        }
                         _ => {}
                     }
                 }
@@ -780,6 +832,8 @@ impl Net {
             _views: views,
             service,
             submitted,
+            unreported_submissions,
+            events,
         });
         self.nodes.len() - 1
     }
@@ -898,15 +952,20 @@ fn fixture_chain(count: u32) -> Vec<Arc<block::Block>> {
     (1..=count).map(fixture_block).collect()
 }
 
-/// Node `b` stores the whole fixture chain. Node `a` has its headers but no
-/// bodies, so it downloads them from `b` over a pair of in-memory streams,
-/// one each way, and submits each body in height order.
-#[test]
-fn block_sync_serves_a_range_over_memory_streams() {
-    const HEIGHTS: u32 = 4;
-    let chain = fixture_chain(HEIGHTS);
-    let tip = Frontier::new(block::Height(HEIGHTS), chain[chain.len() - 1].hash());
-    let mut net = Net::new(3);
+/// The heights the download fixture serves.
+const DOWNLOAD_HEIGHTS: u32 = 4;
+
+/// Node `b` stores the fixture chain. Node `a` has its headers but no bodies,
+/// so it downloads them from `b` over a pair of in-memory streams, one each
+/// way. Runs until `a` submitted every height, and returns the net with `a`
+/// at index 0 and `b` at index 1.
+fn download(seed: u64) -> Net {
+    let chain = fixture_chain(DOWNLOAD_HEIGHTS);
+    let tip = Frontier::new(
+        block::Height(DOWNLOAD_HEIGHTS),
+        chain[chain.len() - 1].hash(),
+    );
+    let mut net = Net::new(seed);
     let a = net.spawn(
         "a",
         committed_view(genesis(), tip, AlarmSet::default()),
@@ -932,7 +991,7 @@ fn block_sync_serves_a_range_over_memory_streams() {
         (b_recv, b_send),
     );
 
-    let expected: Vec<_> = (1..=HEIGHTS).map(block::Height).collect();
+    let expected: Vec<_> = (1..=DOWNLOAD_HEIGHTS).map(block::Height).collect();
     let done = |net: &Net| *net.nodes[a].submitted.borrow() == expected;
     net.run_until(done);
     assert!(
@@ -941,10 +1000,17 @@ fn block_sync_serves_a_range_over_memory_streams() {
         net.nodes[a].submitted.borrow()
     );
     // Let `a` handle every frame still in flight, including `b`'s last
-    // ending, before checking that no connection closed.
+    // ending, before the caller checks the run.
     net.settle_until(|_| false);
+    net
+}
+
+/// `a` downloads every body from `b` and submits each in height order.
+#[test]
+fn block_sync_serves_a_range_over_memory_streams() {
+    let net = download(3);
     assert!(
-        net.nodes[b].submitted.borrow().is_empty(),
+        net.nodes[1].submitted.borrow().is_empty(),
         "`b` already had every body"
     );
     for (connection, cause) in &net.connections {
@@ -996,4 +1062,855 @@ fn an_unsolicited_ending_closes_the_connection_with_its_cause() {
     assert!(connection.is_cancelled(), "{:?}", net.steps);
     assert_eq!(cause.get(), Some("service_protocol_reject"));
     assert_eq!(net.finish(), ["completed"]);
+}
+
+/// A node's block-sync events, in the order its tasks reported them.
+#[derive(Clone, Debug, Default)]
+struct Recorder(Arc<Mutex<Vec<BlockEvent>>>);
+
+impl Recorder {
+    fn events(&self) -> Vec<BlockEvent> {
+        self.0
+            .lock()
+            .expect("no observer call panics while it holds the log")
+            .clone()
+    }
+}
+
+impl BlockSyncObserver for Recorder {
+    fn observe(&self, event: BlockEvent) {
+        self.0
+            .lock()
+            .expect("no observer call panics while it holds the log")
+            .push(event);
+    }
+}
+
+/// Each routine's judged frames count up from 1 with no gap.
+fn check_frame_sequence(events: &[BlockEvent]) -> Result<(), String> {
+    let mut last = std::collections::HashMap::new();
+    for event in events {
+        if let BlockEvent::FrameJudged {
+            peer,
+            conn_id,
+            generation,
+            seq,
+            ..
+        } = event
+        {
+            let previous = last.insert((peer.clone(), *conn_id, *generation), *seq);
+            if *seq != previous.unwrap_or(0) + 1 {
+                return Err(format!("frame {seq} after {previous:?}"));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Each budget change starts where the previous one ended, from an empty
+/// budget, and the budget ends empty.
+fn check_budget_chain(events: &[BlockEvent]) -> Result<(), String> {
+    let mut reserved = 0;
+    for event in events {
+        if let BlockEvent::Budget(BudgetChange {
+            kind,
+            before,
+            after,
+        }) = event
+        {
+            if *before != reserved {
+                return Err(format!("{kind:?} from {before}, but {reserved} reserved"));
+            }
+            reserved = *after;
+        }
+    }
+    match reserved {
+        0 => Ok(()),
+        left => Err(format!("{left} bytes left reserved")),
+    }
+}
+
+/// Every published request reaches `Written`, after `Started`.
+fn check_request_steps(events: &[BlockEvent]) -> Result<(), String> {
+    let mut steps: Vec<(_, Vec<RequestStep>)> = Vec::new();
+    for event in events {
+        if let BlockEvent::Request { owner, step, .. } = event {
+            match steps.iter_mut().find(|(known, _)| known == owner) {
+                Some((_, list)) => list.push(*step),
+                None => steps.push((*owner, vec![*step])),
+            }
+        }
+    }
+    for (owner, list) in &steps {
+        let position = |wanted| list.iter().position(|step| *step == wanted);
+        match (
+            position(RequestStep::Published),
+            position(RequestStep::Started),
+            position(RequestStep::Written),
+        ) {
+            (Some(0), Some(started), Some(written)) if started < written => {}
+            _ => return Err(format!("{owner:?} took {list:?}")),
+        }
+    }
+    Ok(())
+}
+
+/// Each handoff starts before the routine retains its body's `Queued`
+/// holder, so the handoff covers every moment the sequencer's input holds
+/// the body. Each ends with the same body and charge. The budget's release
+/// of exactly that charge comes just before the end, because the routine
+/// reports the end after the counter changes and before the release wakes
+/// any waiter. Returns the handoffs that ended.
+fn check_handoffs(events: &[BlockEvent]) -> Result<usize, String> {
+    // Each open handoff, and whether its body's `Queued` holder followed.
+    let mut open = Vec::new();
+    let mut queued = Vec::new();
+    let mut ended = 0;
+    for (index, event) in events.iter().enumerate() {
+        match event {
+            BlockEvent::HandoffStarted {
+                peer,
+                owner,
+                height,
+                charge,
+            } => {
+                open.push((peer.clone(), *owner, *height, *charge));
+                queued.push(false);
+            }
+            BlockEvent::Holder {
+                body,
+                holder: Holder::Queued { .. },
+                change: HolderChange::Retained,
+            } => {
+                if let Some(position) =
+                    open.iter()
+                        .zip(&queued)
+                        .position(|((_, owner, height, _), queued)| {
+                            !queued && *owner == body.owner && *height == body.height
+                        })
+                {
+                    queued[position] = true;
+                }
+            }
+            BlockEvent::HandoffEnded {
+                peer,
+                owner,
+                height,
+                charge,
+            } => {
+                let key = (peer.clone(), *owner, *height, *charge);
+                let Some(position) = open.iter().position(|started| *started == key) else {
+                    return Err(format!("{height:?} ended a handoff it never started"));
+                };
+                open.remove(position);
+                if !queued.remove(position) {
+                    return Err(format!(
+                        "{height:?}'s handoff started after its body was queued"
+                    ));
+                }
+                match index.checked_sub(1).map(|previous| &events[previous]) {
+                    Some(BlockEvent::Budget(BudgetChange {
+                        kind: BudgetChangeKind::Released,
+                        before,
+                        after,
+                    })) if before - after == *charge => ended += 1,
+                    other => return Err(format!("{height:?} ended after {other:?}")),
+                }
+            }
+            _ => {}
+        }
+    }
+    match open.as_slice() {
+        [] => Ok(ended),
+        unended => Err(format!("{unended:?} never ended")),
+    }
+}
+
+/// The write phase each request step moves its request to, if it moves it.
+/// `Dropped` reports the phase its request ended in without moving it.
+fn phase_after(step: RequestStep) -> Option<RequestWritePhase> {
+    match step {
+        RequestStep::Published => Some(RequestWritePhase::Queued),
+        RequestStep::Started => Some(RequestWritePhase::Started),
+        RequestStep::Written => Some(RequestWritePhase::Written),
+        RequestStep::Expired => Some(RequestWritePhase::Skipped),
+        RequestStep::Dropped(_) | RequestStep::DeliveryFailed | RequestStep::Reset => None,
+    }
+}
+
+/// Folds each request's steps into the phases it passed through, from
+/// `Unpublished`. Every request in a routine snapshot shows a phase its
+/// steps already reached. A snapshot can lag its request's steps, because
+/// the routine reads each phase before it reports the snapshot, but it can
+/// never lead them: a phase no step reported means a missed step. Each
+/// `Dropped` step reports the last phase the steps reached.
+///
+/// The check relies on the sim's single thread. The status reports
+/// `Expired` after its compare-exchange, so on a multi-threaded runtime the
+/// handle's drop on another thread can read the expired phase and report
+/// `Dropped(Skipped)` first. This check would then fail a correct run.
+fn check_request_snapshots(events: &[BlockEvent]) -> Result<(), String> {
+    let mut reached: Vec<(_, Vec<RequestWritePhase>)> = Vec::new();
+    for event in events {
+        match event {
+            BlockEvent::Request { owner, step, .. } => {
+                let index = match reached.iter().position(|(known, _)| known == owner) {
+                    Some(index) => index,
+                    None => {
+                        reached.push((*owner, vec![RequestWritePhase::Unpublished]));
+                        reached.len() - 1
+                    }
+                };
+                let phases = &mut reached[index].1;
+                if let RequestStep::Dropped(phase) = step {
+                    if phases.last() != Some(phase) {
+                        return Err(format!(
+                            "{owner:?} dropped in {phase:?} after reaching {phases:?}"
+                        ));
+                    }
+                }
+                phases.extend(phase_after(*step));
+            }
+            BlockEvent::Routine(snapshot) => {
+                for request in &snapshot.requests {
+                    let phases = reached
+                        .iter()
+                        .find(|(owner, _)| *owner == request.owner)
+                        .map_or(&[RequestWritePhase::Unpublished][..], |(_, phases)| phases);
+                    if !phases.contains(&request.write) {
+                        return Err(format!(
+                            "{:?} shows {:?}, but its steps reached only {phases:?}",
+                            request.owner, request.write
+                        ));
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+/// Folds the holder events. At each sequencer snapshot, the fold's reorder,
+/// `applying` and submission holders equal the snapshot's. Every queued
+/// body leaves the queue, and every body that leaves it before the
+/// sequencer closes enters a sequencer holder by the same allocation. After
+/// [`BlockEvent::SequencerClosed`], a queued body's release has no next
+/// holder. Returns the heights the sequencer held, in the order they
+/// arrived.
+///
+/// The sequencer reports its `Reorder`, `Applying`, `Submitted` and
+/// `Detached` holders by diffing its own snapshots, so the fold can't
+/// disagree with those snapshots. Real runs check those holders
+/// independently in two places: a dequeued body must enter one by its
+/// allocation, and the action task checks that each `SubmitBlock` follows
+/// its `Submitted` holder.
+fn check_holders(events: &[BlockEvent]) -> Result<Vec<block::Height>, String> {
+    let mut held: Vec<(Holder, HeldBody)> = Vec::new();
+    let mut dequeued = Vec::new();
+    let mut heights = Vec::new();
+    let mut closed = false;
+    for event in events {
+        match event {
+            BlockEvent::Holder {
+                body,
+                holder,
+                change: HolderChange::Retained,
+            } => {
+                if let Holder::Reorder { allocation } | Holder::Applying { allocation } = holder {
+                    dequeued.retain(|queued| queued != allocation);
+                    if !heights.contains(&body.height) {
+                        heights.push(body.height);
+                    }
+                }
+                held.push((*holder, *body));
+            }
+            BlockEvent::Holder {
+                body,
+                holder,
+                change: HolderChange::Released,
+            } => {
+                let Some(position) = held.iter().position(|entry| *entry == (*holder, *body))
+                else {
+                    return Err(format!("{holder:?} released {body:?} it never held"));
+                };
+                held.remove(position);
+                match holder {
+                    Holder::Queued { allocation } if !closed => dequeued.push(*allocation),
+                    _ => {}
+                }
+            }
+            BlockEvent::SequencerClosed => closed = true,
+            BlockEvent::Sequencer(snapshot) => {
+                let mut expected = snapshot.holders();
+                for entry in held
+                    .iter()
+                    .filter(|(holder, _)| !matches!(holder, Holder::Queued { .. }))
+                {
+                    let Some(position) = expected.iter().position(|other| other == entry) else {
+                        return Err(format!("{entry:?} folded but not in {snapshot:?}"));
+                    };
+                    expected.remove(position);
+                }
+                if !expected.is_empty() {
+                    return Err(format!("{expected:?} in the snapshot but not folded"));
+                }
+            }
+            _ => {}
+        }
+    }
+    if let Some(queued) = held
+        .iter()
+        .find(|(holder, _)| matches!(holder, Holder::Queued { .. }))
+    {
+        return Err(format!("{queued:?} never left the queue"));
+    }
+    match dequeued.as_slice() {
+        [] => Ok(heights),
+        lost => Err(format!("allocations {lost:?} left the queue to no holder")),
+    }
+}
+
+/// Teardown returns every owner to its baseline: each routine's last
+/// snapshot holds no request or claim, the work queue's last snapshot holds
+/// no provisional item or reservation, no body has a holder, and the
+/// sequencer's last snapshot is empty.
+///
+/// A received item stays in flight until the state commits its block. The
+/// fixture never commits, so the queue keeps those items, and the snapshot
+/// can't tell them from unreceived ones. The routine snapshot covers the
+/// unreceived ones: its requests and claims are empty only after the
+/// routine returned their heights.
+fn check_teardown(events: &[BlockEvent]) -> Result<(), String> {
+    let mut routines: Vec<(_, &RoutineSnapshot)> = Vec::new();
+    let mut held: Vec<(Holder, HeldBody)> = Vec::new();
+    let (mut queue, mut sequencer) = (None, None);
+    for event in events {
+        match event {
+            BlockEvent::Routine(snapshot) => {
+                let key = (snapshot.peer.clone(), snapshot.conn_id, snapshot.generation);
+                match routines.iter_mut().find(|(known, _)| *known == key) {
+                    Some((_, last)) => *last = snapshot,
+                    None => routines.push((key, snapshot)),
+                }
+            }
+            BlockEvent::WorkQueue(items) => queue = Some(items),
+            BlockEvent::Sequencer(snapshot) => sequencer = Some(snapshot),
+            BlockEvent::Holder {
+                body,
+                holder,
+                change: HolderChange::Retained,
+            } => held.push((*holder, *body)),
+            BlockEvent::Holder {
+                body,
+                holder,
+                change: HolderChange::Released,
+            } => held.retain(|entry| *entry != (*holder, *body)),
+            _ => {}
+        }
+    }
+    if let Some((key, last)) = routines
+        .iter()
+        .find(|(_, last)| !last.requests.is_empty() || !last.claims.is_empty())
+    {
+        return Err(format!("routine {key:?} ended with {last:?}"));
+    }
+    if let Some(item) = queue
+        .into_iter()
+        .flatten()
+        .find(|item| item.place == WorkItemPlace::Provisional || item.reserved_bytes > 0)
+    {
+        return Err(format!("the queue ended with {item:?}"));
+    }
+    if !held.is_empty() {
+        return Err(format!("{held:?} still held"));
+    }
+    match sequencer {
+        Some(last) if *last != Default::default() => {
+            Err(format!("the sequencer ended with {last:?}"))
+        }
+        _ => Ok(()),
+    }
+}
+
+/// One serving response, as [`check_serving`] folds it.
+struct Response {
+    /// The serving session: its peer, connection and routine generation.
+    session: (ZakuraPeerId, u64, u64),
+    start: block::Height,
+    count: u32,
+    released: bool,
+    blocks: Vec<u64>,
+    /// Whether the ending came after the release, if it came.
+    ending_after_release: Option<bool>,
+}
+
+/// Each serving response takes its lease, queues block frames only while it
+/// holds the lease, and queues exactly one ending. A produced response ends
+/// before its release. Serve's failure ending comes after the release.
+/// Returns the block frames served and the failure endings.
+fn check_serving(events: &[BlockEvent]) -> Result<(usize, usize), String> {
+    let mut responses: Vec<Response> = Vec::new();
+    for event in events {
+        match event {
+            BlockEvent::ServingLease {
+                peer,
+                conn_id,
+                generation,
+                start,
+                count,
+                step: LeaseStep::Acquired,
+            } => responses.push(Response {
+                session: (peer.clone(), *conn_id, *generation),
+                start: *start,
+                count: *count,
+                released: false,
+                blocks: Vec::new(),
+                ending_after_release: None,
+            }),
+            BlockEvent::ServingLease {
+                peer,
+                conn_id,
+                generation,
+                start,
+                count,
+                step: LeaseStep::Released,
+            } => {
+                let session = (peer.clone(), *conn_id, *generation);
+                let Some(response) = responses.iter_mut().find(|response| {
+                    response.session == session
+                        && response.start == *start
+                        && response.count == *count
+                        && !response.released
+                }) else {
+                    return Err(format!("{start:?} released a lease it never acquired"));
+                };
+                response.released = true;
+            }
+            BlockEvent::ServingFrame {
+                peer,
+                conn_id,
+                generation,
+                start,
+                body_bytes,
+                ..
+            } => {
+                let session = (peer.clone(), *conn_id, *generation);
+                let Some(response) = responses.iter_mut().find(|response| {
+                    response.session == session
+                        && response.start == *start
+                        && response.ending_after_release.is_none()
+                }) else {
+                    return Err(format!("frame for {start:?} outside a response"));
+                };
+                match (*body_bytes, response.released) {
+                    (0, released) => response.ending_after_release = Some(released),
+                    (_, false) => response.blocks.push(*body_bytes),
+                    (_, true) => return Err(format!("{start:?} sent a block after its release")),
+                }
+            }
+            _ => {}
+        }
+    }
+    let (mut served, mut failures) = (0, 0);
+    for response in &responses {
+        let start = response.start;
+        match response.ending_after_release {
+            _ if !response.released => return Err(format!("{start:?} never released")),
+            None => return Err(format!("{start:?} never ended")),
+            Some(_) if response.blocks.len() > response.count as usize => {
+                return Err(format!("{start:?} sent {} blocks", response.blocks.len()))
+            }
+            Some(after) => {
+                served += response.blocks.len();
+                failures += usize::from(after);
+            }
+        }
+    }
+    Ok((served, failures))
+}
+
+/// Block sync reports each effect of a download in an order that agrees
+/// with its owners' snapshots, under each of 16 plans.
+#[test]
+fn block_sync_reports_each_effect_of_a_download() {
+    for seed in 0..16 {
+        check_download_events(seed);
+    }
+}
+
+/// Runs the download under plan `seed`, shuts it down, and checks both
+/// nodes' events.
+fn check_download_events(seed: u64) {
+    let net = download(seed);
+    let unreported = net.nodes[0].unreported_submissions.borrow().clone();
+    let recorders = [net.nodes[0].events.clone(), net.nodes[1].events.clone()];
+    assert_eq!(net.finish(), ["completed", "completed"]);
+    let [a, b] = recorders.map(|recorder| recorder.events());
+
+    let admitted = |events: &[BlockEvent]| -> Vec<_> {
+        events
+            .iter()
+            .filter_map(|event| match event {
+                BlockEvent::SessionAdmitted {
+                    peer,
+                    conn_id,
+                    direction,
+                    ..
+                } => Some((peer.clone(), *conn_id, *direction)),
+                _ => None,
+            })
+            .collect()
+    };
+    assert_eq!(
+        admitted(&a),
+        [(peer_id(2), 1, ServicePeerDirection::Outbound)]
+    );
+    assert_eq!(
+        admitted(&b),
+        [(peer_id(1), 1, ServicePeerDirection::Inbound)]
+    );
+
+    for events in [&a, &b] {
+        check_frame_sequence(events).unwrap();
+        check_budget_chain(events).unwrap();
+        check_request_steps(events).unwrap();
+        check_request_snapshots(events).unwrap();
+        check_teardown(events).unwrap();
+    }
+    let judged = |events: &[BlockEvent]| {
+        events
+            .iter()
+            .filter(|event| matches!(event, BlockEvent::FrameJudged { .. }))
+            .count()
+    };
+    assert!(
+        judged(&a) > DOWNLOAD_HEIGHTS as usize,
+        "`a` judged each body and ending"
+    );
+    assert!(judged(&b) > 0, "`b` judged `a`'s requests");
+    assert!(
+        a.iter().any(|event| matches!(
+            event,
+            BlockEvent::Request {
+                step: RequestStep::Written,
+                ..
+            }
+        )),
+        "`a` wrote its requests"
+    );
+
+    assert_eq!(check_handoffs(&a), Ok(DOWNLOAD_HEIGHTS as usize));
+    let mut held = check_holders(&a).unwrap();
+    held.sort();
+    assert_eq!(
+        held,
+        (1..=DOWNLOAD_HEIGHTS)
+            .map(block::Height)
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        unreported.is_empty(),
+        "submitted before their holder: {unreported:?}"
+    );
+    assert_eq!(check_serving(&b), Ok((DOWNLOAD_HEIGHTS as usize, 0)));
+    assert_eq!(check_serving(&a), Ok((0, 0)), "`a` serves nothing");
+
+    for events in [&a, &b] {
+        assert!(events
+            .iter()
+            .any(|event| matches!(event, BlockEvent::Routine(_))));
+        assert!(events
+            .iter()
+            .any(|event| matches!(event, BlockEvent::WorkQueue(_))));
+    }
+    assert!(
+        a.iter()
+            .any(|event| matches!(event, BlockEvent::Sequencer(_))),
+        "`a`'s sequencer held bodies"
+    );
+}
+
+/// Removing any one event a check reads from a download's log makes that
+/// check fail. The hooks themselves are covered by the real runs above and
+/// the deliberate breaks in the commit message.
+#[test]
+fn each_check_catches_a_suppressed_event() {
+    let net = download(5);
+    let recorders = [net.nodes[0].events.clone(), net.nodes[1].events.clone()];
+    assert_eq!(net.finish(), ["completed", "completed"]);
+    let [a, b] = recorders.map(|recorder| recorder.events());
+
+    fn without(events: &[BlockEvent], suppressed: impl Fn(&BlockEvent) -> bool) -> Vec<BlockEvent> {
+        let index = events
+            .iter()
+            .position(suppressed)
+            .expect("the download reports the event");
+        let mut events = events.to_vec();
+        events.remove(index);
+        events
+    }
+
+    let first_frame = without(&a, |event| matches!(event, BlockEvent::FrameJudged { .. }));
+    assert!(check_frame_sequence(&first_frame).is_err());
+    let first_budget = without(&a, |event| matches!(event, BlockEvent::Budget(_)));
+    assert!(check_budget_chain(&first_budget).is_err());
+    let first_written = without(&a, |event| {
+        matches!(
+            event,
+            BlockEvent::Request {
+                step: RequestStep::Written,
+                ..
+            }
+        )
+    });
+    assert!(check_request_steps(&first_written).is_err());
+    // Remove the `Written` step of the first request a snapshot shows
+    // written, so only the snapshot can tell.
+    let shown_written = a
+        .iter()
+        .find_map(|event| match event {
+            BlockEvent::Routine(snapshot) => snapshot
+                .requests
+                .iter()
+                .find(|request| request.write == RequestWritePhase::Written)
+                .map(|request| request.owner),
+            _ => None,
+        })
+        .expect("a snapshot shows a written request");
+    let unwritten = without(&a, |event| {
+        matches!(
+            event,
+            BlockEvent::Request {
+                owner,
+                step: RequestStep::Written,
+                ..
+            } if *owner == shown_written
+        )
+    });
+    assert!(check_request_snapshots(&unwritten).is_err());
+    let first_ended = without(&a, |event| matches!(event, BlockEvent::HandoffEnded { .. }));
+    assert!(check_handoffs(&first_ended).is_err());
+    let first_retained = without(&a, |event| {
+        matches!(
+            event,
+            BlockEvent::Holder {
+                holder: Holder::Reorder { .. } | Holder::Applying { .. },
+                change: HolderChange::Retained,
+                ..
+            }
+        )
+    });
+    assert!(check_holders(&first_retained).is_err());
+    let first_dequeue = without(&a, |event| {
+        matches!(
+            event,
+            BlockEvent::Holder {
+                holder: Holder::Queued { .. },
+                change: HolderChange::Released,
+                ..
+            }
+        )
+    });
+    assert!(check_holders(&first_dequeue).is_err());
+    assert!(check_teardown(&first_dequeue).is_err());
+    let first_lease_end = without(&b, |event| {
+        matches!(
+            event,
+            BlockEvent::ServingLease {
+                step: LeaseStep::Released,
+                ..
+            }
+        )
+    });
+    assert!(check_serving(&first_lease_end).is_err());
+}
+
+/// Links `a`, which needs the fixture chain's bodies, to `b`, which serves
+/// them from `source`. `b` reads what `a` writes only when `b_reads`; else
+/// `a`'s frames stay queued. Returns the net and the streams the test keeps
+/// alive.
+fn linked(
+    seed: u64,
+    source: Option<Arc<dyn BlockRangeSource>>,
+    b_reads: bool,
+) -> (Net, Vec<FramedRecv>, Vec<FramedSend>) {
+    let chain = fixture_chain(DOWNLOAD_HEIGHTS);
+    let tip = Frontier::new(
+        block::Height(DOWNLOAD_HEIGHTS),
+        chain[chain.len() - 1].hash(),
+    );
+    let mut net = Net::new(seed);
+    let a = net.spawn(
+        "a",
+        committed_view(genesis(), tip, AlarmSet::default()),
+        &chain,
+    );
+    let b_view = committed_view(tip, tip, AlarmSet::default());
+    let b = match source {
+        Some(source) => net.spawn_with_source("b", b_view, &chain, source),
+        None => net.spawn("b", b_view, &chain),
+    };
+    let (a_send, a_to_b) = framed_channel(8);
+    let (b_send, a_recv) = framed_channel(8);
+    let (mut kept_recv, mut kept_send) = (Vec::new(), Vec::new());
+    let b_recv = if b_reads {
+        a_to_b
+    } else {
+        let (feed, b_recv) = framed_channel(8);
+        kept_recv.push(a_to_b);
+        kept_send.push(feed);
+        b_recv
+    };
+    net.add_peer(
+        a,
+        peer_id(2),
+        ServicePeerDirection::Outbound,
+        1,
+        (a_recv, a_send),
+    );
+    net.add_peer(
+        b,
+        peer_id(1),
+        ServicePeerDirection::Inbound,
+        1,
+        (b_recv, b_send),
+    );
+    (net, kept_recv, kept_send)
+}
+
+/// `b` never reads what `a` writes, so transport never takes `a`'s request
+/// frames. Each request's timeout expires it while its frame is still
+/// queued, and the expiry reports its step.
+#[test]
+fn a_request_that_times_out_unwritten_reports_its_expiry() {
+    let (mut net, kept_recv, kept_send) = linked(6, None, false);
+    let expired = |net: &Net| {
+        net.nodes[0].events.events().iter().any(|event| {
+            matches!(
+                event,
+                BlockEvent::Request {
+                    step: RequestStep::Expired,
+                    ..
+                }
+            )
+        })
+    };
+    net.run_until(expired);
+    assert!(expired(&net), "{:?}", net.steps.last());
+    // Run on until the routine holds a request again, so the shutdown
+    // below finds requests to return.
+    let holding = |net: &Net| {
+        net.nodes[0]
+            .events
+            .events()
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                BlockEvent::Routine(snapshot) => Some(!snapshot.requests.is_empty()),
+                _ => None,
+            })
+            .unwrap_or(false)
+    };
+    net.run_until(holding);
+    assert!(holding(&net), "{:?}", net.steps.last());
+    let a = net.nodes[0].events.events();
+    let owner = a
+        .iter()
+        .find_map(|event| match event {
+            BlockEvent::Request {
+                owner,
+                step: RequestStep::Expired,
+                ..
+            } => Some(*owner),
+            _ => None,
+        })
+        .expect("a request expired");
+    let steps: Vec<_> = a
+        .iter()
+        .filter_map(|event| match event {
+            BlockEvent::Request {
+                owner: stepped,
+                step,
+                ..
+            } if *stepped == owner => Some(*step),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        steps[..2],
+        [RequestStep::Published, RequestStep::Expired],
+        "the request expired while queued, before any reset or drop"
+    );
+    check_request_snapshots(&a).unwrap();
+    let recorder = net.nodes[0].events.clone();
+    assert_eq!(net.finish(), ["completed", "completed"]);
+    drop((kept_recv, kept_send));
+
+    // `a` still had requests out when the run shut down. Its routine's
+    // drop snapshot shows them returned.
+    let a = recorder.events();
+    check_request_snapshots(&a).unwrap();
+    check_teardown(&a).unwrap();
+    let index = a
+        .iter()
+        .rposition(|event| matches!(event, BlockEvent::Routine(_)))
+        .expect("the routine reports its snapshots");
+    let BlockEvent::Routine(before_drop) = &a[..index]
+        .iter()
+        .rev()
+        .find(|event| matches!(event, BlockEvent::Routine(_)))
+        .expect("the routine reported before its drop")
+    else {
+        unreachable!("found above")
+    };
+    assert!(
+        !before_drop.requests.is_empty(),
+        "the routine held requests until its drop"
+    );
+    let mut without_drop = a.clone();
+    without_drop.remove(index);
+    assert!(check_teardown(&without_drop).is_err());
+}
+
+/// `b` can't read the blocks it stores. Serve releases each response's
+/// lease, then queues the failure ending, and reports both.
+#[test]
+fn a_serving_read_failure_reports_its_failure_ending() {
+    let (mut net, kept_recv, kept_send) = linked(7, Some(Arc::new(FailingSource)), true);
+    let failed = |net: &Net| {
+        net.nodes[1]
+            .events
+            .events()
+            .iter()
+            .any(|event| matches!(event, BlockEvent::ServingFrame { body_bytes: 0, .. }))
+    };
+    net.run_until(failed);
+    assert!(failed(&net), "{:?}", net.steps.last());
+    let b = net.nodes[1].events.events();
+    let ending = b
+        .iter()
+        .position(|event| matches!(event, BlockEvent::ServingFrame { body_bytes: 0, .. }))
+        .expect("serve queued an ending");
+    assert_eq!(
+        check_serving(&b[..=ending]).map(|(served, _)| served),
+        Ok(0),
+        "no block was served"
+    );
+    let BlockEvent::ServingFrame { start, .. } = &b[ending] else {
+        unreachable!("found above")
+    };
+    assert!(
+        b[..ending].iter().any(|event| matches!(
+            event,
+            BlockEvent::ServingLease {
+                start: released,
+                step: LeaseStep::Released,
+                ..
+            } if released == start
+        )),
+        "the failure ending follows the lease's release"
+    );
+    assert_eq!(net.finish(), ["completed", "completed"]);
+    drop((kept_recv, kept_send));
 }

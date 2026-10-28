@@ -68,6 +68,9 @@ pub struct BlockRangeReadResult {
 pub struct BlockRangeReadLease {
     pub(super) work: WorkLease,
     pub(super) _session: Option<FramedSend>,
+    /// Reports the frames the response queues, in test and simulator builds.
+    #[cfg(any(test, zakura_sim))]
+    pub(super) observed: Option<super::block_sync_observe::ServingReporter>,
 }
 
 /// The session end of a [`BlockRangeReadLease::detached`] lease. Dropping it
@@ -93,6 +96,8 @@ impl BlockRangeReadLease {
         let lease = BlockRangeReadLease {
             work,
             _session: None,
+            #[cfg(any(test, zakura_sim))]
+            observed: None,
         };
         (lease, session)
     }
