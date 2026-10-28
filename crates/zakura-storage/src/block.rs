@@ -14,6 +14,11 @@
 //! was written against, and the source references below name the code it
 //! follows.
 //!
+//! [`controlled`] holds the block service that keeps this contract,
+//! [`evidence`] the facts it publishes and the models that check them, and
+//! [`range`] the range source serving reads through. [`fixture`] builds the
+//! blocks it serves.
+//!
 //! # Operations
 //!
 //! [`BlockOp`] lists one operation per action, plus the range read. A
@@ -95,7 +100,11 @@
 //!   duplicate (`KnownBlock` in zakura-consensus's block verifier), and
 //!   state refuses a hash it has already sent to the writer
 //!   (`non_finalized_block_write_sent_hashes`). The older submission's own
-//!   verdict may still fail.
+//!   verdict may still fail. The two are either/or: state replaces a
+//!   queued older copy or refuses the newer one
+//!   (`queue_and_commit_to_non_finalized_state`), so a newer copy that
+//!   reports a duplicate replaced nothing, and the older copy must reach a
+//!   verdict of its own.
 //! * State checks a body's header commitments against its parent's trees,
 //!   after it checks for a duplicate, so `payload_mismatch` waits for the
 //!   parent too ([`Gate::ParentCommitted`]). Full state checks them once
@@ -196,7 +205,10 @@ use zakura_network::zakura::{
 };
 use zakura_node_services::constants::MAX_CHECKPOINT_HEIGHT_GAP;
 
+pub mod controlled;
+pub mod evidence;
 pub mod fixture;
+pub mod range;
 
 /// How many times `persist_consensus_body_invalid` refreshes a stale
 /// version before it gives up.
@@ -536,7 +548,8 @@ pub struct Conditions {
     pub committed: bool,
     /// The body's hash was committed when the run admitted it.
     pub committed_at_admission: bool,
-    /// A later admission of the same hash replaced this one.
+    /// A later admission of the same hash replaced this one and didn't
+    /// report a duplicate itself.
     pub replaced: bool,
     /// An older admission of the same hash is in flight.
     pub older_in_flight: bool,
@@ -720,6 +733,21 @@ impl BlockOp {
             BlockOp::Misbehavior => "misbehavior",
             BlockOp::ReadRange => "read_range",
         }
+    }
+
+    /// Whether the driver awaits this operation before it takes its next
+    /// action: a query or a record. It queues a submission, and awaits a
+    /// misbehavior report's enforcement only, which the simulator doesn't
+    /// run.
+    pub const fn awaited(self) -> bool {
+        matches!(
+            self,
+            BlockOp::QueryNeededBlocks
+                | BlockOp::RecordBodyUnavailable
+                | BlockOp::RecordBodyInvalid
+                | BlockOp::RestartBodyAvailability
+                | BlockOp::RetryBodyAvailability
+        )
     }
 
     /// This operation's contract.
