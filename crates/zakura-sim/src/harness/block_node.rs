@@ -212,6 +212,9 @@ pub struct Effects {
     /// Each actor whose chain grew or switched to a fork, once per change,
     /// in order.
     pub chains: Rc<RefCell<Vec<(LinkEffect, String)>>>,
+    /// Each actor that prepared a chain change's headers, once per
+    /// preparation, in order.
+    pub prepared: Rc<RefCell<Vec<String>>>,
     /// Why a `Control` step couldn't take effect, which ends the run as a
     /// harness failure: the scenario asked for something that can't happen.
     pub failure: Rc<RefCell<Option<String>>>,
@@ -259,6 +262,8 @@ pub struct PolicySource {
     closed: BTreeSet<u64>,
     /// How many chain changes are recorded.
     changed: usize,
+    /// How many preparations are recorded.
+    prepared: usize,
     /// The node's `record_body_invalid` operations not yet completed.
     invalid_records: BTreeSet<u64>,
 }
@@ -284,6 +289,7 @@ impl PolicySource {
             linked: 0,
             closed: BTreeSet::new(),
             changed: 0,
+            prepared: 0,
             invalid_records: BTreeSet::new(),
         }
     }
@@ -408,6 +414,11 @@ impl ActionSource for PolicySource {
             predicates.record_link(*effect, actor);
         }
         self.changed = chains.len();
+        let prepared = self.effects.prepared.borrow();
+        for actor in &prepared[self.prepared..] {
+            predicates.record_link(LinkEffect::Prepared, actor);
+        }
+        self.prepared = prepared.len();
         match self.effects.failure.borrow().as_ref() {
             Some(failure) => Err(format!("ControlFailed: {failure}")),
             None => Ok(()),
@@ -465,6 +476,9 @@ struct PendingRead {
     engine: Arc<EnginePort>,
     /// The read.
     request: BlockRangeRead,
+    /// Whether the mirror withholds the read's first height, so the run
+    /// never serves it.
+    withheld: bool,
     /// Whether the run has served it, which lets its caller read full state.
     served: bool,
     /// The caller's waker.
@@ -580,6 +594,8 @@ pub struct MirrorStorage {
     name: String,
     engine: Arc<EnginePort>,
     reads: MirrorReads,
+    /// Heights whose range reads the run never serves.
+    withheld: Vec<u32>,
 }
 
 impl MirrorStorage {
@@ -590,7 +606,15 @@ impl MirrorStorage {
             name: name.to_owned(),
             engine,
             reads,
+            withheld: Vec::new(),
         }
+    }
+
+    /// The same storage, except that the run never serves a range read that
+    /// starts at one of `heights`. The read waits until its caller drops it.
+    pub fn withholding(mut self, heights: &[u32]) -> Self {
+        self.withheld = heights.to_vec();
+        self
     }
 
     /// Spawns a task that answers each of `actions` until the channel
@@ -658,6 +682,7 @@ impl BlockRangeSource for MirrorStorage {
             PendingRead {
                 mirror: self.name.clone(),
                 engine: self.engine.clone(),
+                withheld: self.withheld.contains(&request.start_height.0),
                 request,
                 served: false,
                 waker: None,
@@ -697,7 +722,7 @@ impl ActionSource for MirrorReadSource {
         let predicates = self.predicates.borrow();
         for (id, read) in &queue.pending {
             let since = self.stages.since(BlockKey::Mirror(*id), now);
-            if !read.served && predicates.serves(*id, since) {
+            if !read.served && !read.withheld && predicates.serves(*id, since) {
                 out.push((Identity::storage(&read.mirror, *id, "serve"), *id));
             }
         }
@@ -1420,9 +1445,10 @@ impl Topology {
     }
 
     /// Prepares `change`'s headers on the node under test's engine, for
-    /// [`apply_node`](Self::apply_node). Records a failure, and returns
-    /// `None`, if they don't prepare. Only the step loop reads the node's
-    /// engine, so only it may call this.
+    /// [`apply_node`](Self::apply_node), and records the preparation for
+    /// [`Trigger::Prepared`](crate::harness::policy::Trigger::Prepared). Records a failure,
+    /// and returns `None`, if they don't prepare. Only the step loop reads
+    /// the node's engine, so only it may call this.
     pub(crate) fn prepare_node(&self, change: &ChainChange) -> Option<NodeTarget> {
         let node = &self.nodes[0];
         let request = self.chain.fixture.target_request(
@@ -1432,10 +1458,13 @@ impl Topology {
             1,
         );
         match ready(node.engine.prepare_header_target(request)) {
-            Ok(prepared) => Some(NodeTarget {
-                prepared,
-                invalidated: self.effects.invalidated.get(),
-            }),
+            Ok(prepared) => {
+                self.effects.prepared.borrow_mut().push(node.name.clone());
+                Some(NodeTarget {
+                    prepared,
+                    invalidated: self.effects.invalidated.get(),
+                })
+            }
             Err(error) => {
                 let tip = node.engine.view().frontiers.header_best;
                 self.settle(node, change, Err(error), Ok(()), tip);

@@ -8,8 +8,9 @@
 //! sidecar names its harness. For each case the runner:
 //!
 //! 1. checks out `HEAD` in a scratch worktree under `target/planted/`; every
-//!    case builds in `target/planted/target`, apart from the checkout's own
-//!    target directory;
+//!    case builds with the workspace's `planted` profile in
+//!    `target/planted/target`, apart from the checkout's own target
+//!    directory;
 //! 2. records the input unpatched, which must hold the property with no
 //!    violation of any property and pass its witness test expecting
 //!    `holds`;
@@ -19,7 +20,9 @@
 //! 4. runs a short campaign on the patched build: [`CAMPAIGN_INPUTS`] fuzz
 //!    inputs, drawn from a seed that the property's ID fixes, each of which
 //!    must hold or violate only the case's property, and a violation must
-//!    pass the witness test;
+//!    pass the witness test. A case file's `also_violates` names properties
+//!    the patch's bug breaks too, and a campaign run may violate one of
+//!    them instead;
 //! 5. removes the worktree, keeping every trace as evidence.
 //!
 //! A witness test passes only if the run reached the property's trigger
@@ -33,8 +36,9 @@
 //! failure, never as a catch. The campaign reports how many of its inputs
 //! caught the patch, and how the others' runs ended. It fails the case only
 //! on a run that fails, ends at a harness failure, violates another
-//! property, doesn't report the case's property, or violates it without its
-//! trigger history, so the gate stays the committed input.
+//! property not in `also_violates`, doesn't report the case's property, or
+//! violates it without its trigger history, so the gate stays the committed
+//! input, which must violate exactly the case's property.
 //!
 //! `--changed-since <rev>` runs only the cases a change since `rev` can
 //! affect: those whose patch, case file, input, patched files or listed
@@ -77,6 +81,11 @@ const SHARED: &[&str] = &[
     ".cargo",
 ];
 
+/// The cargo profile every case builds with: optimized, with the dev
+/// profile's debug assertions and overflow checks (the workspace's
+/// `Cargo.toml`).
+const PROFILE: &str = "planted";
+
 /// Fuzz inputs the short campaign records after the committed input.
 const CAMPAIGN_INPUTS: usize = 32;
 
@@ -96,6 +105,9 @@ struct Case {
     /// Other paths whose change can break the catch, relative to the
     /// repository root.
     checks: Vec<PathBuf>,
+    /// Other properties the patch's bug breaks, which a campaign run may
+    /// violate instead of the case's property.
+    also_violates: Vec<String>,
 }
 
 /// A case's `<name>.toml`.
@@ -109,6 +121,12 @@ struct CaseFile {
     /// [`SHARED`], such as the rest of the patched module.
     #[serde(default)]
     checks: Vec<PathBuf>,
+    /// Other properties the patched bug breaks, by ID. A campaign input's
+    /// run may violate one of them instead of the case's property, as when
+    /// a leaked charge also takes the byte budget past its bound. The
+    /// committed input must still violate exactly the case's property.
+    #[serde(default)]
+    also_violates: Vec<String>,
 }
 
 /// A committed fuzz input's sidecar, as `zakura-sim`'s tests check it.
@@ -303,7 +321,11 @@ fn cases(repo_root: &Path) -> Result<Vec<Case>, BoxError> {
                 .ok_or_else(|| format!("{} isn't under a property", patch.display()))?
                 .to_owned();
             let case_file = patch.with_extension("toml");
-            let CaseFile { input, checks } = toml::from_str(
+            let CaseFile {
+                input,
+                checks,
+                also_violates,
+            } = toml::from_str(
                 &fs::read_to_string(&case_file)
                     .map_err(|error| format!("{}: {error}", case_file.display()))?,
             )
@@ -323,6 +345,7 @@ fn cases(repo_root: &Path) -> Result<Vec<Case>, BoxError> {
                 patch,
                 input,
                 checks,
+                also_violates,
             })
         })
         .collect()
@@ -526,7 +549,7 @@ fn campaign(target: &Path, harness: &str, case: &Case, dir: &Path) -> Result<Ver
         fs::remove_dir_all(dir)?;
     }
     fs::create_dir_all(dir)?;
-    let binary = target.join("debug").join("zakura-sim");
+    let binary = target.join(PROFILE).join("zakura-sim");
     let mut caught = 0;
     let mut missed = BTreeMap::new();
     for (index, bytes) in campaign_inputs(&case.property).into_iter().enumerate() {
@@ -543,6 +566,9 @@ fn campaign(target: &Path, harness: &str, case: &Case, dir: &Path) -> Result<Ver
         match classify(&case.property, &run) {
             Verdict::Caught(_) => caught += 1,
             Verdict::NotCaught(outcome) => *missed.entry(outcome).or_default() += 1,
+            Verdict::Unrelated(violated) if case.also_violates.contains(&violated) => {
+                *missed.entry(format!("violated {violated}")).or_default() += 1;
+            }
             verdict => {
                 return Ok(Verdict::CampaignFails {
                     input,
@@ -624,8 +650,8 @@ fn apply(worktree: &Path, patch: &Path) -> Result<(), String> {
     }
 }
 
-/// `zakura-sim`, built and run from `worktree`'s simulator build in
-/// `target`.
+/// `zakura-sim`, built with [`PROFILE`] and run from `worktree`'s simulator
+/// build in `target`.
 fn cargo_run(worktree: &Path, target: &Path) -> Command {
     let cargo = env::var_os("CARGO").unwrap_or_else(|| OsString::from("cargo"));
     let mut command = Command::new(cargo);
@@ -636,6 +662,8 @@ fn cargo_run(worktree: &Path, target: &Path) -> Command {
         .args([
             "run",
             "--locked",
+            "--profile",
+            PROFILE,
             "-p",
             "zakura-sim",
             "--bin",

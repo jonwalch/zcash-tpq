@@ -128,12 +128,7 @@ fn a_held_mirror_read_waits_for_its_trigger() {
     }];
     for input in inputs(8, 256) {
         let scenario = BlockScenario {
-            mirrors: vec![
-                MirrorSpec {
-                    dialer: Dialer::Mirror,
-                };
-                2
-            ],
+            mirrors: vec![MirrorSpec::new(Dialer::Mirror); 2],
             ..scenario(16, holds.clone(), Vec::new())
         };
         let (_, ports) = run(&scenario, input);
@@ -173,12 +168,8 @@ fn close_and_relink_change_only_the_named_link() {
     ];
     let scenario = BlockScenario {
         mirrors: vec![
-            MirrorSpec {
-                dialer: Dialer::Mirror,
-            },
-            MirrorSpec {
-                dialer: Dialer::Node,
-            },
+            MirrorSpec::new(Dialer::Mirror),
+            MirrorSpec::new(Dialer::Node),
         ],
         ..scenario(16, Vec::new(), control)
     };
@@ -206,6 +197,7 @@ fn growth_extends_every_actor_and_the_node_follows() {
         action: ControlAction::Grow {
             len: 8,
             node_first: false,
+            apply_when: None,
         },
         when: Some(Trigger::Count(
             8,
@@ -237,6 +229,7 @@ fn a_node_first_growth_runs_the_headers_ahead_of_the_bodies() {
         action: ControlAction::Grow {
             len: 4,
             node_first: true,
+            apply_when: None,
         },
         when: Some(Trigger::Count(
             8,
@@ -273,6 +266,7 @@ fn a_reset_from_the_tip_fails_the_run() {
                 len: 2,
             },
             node_first: false,
+            apply_when: None,
         },
         when: None,
     }];
@@ -307,6 +301,7 @@ fn a_reset_switches_the_node_to_the_fork() {
                 len: 12,
             },
             node_first: false,
+            apply_when: None,
         },
         when: Some(Trigger::Count(
             12,
@@ -336,11 +331,9 @@ fn a_reset_switches_the_node_to_the_fork() {
 /// A consensus-invalid body recorded between the node's two reset steps
 /// moves its header generation, which makes the preparation stale, so the
 /// node prepares the reset again and still switches to the fork. The
-/// invalid body is the old branch's, above the fork point, and its record
-/// waits for the last mirror's reset, so it races the node's steps. Long
-/// inputs keep the plan's choices fuzzed that late in the run. Few
-/// schedules win that race: of the first 96 seeded inputs, only the 82nd
-/// does, so the test runs the first 82.
+/// invalid body is the old branch's, above the fork point. Its record waits
+/// for the node's preparation, and the node's apply step waits for the
+/// record, so the record lands between the steps on every schedule.
 #[test]
 fn an_invalid_body_between_the_reset_steps_prepares_it_again() {
     let holds = vec![
@@ -352,7 +345,7 @@ fn an_invalid_body_between_the_reset_steps_prepares_it_again() {
         },
         Hold {
             select: Select::nth(BlockKind::Record, 1),
-            until: Trigger::Reset("mirror-1".to_owned()),
+            until: Trigger::Prepared("node".to_owned()),
             then: vec![BlockAllow::Apply],
             deadline_ms: None,
         },
@@ -365,34 +358,30 @@ fn an_invalid_body_between_the_reset_steps_prepares_it_again() {
                 len: 12,
             },
             node_first: false,
+            apply_when: Some(Trigger::Completed(Select::nth(BlockKind::Record, 1))),
         },
         when: Some(Trigger::Completed(Select::nth(BlockKind::Apply, 8))),
     }];
     let scenario = BlockScenario {
         mirrors: vec![
-            MirrorSpec {
-                dialer: Dialer::Mirror,
-            },
-            MirrorSpec {
-                dialer: Dialer::Node,
-            },
+            MirrorSpec::new(Dialer::Mirror),
+            MirrorSpec::new(Dialer::Node),
         ],
         ..scenario(12, holds, control)
     };
-    let mut prepared_again = 0;
-    for input in inputs(82, 16_384) {
+    for input in inputs(4, 16_384) {
         let (report, ports) = run(&scenario, input);
         assert_converged(&ports);
         let picks = picks(&report);
+        let at = |pick| picks.iter().position(|p| *p == pick);
         let prepares = picks.iter().filter(|p| **p == "peer:node:reset").count();
-        if prepares > 1 {
-            prepared_again += 1;
-        }
+        assert_eq!(prepares, 2, "the node prepares the reset again: {picks:?}");
+        let apply = at("peer:node:reset-apply").expect("the node applies the reset");
+        assert!(
+            picks[apply..].contains(&"peer:node:reset"),
+            "the stale apply comes between the preparations: {picks:?}"
+        );
     }
-    assert!(
-        prepared_again > 0,
-        "no schedule records the invalid body between the steps"
-    );
 }
 
 /// A node holding every body serves the probe's requests through its real
@@ -478,9 +467,7 @@ fn the_probe_gets_the_range_it_asks_for() {
 fn an_unsolicited_probe_ending_closes_only_the_probe() {
     let scenario = BlockScenario {
         blocks: 8,
-        mirrors: vec![MirrorSpec {
-            dialer: Dialer::Mirror,
-        }],
+        mirrors: vec![MirrorSpec::new(Dialer::Mirror)],
         probe: true,
         control: vec![
             ControlStep {
@@ -496,6 +483,7 @@ fn an_unsolicited_probe_ending_closes_only_the_probe() {
                 action: ControlAction::Grow {
                     len: 2,
                     node_first: false,
+                    apply_when: None,
                 },
                 when: Some(Trigger::Closed(PROBE.to_owned())),
             },
