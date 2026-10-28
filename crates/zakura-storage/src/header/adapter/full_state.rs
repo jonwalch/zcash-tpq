@@ -129,6 +129,37 @@ impl EnginePort {
         )
     }
 
+    /// Commits `blocks`, each after its parent, to a port no block service
+    /// commits through: before a run, so full state holds them when a node
+    /// starts, as the header side's preload commits headers, or to a peer
+    /// whose storage the run doesn't control. Each counts as received at
+    /// receipt 0, as genesis does, so it ranks before any body a service
+    /// admits, and equal-work tips among preloaded bodies fall to the
+    /// greater hash. A node under test commits only through its block
+    /// service, which publishes each commit's facts.
+    ///
+    /// # Errors
+    ///
+    /// As [`Self::commit_block`] does.
+    ///
+    /// # Panics
+    ///
+    /// If a block service commits through this port, whose receipts and
+    /// facts the preload would skip.
+    pub fn preload_blocks(
+        &self,
+        blocks: impl IntoIterator<Item = Arc<block::Block>>,
+    ) -> Result<(), StateError> {
+        assert!(
+            !self.has_block_service(),
+            "bodies preload only to a port no block service commits through"
+        );
+        for block in blocks {
+            self.commit_block(block, 0)?;
+        }
+        Ok(())
+    }
+
     /// Records body evidence, a supplier discovery or a scheduler retry, as
     /// zakura-state's `apply_prepared_body_evidence` and
     /// `retry_body_availability` do. The engine decides whether it's
