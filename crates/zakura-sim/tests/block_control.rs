@@ -339,8 +339,8 @@ fn a_reset_switches_the_node_to_the_fork() {
 /// invalid body is the old branch's, above the fork point, and its record
 /// waits for the last mirror's reset, so it races the node's steps. Long
 /// inputs keep the plan's choices fuzzed that late in the run. Few
-/// schedules win that race: of the first 48 seeded inputs, only the 12th
-/// does, so the test runs the first 12.
+/// schedules win that race: of the first 96 seeded inputs, only the 82nd
+/// does, so the test runs the first 82.
 #[test]
 fn an_invalid_body_between_the_reset_steps_prepares_it_again() {
     let holds = vec![
@@ -380,7 +380,7 @@ fn an_invalid_body_between_the_reset_steps_prepares_it_again() {
         ..scenario(12, holds, control)
     };
     let mut prepared_again = 0;
-    for input in inputs(12, 16_384) {
+    for input in inputs(82, 16_384) {
         let (report, ports) = run(&scenario, input);
         assert_converged(&ports);
         let picks = picks(&report);
@@ -471,8 +471,8 @@ fn the_probe_gets_the_range_it_asks_for() {
 }
 
 /// An ending for a range nobody asked for breaks the stream-6 table: the
-/// node's routine rejects it, the probe's connection closes with
-/// `service_protocol_reject`, and a step gated on that closure runs. The
+/// node's stream reader refuses it, the probe's connection closes with
+/// `ordered_read_rejected`, and a step gated on that closure runs. The
 /// mirror's link stays open, and the node still converges.
 #[test]
 fn an_unsolicited_probe_ending_closes_only_the_probe() {
@@ -512,7 +512,7 @@ fn an_unsolicited_probe_ending_closes_only_the_probe() {
             .find(|link| link.peer == PROBE)
             .expect("the probe links");
         assert!(probe.is_closed());
-        assert_eq!(probe.cause.get(), Some("service_protocol_reject"));
+        assert_eq!(probe.cause.get(), Some("ordered_read_rejected"));
         let mirror = links
             .iter()
             .find(|link| link.peer == "mirror-0")

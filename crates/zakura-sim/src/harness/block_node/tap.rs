@@ -47,7 +47,9 @@ use zakura_scheduler::SimInstant;
 use zakura_storage::block::controlled::ControlledBlockService;
 
 use super::{
+    identity::Adapter,
     pair::{Paired, Pairer},
+    relay::Wire,
     view::BlockSyncView,
 };
 use crate::{
@@ -79,6 +81,9 @@ pub struct BlockTap {
     allocations: Allocations,
     /// The owner state the events fold into, shared with the harness.
     view: Rc<RefCell<BlockSyncView>>,
+    /// Writes the generated-property observations, if the run labels its
+    /// links.
+    adapter: Option<Adapter>,
 }
 
 /// What the observer and the reader share.
@@ -158,6 +163,17 @@ impl LiveEvidence for TapState {
         } else {
             None
         }
+    }
+}
+
+/// How many events a tap has recorded, read by the relays that label the
+/// node's links, so each label takes its place among the events.
+pub(crate) struct TapClock(Arc<TapState>);
+
+impl TapClock {
+    /// The events recorded so far. Takes only the buffer's std lock.
+    pub(crate) fn events(&self) -> u64 {
+        self.0.buffer().last
     }
 }
 
@@ -245,8 +261,16 @@ impl BlockTap {
             facts: Vec::new(),
             allocations: Allocations::default(),
             view,
+            adapter: None,
         };
         (observer, tap)
+    }
+
+    /// Writes `wire`'s labels, and the node's identities and effects, as the
+    /// observations the stream-6 generated checks read, at each drain.
+    pub(crate) fn label_with(&mut self, wire: Wire) {
+        wire.set_clock(TapClock(self.state.clone()));
+        self.adapter = Some(Adapter::new(wire));
     }
 
     /// The notice the harness gives this tap when it tears the node down.
@@ -373,6 +397,17 @@ impl BlockTap {
                     LeaseStep::Released => "released",
                 }
                 .to_owned(),
+            },
+            BlockEvent::ServingAdmission {
+                peer: requesting,
+                start,
+                count,
+                live,
+            } => BlockSyncFact::ServingAdmission {
+                peer: peer(requesting),
+                start: start.0,
+                count: *count,
+                live: live.iter().map(|(first, last)| (first.0, last.0)).collect(),
             },
             BlockEvent::ServingFrame {
                 peer: requesting,
@@ -630,6 +665,9 @@ impl ActionSource for BlockTap {
         // was handed may not be the run's.
         self.checkpoint.record(log.step(), &sent, last);
         let facts = mem::take(&mut self.facts);
+        if let Some(adapter) = &mut self.adapter {
+            adapter.write(&events, &facts, log);
+        }
         let paired = self.pairer.pair(
             facts.iter().map(|(seq, fact)| (*seq, fact)),
             sent.iter().filter_map(|obs| match obs {
