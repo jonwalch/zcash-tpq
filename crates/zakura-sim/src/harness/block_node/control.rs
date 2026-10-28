@@ -18,6 +18,10 @@
 //! headers, so any other stale apply fails the run. The change reaches the
 //! mirrors before the node, or after it, as the action says. Chain changes
 //! run one stage at a time, in script order.
+//!
+//! A teardown runs on the link task, since it closes links. The two bypass
+//! witnesses run in the step loop, since they read the node's engine and
+//! its block service's owner state, as completions do.
 
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
@@ -90,6 +94,21 @@ pub enum ControlAction {
         /// The frames.
         frames: Vec<ProbeFrame>,
     },
+    /// Tear the node under test down: close every link, cancel its reactor,
+    /// and drop every handle the harness holds, so its block sync ends and
+    /// its sequencer releases what it holds. Its tap expects the observer
+    /// to go once it logs the sequencer's close. A later relink fails.
+    Teardown,
+    /// A bypass witness for direct work insertion: answer the node's oldest
+    /// pending needed-blocks query from its engine, straight through its
+    /// handle, so block sync's work queue takes work that its block service
+    /// never answered.
+    InsertWork,
+    /// A bypass witness for an alternate storage dispatch: send block sync a
+    /// committed verdict for the node's oldest pending submission, straight
+    /// through its handle, so the sequencer finishes a submission that its
+    /// block service never committed.
+    DispatchVerdict,
 }
 
 impl ControlAction {
@@ -100,6 +119,9 @@ impl ControlAction {
             ControlAction::Close { peer } | ControlAction::Relink { peer } => peer,
             ControlAction::Grow { .. } | ControlAction::Reset { .. } => "chain",
             ControlAction::ProbeSend { .. } => PROBE,
+            ControlAction::Teardown
+            | ControlAction::InsertWork
+            | ControlAction::DispatchVerdict => "node",
         }
     }
 
@@ -111,6 +133,9 @@ impl ControlAction {
             ControlAction::Grow { .. } => "grow",
             ControlAction::Reset { .. } => "reset",
             ControlAction::ProbeSend { .. } => "send",
+            ControlAction::Teardown => "teardown",
+            ControlAction::InsertWork => "insert-work",
+            ControlAction::DispatchVerdict => "dispatch-verdict",
         }
     }
 }
@@ -154,7 +179,7 @@ pub struct Control {
     /// The next step to offer.
     next: usize,
     stages: Stages,
-    /// Closes and relinks, for the link task.
+    /// Closes, relinks and teardowns, for the link task.
     to_links: mpsc::Sender<ControlAction>,
     /// Probe sends, for the probe task.
     to_probe: mpsc::Sender<Vec<ProbeFrame>>,
@@ -185,6 +210,7 @@ impl Control {
                         .unwrap_or_else(|| panic!("the scenario links `{peer}`"))
                         .close(),
                     ControlAction::Relink { peer } => task_topology.relink(&peer),
+                    ControlAction::Teardown => task_topology.teardown(),
                     action => unreachable!("the link task gets only links, not {action:?}"),
                 }
             }
@@ -331,6 +357,8 @@ impl ActionSource for Control {
                 .to_probe
                 .try_send(frames)
                 .unwrap_or_else(|_| panic!("{full}")),
+            ControlAction::InsertWork => self.topology.insert_work(),
+            ControlAction::DispatchVerdict => self.topology.dispatch_verdict(),
             action => self
                 .to_links
                 .try_send(action)
