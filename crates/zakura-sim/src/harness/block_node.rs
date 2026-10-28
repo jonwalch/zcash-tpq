@@ -17,10 +17,16 @@
 //!
 //! Mirrors hold every body, so they never ask the node for one. Only the
 //! probe exercises the node's serving.
+//!
+//! [`tap::BlockTap`] logs the node's block-sync events beside its storage
+//! facts, pairs them, and folds them into a [`view::BlockSyncView`].
 
 pub mod control;
+mod pair;
 pub mod policy;
 pub mod probe;
+pub mod tap;
+pub mod view;
 
 use std::{
     cell::{Cell, RefCell},
@@ -38,11 +44,12 @@ use serde::{Deserialize, Serialize};
 use zakura_header_chain::{ErrorCategory, Frontier};
 use zakura_network::{
     zakura::{
-        framed_channel, spawn_block_sync_reactor, BlockRangeRead, BlockRangeReadResult,
-        BlockRangeSource, BlockSyncAction, BlockSyncFrontiers, BlockSyncHandle, BlockSyncService,
-        BlockSyncStartup, CloseCauseReader, FramedSend, Peer, Service, ServicePeerDirection,
-        ZakuraBlockSyncConfig, ZakuraPeerId, ZAKURA_CAP_BLOCK_SYNC_REGULATED,
-        ZAKURA_REGULATED_BLOCK_SYNC_STREAM_VERSION, ZAKURA_STREAM_BLOCK_SYNC,
+        block_sync_observe::BlockSyncObserver, framed_channel, spawn_block_sync_reactor,
+        BlockRangeRead, BlockRangeReadResult, BlockRangeSource, BlockSyncAction,
+        BlockSyncFrontiers, BlockSyncHandle, BlockSyncService, BlockSyncStartup, CloseCauseReader,
+        FramedSend, Peer, Service, ServicePeerDirection, ZakuraBlockSyncConfig, ZakuraPeerId,
+        ZAKURA_CAP_BLOCK_SYNC_REGULATED, ZAKURA_REGULATED_BLOCK_SYNC_STREAM_VERSION,
+        ZAKURA_STREAM_BLOCK_SYNC,
     },
     BoxError,
 };
@@ -63,11 +70,12 @@ use zakura_storage::{
 use self::{
     policy::{BlockKey, Hold, MirrorEvent, Predicates},
     probe::ProbeLog,
+    tap::BlockTap,
 };
 use super::header_node::LINK_DEPTH;
 use crate::{
     harness::policy::LinkEffect,
-    observe::StorageFact,
+    observe::{StorageFact, StorageRequest, StorageResult},
     storage::{decode_block, BlockStorage, BLOCK_SERVICE},
     ActionSource, Boundary, Identity, Observation, ObservationLog, Sim,
 };
@@ -199,6 +207,10 @@ pub struct Effects {
     /// Why a `Control` step couldn't take effect, which ends the run as a
     /// harness failure: the scenario asked for something that can't happen.
     pub failure: Rc<RefCell<Option<String>>>,
+    /// How many consensus-invalid bodies the node's engine has recorded.
+    /// Each one moves its header generation, which makes a preparation made
+    /// before it stale.
+    pub invalidated: Rc<Cell<u64>>,
 }
 
 /// The time since each operation's current stage began.
@@ -222,9 +234,11 @@ impl Stages {
 
 /// A [`BlockStorage`] whose offers follow a [`Policy`]. It changes its
 /// [`Predicates`] only in `observe`, so `enabled` and `boundaries` stay
-/// pure.
+/// pure. With a [`BlockTap`], it logs the node's block-sync events after its
+/// storage facts.
 pub struct PolicySource {
     storage: BlockStorage,
+    tap: Option<BlockTap>,
     service: Arc<ControlledBlockService>,
     base: Base,
     bound: Option<Duration>,
@@ -237,6 +251,8 @@ pub struct PolicySource {
     closed: BTreeSet<u64>,
     /// How many chain changes are recorded.
     changed: usize,
+    /// The node's `record_body_invalid` operations not yet completed.
+    invalid_records: BTreeSet<u64>,
 }
 
 impl PolicySource {
@@ -250,6 +266,7 @@ impl PolicySource {
     ) -> Self {
         PolicySource {
             storage: BlockStorage::new(sim, service.clone()),
+            tap: None,
             service,
             base: policy.base,
             bound: policy.bound_ms.map(Duration::from_millis),
@@ -259,6 +276,7 @@ impl PolicySource {
             linked: 0,
             closed: BTreeSet::new(),
             changed: 0,
+            invalid_records: BTreeSet::new(),
         }
     }
 
@@ -266,6 +284,16 @@ impl PolicySource {
     /// gated by the same counts.
     pub fn predicates(&self) -> Rc<RefCell<Predicates>> {
         self.predicates.clone()
+    }
+
+    /// This source, draining `tap` at each observation, after storage, so
+    /// each event's storage watermark is already logged and the tap pairs
+    /// the node's operations with its events.
+    pub fn with_tap(self, tap: BlockTap) -> Self {
+        PolicySource {
+            tap: Some(tap),
+            ..self
+        }
     }
 }
 
@@ -299,17 +327,57 @@ impl ActionSource for PolicySource {
 
     fn observe(&mut self, log: &mut ObservationLog) -> Result<(), String> {
         let before = log.entries().len();
-        self.storage.observe(log)?;
+        let stored = self.storage.observe(log);
+        // Drained even when storage failed, so the tap's evidence still
+        // reaches the log.
+        let tapped = match &mut self.tap {
+            Some(tap) => {
+                // The storage source appends only its own service's facts,
+                // but a run may hold other services' storage too.
+                tap.storage_facts(log.entries()[before..].iter().filter_map(
+                    |entry| match &entry.obs {
+                        Observation::Storage {
+                            service, seq, fact, ..
+                        } if service == BLOCK_SERVICE => Some((*seq, fact)),
+                        _ => None,
+                    },
+                ));
+                tap.observe(log)
+            }
+            None => Ok(()),
+        };
+        stored?;
+        tapped?;
         let mut predicates = self.predicates.borrow_mut();
-        // Only this source's storage appends here.
+        // Only this source's storage and tap append here.
         for entry in &log.entries()[before..] {
             if let Observation::Storage { service, fact, .. } = &entry.obs {
                 if service != BLOCK_SERVICE {
                     continue;
                 }
                 match fact {
-                    StorageFact::BlockSubmitted { id, .. } | StorageFact::Admitted { id } => {
+                    StorageFact::BlockSubmitted { id, request, .. } => {
+                        if matches!(
+                            request,
+                            StorageRequest::RecordBody { record, .. }
+                                if record == "record_body_invalid"
+                        ) {
+                            self.invalid_records.insert(*id);
+                        }
                         self.stages.start(BlockKey::Service(*id))
+                    }
+                    StorageFact::Admitted { id } => self.stages.start(BlockKey::Service(*id)),
+                    StorageFact::BlockCompleted { id, result, .. }
+                        if self.invalid_records.remove(id) =>
+                    {
+                        if matches!(
+                            result,
+                            StorageResult::Recorded { attempts }
+                                if attempts.last().is_some_and(|last| last == "committed")
+                        ) {
+                            let invalidated = &self.effects.invalidated;
+                            invalidated.set(invalidated.get() + 1);
+                        }
                     }
                     _ => {}
                 }
@@ -683,13 +751,15 @@ impl BlockNode {
     /// from `seed`.
     ///
     /// Unlike zakurad, it supplies no retention, so every actor serves as
-    /// archive storage: no fixture chain is long enough to prune.
+    /// archive storage: no fixture chain is long enough to prune. An
+    /// `observer`, such as a [`BlockTap`]'s, receives its block-sync events.
     pub fn spawn(
         sim: &mut Sim,
         name: &str,
         seed: u8,
         engine: &Arc<EnginePort>,
         storage: NodeStorage,
+        observer: Option<Arc<dyn BlockSyncObserver>>,
     ) -> Self {
         let view = engine.view();
         let frontiers = &view.frontiers;
@@ -704,6 +774,7 @@ impl BlockNode {
             ZakuraBlockSyncConfig::default(),
         );
         startup.max_checkpoint_height = Some(LAST_CHECKPOINT);
+        startup.observer.0 = observer;
         let source: Arc<dyn BlockRangeSource> = match &storage {
             NodeStorage::Controlled { service, .. } => Arc::new(service.range_source()),
             NodeStorage::Mirror(mirror) => Arc::new(mirror.clone()),
@@ -1082,7 +1153,7 @@ impl Topology {
     /// [`apply_node`](Self::apply_node). Records a failure, and returns
     /// `None`, if they don't prepare. Only the step loop reads the node's
     /// engine, so only it may call this.
-    pub(crate) fn prepare_node(&self, change: &ChainChange) -> Option<PreparedHeaderTarget> {
+    pub(crate) fn prepare_node(&self, change: &ChainChange) -> Option<NodeTarget> {
         let node = &self.nodes[0];
         let request = self.chain.fixture.target_request(
             &node.engine.snapshot(),
@@ -1091,7 +1162,10 @@ impl Topology {
             1,
         );
         match ready(node.engine.prepare_header_target(request)) {
-            Ok(prepared) => Some(prepared),
+            Ok(prepared) => Some(NodeTarget {
+                prepared,
+                invalidated: self.effects.invalidated.get(),
+            }),
             Err(error) => {
                 let tip = node.engine.view().frontiers.header_best;
                 self.settle(node, change, Err(error), Ok(()), tip);
@@ -1100,18 +1174,23 @@ impl Topology {
         }
     }
 
-    /// Applies `change`'s `prepared` headers on the node under test's
+    /// Applies `change`'s `target` headers on the node under test's
     /// engine, which reorganizes its selected chain through the real engine.
-    /// The node must download the bodies. Returns `false` if a body commit
-    /// since the preparation made it stale, so the caller prepares it again,
-    /// as header sync would. Only the step loop reads the node's engine, so
-    /// only it may call this.
-    pub(crate) fn apply_node(&self, change: &ChainChange, prepared: PreparedHeaderTarget) -> bool {
+    /// The node must download the bodies. Returns `false` if a
+    /// consensus-invalid body recorded since the preparation moved the
+    /// header generation and made it stale, so the caller prepares it again,
+    /// as header sync would. Records a failure if they don't apply for any
+    /// other reason, any other stale preparation included: a body commit
+    /// leaves the preparation valid, and nothing else changes the node's
+    /// headers. Only the step loop reads the node's engine, so only it may
+    /// call this.
+    pub(crate) fn apply_node(&self, change: &ChainChange, target: NodeTarget) -> bool {
         let node = &self.nodes[0];
-        let applied = ready(node.engine.apply_header_target(prepared));
-        if applied
-            .as_ref()
-            .is_err_and(|error| error.category == ErrorCategory::StaleTargetOrGeneration)
+        let applied = ready(node.engine.apply_header_target(target.prepared));
+        if target.invalidated != self.effects.invalidated.get()
+            && applied
+                .as_ref()
+                .is_err_and(|error| error.category == ErrorCategory::StaleTargetOrGeneration)
         {
             return false;
         }
@@ -1162,6 +1241,15 @@ pub(crate) struct ChainChange {
     blocks: Vec<FixtureBlock>,
     /// What the change records for each actor.
     pub(crate) effect: LinkEffect,
+}
+
+/// A chain change's headers, prepared on the node under test, for
+/// [`Topology::apply_node`].
+pub(crate) struct NodeTarget {
+    prepared: PreparedHeaderTarget,
+    /// How many consensus-invalid bodies the node's engine had recorded at
+    /// the preparation.
+    invalidated: u64,
 }
 
 /// The probe's name, which `Control` steps and link triggers use.
