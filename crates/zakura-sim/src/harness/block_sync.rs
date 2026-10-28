@@ -4,7 +4,7 @@
 //! The node's real reactor, routines and sequencer run against a
 //! [`ControlledBlockService`] that shares its engine with the node's header
 //! side, as zakurad's driver shares zakura-state with header sync. Its
-//! serving reads through the same service, but no mirror asks it for a
+//! serving reads through the same service, but only a probe asks it for a
 //! body. Header sync itself doesn't run: every actor's headers are
 //! committed before the run, so block sync's work comes only from the
 //! committed views.
@@ -29,8 +29,11 @@ use zakura_storage::{
 
 use super::{
     block_node::{
-        default_limits, preload, BlockNode, LateHandle, MirrorStorage, NodeStorage, Policy,
-        PolicySource, Topology,
+        control::{Control, ControlAction, ControlStep},
+        default_limits, policy, preload,
+        probe::ProbeLog,
+        BlockNode, Effects, LateHandle, LiveChain, MirrorReadSource, MirrorReads, MirrorStorage,
+        NodeStorage, Policy, PolicySource, Topology,
     },
     header_sync::{check_service_operation_ids, Dialer},
     Subsystem,
@@ -70,8 +73,16 @@ pub struct BlockScenario {
     pub node_bodies: u32,
     /// The mirror peers, each linked once to the node at setup.
     pub mirrors: Vec<MirrorSpec>,
-    /// How the run completes the node's block operations.
+    /// Whether a scripted probe links to the node at setup, after the
+    /// mirrors. Only `Control` steps make it send anything.
+    #[serde(default)]
+    pub probe: bool,
+    /// How the run completes the node's block operations and the mirrors'
+    /// range reads.
     pub policy: Policy,
+    /// Scripted harness actions, offered in order.
+    #[serde(default)]
+    pub control: Vec<ControlStep>,
 }
 
 impl Default for BlockScenario {
@@ -85,7 +96,9 @@ impl Default for BlockScenario {
             mirrors: vec![MirrorSpec {
                 dialer: Dialer::Mirror,
             }],
+            probe: false,
             policy: Policy::converging(),
+            control: Vec::new(),
         }
     }
 }
@@ -105,6 +118,15 @@ pub struct Ports {
     replies: Arc<LateHandle>,
     /// Each mirror's engine, in scenario order.
     pub mirrors: Vec<Arc<EnginePort>>,
+    /// The chain as `Control` steps grow and fork it, which starts as
+    /// `chain`.
+    pub live: LiveChain,
+    /// The mirrors' range reads.
+    pub reads: MirrorReads,
+    /// What the node sent the probe, if the scenario links one.
+    pub probe: ProbeLog,
+    /// The links made and the chain changes, as the run's tasks made them.
+    pub effects: Effects,
 }
 
 /// The node under test, named `node`, on a controlled block service with
@@ -139,7 +161,9 @@ impl Subsystem for Storage {
     ///
     /// # Panics
     ///
-    /// If the node holds more bodies than the scenario has blocks.
+    /// If the node holds more bodies than the scenario has blocks, or a
+    /// hold or control step waits for a trigger the node never records
+    /// ([`policy::undriven`]).
     fn prepare(scenario: &BlockScenario) -> Ports {
         assert!(
             scenario.node_bodies <= scenario.blocks,
@@ -147,6 +171,15 @@ impl Subsystem for Storage {
             scenario.blocks,
             scenario.node_bodies
         );
+        let triggers = scenario.policy.holds.iter().map(|hold| &hold.until).chain(
+            scenario
+                .control
+                .iter()
+                .filter_map(|step| step.when.as_ref()),
+        );
+        if let Some(why) = triggers.filter_map(policy::undriven).next() {
+            panic!("{why}");
+        }
         let fixture = BlockFixture::regtest();
         let chain = fixture.uniform(
             fixture.anchor(),
@@ -172,6 +205,11 @@ impl Subsystem for Storage {
                 engine
             })
             .collect();
+        let live = LiveChain::new(
+            fixture.clone(),
+            chain.clone(),
+            BodySpec::exact(scenario.body_bytes),
+        );
         Ports {
             fixture,
             chain,
@@ -179,14 +217,30 @@ impl Subsystem for Storage {
             service,
             replies,
             mirrors,
+            live,
+            reads: MirrorReads::default(),
+            probe: ProbeLog::default(),
+            effects: Effects::default(),
         }
     }
 
     /// Spawns the node on its controlled service under the scenario's
-    /// policy, then each mirror, and links each mirror to the node once.
+    /// policy, then each mirror, links each mirror to the node once, then
+    /// the probe if the scenario has one, and offers the scenario's control
+    /// steps.
     fn build(sim: &mut Sim, scenario: &BlockScenario, ports: Ports) -> Self {
-        let storage = PolicySource::new(sim, ports.service.clone(), scenario.policy);
+        let storage = PolicySource::new(
+            sim,
+            ports.service.clone(),
+            scenario.policy.clone(),
+            ports.effects.clone(),
+        );
+        let predicates = storage.predicates();
         sim.add_source(Box::new(storage));
+        sim.add_source(Box::new(MirrorReadSource::new(
+            ports.reads.clone(),
+            predicates.clone(),
+        )));
         let mut nodes = vec![BlockNode::spawn(
             sim,
             "node",
@@ -198,21 +252,31 @@ impl Subsystem for Storage {
             },
         )];
         for ((index, engine), seed) in ports.mirrors.iter().enumerate().zip(2..) {
+            let name = format!("mirror-{index}");
             nodes.push(BlockNode::spawn(
                 sim,
-                &format!("mirror-{index}"),
+                &name,
                 seed,
                 engine,
-                NodeStorage::Mirror(MirrorStorage::new(engine.clone())),
+                NodeStorage::Mirror(MirrorStorage::new(
+                    &name,
+                    engine.clone(),
+                    ports.reads.clone(),
+                )),
             ));
         }
-        let topology = Rc::new(Topology::new(nodes));
+        let topology = Rc::new(Topology::new(nodes, ports.effects, ports.live));
         for (index, spec) in (1..).zip(&scenario.mirrors) {
             match spec.dialer {
                 Dialer::Mirror => topology.link(index, 0),
                 Dialer::Node => topology.link(0, index),
             };
         }
+        if scenario.probe {
+            topology.link_probe(sim, ports.probe);
+        }
+        let control = Control::new(sim, topology.clone(), scenario.control.clone(), predicates);
+        sim.add_source(Box::new(control));
         Storage {
             _topology: topology,
         }
@@ -240,15 +304,24 @@ impl Subsystem for Storage {
 const STEPS_PER_BLOCK: u64 = 1_000;
 
 /// The storage run's config for `scenario`: 2 workers, the default stack,
-/// which engine planning needs, and room to sync every block and then idle
-/// on timers.
+/// which engine planning needs, and room to sync every block, including
+/// those its control steps grow or fork, and then idle on timers.
 pub fn storage_config(scenario: &BlockScenario) -> RunConfig {
+    let changed: u64 = scenario
+        .control
+        .iter()
+        .map(|step| match step.action {
+            ControlAction::Grow { len, .. } => u64::from(len),
+            ControlAction::Reset { fork, .. } => u64::from(fork.len),
+            _ => 0,
+        })
+        .sum();
     RunConfig {
         scheduler: SchedulerConfig {
             workers: 2,
             ..SchedulerConfig::default()
         },
-        budget: 8_000 + STEPS_PER_BLOCK * u64::from(scenario.blocks),
+        budget: 8_000 + STEPS_PER_BLOCK * (u64::from(scenario.blocks) + changed),
         drain_bound: 2_000,
         ..RunConfig::default()
     }
