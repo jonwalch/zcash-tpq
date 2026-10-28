@@ -445,6 +445,10 @@ struct Ops {
     /// The actions the driver took off its channel and deferred, oldest
     /// first. Only a step takes them out.
     deferred: VecDeque<BlockSyncAction>,
+    /// `deferred`'s identities as the last transaction left them. A step
+    /// holds `deferred` outside the lock while it reads the channel, so
+    /// the owner state and the drop facts read these.
+    published_deferred: Vec<RequestIdentity>,
     /// The intake task's waker while it waits for the driver to be free or
     /// for its channel.
     intake: Option<Waker>,
@@ -930,6 +934,7 @@ impl ControlledBlockService {
         }
         let queue = deferred_identities(&deferred, &self.inner.limits);
         ops.deferred = deferred;
+        ops.published_deferred.clone_from(&queue);
         let Some(action) = action else {
             debug_assert!(
                 coalesced.is_empty() && queue == before,
@@ -1147,7 +1152,7 @@ impl ControlledBlockService {
             completion.txn = txn;
             FactKind::Completed(Box::new(completion.clone()))
         });
-        let exited = exits.then(|| exit_driver(&mut ops, &self.inner.limits, now));
+        let exited = exits.then(|| exit_driver(&mut ops, now));
         // The driver takes its next action once it stops awaiting this one.
         let intake = op.awaited().then(|| ops.intake.take()).flatten();
         drop(ops);
@@ -1504,7 +1509,7 @@ impl ControlledBlockService {
                     retained: slot.held_block(),
                 })
                 .collect(),
-            deferred: deferred_identities(&ops.deferred, &self.inner.limits),
+            deferred: ops.published_deferred.clone(),
         }
     }
 
@@ -1574,7 +1579,7 @@ impl ControlledBlockService {
             }
             let slots = mem::take(&mut ops.slots);
             let dropped = slots.keys().copied().collect();
-            let deferred = deferred_identities(&ops.deferred, &self.inner.limits);
+            let deferred = mem::take(&mut ops.published_deferred);
             ops.publish(now, Vec::new(), |_| FactKind::ShutDown {
                 dropped,
                 deferred,
@@ -1649,11 +1654,7 @@ impl ControlledBlockService {
 /// reads, and publishes the exit. Returns what it dropped, for the caller to
 /// drop outside the lock, and leaves the intake's waker for the caller to
 /// wake.
-fn exit_driver(
-    ops: &mut Ops,
-    limits: &ApplyLimits,
-    now: Instant,
-) -> (Vec<Slot>, VecDeque<BlockSyncAction>) {
+fn exit_driver(ops: &mut Ops, now: Instant) -> (Vec<Slot>, VecDeque<BlockSyncAction>) {
     ops.exited = true;
     let dropped: Vec<OpId> = ops
         .slots
@@ -1665,7 +1666,7 @@ fn exit_driver(
         .iter()
         .filter_map(|id| ops.slots.remove(id))
         .collect();
-    let deferred = deferred_identities(&ops.deferred, limits);
+    let deferred = mem::take(&mut ops.published_deferred);
     ops.publish(now, Vec::new(), |_| FactKind::DriverExited {
         dropped,
         deferred,
