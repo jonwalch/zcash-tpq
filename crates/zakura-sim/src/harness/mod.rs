@@ -35,6 +35,7 @@ pub use record::{record, record_witness, RecordError, RecordInput, WITNESS_FILE}
 use crate::{
     check::{Checker, Phase, PropertyReport, StepCtx, Violation},
     end::{HarnessFailure, Outcome, RunEnd},
+    explore::{self, ExploreRun},
     net::Net,
     observe::Exit,
     property::{
@@ -353,6 +354,9 @@ pub struct HarnessEntry {
     pub properties: fn() -> Vec<PropertyRef>,
     /// [`witness_into`] on a serialized scenario.
     pub witness: WitnessFn,
+    /// [`explore::run_bytes`]: a full fuzz input, the sink, and an extra
+    /// checker.
+    pub run_bytes: fn(&[u8], &mut dyn RecordSink, Option<&mut dyn Checker>) -> ExploreRun,
 }
 
 /// [`HarnessEntry::witness`]: the serialized scenario, the input, the
@@ -394,6 +398,7 @@ pub const fn entry<S: Subsystem>() -> HarnessEntry {
         draw: draw_value::<S>,
         properties: registered::<S>,
         witness: witness_value::<S>,
+        run_bytes: explore::run_bytes::<S>,
     }
 }
 
