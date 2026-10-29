@@ -39,6 +39,9 @@ pub use check::{Checker, NoChecks, PropertyOutcome, PropertyReport, StepCtx, Vio
 pub use end::{HarnessFailure, IdleStatus, Outcome, RunEnd};
 pub use identity::{Category, Identity};
 pub use observe::{Observation, ObservationLog};
-pub use plan::{By, Divergence, HexU64, Plan, PlanChoice, PlanError, PlanInput, TraceScript};
+pub use plan::{
+    By, Candidate, Divergence, HexU64, Plan, PlanChoice, PlanError, PlanInput, SkipScript,
+    TraceScript,
+};
 pub use record::{MemorySink, NullSink, Record, RecordSink};
 pub use sim::{RunConfig, RunReport, Sim, TaskHold};
