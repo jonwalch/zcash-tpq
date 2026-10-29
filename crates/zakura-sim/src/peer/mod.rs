@@ -11,7 +11,8 @@
 //! [`StreamModels`] before the write and logged as a `PeerFrame`, then as a
 //! `PeerWritten` once the write returns, and every frame it reads from the
 //! node is logged as a `PeerReceived`, then as a `NodeFrame` labelled under
-//! the sender's rules by the [`adapter`] (M5-E2). Each record names its
+//! the sender's rules by the [`adapter`] (M5-E2). A peer that closes its
+//! connection with a header stream open logs a `PeerClosed` (M5-F). Each record names its
 //! connection and QUIC stream from the identity map, never from draw order,
 //! so it waits in [`PeerControl`] until the node's transport has admitted
 //! its stream.
@@ -204,6 +205,10 @@ pub enum PeerAction {
     FinishHeader,
     /// Closes the connection with application code 0, as `Conn::close`.
     Close,
+    /// Closes the connection as [`PeerAction::Close`] does, but while the
+    /// honest script still serves the node: offered once it has written a
+    /// page of a subscription the node hasn't closed (M5-F).
+    Disconnect,
     /// After a [`PeerAction::Close`], dials again from a fresh address, once
     /// the production handshake timeout has passed. Only a dialing peer can.
     Redial,
@@ -224,6 +229,7 @@ impl PeerAction {
             PeerAction::Open { .. } => "open",
             PeerAction::FinishHeader => "finish-header",
             PeerAction::Close => "close",
+            PeerAction::Disconnect => "disconnect",
             PeerAction::Redial => "redial",
             PeerAction::Grant => "grant",
             PeerAction::Act { act } => act.name(),
@@ -1329,8 +1335,11 @@ impl PeerTask {
                             // A responder waits for the node to reopen it.
                             settled = self.spec.dialer == Dialer::Peer;
                         }
-                        PeerAction::Close => {
+                        PeerAction::Close | PeerAction::Disconnect => {
                             conn.close(VarInt::from_u32(0), b"close");
+                            if let Some(stream) = &header {
+                                self.record(remote, stream.id, RecordBody::Closed);
+                            }
                             conn.closed().await;
                             return Ended::Closed;
                         }

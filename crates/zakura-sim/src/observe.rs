@@ -381,6 +381,16 @@ pub enum Observation {
         /// 0.
         seq: u64,
     },
+    /// A scripted peer closed its connection with `Conn::close`, so its
+    /// close is on its way and nothing it sends on the connection follows
+    /// it. It's recorded on the peer's header stream, so it waits for that
+    /// stream's identity rows as the peer's frames do.
+    PeerClosed {
+        /// The connection, from the identity map.
+        connection: u64,
+        /// The QUIC stream of the peer's header stream then.
+        quic_stream: u64,
+    },
     /// A scripted peer read and decoded one frame the node wrote.
     PeerReceived {
         /// The connection, from the identity map.
@@ -1718,6 +1728,13 @@ pub enum TransportFact {
     HandshakeRefused {
         /// The handshake error, or the refusal's trace label.
         reason: String,
+    },
+    /// The node's dial to the remote address failed, as the wire node's
+    /// call to `ZakuraEndpoint::dial` returned. No connection was
+    /// registered for it, so the address alone keys it.
+    DialFailed {
+        /// The returned error, as it displays.
+        error: String,
     },
     /// The supervisor registered the connection as `connection`.
     Registered,
