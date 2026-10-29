@@ -14,15 +14,24 @@
 //! QUIC stream from the identity map, never from draw order, so it waits in
 //! [`PeerControl`] until the node's transport has admitted its stream.
 //!
+//! A peer with an [`AdversarySpec`] also takes [`PeerAction::Act`]s, the
+//! receiver-direction boundaries of M5-E1 ([`adversary`]). Its frames are
+//! labelled by the same models and by the content labeller, and the node's
+//! evidence judges each at the reader stage that decides it ([`stage`]).
+//!
 //! Actions follow M4's `Control` pattern. [`PeerControl`] offers a peer's
 //! next action as `peer:<name>:<action>` only while the peer is settled and
 //! idle, so the `Plan` picks when it happens, `execute` only queues it, and
 //! the peer's task carries it out. So at most one action is queued per
-//! peer.
+//! peer, and an adversary's actions stay within the rate [`limit`] sets.
 
+pub mod adversary;
+mod content;
 mod evidence;
 pub(crate) mod handshake;
 pub mod honest;
+pub mod limit;
+mod stage;
 
 use std::{
     cell::Cell,
@@ -37,7 +46,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use zakura_network::zakura::{
-    v9::{Message, Operation, RegtestMessage},
+    v9::{Cursor, Headers, Message, Operation, RegtestMessage},
     wire_codec::{decode_frame, encode_frame},
     Frame, P2P_V2_ALPN, ZAKURA_CAP_HEADER_SYNC, ZAKURA_HEADER_SYNC_STREAM_VERSION,
     ZAKURA_STREAM_HEADER_SYNC,
@@ -55,12 +64,17 @@ use zakura_scheduler::SimInstant;
 
 pub(crate) use self::evidence::{PeerRecord, PeerRecords, RecordBody};
 use self::{
+    adversary::{Act, Adversary, AdversarySpec},
+    content::ContentLabeller,
     evidence::WireEvidence,
     handshake::{Echo, Local},
     honest::{Honest, HonestChain, HonestSpec},
+    limit::{RateLimit, ADVERSARY_RATE},
 };
 use crate::{
-    model::{CadenceModel, Charge, FrameHeader, FrameModel, Labels, ReaderEnd, SubscriptionModel},
+    model::{
+        CadenceModel, Charge, FrameHeader, FrameModel, Label, Labels, ReaderEnd, SubscriptionModel,
+    },
     observe::{PeerCredit, StreamId},
     table::rule_row,
     ActionSource, Boundary, Identity, ObservationLog,
@@ -139,6 +153,12 @@ pub struct PeerSpec {
     /// If set, it runs the honest script on its header streams.
     #[serde(default)]
     pub honest: Option<HonestSpec>,
+    /// If set, it's an adversary: its script may hold [`PeerAction::Act`]s,
+    /// and between them it runs the honest script on `honest`'s chain as
+    /// this says. Its actions are limited to [`ADVERSARY_RATE`] per virtual
+    /// second.
+    #[serde(default)]
+    pub adversary: Option<AdversarySpec>,
 }
 
 impl PeerSpec {
@@ -150,6 +170,7 @@ impl PeerSpec {
             bad_nonce_echo: false,
             script: Vec::new(),
             honest: None,
+            adversary: None,
         }
     }
 
@@ -186,6 +207,11 @@ pub enum PeerAction {
     /// Releases one held grant of an honest subscriber, offered once its
     /// quiet time after the last page has passed.
     Grant,
+    /// An adversary's act, offered once its setup history is done.
+    Act {
+        /// The act.
+        act: Act,
+    },
 }
 
 impl PeerAction {
@@ -197,6 +223,7 @@ impl PeerAction {
             PeerAction::Close => "close",
             PeerAction::Redial => "redial",
             PeerAction::Grant => "grant",
+            PeerAction::Act { act } => act.name(),
         }
     }
 }
@@ -278,6 +305,20 @@ struct Slot {
     next: usize,
     readiness: Readiness,
     to_task: mpsc::Sender<PeerAction>,
+    /// An adversary's budget of actions per virtual second.
+    limit: Option<RateLimit>,
+}
+
+impl Slot {
+    /// The next action, if the peer is ready for it and its budget allows
+    /// it at `now`.
+    fn offered(&self, now: SimInstant) -> Option<PeerAction> {
+        let allowed = self.limit.is_none_or(|limit| limit.allows(now));
+        self.script
+            .get(self.next)
+            .copied()
+            .filter(|_| allowed && self.readiness.ready())
+    }
 }
 
 /// Offers each peer's next scripted action, as `peer:<name>:<action>`,
@@ -302,12 +343,14 @@ impl PeerControl {
         }
     }
 
-    /// Adds peer `name`'s script. Returns the readiness its task keeps, and
-    /// the receiver it takes actions from, which holds one.
+    /// Adds peer `name`'s script, limited to [`ADVERSARY_RATE`] actions
+    /// per virtual second if it's an `adversary`. Returns the readiness its
+    /// task keeps, and the receiver it takes actions from, which holds one.
     pub(crate) fn add(
         &mut self,
         name: &str,
         script: Vec<PeerAction>,
+        adversary: bool,
     ) -> (Readiness, mpsc::Receiver<PeerAction>) {
         let (to_task, commands) = mpsc::channel(1);
         let readiness = Readiness::default();
@@ -317,35 +360,43 @@ impl PeerControl {
             next: 0,
             readiness: readiness.clone(),
             to_task,
+            limit: adversary.then(|| RateLimit::new(ADVERSARY_RATE)),
         });
         (readiness, commands)
     }
 }
 
 impl ActionSource for PeerControl {
-    /// Each ready peer's next action.
-    fn enabled(&self, _: SimInstant, out: &mut Vec<(Identity, u64)>) {
+    /// Each ready peer's next action, if its budget allows it.
+    fn enabled(&self, now: SimInstant, out: &mut Vec<(Identity, u64)>) {
         for (index, slot) in (0..).zip(&self.slots) {
-            if let Some(action) = slot
-                .script
-                .get(slot.next)
-                .filter(|_| slot.readiness.ready())
-            {
+            if let Some(action) = slot.offered(now) {
                 out.push((Identity::peer(&slot.name, action.name()), index));
             }
         }
     }
 
-    /// None: a peer's readiness changes only when its task runs.
-    fn boundaries(&self, _: SimInstant, _: &mut Vec<Boundary>) {}
+    /// The next whole second, for each ready adversary whose budget is
+    /// spent. Otherwise a peer's readiness changes only when its task runs.
+    fn boundaries(&self, now: SimInstant, out: &mut Vec<Boundary>) {
+        for slot in &self.slots {
+            let waiting = slot.script.get(slot.next).is_some() && slot.readiness.ready();
+            if let Some(limit) = slot.limit.filter(|limit| waiting && !limit.allows(now)) {
+                out.push(Boundary::Opens(limit.opens()));
+            }
+        }
+    }
 
-    /// Queues the peer's next action and marks it busy until its task is
-    /// done with it.
+    /// Queues the peer's next action, charges an adversary's budget, and
+    /// marks the peer busy until its task is done with the action.
     fn execute(&mut self, local: u64, _: &mut ObservationLog) {
         let slot = usize::try_from(local)
             .ok()
             .and_then(|index| self.slots.get_mut(index))
             .expect("`enabled` offered this peer at this step");
+        if let Some(limit) = slot.limit.as_mut() {
+            limit.charge(zakura_scheduler::hooks::now().expect("a peer acts inside a run"));
+        }
         slot.readiness.queued();
         slot.to_task
             .try_send(slot.script[slot.next])
@@ -417,16 +468,111 @@ pub(crate) const PAGE_FIXED_BYTES: usize = 8 + 32 + 4 + 32 + 4 + 1 + 1;
 /// 4-byte body-size hint.
 pub(crate) const ENTRY_BYTES: usize = 177 + 4;
 
-/// A labelled frame, encoded, for a peer to write.
+/// Labelled frames, encoded, for a peer to write at once: one frame, or a
+/// burst.
 pub(crate) struct Outgoing {
-    /// The frame's bytes, header included.
+    /// The frames' bytes, headers included. A frame whose payload is
+    /// withheld has only its header here.
     bytes: Vec<u8>,
-    /// What its `PeerFrame` records.
-    record: RecordBody,
+    /// What each frame's `PeerFrame` records, in order.
+    records: Vec<RecordBody>,
+}
+
+impl Outgoing {
+    /// Withholds a lone frame's payload: only its header is written.
+    pub(crate) fn withhold(&mut self) {
+        assert_eq!(self.records.len(), 1, "only a lone frame withholds");
+        self.bytes.truncate(8);
+    }
+
+    /// Whether every frame here is labelled `Conformant`.
+    pub(crate) fn conformant(&self) -> bool {
+        self.records.iter().all(|record| {
+            matches!(
+                record,
+                RecordBody::Frame {
+                    label: Label::Conformant,
+                    ..
+                }
+            )
+        })
+    }
+
+    /// Whether any frame here found its cadence bucket empty when charged.
+    pub(crate) fn exhausted(&self) -> bool {
+        self.records.iter().any(|record| {
+            matches!(
+                record,
+                RecordBody::Frame {
+                    exhausted: true,
+                    ..
+                }
+            )
+        })
+    }
+
+    /// `frames` in order, written with one call, so a burst's writes don't
+    /// each take their own steps.
+    pub(crate) fn burst(frames: Vec<Outgoing>) -> Outgoing {
+        let mut burst = Outgoing {
+            bytes: Vec::new(),
+            records: Vec::new(),
+        };
+        for frame in frames {
+            burst.bytes.extend(frame.bytes);
+            burst.records.extend(frame.records);
+        }
+        burst
+    }
+}
+
+/// A frame a peer writes: the message its role and content labels read,
+/// and the header and payload it actually writes. An honest frame is its
+/// message encoded. A crafted one may declare another type, flags or
+/// length, carry bytes the encoder refuses, or withhold its payload.
+#[derive(Clone, Debug)]
+pub(crate) struct Crafted {
+    /// What the frame means to the role and content labels.
+    pub(crate) message: RegtestMessage,
+    /// The header written.
+    pub(crate) header: FrameHeader,
+    /// The bytes written after the header, which may stop short of
+    /// `header.payload_len`.
+    pub(crate) payload: Vec<u8>,
+}
+
+impl Crafted {
+    /// `message`, encoded as it is.
+    pub(crate) fn of(message: RegtestMessage) -> Self {
+        let frame = encode_frame(&message).expect("a crafted frame starts from a valid message");
+        Crafted {
+            header: FrameHeader {
+                message_type: frame.message_type,
+                flags: frame.flags,
+                payload_len: frame.payload.len(),
+            },
+            payload: frame.payload,
+            message,
+        }
+    }
+
+    /// The header and payload bytes, as written.
+    fn bytes(&self) -> Vec<u8> {
+        // Crafted lengths stay far below 4 GiB.
+        let len = u32::try_from(self.header.payload_len).expect("a crafted payload fits u32");
+        let mut bytes = Vec::with_capacity(8 + self.payload.len());
+        bytes.extend(self.header.message_type.to_le_bytes());
+        bytes.extend(self.header.flags.to_le_bytes());
+        bytes.extend(len.to_le_bytes());
+        bytes.extend(&self.payload);
+        bytes
+    }
 }
 
 /// One header stream's role models, which label each frame a peer sends
-/// before the write and follow each frame it reads from the node (P3a).
+/// before the write and follow each frame it reads from the node (P3a),
+/// and its content labeller (M5-Q14).
+#[derive(Clone)]
 pub(crate) struct StreamModels {
     /// When the stream started, the cadence model's origin.
     start: Instant,
@@ -434,8 +580,71 @@ pub(crate) struct StreamModels {
     /// The header-sync subscription row, in both directions.
     pub(crate) subscriptions: SubscriptionModel,
     cadence: CadenceModel,
+    content: ContentLabeller,
+    /// Wire cursors as the subscription model's keys.
+    cursors: Cursors,
     /// Frames labelled so far, the next one's `seq`.
     sent: u64,
+}
+
+/// Wire cursors as keys for the subscription model, which compares cursors
+/// by equality alone, as the publisher does: each distinct (height, hash,
+/// headers, bytes) gets its own key, so a cursor differing in any field is
+/// another cursor.
+#[derive(Clone, Debug, Default)]
+struct Cursors {
+    keys: BTreeMap<(u32, [u8; 32], u64, u64), u64>,
+    /// The headers and bytes the pages of each subscription consumed, by
+    /// who sent the pages and the subscription's ID.
+    consumed: BTreeMap<(Pages, u64), (u64, u64)>,
+}
+
+/// Whose pages a subscription carries.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Pages {
+    /// The peer's, on a subscription the node opened.
+    Peer,
+    /// The node's, on one the peer opened.
+    Node,
+}
+
+impl Cursors {
+    /// `cursor`'s key.
+    fn key(&mut self, cursor: &Cursor) -> u64 {
+        let next = u64::try_from(self.keys.len()).expect("a run sees fewer than 2^64 cursors");
+        *self
+            .keys
+            .entry((cursor.height.0, cursor.hash.0, cursor.headers, cursor.bytes))
+            .or_insert(next)
+    }
+
+    /// The key of `page`'s cursor, `payload_len` bytes long, from `pages`,
+    /// with the totals it consumes through it. Nothing is recorded.
+    fn page(&mut self, pages: Pages, page: &Headers, payload_len: usize) -> (u64, (u64, u64)) {
+        let count = u32::try_from(page.entries.len()).unwrap_or(u32::MAX);
+        let (headers, bytes) = self
+            .consumed
+            .get(&(pages, page.subscription_id))
+            .copied()
+            .unwrap_or_default();
+        let totals = (
+            headers.saturating_add(u64::from(count)),
+            bytes.saturating_add(u64::try_from(payload_len).unwrap_or(u64::MAX)),
+        );
+        let last = page
+            .entries
+            .last()
+            .map_or(page.common_ancestor_hash, |entry| entry.header.hash());
+        let key = self.key(&Cursor {
+            height: zakura_chain::block::Height(
+                page.common_ancestor_height.0.saturating_add(count),
+            ),
+            hash: last,
+            headers: totals.0,
+            bytes: totals.1,
+        });
+        (key, totals)
+    }
 }
 
 /// The model session of a header stream: each stream has models of its own.
@@ -456,75 +665,32 @@ fn subscription_row() -> u16 {
 }
 
 impl StreamModels {
-    /// Fresh models for a stream that starts at `start`.
-    pub(crate) fn new(start: Instant) -> Self {
+    /// Fresh models for a stream that starts at `start`, for a peer
+    /// holding `chain`.
+    pub(crate) fn new(start: Instant, chain: Arc<HonestChain>) -> Self {
         StreamModels {
             start,
             frames: FrameModel::new(&RegtestMessage::ROWS, ReaderEnd::Persistent),
             subscriptions: SubscriptionModel::new(&RegtestMessage::ROWS, subscription_row())
                 .expect("the row is a subscription"),
             cadence: CadenceModel::new(),
+            content: ContentLabeller::new(chain),
+            cursors: Cursors::default(),
             sent: 0,
         }
     }
 
-    /// Labels `message` with the models and encodes it. A conformant frame
-    /// changes the models as its sending does. One with a header fault
-    /// labels its role on a copy, so it changes nothing.
-    pub(crate) fn send(&mut self, message: &RegtestMessage) -> Outgoing {
-        let frame = encode_frame(message).expect("the honest script builds valid messages");
-        let header = FrameHeader {
-            message_type: frame.message_type,
-            flags: frame.flags,
-            payload_len: frame.payload.len(),
-        };
-        let header_labels = self.frames.labels(&header);
-        let mut copy;
-        let subscriptions = if header_labels.is_conformant() {
-            &mut self.subscriptions
-        } else {
-            copy = self.subscriptions.clone();
-            &mut copy
-        };
-        let (role, exchange) = match message {
-            Message::Status(_) => (Labels::NONE, None),
-            Message::SubscribeHeaders(update) => {
-                let (id, sequence) = (update.subscription_id, update.update_sequence);
-                let acknowledged = u64::from(update.acknowledged.height.0);
-                let labels = match update.operation {
-                    Operation::Open => subscriptions.open_frame(
-                        SESSION,
-                        id,
-                        sequence,
-                        update.added_credit,
-                        acknowledged,
-                    ),
-                    Operation::Grant => subscriptions.grant_frame(
-                        SESSION,
-                        id,
-                        sequence,
-                        acknowledged,
-                        update.added_credit,
-                    ),
-                    Operation::Close => {
-                        subscriptions.close_frame(SESSION, id, sequence, acknowledged)
-                    }
-                };
-                (labels, Some(id))
-            }
-            Message::Headers(page) => {
-                let id = page.subscription_id;
-                let count = u32::try_from(page.entries.len()).unwrap_or(u32::MAX);
-                let last = u64::from(page.common_ancestor_height.0) + u64::from(count);
-                let labels = subscriptions.page_frame(SESSION, id, count, header.payload_len, last);
-                (labels, Some(id))
-            }
-            Message::HeadersOutcome(outcome) => {
-                let id = outcome.subscription_id;
-                (subscriptions.ending_frame(SESSION, id), Some(id))
-            }
-        };
-        let label = header_labels.union(role).first();
+    /// Every label `frame` would get, without sending it.
+    pub(crate) fn preview(&self, frame: &Crafted) -> Labels {
+        self.clone().labels(frame)
+    }
+
+    /// Labels `frame` with the models, as [`Self::labels`] does, and
+    /// returns its bytes and record. A conformant frame changes the models
+    /// as its sending does.
+    pub(crate) fn send_crafted(&mut self, frame: Crafted) -> Outgoing {
+        let header = frame.header;
+        let label = self.labels(&frame).first();
         let stream = &RegtestMessage::LAYOUT[0];
         let id = |stream: &zakura_network::zakura::Stream| StreamId {
             kind: stream.kind,
@@ -544,32 +710,73 @@ impl StreamModels {
         let seq = self.sent;
         self.sent += 1;
         Outgoing {
-            bytes: frame
-                .encode(stream.frame_cap)
-                .expect("a valid message fits the frame cap"),
-            record: RecordBody::Frame {
+            bytes: frame.bytes(),
+            records: vec![RecordBody::Frame {
                 seq,
                 row,
                 rule_stream,
                 label,
                 exhausted,
-                exchange,
-                // A frame's payload is under its 2 MiB cap.
+                exchange: exchange(&frame.message),
+                // A frame's declared length is under 4 GiB.
                 payload: header.payload_len as u64,
-            },
+            }],
         }
+    }
+
+    /// Every label of `frame`: its header's faults, its role's under the
+    /// subscription model, and its content's. The role reads the header's
+    /// declared length, and only a frame whose type has a row and is its
+    /// message's has one. A frame with any fault is labelled on a copy of
+    /// the subscription model, so it changes no model state (P3a, Scope).
+    /// A conformant one changes the models as its sending does.
+    fn labels(&mut self, frame: &Crafted) -> Labels {
+        let header = frame.header;
+        let message = &frame.message;
+        let header_labels = self.frames.labels(&header);
+        let content = self.content.label(message, header.payload_len);
+        let mut copy;
+        let subscriptions = if header_labels.is_conformant() && content.is_conformant() {
+            &mut self.subscriptions
+        } else {
+            copy = self.subscriptions.clone();
+            &mut copy
+        };
+        let own_row = self.frames.row(header.message_type).is_some()
+            && message_type(message) == header.message_type;
+        let (role, page) = if own_row {
+            role_labels(
+                subscriptions,
+                &mut self.cursors,
+                message,
+                header.payload_len,
+            )
+        } else {
+            (Labels::NONE, None)
+        };
+        let labels = header_labels.union(role).union(content);
+        if labels.is_conformant() {
+            self.content.sent(message);
+            if let (Message::Headers(sent), Some(totals)) = (message, page) {
+                self.cursors
+                    .consumed
+                    .insert((Pages::Peer, sent.subscription_id), totals);
+            }
+        }
+        labels
     }
 
     /// Follows the node's `message`, `payload_len` bytes long, as the
     /// models' node side: its own subscription updates, and its pages and
     /// outcomes on this peer's subscription.
     pub(crate) fn receive(&mut self, message: &RegtestMessage, payload_len: usize) {
+        self.content.received(message);
         let models = &mut self.subscriptions;
         match message {
             Message::Status(_) => {}
             Message::SubscribeHeaders(update) => {
                 let id = update.subscription_id;
-                let acknowledged = u64::from(update.acknowledged.height.0);
+                let acknowledged = self.cursors.key(&update.acknowledged);
                 match update.operation {
                     Operation::Open => {
                         models.subscribe(SESSION, id, update.added_credit, acknowledged);
@@ -588,8 +795,12 @@ impl StreamModels {
             }
             Message::Headers(page) => {
                 let count = u32::try_from(page.entries.len()).unwrap_or(u32::MAX);
-                let last = u64::from(page.common_ancestor_height.0) + u64::from(count);
-                models.send_page(SESSION, page.subscription_id, count, payload_len, last);
+                let (last, totals) = self.cursors.page(Pages::Node, page, payload_len);
+                if models.send_page(SESSION, page.subscription_id, count, payload_len, last) {
+                    self.cursors
+                        .consumed
+                        .insert((Pages::Node, page.subscription_id), totals);
+                }
             }
             Message::HeadersOutcome(outcome) => {
                 models.end(SESSION, outcome.subscription_id);
@@ -597,6 +808,69 @@ impl StreamModels {
             }
         }
     }
+}
+
+/// `message`'s type.
+fn message_type(message: &RegtestMessage) -> u16 {
+    use zakura_network::zakura::wire_codec::WireMessage;
+    message.message_type()
+}
+
+/// The exchange or subscription `message` names, if any.
+fn exchange(message: &RegtestMessage) -> Option<u64> {
+    match message {
+        Message::Status(_) => None,
+        Message::SubscribeHeaders(update) => Some(update.subscription_id),
+        Message::Headers(page) => Some(page.subscription_id),
+        Message::HeadersOutcome(outcome) => Some(outcome.subscription_id),
+    }
+}
+
+/// The subscription model's labels for the peer sending `message`, a page
+/// read as `payload_len` bytes, with cursors keyed by `cursors`. It applies
+/// a conformant one. For a page, also the totals it consumes, which the
+/// caller records once the whole frame is conformant.
+fn role_labels(
+    subscriptions: &mut SubscriptionModel,
+    cursors: &mut Cursors,
+    message: &RegtestMessage,
+    payload_len: usize,
+) -> (Labels, Option<(u64, u64)>) {
+    let labels = match message {
+        Message::Status(_) => Labels::NONE,
+        Message::SubscribeHeaders(update) => {
+            let (id, sequence) = (update.subscription_id, update.update_sequence);
+            let acknowledged = cursors.key(&update.acknowledged);
+            match update.operation {
+                Operation::Open => subscriptions.open_frame(
+                    SESSION,
+                    id,
+                    sequence,
+                    update.added_credit,
+                    acknowledged,
+                ),
+                Operation::Grant => subscriptions.grant_frame(
+                    SESSION,
+                    id,
+                    sequence,
+                    acknowledged,
+                    update.added_credit,
+                ),
+                Operation::Close => subscriptions.close_frame(SESSION, id, sequence, acknowledged),
+            }
+        }
+        Message::Headers(page) => {
+            let count = u32::try_from(page.entries.len()).unwrap_or(u32::MAX);
+            let (last, totals) = cursors.page(Pages::Peer, page, payload_len);
+            let labels =
+                subscriptions.page_frame(SESSION, page.subscription_id, count, payload_len, last);
+            return (labels, Some(totals));
+        }
+        Message::HeadersOutcome(outcome) => {
+            subscriptions.ending_frame(SESSION, outcome.subscription_id)
+        }
+    };
+    (labels, None)
 }
 
 /// The credit `message` adds, if it's an `Open` or a `Grant`.
@@ -735,21 +1009,56 @@ async fn accept_streams(
     }
 }
 
+/// The scripts a peer runs on its header streams.
+struct Scripts {
+    honest: Option<Honest>,
+    adversary: Option<Adversary>,
+}
+
+impl Scripts {
+    /// When the peer may next become ready for `next`, its next scripted
+    /// action, if it runs a script: the adversary's setup history for an
+    /// act, and the honest script's settling for any other action.
+    fn wake(&self, next: Option<PeerAction>) -> Option<Instant> {
+        let honest = self.honest.as_ref()?;
+        match (next, &self.adversary) {
+            (Some(PeerAction::Act { act }), Some(adversary)) => adversary.wake(act, honest),
+            _ => honest.wake(next),
+        }
+    }
+}
+
 impl PeerTask {
     /// Runs the peer until the run ends.
     pub(crate) async fn run(mut self) {
         let local = Local::regtest();
-        let mut honest = match (self.spec.honest.clone(), self.chain.clone()) {
-            (Some(spec), Some(chain)) => Some(Honest::new(spec, chain)),
+        let adversary = self.spec.adversary.clone().map(Adversary::new);
+        let (announce, serve) = adversary.as_ref().map_or((true, true), |adversary| {
+            (adversary.announces(), adversary.serves())
+        });
+        let honest = match (self.spec.honest.clone(), self.chain.clone()) {
+            (Some(spec), Some(chain)) => Some(Honest::with(spec, chain, announce, serve)),
             (None, None) => None,
             _ => unreachable!("the harness gives a chain to exactly the honest peers"),
         };
+        let acts = self
+            .spec
+            .script
+            .iter()
+            .any(|action| matches!(action, PeerAction::Act { .. }));
+        let mut scripts = Scripts { honest, adversary };
         match self.spec.dialer {
-            Dialer::Peer => self.dial(&local, &mut honest).await,
+            _ if scripts.adversary.is_some() && scripts.honest.is_none() => {
+                self.fail("an adversary needs an honest chain");
+            }
+            _ if acts && scripts.adversary.is_none() => {
+                self.fail("only an adversary can act");
+            }
+            Dialer::Peer => self.dial(&local, &mut scripts).await,
             Dialer::Node if self.spec.script.contains(&PeerAction::Redial) => {
                 self.fail("only a dialing peer can redial");
             }
-            Dialer::Node => self.listen(&local, &mut honest).await,
+            Dialer::Node => self.listen(&local, &mut scripts).await,
         }
         // The endpoint stays up, so nothing the node holds closes under it.
         std::future::pending::<()>().await;
@@ -780,7 +1089,7 @@ impl PeerTask {
 
     /// Dials the node, from a fresh address each time, until a connection
     /// ends without a [`PeerAction::Redial`] after it.
-    async fn dial(&mut self, local: &Local, honest: &mut Option<Honest>) {
+    async fn dial(&mut self, local: &Local, scripts: &mut Scripts) {
         let mut dial = 0;
         loop {
             let quic = self.bind(dial);
@@ -793,7 +1102,7 @@ impl PeerTask {
                 return;
             };
             let remote = peer_addr(self.index, dial);
-            if let Ended::Failed = self.serve(&conn, negotiated, remote, honest).await {
+            if let Ended::Failed = self.serve(&conn, negotiated, remote, scripts).await {
                 return;
             }
             // Only a redial may follow a closed connection.
@@ -819,7 +1128,7 @@ impl PeerTask {
     }
 
     /// Listens for the node's dials, and answers each one's handshake.
-    async fn listen(&mut self, local: &Local, honest: &mut Option<Honest>) {
+    async fn listen(&mut self, local: &Local, scripts: &mut Scripts) {
         let quic = self.bind(0);
         let (forward, mut incoming) = mpsc::channel(4);
         quic.serve(Forward(forward))
@@ -836,7 +1145,7 @@ impl PeerTask {
                     .await;
             let ended = match answered {
                 Ok(negotiated) => {
-                    self.serve(&conn, negotiated, peer_addr(self.index, 0), honest)
+                    self.serve(&conn, negotiated, peer_addr(self.index, 0), scripts)
                         .await
                 }
                 Err(_) => {
@@ -860,9 +1169,9 @@ impl PeerTask {
         });
     }
 
-    /// Writes `frames` on `stream` in order, recording each one's
-    /// `PeerFrame` before its write and its `PeerWritten` after. False once
-    /// a write fails, which leaves the rest unwritten.
+    /// Writes `frames` on `stream` in order, recording the `PeerFrame` of
+    /// each frame of a write before it and their `PeerWritten`s after.
+    /// False once a write fails, which leaves the rest unwritten.
     async fn write(
         &self,
         remote: SocketAddr,
@@ -870,14 +1179,20 @@ impl PeerTask {
         frames: Vec<Outgoing>,
     ) -> bool {
         for frame in frames {
-            let RecordBody::Frame { seq, .. } = frame.record else {
-                unreachable!("an outgoing frame records a PeerFrame");
-            };
-            self.record(remote, stream.id, frame.record);
+            let mut written = Vec::with_capacity(frame.records.len());
+            for record in frame.records {
+                let RecordBody::Frame { seq, .. } = record else {
+                    unreachable!("an outgoing frame records a PeerFrame");
+                };
+                written.push(seq);
+                self.record(remote, stream.id, record);
+            }
             if stream.send.write_all(&frame.bytes).await.is_err() {
                 return false;
             }
-            self.record(remote, stream.id, RecordBody::Written { seq });
+            for seq in written {
+                self.record(remote, stream.id, RecordBody::Written { seq });
+            }
         }
         true
     }
@@ -892,7 +1207,7 @@ impl PeerTask {
         conn: &Conn,
         negotiated: u64,
         remote: SocketAddr,
-        honest: &mut Option<Honest>,
+        scripts: &mut Scripts,
     ) -> Ended {
         let header_sync = negotiated & ZAKURA_CAP_HEADER_SYNC != 0;
         let (events, mut stream_events) = mpsc::unbounded_channel();
@@ -925,7 +1240,7 @@ impl PeerTask {
             zakura_rt::task::spawn_named("peer_header", read_frames(id, recv, events.clone()));
             reads.insert(id, 0);
             let mut stream = HeaderStream { id, send };
-            if let Some(honest) = honest.as_mut() {
+            if let Some(honest) = scripts.honest.as_mut() {
                 let frames = honest.start_stream();
                 if !self.write(remote, &mut stream, frames).await {
                     return Ended::Closed;
@@ -936,14 +1251,14 @@ impl PeerTask {
         loop {
             let now = Instant::now();
             let next = self.spec.script.get(self.taken).copied();
-            let ready = settled && honest.as_ref().is_none_or(|honest| honest.settled(next));
+            let wake = scripts.wake(next);
+            let ready =
+                settled && (scripts.honest.is_none() || wake.is_some_and(|wake| now >= wake));
             self.readiness.set(ready);
             // The honest script's next timer: its refresh, or when it may
             // become settled, which makes the peer ready.
-            let deadline = honest.as_ref().map(|honest| {
-                honest
-                    .wake(next)
-                    .filter(|wake| *wake > now)
+            let deadline = scripts.honest.as_ref().map(|honest| {
+                wake.filter(|wake| *wake > now)
                     .map_or(honest.deadline(), |wake| wake.min(honest.deadline()))
             });
             let mut frames = Vec::new();
@@ -952,7 +1267,7 @@ impl PeerTask {
                     StreamEvent::Header { id, send } => {
                         reads.insert(id, 0);
                         header = Some(HeaderStream { id, send });
-                        if let Some(honest) = honest.as_mut() {
+                        if let Some(honest) = scripts.honest.as_mut() {
                             frames = honest.start_stream();
                         }
                     }
@@ -977,7 +1292,10 @@ impl PeerTask {
                             payload: frame.payload.len() as u64,
                             credit: credit(&message),
                         });
-                        if let Some(honest) = honest.as_mut().filter(|_| current) {
+                        if let Some(adversary) = scripts.adversary.as_mut().filter(|_| current) {
+                            adversary.before_receive(&message);
+                        }
+                        if let Some(honest) = scripts.honest.as_mut().filter(|_| current) {
                             frames = honest.receive(&message, frame.payload.len());
                         }
                     }
@@ -1002,16 +1320,27 @@ impl PeerTask {
                         }
                         PeerAction::Redial => return self.fail("can't redial a live connection"),
                         PeerAction::Grant => {
-                            match honest.as_mut().map(Honest::release_grant) {
+                            match scripts.honest.as_mut().map(Honest::release_grant) {
                                 Some(Ok(released)) => frames = released,
                                 Some(Err(why)) => return self.fail(why),
                                 None => return self.fail("can't grant without the honest script"),
                             }
                         }
+                        PeerAction::Act { act } => {
+                            let (Some(adversary), Some(honest)) =
+                                (scripts.adversary.as_mut(), scripts.honest.as_mut())
+                            else {
+                                return self.fail("only an adversary can act");
+                            };
+                            match adversary.act(act, honest) {
+                                Ok(acted) => frames = acted,
+                                Err(why) => return self.fail(why),
+                            }
+                        }
                     }
                 }
                 () = zakura_rt::time::sleep_until(deadline.unwrap_or(now)), if deadline.is_some() => {
-                    if let Some(honest) = honest.as_mut() {
+                    if let Some(honest) = scripts.honest.as_mut() {
                         frames = honest.tick();
                     }
                 }
