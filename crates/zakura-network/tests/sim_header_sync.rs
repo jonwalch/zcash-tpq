@@ -6,17 +6,36 @@
 //! draw.
 #![cfg(zakura_sim)]
 
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{
+    cell::RefCell,
+    net::{Ipv4Addr, SocketAddr},
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 
 use zakura_chain::parameters::Network;
-use zakura_network::zakura::{
-    framed_channel, spawn_header_sync_reactor, FullStateFrontiers, HeaderSyncService,
-    HeaderSyncStartup, Peer, Service, ServicePeerDirection, ZakuraHeaderSyncConfig, ZakuraPeerId,
-    LOCAL_MAX_MESSAGE_BYTES, ZAKURA_CAP_HEADER_SYNC, ZAKURA_HEADER_SYNC_STREAM_VERSION,
-    ZAKURA_STREAM_HEADER_SYNC,
+use zakura_network::{
+    zakura::{
+        framed_channel, header_sync_header_bytes_for_network, spawn_header_sync_reactor,
+        v9::{
+            self, Cursor, Headers, HeadersOutcome, HeadersOutcomeCode, Message, Operation,
+            RegtestMessage, SubscribeHeaders,
+        },
+        wire_codec::{decode_frame, encode_frame},
+        AuxSchema, Credit, FullStateFrontiers, HeaderEntry, HeaderSyncService, HeaderSyncStartup,
+        MessageRule, Peer, Service, ServicePeerDirection, ServiceRegistry, ZakuraEndpoint,
+        ZakuraHandshakeConfig, ZakuraHeaderSyncConfig, ZakuraLocalLimits, ZakuraPeerId,
+        ZakuraProtocolHandler, ZakuraSupervisorHandle, ZakuraTrace, LOCAL_MAX_MESSAGE_BYTES,
+        ZAKURA_CAP_HEADER_SYNC, ZAKURA_HEADER_SYNC_STREAM_VERSION, ZAKURA_STREAM_HEADER_SYNC,
+    },
+    Config,
 };
 use zakura_node_services::header_chain::InertHeaderChainPort;
-use zakura_quic::NodeSecretKey;
+use zakura_quic::{
+    sim::{LinkModel, SeededInputs, SimNet},
+    NodeAddr, NodeSecretKey, QuicBindConfig, QuicEndpoint,
+};
 use zakura_rt::sync::CancellationToken;
 use zakura_scheduler::{RunOutcome, Scheduler, SchedulerConfig, SimInstant, Status};
 
@@ -377,5 +396,261 @@ fn a_replacement_session_outlives_the_old_teardown() {
     assert!(
         !steps.iter().any(|step| step.starts_with("panicked")),
         "{steps:?}"
+    );
+}
+
+/// The node's address.
+fn node_addr() -> SocketAddr {
+    SocketAddr::from((Ipv4Addr::new(10, 0, 0, 1), 4000))
+}
+
+/// The peer's address.
+fn peer_addr() -> SocketAddr {
+    SocketAddr::from((Ipv4Addr::new(10, 0, 0, 2), 4000))
+}
+
+/// The seed of every endpoint's keys and inputs.
+const SEED: [u8; 32] = [5; 32];
+
+/// One socket at `addr`.
+fn bind_config(addr: SocketAddr) -> QuicBindConfig {
+    QuicBindConfig {
+        addrs: vec![addr],
+        max_bidi_streams: 16,
+        max_connections: 16,
+        dial_reserve: 0,
+        max_closing_connections: 16,
+    }
+}
+
+/// Production network config on Regtest.
+fn regtest_config() -> Config {
+    Config {
+        network: Network::new_regtest(Default::default()),
+        ..Config::default()
+    }
+}
+
+/// Builds the node: a header-sync reactor on inert storage behind the real
+/// handler, which advertises header sync alone. Returns its QUIC endpoint,
+/// handler and local limits.
+fn bind_node(
+    net: &SimNet,
+    service: Arc<dyn Service>,
+) -> (QuicEndpoint, ZakuraProtocolHandler, ZakuraLocalLimits) {
+    let config = regtest_config();
+    let limits = ZakuraLocalLimits::from_config(&config);
+    let quic = QuicEndpoint::bind_with(
+        SeededInputs::node_key(SEED, 0),
+        &bind_config(node_addr()),
+        &limits.quic,
+        net.clone(),
+        SeededInputs::new(SEED, 0).endpoint_inputs(),
+    )
+    .expect("the node binds");
+    let supervisor = ZakuraSupervisorHandle::new(config.zakura.max_connections_per_ip);
+    let registry = ServiceRegistry::new(vec![service]).expect("one service registers");
+    let handler = ZakuraProtocolHandler::new_with_registry_and_trace(
+        supervisor,
+        config.network.clone(),
+        ZakuraHandshakeConfig::for_network(&config.network),
+        limits.clone(),
+        Arc::new(registry),
+        ZakuraTrace::noop(),
+    )
+    .with_local_node_id(quic.local_id());
+    (quic, handler, limits)
+}
+
+/// `ZakuraEndpoint::new` and `ZakuraEndpoint::dial` build and run without
+/// `zakura-testkit`. A dial to an address where nothing answers returns the
+/// transport's handshake timeout unchanged.
+#[test]
+fn endpoint_new_builds_without_the_testkit() {
+    let plan = Rc::new(RefCell::new(Plan(17)));
+    let mut sched = Scheduler::new(SchedulerConfig::default(), SimInstant::ZERO);
+    {
+        let plan = Rc::clone(&plan);
+        sched.set_draws(move |draw| plan.borrow_mut().below(draw.bound));
+    }
+    let net = SimNet::new(LinkModel::default());
+    let shutdown = CancellationToken::new();
+    let (handle, actions, reactor) =
+        spawn_header_sync_reactor(startup(shutdown.clone())).expect("the reactor starts");
+    sched.spawn_root("reactor", async move {
+        reactor.await.expect("the reactor ends on shutdown");
+    });
+    let service: Arc<dyn Service> = Arc::new(HeaderSyncService::new(handle));
+    let dialed = Rc::new(RefCell::new(None));
+    {
+        let (net, dialed) = (net.clone(), Rc::clone(&dialed));
+        sched.spawn_root("node", async move {
+            let _actions = actions;
+            let (quic, handler, limits) = bind_node(&net, service);
+            let endpoint = ZakuraEndpoint::new(quic, handler);
+            let unreachable =
+                NodeAddr::with_addrs(SeededInputs::node_key(SEED, 1).public(), [peer_addr()]);
+            let result = endpoint.dial(unreachable, &limits).await;
+            *dialed.borrow_mut() = Some(format!("{result:?}"));
+            endpoint.shutdown().await;
+        });
+    }
+    let mut steps = Vec::new();
+    run_to_end(&mut sched, &plan, &mut steps);
+    shutdown.cancel();
+    run_to_end(&mut sched, &plan, &mut steps);
+    let _ = sched.shutdown();
+    let dialed = dialed.borrow_mut().take().expect("the dial returned");
+    // The transport's handshake timeout comes back as it is, not wrapped as
+    // the dial's own deadline.
+    assert_eq!(dialed, "Err(QuicConnect(HandshakeTimeout))");
+}
+
+/// `ZakuraEndpoint::shutdown` stops a maintained dial started on an endpoint
+/// from `ZakuraEndpoint::new`, even while it is still retrying.
+#[test]
+fn shutdown_stops_a_maintained_dial() {
+    let plan = Rc::new(RefCell::new(Plan(17)));
+    let mut sched = Scheduler::new(SchedulerConfig::default(), SimInstant::ZERO);
+    {
+        let plan = Rc::clone(&plan);
+        sched.set_draws(move |draw| plan.borrow_mut().below(draw.bound));
+    }
+    let net = SimNet::new(LinkModel::default());
+    let shutdown = CancellationToken::new();
+    let (handle, actions, reactor) =
+        spawn_header_sync_reactor(startup(shutdown.clone())).expect("the reactor starts");
+    sched.spawn_root("reactor", async move {
+        reactor.await.expect("the reactor ends on shutdown");
+    });
+    let service: Arc<dyn Service> = Arc::new(HeaderSyncService::new(handle));
+    let stopped = Rc::new(RefCell::new(false));
+    {
+        let (net, stopped) = (net.clone(), Rc::clone(&stopped));
+        sched.spawn_root("node", async move {
+            let _actions = actions;
+            let (quic, handler, _limits) = bind_node(&net, service);
+            let endpoint = ZakuraEndpoint::new(quic, handler);
+            let unreachable =
+                NodeAddr::with_addrs(SeededInputs::node_key(SEED, 1).public(), [peer_addr()]);
+            let dial = endpoint.spawn_native_dial(unreachable);
+            // Long enough for at least one failed attempt and a backoff.
+            zakura_rt::time::sleep(Duration::from_secs(60)).await;
+            assert!(!dial.is_finished(), "the dial is still retrying");
+            endpoint.shutdown().await;
+            dial.await.expect("the dial task ends without panicking");
+            *stopped.borrow_mut() = true;
+        });
+    }
+    let mut steps = Vec::new();
+    run_to_end(&mut sched, &plan, &mut steps);
+    shutdown.cancel();
+    run_to_end(&mut sched, &plan, &mut steps);
+    let _ = sched.shutdown();
+    assert!(*stopped.borrow(), "the maintained dial ended at shutdown");
+}
+
+/// Every version 9 message builds from public fields, encodes, decodes to
+/// itself, and reads back field by field.
+#[test]
+fn codec_builds_every_row_from_outside_the_crate() {
+    let genesis = zakura_chain::block::genesis::regtest_genesis_block();
+    let parent = (zakura_chain::block::Height(0), genesis.hash());
+    let mut header = *genesis.header;
+    header.previous_block_hash = parent.1;
+    let target = header.hash();
+    let status = v9::Status {
+        work_anchor_height: parent.0,
+        work_anchor_hash: parent.1,
+        selected_tip_height: zakura_chain::block::Height(1),
+        selected_tip_hash: target,
+        suffix_cumulative_work: Default::default(),
+        oldest_retained_height: parent.0,
+        max_headers_per_response: 160,
+        max_subscriptions: 1,
+        max_message_bytes: 1 << 20,
+        tree_aux_schema_mask: 0,
+    };
+    let cursor = Cursor {
+        height: parent.0,
+        hash: parent.1,
+        headers: 0,
+        bytes: 0,
+    };
+    let open = SubscribeHeaders {
+        operation: Operation::Open,
+        subscription_id: 1,
+        update_sequence: 0,
+        initial_target_tip_hash: target,
+        acknowledged: cursor,
+        locator_hashes: vec![parent.1],
+        added_credit: Credit {
+            objects: 10,
+            bytes: 10_000,
+        },
+        tree_aux_schema: AuxSchema::None,
+    };
+    let page = Headers {
+        subscription_id: 1,
+        initial_target_tip_hash: target,
+        common_ancestor_height: parent.0,
+        common_ancestor_hash: parent.1,
+        reaches_initial_target: true,
+        tree_aux_schema: AuxSchema::None,
+        entries: vec![HeaderEntry {
+            header: Arc::new(header),
+            body_size: 1_000,
+            tree_aux: None,
+        }],
+    };
+    let outcome = HeadersOutcome {
+        subscription_id: 1,
+        initial_target_tip_hash: target,
+        outcome: HeadersOutcomeCode::SubscriptionClosed,
+    };
+    let messages = [
+        RegtestMessage::Status(status.clone()),
+        RegtestMessage::SubscribeHeaders(open.clone()),
+        RegtestMessage::Headers(page.clone()),
+        RegtestMessage::HeadersOutcome(outcome),
+    ];
+    for (message, row) in messages.iter().zip(RegtestMessage::ROWS) {
+        let frame = encode_frame(message).expect("the message encodes");
+        assert_eq!(frame.message_type, row.message_type, "{}", row.name);
+        let decoded = decode_frame::<RegtestMessage>(&frame).expect("the frame decodes");
+        assert_eq!(&decoded, message, "{}", row.name);
+        match decoded {
+            Message::Status(decoded) => {
+                assert_eq!(decoded.selected_tip_hash, status.selected_tip_hash);
+                assert_eq!(decoded.max_headers_per_response, 160);
+                assert_eq!(decoded.max_message_bytes, 1 << 20);
+            }
+            Message::SubscribeHeaders(decoded) => {
+                assert_eq!(decoded.operation, Operation::Open);
+                assert_eq!(decoded.acknowledged, cursor);
+                assert_eq!(decoded.locator_hashes, open.locator_hashes);
+                assert_eq!(decoded.added_credit, open.added_credit);
+            }
+            Message::Headers(decoded) => {
+                assert_eq!(decoded.common_ancestor_hash, parent.1);
+                assert!(decoded.reaches_initial_target);
+                assert_eq!(decoded.entries[0].header.hash(), target);
+                assert_eq!(decoded.entries[0].body_size, 1_000);
+            }
+            Message::HeadersOutcome(decoded) => {
+                assert_eq!(decoded.outcome, HeadersOutcomeCode::SubscriptionClosed);
+                assert_eq!(decoded.initial_target_tip_hash, target);
+            }
+        }
+    }
+    let network = Network::new_regtest(Default::default());
+    let names = |rows: &[MessageRule]| rows.iter().map(|row| row.name).collect::<Vec<_>>();
+    assert_eq!(
+        names(v9::rows(header_sync_header_bytes_for_network(&network))),
+        names(&RegtestMessage::ROWS)
+    );
+    assert_eq!(
+        v9::layout(&network)[0].messages.map(names),
+        Some(names(&RegtestMessage::ROWS))
     );
 }
