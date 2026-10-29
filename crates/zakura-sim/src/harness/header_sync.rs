@@ -4,10 +4,11 @@
 //! tapped. `header-sync/wire` runs the same node behind its real transport
 //! on simulated QUIC, with scripted peers (M5-C).
 
-use std::{any::Any, collections::BTreeSet, rc::Rc, sync::Arc};
+use std::{any::Any, cell::RefCell, collections::BTreeSet, rc::Rc, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use zakura_chain::{block::Height, parameters::Network};
+use zakura_header_chain::Frontier;
 use zakura_network::zakura::{
     spawn_header_sync_reactor, FullStateFrontiers, HeaderSyncStartup, ZakuraHeaderSyncConfig,
     LOCAL_MAX_MESSAGE_BYTES,
@@ -20,6 +21,7 @@ use zakura_storage::header::{
 };
 
 use super::{
+    header_node::StartupFacts,
     header_node::{
         policy, preload, tap::ReactorTap, Chain, Control, ControlStep, DispatchFlag, Effects,
         HeaderNode, Policy, PolicySource, Topology,
@@ -29,7 +31,10 @@ use super::{
 };
 use crate::{
     observe::StorageFact,
-    peer::{Dialer as PeerDialer, PeerControl, PeerFailure, PeerSpec, PeerTask, NODE_ADDR},
+    peer::{
+        honest::HonestChain, Dialer as PeerDialer, PeerControl, PeerFailure, PeerRecords, PeerSpec,
+        PeerTask, NODE_ADDR,
+    },
     property::{CheckCtx, HasView, Kind, Property, PropertyId, Source, Sources, Status, Verdict},
     storage::HEADER_SERVICE,
     Observation, RunConfig, Sim,
@@ -378,14 +383,37 @@ impl Default for WireScenario {
     }
 }
 
-/// The wire scenario's storage: the fixture and the node's controlled port
-/// with its chain committed. Cloning shares the port.
+/// The wire scenario's storage: the fixture, the node's controlled port
+/// with its chain committed, and each honest peer's chain. Cloning shares
+/// them, so a test can read them after a run.
 #[derive(Clone)]
 pub struct WirePorts {
     /// The fixture the node's chain comes from.
     pub fixture: HeaderFixture,
     /// The node's controlled port.
     pub node: Arc<ControlledPort>,
+    /// Each peer's chain, by index, if it runs the honest script.
+    pub chains: Vec<Option<Arc<HonestChain>>>,
+    /// What the node's reactor was started with, once the run builds it.
+    pub startup: Rc<RefCell<Option<StartupFacts>>>,
+    /// The peers' records the identity map hasn't placed yet.
+    records: PeerRecords,
+}
+
+impl WirePorts {
+    /// The node's selected header tip, read from its engine: the end-of-run
+    /// check that sync converged, as M4's tests read it.
+    pub fn selected_tip(&self) -> Frontier {
+        self.node.engine().snapshot().frontiers.header_best
+    }
+
+    /// How many peer records are still waiting for their stream's identity
+    /// rows. A run ends with some only if a peer wrote on a stream the node
+    /// hasn't admitted yet, so a test whose streams all reach admission
+    /// requires none.
+    pub fn unplaced_records(&self) -> usize {
+        self.records.borrow().len()
+    }
 }
 
 /// The node under test, named `node`, on a controlled port behind its real
@@ -423,12 +451,33 @@ impl Subsystem for HeaderWire {
         wire_config()
     }
 
-    /// Commits the node's chain to its port.
+    /// Commits the node's chain to its port, and builds each honest peer's
+    /// chain.
     fn prepare(scenario: &WireScenario) -> WirePorts {
         let fixture = HeaderFixture::regtest();
         let node = Arc::new(ControlledPort::new(&fixture));
         preload(node.engine(), &fixture, &scenario.node);
-        WirePorts { fixture, node }
+        let chains = scenario
+            .peers
+            .iter()
+            .map(|peer| {
+                peer.honest.as_ref().map(|honest| {
+                    let start = honest.subscribe.as_ref().map_or(0, |spec| spec.start);
+                    assert!(
+                        start <= honest.chain,
+                        "an honest peer subscribes from a height on its own chain"
+                    );
+                    Arc::new(HonestChain::new(&fixture, honest.chain))
+                })
+            })
+            .collect();
+        WirePorts {
+            fixture,
+            node,
+            chains,
+            startup: Rc::default(),
+            records: PeerRecords::default(),
+        }
     }
 
     /// Adds the network, then spawns the node as `header-sync/storage` does,
@@ -457,6 +506,7 @@ impl Subsystem for HeaderWire {
             dispatch.clone(),
             Some(observer),
         );
+        *ports.startup.borrow_mut() = Some(header.startup.clone());
         let names: Vec<String> = (0..scenario.peers.len())
             .map(|index| format!("peer-{index}"))
             .collect();
@@ -471,7 +521,7 @@ impl Subsystem for HeaderWire {
             observer,
         );
         let failure = PeerFailure::default();
-        let mut control = PeerControl::new(failure.clone());
+        let mut control = PeerControl::new(failure.clone(), ports.records.clone());
         for ((index, spec), name) in scenario.peers.iter().enumerate().zip(names) {
             let (readiness, commands) = control.add(&name, spec.script.clone());
             let (listening, listened) = zakura_rt::sync::watch::channel(false);
@@ -489,6 +539,9 @@ impl Subsystem for HeaderWire {
                 readiness,
                 failure: failure.clone(),
                 listening,
+                chain: ports.chains[index].clone(),
+                records: ports.records.clone(),
+                taken: 0,
             };
             sim.scheduler().spawn_root("peer", task.run());
             if spec.dialer == PeerDialer::Node {
@@ -508,13 +561,16 @@ impl Subsystem for HeaderWire {
         storage_properties()
     }
 
-    /// [`storage_sources`], plus the network's datagrams.
+    /// [`storage_sources`], plus the network's datagrams, the peers'
+    /// frames and the node's closes.
     fn sources() -> Sources {
         Sources::observed(&[
             Source::Schedule,
             Source::Storage,
             Source::View,
             Source::Datagrams,
+            Source::Frames,
+            Source::Closes,
         ])
     }
 
