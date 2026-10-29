@@ -29,6 +29,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use zakura_quic::sim::{Link, LinkModel, SimNet};
 
+pub(crate) use record::write_trace;
 pub use record::{record, record_witness, RecordError, RecordInput, WITNESS_FILE};
 
 use crate::{
