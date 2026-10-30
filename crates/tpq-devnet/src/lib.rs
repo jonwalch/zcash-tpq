@@ -1,19 +1,27 @@
 //! Bounded, opt-in devnet preparation and operations, outside the node graph.
+//! Disable default features to reuse public rules, canonical wallet profiles and
+//! saved-chain validation without wallet keys, preparation, funding or RPC operations.
 #![forbid(unsafe_code)]
 
+#[cfg(feature = "adapter")]
+pub mod adapter;
+#[cfg(feature = "wallet")]
 pub mod bootstrap;
+#[cfg(feature = "wallet")]
 pub mod funding;
+#[cfg(feature = "wallet")]
 pub mod rpc;
 pub mod storage;
 
 use hex::FromHex;
 use serde::{Deserialize, Serialize};
 use std::{io::Cursor, path::Path};
+#[cfg(feature = "wallet")]
+use zakura_chain::local_genesis::{
+    generate_local_testnet_with_slh_dsa_b128s_funding, LocalTestnetGenesisOptions,
+};
 use zakura_chain::{
     block::{Block, Height},
-    local_genesis::{
-        generate_local_testnet_with_slh_dsa_b128s_funding, LocalTestnetGenesisOptions,
-    },
     parameters::{
         testnet::{
             ConfiguredActivationHeights, ConfiguredCheckpoints, ConfiguredLockboxDisbursement,
@@ -133,6 +141,11 @@ impl Chain {
     /// Wallet transport identity derived from the validated native chain rules.
     pub fn wallet_profile(&self) -> Result<zakura_pq_wallet::Profile> {
         self.validate()?;
+        self.wallet_profile_from_rules()
+    }
+
+    // Only call after validating this immutable chain in the current operation.
+    fn wallet_profile_from_rules(&self) -> Result<zakura_pq_wallet::Profile> {
         let profile = zakura_pq_wallet::Profile {
             chain_fingerprint: Some(zakura_pq_wallet::Hex(
                 hex::decode(&self.chain_fingerprint)?
@@ -154,6 +167,27 @@ impl Chain {
             pq_activation_height: self.rules.experimental_slh_dsa_b128s_activation_height,
         };
         profile.validate()?;
+        Ok(profile)
+    }
+
+    /// Require canonical profile bytes to match this validated saved chain.
+    /// Neither this comparison nor the embedded fingerprint authenticates inputs;
+    /// callers must first bind them to an independently approved artifact set.
+    pub fn validate_wallet_profile(&self, bytes: &[u8]) -> Result<zakura_pq_wallet::Profile> {
+        let profile = zakura_pq_wallet::Profile::from_json(bytes)?;
+        self.validate()?;
+        self.compare_wallet_profile(profile)
+    }
+
+    // Private so callers cannot bypass fresh saved-chain validation.
+    fn compare_wallet_profile(
+        &self,
+        profile: zakura_pq_wallet::Profile,
+    ) -> Result<zakura_pq_wallet::Profile> {
+        require(
+            profile == self.wallet_profile_from_rules()?,
+            "wallet profile differs from saved chain",
+        )?;
         Ok(profile)
     }
 
@@ -245,6 +279,7 @@ pub(crate) fn decode_block(encoded: &str) -> Result<Block> {
 
 /// Generate one private local cohort. PoW is explicitly disabled in this recipe.
 /// A separate create-new private directory holds the classical key, not a PQ root.
+#[cfg(feature = "wallet")]
 pub fn prepare(public_dir: &Path, private_dir: &Path, name: String) -> Result<Chain> {
     storage::create_private_dir(private_dir)?;
     std::fs::create_dir(public_dir)?;

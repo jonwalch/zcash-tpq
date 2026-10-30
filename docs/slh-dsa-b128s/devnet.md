@@ -10,6 +10,142 @@ This is an opt-in, bounded local recipe, not a public-network launcher or a
 general classical wallet. The recipe disables proof of work explicitly. Do not
 expose it as a permissionless public chain. Live acceptance remains unqualified.
 
+## Reuse public rules and profiles without signing
+
+The existing library supports `default-features = false`. This keeps `Rules`,
+`Rules::network`, `Chain`, `Chain::validate`, `Chain::load`, `Chain::wallet_profile`
+and `Chain::validate_wallet_profile` available without wallet keys, the SLH
+signer or the transaction-signing context. It reuses the same native rule,
+saved-block and canonical profile checks. It does not copy consensus,
+fingerprint or profile parsing logic.
+
+`validate_wallet_profile` requires exact canonical profile bytes and compares
+every profile field with the validated saved chain. It rejects a profile that
+is valid by itself but has another genesis, fingerprint, activation or check
+budget. This is consistency checking, not authentication: first bind the input
+files to an independently approved public artifact set.
+
+The dependency on `zakura-pq-wallet` selects only its opt-in `public-profile`
+feature, with default features disabled. This exposes `Hex`, `Profile` and
+`Error`, not keys, signing, backup encryption or payment operations. The full
+wallet feature includes it. The public types moved from `manifest.rs` to
+`profile.rs`, retaining their public re-exports and validation. The existing
+`canonical.rs` is unchanged, including its clearing output buffer, ASCII/depth
+checks, duplicate/unknown rejection, exact serialization comparison and the
+4,096-byte profile limit. This reuses the implementation at TPQ source baseline
+`7d8d9349dbc8914c6423f1a5a3d3ef8f2f6f208d`; no research runtime dependency or
+new wire format is introduced.
+
+The default `wallet` feature retains the existing `tpq-devnet` executable,
+preparation, bootstrap, RPC and funding APIs. The
+executable requires that feature. Existing default commands and file formats
+are unchanged. A public-input adapter can select the signing-free library profile
+without adding another crate or importing private funding operations.
+
+This library boundary is not an OS sandbox. The optional public adapter below
+adds an offline process protocol, not deployment or host lifecycle authorization.
+Other consumers in the same Cargo graph can still enable the default feature;
+check the exact final consumer graph before packaging a host executable.
+The [dependency guard](../../tests/slh-dsa-b128s/dependencies/README.md) checks
+both standalone-tool and public-rules profiles across all targets.
+
+## Signing-free public-input adapter
+
+The separate `zdn-tpq-adapter` executable implements
+`zdn-public-chain-adapter/v1`. Build only this profile for host distribution:
+
+```sh
+cargo build --locked -p zakura-tpq-devnet --no-default-features \
+  --features adapter --bin zdn-tpq-adapter
+```
+
+The `adapter` feature selects only public validation, SHA-256 and TOML support.
+It does not select the `wallet` feature. Normal all-target checks may enable
+both; that executable refuses at startup rather than acting as a host adapter.
+Never package a combined-feature executable as signing-free. The normal/build
+dependency guard checks the dedicated adapter graph across all targets.
+
+Invoke the executable with exactly `--zdn-public-chain-adapter-v1`. It reads one
+bounded UTF-8 JSON request from stdin and writes one JSON response. Operations
+are `describe`, `compile` and `render`. Protocol, operation, fresh caller UUID,
+adapter-selection digest and operation context must match. Envelope and typed
+objects reject unknown/duplicate fields, positional arrays, floats and trailing
+JSON. Public metadata/schema is `zdn-external-public/v1`; implementation identity
+is `zdn-tpq` version `0.1.0`. A digest identifies bytes, not their publisher.
+
+`CompileInput` has exactly `descriptor`, `nativeRulesJson`, `walletProfileJson`
+and `seedBundle` (byte count/SHA-256). The descriptor has `schema`, `nativeName`
+and `nativeFingerprint`. Native rules and canonical profile are exact public
+file bytes in explicit slots, not arbitrary settings or an executable callback.
+The raw slot is always the regular file `seed-blocks.bin` in the staged working
+directory. Its format is repeated four-byte little-endian length plus exact
+block bytes, with no paths. The compiler verifies the bundle digest and actually
+decodes every block through `Chain::validate`, then checks the canonical profile
+with `Chain::validate_wallet_profile`. It does not trust claimed block hashes.
+`import_public` converts only explicit `chain.json` and `wallet-profile.json`
+bytes. Do not recursively upload a preparation directory or include `funder.json`.
+
+The exact compact result bytes contain native identity, full effective rules,
+collapsed native upgrade/branch schedule, dense seed identities and byte pins,
+sorted Cargo features/capabilities and finite transport class. Result hashes do
+not include request IDs or envelopes. `render` recompiles the public inputs and
+requires the exact compiled-result hash. Runtime paths, role, image digest,
+native listener, expected persistent NodeId and private public-peer inventory
+are bound in the request's input hash. Rendered configuration includes
+`network.zakura.expected_node_id` and keeps identity storage separate from chain
+state. ZDN must independently enforce its allowlisted security envelope before
+comparing or installing renders.
+
+The rule projection moved from the product's
+`zakura-rpc/src/methods/chain_diagnostics.rs` into
+`zakura-chain/src/chain_diagnostics.rs`. RPC supplies its actual verifier/runtime
+identity; the adapter supplies required true support flags for a future node.
+Those flags are expectations, not observations or evidence this executable has
+a verifier. The signing-contract constant has one native owner, used by consensus
+and both projections. No consensus/fingerprint implementation was copied and
+no RPC/service dependency was added to the adapter.
+
+Budgets: 4 MiB request/response, 2 MiB per metadata slot, 128 MiB raw bundle,
+256 blocks and the existing 1 MiB native seed-block decoder bound. Core may
+accept up to 2,000,000 bytes per saved block, but this adapter retains its stricter
+native-tool bound. This is not full 20 MB saved-history import. Core supervision
+must enforce deadlines/cancellation and independent output limits. Scrubbing
+environment variables does not establish OS, network or filesystem isolation.
+
+**Operational status:** offline contracts only. ZDN host delivery/sandbox,
+two-phase persistent peer inventory/UDP provisioning and install/startup/
+bootstrap/readiness/producer/update/recovery gates remain required before an
+external deployment can be enabled. Inspection/cleanup must not require adapter
+execution. A deliberate refusal is not supported deployment integration. No live,
+cloud, container, signing or payment qualification is provided by these contracts.
+
+The separate-terminal connection, managed identity, approved funding, uncertain
+wallet outcome and recovery workflow is in the [ZDN runbook](zdn.md). Use that
+runbook rather than treating this protocol reference as deployment approval.
+
+### Export only the public slots
+
+Build the separate signing-free importer with the same feature selection:
+
+```sh
+cargo build --locked -p zakura-tpq-devnet --no-default-features \
+  --features adapter --bin zdn-tpq-import
+target/debug/zdn-tpq-import ABS_CHAIN_JSON ABS_WALLET_PROFILE_JSON \
+  ABS_LINUX_HOST_ADAPTER EXECUTABLE_SHA256 SELECTION_SHA256 SOURCE_REVISION \
+  ABS_NEW_PUBLIC_DIR
+```
+
+All four paths must be absolute; the output directory must be new. The two
+64-character lowercase SHA-256 values pin the selected executable and adapter
+selection. The source revision is 40 lowercase hex characters. The importer
+validates the native chain, canonical profile and exact executable bytes before
+creating the directory. It writes only `descriptor.json`, `native-rules.json`,
+`wallet-profile.json`, `seed-blocks.bin`, `host-adapter`, `compiled.json` and
+`package.json`. The package pins exact slot bytes and the two original public
+source files. It does not execute the host adapter, upload files or read a funder.
+The final JSON contains the exact package pin and native fingerprint. The
+package's declarations are not an independent core trust decision.
+
 ## Prepare once
 
 After the package is included in the workspace, build it separately:
@@ -74,13 +210,23 @@ seeds. The existing native peer handshake, fingerprint, and state namespace
 rules provide isolation; the tool does not replace them.
 
 Enable the node's experimental SLH runtime feature. Bind authenticated RPC to
-loopback. Use the node's cookie file, with mode 0600 in a mode-0700 directory.
-The tool takes a numeric socket and cookie path, not credentials on the command
-line. It uses Basic authentication over literal-loopback HTTP only. It does
-not use DNS, proxy environment settings, redirects, or an external RPC URL.
+loopback. Direct mode uses the node's private cookie file, reopened for each
+request (mode 0600 in a mode-0700 directory), not credentials on the command line.
+Funding commands can instead replace the cookie positional argument with
+`--trusted-local-gateway`. This explicitly trusts a literal-loopback local gateway
+and sends no node credentials. Cookie and gateway modes are mutually exclusive;
+there is no automatic fallback. Bootstrap remains direct-cookie-only because the
+participant gateway cannot submit blocks or call administrator diagnostics.
+Both modes preserve approved-chain/profile checks and reject DNS, proxies,
+redirects and external endpoints. Keep a ZDN managed connection running in one
+terminal and use the wallet in another normal terminal for password prompts.
+Never put wallet passwords or dummy cookies in arguments, environment or journals.
 
 Each RPC has a ten-second total network deadline and a three-second connection
-timeout. Headers have a 16 KiB bound; requests and responses have a 2 MiB bound.
+timeout. Headers have a 16 KiB bound. Metadata retains the 2 MiB default body
+limit; approved block/transaction hex methods use finite 40,100,000-byte bounds
+including JSON overhead. This does not qualify maximum-size decoded verbose
+block objects, and every gateway/forwarding hop must also support the bound.
 Only fixed-length HTTP responses are accepted; chunked responses fail closed.
 Saved chain files have a 16 MiB bound, with at most 256 seed blocks and a 1 MiB
 bound on each decoded seed block. These are tool limits, not consensus limits.

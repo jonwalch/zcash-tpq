@@ -45,6 +45,7 @@ use crate::{
 };
 
 mod cache_dir;
+mod managed_identity;
 
 #[cfg(test)]
 pub(crate) mod tests;
@@ -92,6 +93,15 @@ pub enum ZakuraSecretKeyError {
     /// The configured `zakura_node_secret_key` is not a valid node secret key.
     #[error("configured zakura_node_secret_key is not a valid node secret key")]
     InvalidConfigured,
+    /// Managed storage is unavailable, unsafe, corrupt, or not durable.
+    #[error("managed native identity storage is unavailable or unsafe")]
+    ManagedStorage,
+    /// Managed identity must come from the persistent file, not a secret override.
+    #[error("managed native identity forbids a configured secret override")]
+    ManagedOverride,
+    /// The persisted public ID differs from the approved inventory.
+    #[error("managed native identity differs from expected node ID")]
+    ManagedMismatch,
 }
 
 /// The number of times Zakura will retry each initial peer's DNS resolution,
@@ -845,7 +855,12 @@ impl Config {
     /// The persisted key file is the node's long-term private identity. It is
     /// written outside the cache and state directories and restricted to owner
     /// read/write on Unix.
+    /// Managed deployments set `zakura.expected_node_id` and require the existing
+    /// strict durable identity instead of any of the ordinary fallback paths.
     pub fn zakura_secret_key(&self) -> Result<NodeSecretKey, ZakuraSecretKeyError> {
+        if self.zakura.expected_node_id.is_some() {
+            return managed_identity::load(self, false);
+        }
         if let Some(secret) = &self.zakura_node_secret_key {
             return NodeSecretKey::from_str(secret.expose_secret())
                 .map_err(|_| ZakuraSecretKeyError::InvalidConfigured);

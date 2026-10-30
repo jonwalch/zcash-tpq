@@ -123,19 +123,23 @@ pub enum Error {
     #[error("payment is still active at the trusted checkpoint")]
     PaymentActive,
     /// experimental SLH authorization failed.
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
     #[error("experimental SLH authorization failed")]
     Authorization(#[source] zakura_pq_slh_dsa_b_exp::Rejection),
     /// experimental SLH local signature verification failed.
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
     #[error("experimental SLH local signature verification failed")]
     Signing(#[source] zakura_pq_slh_dsa_b_sign::SignError),
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 impl From<zakura_pq_slh_dsa_b_exp::Rejection> for Error {
     fn from(rejection: zakura_pq_slh_dsa_b_exp::Rejection) -> Self {
         Self::Authorization(rejection)
     }
 }
 
+#[cfg(feature = "experimental-slh-dsa-b128s")]
 impl From<zakura_pq_slh_dsa_b_sign::SignError> for Error {
     fn from(error: zakura_pq_slh_dsa_b_sign::SignError) -> Self {
         match error {

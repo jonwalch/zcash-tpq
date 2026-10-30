@@ -27,6 +27,8 @@ use zeroize::Zeroizing;
 static MACHINE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 static COOKIE: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+#[cfg(feature = "experimental-slh-dsa-b128s")]
+static GATEWAY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 fn machine() -> bool {
@@ -49,16 +51,30 @@ fn rpc(
     profile: &Profile,
 ) -> Result<zakura_pq_wallet::rpc::LocalRpc, Box<dyn std::error::Error>> {
     use zakura_pq_wallet::rpc::LocalRpc;
+    if GATEWAY.load(std::sync::atomic::Ordering::Relaxed) {
+        if COOKIE.get().is_some() {
+            return Err("--trusted-local-gateway and --rpc-cookie are mutually exclusive".into());
+        }
+        return Ok(LocalRpc::trusted_local_gateway(endpoint.parse()?)?);
+    }
     match COOKIE.get() {
         Some(path) => Ok(LocalRpc::with_cookie(endpoint.parse()?, path)?),
         None if profile.network == 2 => Ok(LocalRpc::new(endpoint.parse()?)?),
-        None => Err("custom Testnet requires --rpc-cookie <private-cookie-file>".into()),
+        None => Err(
+            "custom Testnet requires --rpc-cookie <private-cookie-file> or --trusted-local-gateway"
+                .into(),
+        ),
     }
 }
 
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 const USAGE: &str = "Experimental isolated-chain PQ wallet keys and backups\n\
-Global options before the command: --json --rpc-cookie <private-cookie-file>\n\
+Global options before the command: --json [--rpc-cookie <private-cookie-file> | --trusted-local-gateway]\n\
+RPC endpoints are numeric nonzero loopback sockets, never URLs or DNS names.\n\
+--trusted-local-gateway explicitly trusts an established local gateway (zdn connect),\n\
+sends no node credentials, and is mutually exclusive with --rpc-cookie.\n\
+Custom Testnet RPC requires one of these modes and an independently approved profile.\n\
+Regtest retains its existing optional-cookie default. Authentication never falls back.\n\
 Usage:\n\
   pq-wallet create-slh-exp <trusted-profile.json> <new-backup-file> <birthday-height>\n\
   pq-wallet inspect <trusted-profile.json> <backup-file>\n\
@@ -211,15 +227,29 @@ fn main() -> std::process::ExitCode {
                 MACHINE.store(true, std::sync::atomic::Ordering::Relaxed);
                 args.remove(0);
             }
-            "--rpc-cookie" if COOKIE.get().is_none() && args.len() >= 2 => {
+            "--rpc-cookie"
+                if COOKIE.get().is_none() && args.len() >= 2 && !args[1].starts_with("--") =>
+            {
                 let path = std::path::PathBuf::from(&args[1]);
                 let _ = COOKIE.set(path);
                 args.drain(..2);
             }
+            "--trusted-local-gateway" if !GATEWAY.load(std::sync::atomic::Ordering::Relaxed) => {
+                GATEWAY.store(true, std::sync::atomic::Ordering::Relaxed);
+                args.remove(0);
+            }
             _ => break,
         }
     }
-    match run(&args) {
+    #[cfg(feature = "experimental-slh-dsa-b128s")]
+    let result = if COOKIE.get().is_some() && GATEWAY.load(std::sync::atomic::Ordering::Relaxed) {
+        Err("--trusted-local-gateway and --rpc-cookie are mutually exclusive".into())
+    } else {
+        run(&args)
+    };
+    #[cfg(not(feature = "experimental-slh-dsa-b128s"))]
+    let result = run(&args);
+    match result {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(error) => {
             // Display only deliberately sanitized wallet errors, not their sources.

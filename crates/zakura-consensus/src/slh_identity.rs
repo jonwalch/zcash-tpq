@@ -29,7 +29,7 @@ pub const fn experimental_slh_dsa_b128s_verifier_identity(
 ) -> ExperimentalSlhDsaB128sVerifierIdentity {
     ExperimentalSlhDsaB128sVerifierIdentity {
         schema_version: 1,
-        contract: "slh-dsa-b-128s-exp-v1",
+        contract: zakura_chain::chain_diagnostics::SLH_CONTRACT,
         suite_id: "f7",
         backend: if cfg!(feature = "experimental-slh-dsa-b128s") {
             "portable-rust"

@@ -12,7 +12,8 @@ pub use self::{entry_point::EntryPoint, start::StartCmd};
 
 use self::{
     audit_historical_treestates::AuditHistoricalTreestatesCmd, generate::GenerateCmd,
-    prune_state::PruneStateCmd, rollback_state::RollbackStateCmd, tip_height::TipHeightCmd,
+    native_identity::NativeIdentityCmd, prune_state::PruneStateCmd,
+    rollback_state::RollbackStateCmd, tip_height::TipHeightCmd,
     verify_historical_treestates::VerifyHistoricalTreestatesCmd,
 };
 
@@ -21,6 +22,7 @@ pub mod start;
 mod audit_historical_treestates;
 mod entry_point;
 mod generate;
+mod native_identity;
 pub mod prune_state;
 pub mod rollback_state;
 mod tip_height;
@@ -48,6 +50,9 @@ pub enum ZakuradCmd {
 
     /// Generate a default `zakura.toml` configuration
     Generate(GenerateCmd),
+
+    /// Ensure a managed native identity without starting node services
+    NativeIdentity(NativeIdentityCmd),
 
     /// Prune Zebra's finalized raw transaction data on disk
     PruneState(PruneStateCmd),
@@ -77,6 +82,7 @@ impl ZakuradCmd {
             // Utility commands that don't use server components
             AuditHistoricalTreestates(_)
             | Generate(_)
+            | NativeIdentity(_)
             | PruneState(_)
             | RollbackState(_)
             | TipHeight(_)
@@ -96,6 +102,7 @@ impl ZakuradCmd {
             // Utility commands
             AuditHistoricalTreestates(_)
             | Generate(_)
+            | NativeIdentity(_)
             | PruneState(_)
             | RollbackState(_)
             | TipHeight(_)
@@ -120,6 +127,7 @@ impl ZakuradCmd {
             // - needs to be read easily.
             AuditHistoricalTreestates(_)
             | Generate(_)
+            | NativeIdentity(_)
             | PruneState(_)
             | RollbackState(_)
             | TipHeight(_)
@@ -146,6 +154,7 @@ impl ZakuradCmd {
         match self {
             AuditHistoricalTreestates(cmd) => cmd.run(&config),
             Generate(cmd) => cmd.run(),
+            NativeIdentity(cmd) => cmd.run(&config),
             PruneState(cmd) => cmd.run(&config),
             RollbackState(cmd) => cmd.run(&config),
             Start(cmd) => cmd.run(config),
