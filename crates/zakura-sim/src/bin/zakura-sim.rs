@@ -15,13 +15,14 @@
 //! zakura-sim properties --sim <name>
 //! zakura-sim triage --sim <name> --out <dir> [--child-secs <s>] <input>...
 //! zakura-sim verify-archive <dir>
+//! zakura-sim campaign (build|start|resume|close|status|verify) --store <dir> ...
 //! ```
 //!
 //! It works only in the simulator build, `RUSTFLAGS="--cfg zakura_sim"`.
 //! `cargo xtask record`, `cargo xtask replay`, `cargo xtask shrink`,
 //! `cargo xtask sim-versions`, `cargo xtask sim-seeds`, `cargo xtask sim-suite`,
-//! `cargo xtask sim-triage` and `cargo xtask sim-verify-archive` build and run
-//! it with that flag.
+//! `cargo xtask sim-triage`, `cargo xtask sim-verify-archive` and
+//! `cargo xtask sim-campaign` build and run it with that flag.
 
 /// Prints that this build has no simulator, and exits with code 2.
 #[cfg(not(zakura_sim))]
@@ -48,6 +49,10 @@ fn main() {
         }
     }
 }
+
+#[cfg(zakura_sim)]
+#[path = "zakura-sim/campaign.rs"]
+mod campaign;
 
 #[cfg(zakura_sim)]
 mod cli {
@@ -98,7 +103,11 @@ mod cli {
              [--against <confirmation.json>]\n  \
              zakura-sim properties --sim <name>\n  \
              zakura-sim triage --sim <name> --out <dir> [--child-secs <s>] <input>...\n  \
-             zakura-sim verify-archive <dir>\n\n\
+             zakura-sim verify-archive <dir>\n",
+        );
+        text.push_str(super::campaign::USAGE);
+        text.push_str(
+            "\n\
              `--input` is a full fuzz input: the scenario prefix, then the Plan bytes.\n\
              `--scenario` and `--plan` run Plan bytes against a given scenario.\n\
              `--witness` judges the run as a witness test of the property, writes the\n\
@@ -143,9 +152,10 @@ mod cli {
              directory under --out.\n\
              `verify-archive` checks every bundle under a triage archive against its\n\
              SHA256SUMS, counts the bundles under each harness, provenance and\n\
-             signature, and exits 1 if any bundle doesn't match.\n\n\
-             Harnesses:\n",
+             signature, and exits 1 if any bundle doesn't match.\n",
         );
+        text.push_str(super::campaign::HELP);
+        text.push_str("\nHarnesses:\n");
         for entry in HARNESSES {
             let _ = writeln!(
                 text,
@@ -171,6 +181,7 @@ mod cli {
             Some("properties") => properties(args.collect()),
             Some("triage") => triage(args.collect()),
             Some("verify-archive") => verify_archive(args.collect()),
+            Some("campaign") => super::campaign::run(args.collect()),
             Some("-h" | "--help") => {
                 print!("{}", usage());
                 Ok(())

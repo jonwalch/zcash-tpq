@@ -9,20 +9,17 @@ use std::{
     time::Instant,
 };
 
+pub use zakura_sim::explore::EXPECT_VAR;
 use zakura_sim::{
     explore::{
         feedback::{Feedback, NewCollector},
         input_path, save_failure, save_input, traces_root, Bucket, Classified, ExploreOutcome,
-        ExploreRun, Worker, ABANDON_LIMIT_VAR,
+        ExploreRun, Worker, ABANDON_LIMIT_PANIC, ABANDON_LIMIT_VAR,
     },
     harness::{fixtures, HarnessEntry, RecordError},
     property::PropertyId,
     trace::{artifacts_root, TRACES_DIR},
 };
-
-/// The variable that makes a target panic only on one property's
-/// violation, for `cargo fuzz tmin`.
-pub const EXPECT_VAR: &str = "ZAKURA_SIM_EXPECT";
 
 /// What the filter prints before its panic, followed by the harness's name,
 /// so `cargo xtask sim-minimize` can check which harness a target runs.
@@ -127,7 +124,8 @@ fn run(
             // The count grows only on an abandoned run, so this input is
             // the one that reached the limit.
             panic!(
-                "abandoned: {} runs abandoned their cleanup, and {ABANDON_LIMIT_VAR} is {limit}; \
+                "{ABANDON_LIMIT_PANIC}: {} runs abandoned their cleanup, and {ABANDON_LIMIT_VAR} \
+                 is {limit}; \
                  the process exits for its supervisor to restart it; input at {}",
                 worker.abandoned(),
                 input_path(&artifacts_root(), Bucket::Abandoned, None, input).display()

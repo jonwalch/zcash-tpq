@@ -39,7 +39,13 @@ pub use process::{
     classify_process, ProcessClassified, ProcessExit, ProcessFailure, ProcessResult,
 };
 pub use save::{input_path, save_failure, save_input, traces_root, SavedFailure, INPUTS_DIR};
-pub use worker::{abandon_limit, Worker, ABANDON_LIMIT_VAR, DEFAULT_ABANDON_LIMIT};
+pub use worker::{
+    abandon_limit, Worker, ABANDON_LIMIT_PANIC, ABANDON_LIMIT_VAR, DEFAULT_ABANDON_LIMIT,
+};
+
+/// The variable that makes a fuzz target panic only on one property's
+/// violation, for `cargo fuzz tmin`.
+pub const EXPECT_VAR: &str = "ZAKURA_SIM_EXPECT";
 
 use crate::{
     check::{Checker, PropertyOutcome, PropertyReport},

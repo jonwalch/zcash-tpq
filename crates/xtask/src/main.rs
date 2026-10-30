@@ -139,6 +139,7 @@ fn try_main() -> Result<(), BoxError> {
         Some("sim-minimize") => sim_minimize::run(&repo_root()?, args),
         Some("sim-triage") => sim::run(&repo_root()?, "triage", args),
         Some("sim-verify-archive") => sim::run(&repo_root()?, "verify-archive", args),
+        Some("sim-campaign") => sim::run(&repo_root()?, "campaign", args),
         Some("-h" | "--help") | None => {
             if args.next().is_some() {
                 return Err(Box::new(UsageError(
@@ -379,6 +380,10 @@ fn print_usage(output: &mut impl fmt::Write) -> fmt::Result {
         "  cargo xtask sim-triage --sim <name> --out <dir> [--child-secs <s>] <input>..."
     )?;
     writeln!(output, "  cargo xtask sim-verify-archive <dir>")?;
+    writeln!(
+        output,
+        "  cargo xtask sim-campaign (build|start|resume|close|status|verify) --store <dir> ..."
+    )?;
     writeln!(output)?;
     writeln!(
         output,
@@ -500,5 +505,14 @@ fn print_usage(output: &mut impl fmt::Write) -> fmt::Result {
     writeln!(
         output,
         "bundles under each harness, provenance and signature."
+    )?;
+    writeln!(output)?;
+    writeln!(
+        output,
+        "Builds, starts, resumes, closes and checks durable zakura-sim fuzz campaigns, whose"
+    )?;
+    writeln!(
+        output,
+        "manifests, corpus snapshots and failures live in the --store directory."
     )
 }
