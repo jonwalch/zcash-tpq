@@ -266,6 +266,9 @@ main.
   running; stop it with `kill -- -<pid>`.
 - `status` lists the runs, and `verify` checks every record in the store,
   and each end record against its run's files as `resume` does.
+- `evidence` sums what a run's fuzzer processes counted, per worker and for
+  the run, and `--out <file>` also writes it as JSON. See
+  [Campaign evidence](#campaign-evidence).
 
 Every run ends with exactly one end record, `runs/<manifest>/end.json`, with
 one of three statuses:
@@ -298,6 +301,9 @@ cargo xtask sim-campaign start --store /mnt/campaign --campaign discovery-2026-1
     --sim discovery/wait-complete --build <sha256> --workers 4 --seconds 43200 \
     --compact-secs 600 --artifacts <uri>
 
+# What the last run's processes counted, and where the counts fall short.
+cargo xtask sim-campaign evidence --store /mnt/campaign --out evidence.json
+
 # After the host or the supervisor stopped: check the store and continue.
 cargo xtask sim-campaign verify --store /mnt/campaign
 cargo xtask sim-campaign resume --store /mnt/campaign
@@ -311,6 +317,40 @@ cargo xtask record --sim discovery/wait-complete \
     --input /mnt/campaign/runs/<run>/workers/0/artifacts/crash-… --out <dir>
 cargo xtask replay <dir>
 ```
+
+### Campaign evidence
+
+The supervisor sets `ZAKURA_SIM_STATS` to each worker's
+`workers/<n>/stats/` directory, and each fuzzer process writes its counts to
+`stats-<pid>.json` there: every 10 seconds, when the target stops the
+process on a run it counted (a failure it panics on, or the abandonment
+limit), and at a clean exit. The counts are runs by what the target did
+(`clean`, `fail`, `harness-failure`, `abandoned`), runs by how they ended
+(`violation`, `budget`, `idle/<status>`, `harness`, `not-run`), drains that
+stopped at their bound, cleanup (abandoned runs and their leaked tasks, and
+runs with unwound, panicked or unwind-failed tasks), each property's runs by
+outcome with its applicable evaluations, and the runs that reached each
+feature. Only the clean exit marks a file `complete`, since libFuzzer exits
+there with `exit` between runs and the target's `atexit` handler runs. An
+`exit` from inside a run leaves the file incomplete. A crash, a timeout
+or a kill leaves the counts of the last write, and the file stays incomplete.
+The compaction's merge writes no stats.
+
+`evidence` matches each file to the attempt in the worker's attempts log
+whose process has the file's process ID and started while the attempt ran.
+It reports each worker's outcome, its processes by how they ended, and its
+counts; the run's totals; the totals of the complete files that logged
+processes wrote and whose attempts exited cleanly, with code 0 and no
+failure in their output; each property's assumption losses
+(`assumptions-never-held` and `assumption-lost`); the features reached, by
+family; and the properties, the harness's and any file's, that none of
+those complete files saw apply. It lists every gap: a worker that didn't
+spend its budget, a process that left no file, a file its process never
+marked complete, a complete file whose attempt didn't exit cleanly, a file
+no logged process wrote (a reused process ID or a
+stale copy among them), and a file that can't be read, that another
+harness wrote, or that isn't named `stats-<pid>.json`. Feature counts come
+only from a target with a collector.
 
 `cargo xtask sim-minimize` minimizes a saved failure, as
 [Minimizing a crash](#minimizing-a-crash) describes, and
