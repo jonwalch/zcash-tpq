@@ -198,7 +198,9 @@ fn orchard_and_ironwood_collection_counts_order_and_pool_identity_are_committed(
                         ..
                     } => {
                         if change == "swap_pool" {
-                            std::mem::swap(orchard_shielded_data, ironwood_shielded_data);
+                            let orchard = orchard_shielded_data.take().map(|bundle| *bundle);
+                            *orchard_shielded_data = ironwood_shielded_data.take().map(Box::new);
+                            *ironwood_shielded_data = orchard;
                         } else if pool == 2 {
                             *orchard_shielded_data = None;
                         } else {
@@ -227,7 +229,7 @@ fn pq_spends_can_have_only_shielded_destinations() {
             else {
                 unreachable!()
             };
-            *sapling_mut(&mut tx) = bundle;
+            *sapling_mut(&mut tx) = *bundle;
             assert!(matches!(
                 sapling_mut(&mut tx).transfers,
                 sapling::TransferData::JustOutputs { .. }

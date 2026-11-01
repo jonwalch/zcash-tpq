@@ -137,7 +137,7 @@ Before the offline audit, retrieve the current upstream and its history. This
 also supplies the previous upstream object needed to authenticate PR #12:
 
 ```sh
-git fetch --no-tags https://github.com/zakura-core/zakura.git b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73
+git fetch --no-tags https://github.com/zakura-core/zakura.git 436a6af46d04637bba793efce5b16be94ec1f7f0
 ```
 
 The content CI uses the same explicit input step. This adds no upstream branch

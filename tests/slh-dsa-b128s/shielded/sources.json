@@ -10,21 +10,21 @@
   "reference_dependencies": [
     {
       "name": "zakura-primitives",
-      "version": "3.0.0",
+      "version": "5.0.0-rc.2",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "adebd9056b44c0e31ac87cb3522c5d88e8fb20bd35000011f0d3400c25106043"
+      "checksum": "6e1c6321a57b57941f85e7e68652a0da379ba55ec0ec1674f2d72335d27aa2d2"
     },
     {
       "name": "zakura-protocol",
-      "version": "3.0.0",
+      "version": "5.0.0-rc.2",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "5eee90e81d499ec2c90a00cd42788d42122d73b3ee6c32a2cd4b6e3c1a40fade"
+      "checksum": "480ba9ac7fd31c57e68354f4a2656f68bbf2dd2b21ca0e4f7b803788127daa12"
     },
     {
       "name": "zakura-transparent",
-      "version": "3.0.0",
+      "version": "5.0.0-rc.2",
       "source": "registry+https://github.com/rust-lang/crates.io-index",
-      "checksum": "9d7bba9785bc014d149b54654ffbd57cfdffe676a751fdacc0e4f64f4785b3d7"
+      "checksum": "281547aae87f9485f6e8a7d596d538d730026cb4fb5f3511fa6dc0fb8a3f2ebd"
     }
   ],
   "fixtures": [

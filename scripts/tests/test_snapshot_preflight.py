@@ -119,43 +119,6 @@ class SnapshotStartupTests(unittest.TestCase):
 
 
 class ReleaseLayoutTests(unittest.TestCase):
-    def test_both_specs_are_checked_before_snapshot_setup(self):
-        source = SCRIPT.with_name("checkpoint-sync-bench.sh").read_text()
-        # Run only the real preflight call sequence, with all external operations
-        # stubbed. No wrapper setup, git fetch, download, build, or node can run.
-        preflight = source.split("\nensure_deps\nensure_bench_home\n", 1)[1]
-        preflight = preflight.split("\nensure_snapshot\n", 1)[0] + "\nensure_snapshot\n"
-        stubs = '''
-ensure_source() { :; }
-die() { exit 1; }
-require_upstream_snapshot_layout() {
-  printf 'source:%s\\n' "$1"
-  [ "$1" != bad ]
-}
-python3() {
-  printf 'release:%s\\n' "$6"
-  [ "$6" != bad ]
-}
-ensure_snapshot() { echo snapshot; }
-'''
-        for build in ("source", ""):
-            for primary, baseline in (("good", "good"), ("good", "bad"), ("bad", "good"), ("good", "")):
-                with self.subTest(build=build, primary=primary, baseline=baseline):
-                    result = subprocess.run(
-                        ["bash", "-eu", "-o", "pipefail", "-c", stubs + preflight],
-                        env={**os.environ, "BUILD_REF": build, "PRIMARY_SPEC": primary,
-                             "BASELINE_SPEC": baseline, "SNAPSHOT_CHECK": str(SCRIPT), "GH_REPO": "owner/repo"},
-                        capture_output=True, text=True, timeout=5, check=False,
-                    )
-                    accepted = "bad" not in (primary, baseline)
-                    self.assertEqual(result.returncode == 0, accepted, result.stderr)
-                    lines = result.stdout.splitlines()
-                    self.assertEqual("snapshot" in lines, accepted)
-                    mode = "source" if build else "release"
-                    self.assertEqual(lines[0], f"{mode}:{primary}")
-                    if primary != "bad" and baseline:
-                        self.assertEqual(lines[1], f"{mode}:{baseline}")
-
     def test_upstream_release_is_accepted(self):
         with mock.patch.object(snapshot, "urlopen", return_value=io.BytesIO(
             b'pub const STATE_DATABASE_KIND: &str = "state";'

@@ -23,8 +23,8 @@ from generate_transactions import canonical, strict_json  # noqa: E402
 
 FOUNDATION = "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc"
 FOUNDATION_TREE = "ac1ad49b6262001d4c07b7458f9638859cc75c36"
-UPSTREAM = "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73"
-UPSTREAM_TREE = "13fc2c226ad28ff1a26dd50698bca227e8cc903e"
+UPSTREAM = "436a6af46d04637bba793efce5b16be94ec1f7f0"
+UPSTREAM_TREE = "672556660886bd00d35d8591fe9291d3ef7fcb2c"
 # GitHub squashed PR #12, so its exact upstream entries have no upstream parent
 # at this historical commit. Its exact record also survives later feature squashes.
 RECORDED_SQUASH_IMPORTS = {

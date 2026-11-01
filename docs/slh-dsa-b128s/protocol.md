@@ -12,8 +12,8 @@ Live acceptance and independent security review remain open.
 
 | Item | Pinned value |
 | --- | --- |
-| Zakura commit | `b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73` |
-| Zakura tree | `13fc2c226ad28ff1a26dd50698bca227e8cc903e` |
+| Zakura commit | `436a6af46d04637bba793efce5b16be94ec1f7f0` |
+| Zakura tree | `672556660886bd00d35d8591fe9291d3ef7fcb2c` |
 | `PQC-Suite-B/signatures` commit | `b392fe82d2d9770142477a576a758a233888bc0a` |
 | Algorithm | `Blake3_128s` |
 | Verifier and wallet signer hash dependency | BLAKE3 `=1.8.5`, without Rayon |
@@ -168,7 +168,7 @@ Moving an old cache does not migrate it.
 Automatic cleanup stays within `state-tpq`. Old `state` caches remain on disk;
 another upstream node may still use them. Remove an old cache only after
 confirming that it is no longer needed. The inherited public-network snapshot
-bake, source-build benchmark, and NU7 seed tools reject this fork's layout.
+bake and NU7 seed tools reject this fork's layout.
 They cannot convert upstream transaction indexes by moving directories.
 `deploy/runner/feed_run.sh` requires an explicit `BENCH_DB_REL` that matches its
 binary and snapshot, such as `state-tpq/v31/<network>` for this fork.
@@ -177,10 +177,10 @@ each running binary. This check occurs after normal writable startup and any
 supported upstream database reuse or upgrade. It does not use a read-only open,
 override the configured network, or accept later sync heights as evidence of
 snapshot reuse. A failed check stops the run before it collects benchmark results.
-The checkpoint benchmark checks both source refs, or both release tags' source
-layouts, before it downloads a snapshot or builds a binary. The later startup
-check also covers cached binaries. These checks do not migrate upstream indexes
-to the fork format. See the feed runner's [runbook](../../deploy/runner/runbook.md).
+Upstream removed the unused checkpoint and performance benchmark workflows.
+The feed runner retains the startup check, including for cached binaries.
+These checks do not migrate upstream indexes to the fork format.
+See the feed runner's [runbook](../../deploy/runner/runbook.md).
 
 The classical block signature-operation limit deliberately remains 20,000,
 including legacy and P2SH operations. A transparent-payment workload can reach

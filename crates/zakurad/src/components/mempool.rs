@@ -24,12 +24,13 @@ use std::{
     iter,
     net::IpAddr,
     pin::{pin, Pin},
+    sync::Arc,
     task::{Context, Poll},
     time::{Duration, Instant},
 };
 
 use futures::{future::FutureExt, stream::Stream};
-use tokio::sync::{broadcast, mpsc, oneshot};
+use tokio::sync::{broadcast, mpsc, oneshot, Notify};
 use tower::{buffer::Buffer, timeout::Timeout, util::BoxCloneService, Service, ServiceExt};
 
 use zakura_chain::{
@@ -637,6 +638,10 @@ pub struct Mempool {
     /// The canonical IPs of zcashd-compat sidecars. The mempool never bans,
     /// cools down, or disconnects these peers.
     zcashd_compat_peer_ips: HashSet<IpAddr>,
+
+    /// Signalled after each transaction download and verify task finishes.
+    /// Shared with every downloader, and kept across mempool resets.
+    verification_finished: Arc<Notify>,
 }
 
 impl Mempool {
@@ -677,6 +682,7 @@ impl Mempool {
                 .into_iter()
                 .map(|ip| ip.to_canonical())
                 .collect(),
+            verification_finished: Arc::new(Notify::new()),
         };
 
         // Make sure `is_enabled` is accurate.
@@ -684,6 +690,13 @@ impl Mempool {
         service.update_state(None, service.is_caught_up_to_start());
 
         (service, transaction_subscriber)
+    }
+
+    /// Returns the signal that fires after each transaction verification finishes.
+    ///
+    /// A mempool request sent after this signal adds the verified transaction.
+    pub(crate) fn verification_finished(&self) -> Arc<Notify> {
+        self.verification_finished.clone()
     }
 
     /// Is the mempool enabled by a debug config option?
@@ -761,6 +774,7 @@ impl Mempool {
             self.expose_peer_addresses,
             self.config.max_transaction_bytes,
             self.peer_cooldowns.clone(),
+            self.verification_finished.clone(),
         ));
         self.active_state = ActiveState::Enabled {
             storage: storage::Storage::with_network(&self.config, self.chain_tip_change.network()),

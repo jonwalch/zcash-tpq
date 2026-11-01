@@ -8,7 +8,7 @@ import sys
 
 import generate_transactions as corpus
 
-UPSTREAM = "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73"
+UPSTREAM = "436a6af46d04637bba793efce5b16be94ec1f7f0"
 PIN_PATH = "docs/slh-dsa-b128s/imports.json"
 SOURCE_PATHS = [PIN_PATH, "tests/slh-dsa-b128s/fixtures/generate_devnet_transactions.py",
                 "tests/slh-dsa-b128s/fixtures/data/v5-1of1.json",

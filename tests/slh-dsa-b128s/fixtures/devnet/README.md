@@ -21,11 +21,11 @@ the coordinator's ignored `.context` directory. Hashes identify recorded inputs;
 they do not prove a compiler's execution history.
 
 New production uses the current Zakura pin
-`b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73`. Before it calls the host or signer,
+`436a6af46d04637bba793efce5b16be94ec1f7f0`. Before it calls the host or signer,
 the producer requires that pin to match the
 [source ledger](../../../../docs/slh-dsa-b128s/imports.json). Its source inventory
 also records the ledger, so a change during production fails the final identity
-check. The host and independent schema checker accept this pin and the four
+check. The host and independent schema checker accept this pin and the five
 recorded historical pins; unknown pins fail. Mocked tests check the reported pin
 and refusal before signing. These changes do not regenerate the fixtures below
 or extend their historical receipts to the current source.

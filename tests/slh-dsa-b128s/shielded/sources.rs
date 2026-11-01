@@ -58,12 +58,10 @@ pub fn actions_mut(tx: &mut Transaction, pool: u8) -> &mut orchard::ShieldedData
             ironwood_shielded_data,
             ..
         } => match pool {
-            ORCHARD => orchard_shielded_data,
-            IRONWOOD => ironwood_shielded_data,
+            ORCHARD => orchard_shielded_data.as_deref_mut().unwrap(),
+            IRONWOOD => ironwood_shielded_data.as_mut().unwrap(),
             _ => unreachable!("no such action pool"),
-        }
-        .as_mut()
-        .unwrap(),
+        },
         _ => unreachable!("shielded fixtures are v5 or v6"),
     }
 }

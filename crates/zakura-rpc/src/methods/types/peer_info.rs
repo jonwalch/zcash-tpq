@@ -24,6 +24,10 @@ pub struct PeerInfo {
     #[getset(get_copy = "pub")]
     pub(crate) inbound: bool,
 
+    /// The best chain height the peer advertised when it connected, or -1 if unknown.
+    #[getset(get_copy = "pub")]
+    pub(crate) startingheight: i64,
+
     /// The round-trip ping time in seconds.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[getset(get = "pub")]
@@ -38,6 +42,9 @@ pub struct PeerInfo {
 /// Response type for the `getpeerinfo` RPC method.
 pub type GetPeerInfoResponse = Vec<PeerInfo>;
 
+/// The `startingheight` zcashd reports for a peer whose handshake height is unknown.
+const UNKNOWN_STARTING_HEIGHT: i64 = -1;
+
 impl PeerInfo {
     /// Creates peer information without optional handshake metadata.
     pub fn new(
@@ -51,6 +58,7 @@ impl PeerInfo {
             subver: None,
             version: None,
             inbound,
+            startingheight: UNKNOWN_STARTING_HEIGHT,
             pingtime,
             pingwait,
         }
@@ -64,6 +72,7 @@ impl From<MetaAddr> for PeerInfo {
             subver: None,
             version: None,
             inbound: meta_addr.is_inbound(),
+            startingheight: UNKNOWN_STARTING_HEIGHT,
             pingtime: meta_addr.rtt().map(|d| d.as_secs_f64()),
             pingwait: meta_addr.ping_sent_at().map(|t| t.elapsed().as_secs_f64()),
         }
@@ -77,6 +86,9 @@ impl From<ConnectedPeer> for PeerInfo {
             subver: peer.user_agent.map(|user_agent| user_agent.to_string()),
             version: peer.version.map(|version| version.0),
             inbound: peer.is_inbound,
+            startingheight: peer
+                .start_height
+                .map_or(UNKNOWN_STARTING_HEIGHT, |height| i64::from(height.0)),
             pingtime: peer.rtt.map(|duration| duration.as_secs_f64()),
             pingwait: peer
                 .ping_sent_at
@@ -92,6 +104,7 @@ impl Default for PeerInfo {
             subver: None,
             version: None,
             inbound: false,
+            startingheight: UNKNOWN_STARTING_HEIGHT,
             pingtime: None,
             pingwait: None,
         }
@@ -115,6 +128,7 @@ mod tests {
         let json = serde_json::to_value(PeerInfo::from(peer)).expect("peer info serializes");
         assert_eq!(json["addr"], "[2001:db8::1]:19934");
         assert_eq!(json["inbound"], true);
+        assert_eq!(json["startingheight"], UNKNOWN_STARTING_HEIGHT);
         for absent in ["subver", "version", "pingtime", "pingwait"] {
             assert!(
                 json.get(absent).is_none(),
@@ -129,6 +143,7 @@ mod tests {
             addr: "127.0.0.1:8233".parse().expect("test address parses"),
             user_agent: Some(Arc::from("/Zakura:1.0.3/")),
             version: Some(Version(170_160)),
+            start_height: Some(zakura_chain::block::Height(3_500_000)),
             is_inbound: true,
             rtt: None,
             ping_sent_at: None,
@@ -139,5 +154,6 @@ mod tests {
         assert_eq!(peer_info.subver.as_deref(), Some("/Zakura:1.0.3/"));
         assert_eq!(peer_info.version, Some(170_160));
         assert!(peer_info.inbound);
+        assert_eq!(peer_info.startingheight, 3_500_000);
     }
 }

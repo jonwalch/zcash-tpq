@@ -6,6 +6,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use zakura_chain::block;
+
 use crate::{
     peer::ConnectionInfo,
     protocol::external::types::Version,
@@ -23,6 +25,8 @@ pub struct ConnectedPeer {
     pub user_agent: Option<Arc<str>>,
     /// The Zcash protocol version from a legacy handshake, absent for native-only peers.
     pub version: Option<Version>,
+    /// The best chain height from a legacy handshake, absent for native-only peers.
+    pub start_height: Option<block::Height>,
     /// Whether the remote peer initiated the connection.
     pub is_inbound: bool,
     /// The latest heartbeat round-trip time.
@@ -34,12 +38,13 @@ pub struct ConnectedPeer {
 impl ConnectedPeer {
     /// Build metadata from the native transport's admitted socket and direction.
     ///
-    /// Native handshakes do not advertise a Zcash version or user agent.
+    /// Native handshakes do not advertise a Zcash version, user agent, or starting height.
     pub fn from_native(addr: PeerSocketAddr, is_inbound: bool) -> Self {
         Self {
             addr,
             user_agent: None,
             version: None,
+            start_height: None,
             is_inbound,
             rtt: None,
             ping_sent_at: None,
@@ -52,6 +57,7 @@ impl ConnectedPeer {
             addr: connection_info.connected_addr.diagnostic_remote_addr()?,
             user_agent: Some(sanitize_subversion(&connection_info.remote.user_agent).into()),
             version: Some(connection_info.remote.version),
+            start_height: Some(connection_info.remote.start_height),
             is_inbound: connection_info.connected_addr.is_inbound(),
             rtt: None,
             ping_sent_at: None,
@@ -304,6 +310,7 @@ mod tests {
                 .expect("test address parses"),
             user_agent: Some(Arc::from("/Zakura:1.0.0/")),
             version: Some(Version(1)),
+            start_height: Some(block::Height(3_500_000)),
             is_inbound: false,
             rtt: None,
             ping_sent_at: None,
@@ -339,6 +346,7 @@ mod tests {
         let registry = PeerRegistry::default();
         let outbound = peer_id(10);
         let inbound = peer_id(11);
+        assert_eq!(native_peer(101, false).start_height, None);
         registry.register_native_connection(outbound.clone(), 1, native_peer(101, false));
         registry.register_native_connection(inbound.clone(), 2, native_peer(102, true));
         assert_eq!(

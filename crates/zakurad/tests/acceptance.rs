@@ -125,13 +125,12 @@ use tower::ServiceExt;
 
 use zakura_chain::{
     amount::Amount,
-    block::{self, genesis::regtest_genesis_block, ChainHistoryBlockTxAuthCommitmentHash, Height},
+    block::{self, genesis::regtest_genesis_block, Height},
     parameters::{
         testnet::{ConfiguredActivationHeights, ConfiguredCheckpoints, RegtestParameters},
         Network::{self, *},
-        NetworkUpgrade,
     },
-    serialization::{BytesInDisplayOrder, ZcashSerialize as _},
+    serialization::ZcashSerialize as _,
     transparent,
 };
 use zakura_node_services::rpc_client::RpcRequestClient;
@@ -1228,13 +1227,17 @@ async fn sync_checkpoints_local() -> Result<()> {
     consumer_config.network.cache_dir = false.into();
     consumer_config.consensus.checkpoint_sync = true;
 
+    // Stopping at the last checkpoint can exit before the mempool activates.
+    // Require a successful checkpoint shutdown so the restart checks persisted state.
+    let checkpoint_stop_regex =
+        format!("{STOP_AT_HEIGHT_REGEX}.*commit checkpoint-verified request");
     let reuse_tempdir = sync_until_with_config(
         CHECKPOINT_TEST_HEIGHT,
         &consumer_network,
-        STOP_AT_HEIGHT_REGEX,
+        &checkpoint_stop_regex,
         LARGE_CHECKPOINT_TIMEOUT,
         None,
-        MempoolBehavior::ShouldAutomaticallyActivate,
+        MempoolBehavior::MayActivate,
         true,
         consumer_config.clone(),
     )?;
@@ -2813,12 +2816,17 @@ async fn regtest_coinbase() -> Result<()> {
     common::coinbase::regtest_coinbase().await
 }
 
+#[cfg(feature = "indexer-rpc")]
 #[tokio::test(flavor = "multi_thread")]
 async fn trusted_chain_sync_handles_forks_correctly() -> Result<()> {
     use std::sync::Arc;
 
     use tokio::time::timeout;
-    use zakura_chain::{chain_tip::ChainTip, primitives::byte_array::increment_big_endian};
+    use zakura_chain::{
+        block::ChainHistoryBlockTxAuthCommitmentHash, chain_tip::ChainTip,
+        parameters::NetworkUpgrade, primitives::byte_array::increment_big_endian,
+        serialization::BytesInDisplayOrder,
+    };
     use zakura_rpc::methods::GetBlockHashResponse;
     use zakura_state::{ReadResponse, Response};
 

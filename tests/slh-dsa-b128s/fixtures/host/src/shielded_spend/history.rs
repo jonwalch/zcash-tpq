@@ -647,7 +647,7 @@ mod tests {
                         )
                     },
                 );
-                *action_slot(&mut tx, pool) = Some(chain_legacy_action(&fake).unwrap());
+                set_action(&mut tx, pool, Some(chain_legacy_action(&fake).unwrap()));
             } else {
                 let mut builder = Builder::new(
                     BundleType::DEFAULT,
@@ -675,7 +675,7 @@ mod tests {
                         )
                     },
                 );
-                *action_slot(&mut tx, pool) = Some(chain_action(&fake).unwrap());
+                set_action(&mut tx, pool, Some(chain_action(&fake).unwrap()));
             }
             sources.push(ShieldedFundingId {
                 pool: pool.into(),
@@ -828,7 +828,11 @@ mod tests {
                             )
                         },
                     );
-                    *action_slot(&mut spend_tx, &note.pool) = Some(chain_action(&fake).unwrap());
+                    set_action(
+                        &mut spend_tx,
+                        &note.pool,
+                        Some(chain_action(&fake).unwrap()),
+                    );
                 }
             }
         }
@@ -865,7 +869,11 @@ mod tests {
             let mut tx = context(&final_recipe).unwrap().tx;
             *sapling_slot(&mut tx) = sapling_slot(&mut spend_tx).clone();
             for pool in final_recipe.pools.iter().filter(|pool| *pool != "sapling") {
-                *action_slot(&mut tx, pool) = action_slot(&mut spend_tx, pool).clone();
+                set_action(
+                    &mut tx,
+                    pool,
+                    action_slot(&mut spend_tx, pool).map(|data| data.clone()),
+                );
             }
             let raw = hex::encode(tx.zcash_serialize_to_vec().unwrap());
             // This only checks finalization correspondence and classical signing;
@@ -921,7 +929,6 @@ mod tests {
         let mut spent = history.transactions[&hash].1.as_ref().clone();
         let nf = fixed_hex::<32>(notes[2].metadata["nullifier"].as_str().unwrap()).unwrap();
         action_slot(&mut spent, "ironwood")
-            .as_mut()
             .unwrap()
             .actions
             .iter_mut()

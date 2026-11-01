@@ -58,22 +58,21 @@ edition = "2021"
 # Published from `crates/zakura-assets/` in this repository. The dependency name and the
 # published name now match, so no `package` rename is needed: every consumer, script, and
 # gate refers to `zakura-assets` and nothing else.
-zakura-assets = { version = "=0.3524060.0" }
+zakura-assets = { version = "=0.3535411.0" }
 incrementalmerkletree = { version = "0.8.2", features = ["legacy-api"] }
-orchard = { version = "=4.0.0", package = "zakura-orchard", default-features = false, features = ["backend-halo2", "circuit", "multicore", "std"] }
-sapling-crypto = { version = "=4.0.0", package = "zakura-sapling-crypto", default-features = false, features = ["circuit", "multicore"] }
-zcash_address = { version = "=4.0.0", package = "zakura-address", default-features = false, features = ["std"] }
+orchard = { version = "=5.0.0-rc.2", package = "zakura-orchard", default-features = false, features = ["backend-halo2", "circuit", "multicore", "std"] }
+sapling-crypto = { version = "=5.0.0-rc.2", package = "zakura-sapling-crypto", default-features = false, features = ["circuit", "multicore"] }
+zcash_address = { version = "=5.0.0-rc.2", package = "zakura-address", default-features = false, features = ["std"] }
 zakura-mmr-tree = { path = "crates/zakura-mmr-tree", version = "0.1.0" }
-zcash_primitives = { version = "=4.0.0", package = "zakura-primitives", default-features = false, features = ["std", "circuits", "multicore", "backend-halo2"] }
-zcash_transparent = { version = "=4.0.0", package = "zakura-transparent", default-features = false, features = ["std"] }
-zcash_protocol = { version = "=4.0.0", package = "zakura-protocol", default-features = false, features = ["std"] }
+zcash_primitives = { version = "=5.0.0-rc.2", package = "zakura-primitives", default-features = false, features = ["std", "circuits", "multicore", "backend-halo2"] }
+zcash_transparent = { version = "=5.0.0-rc.2", package = "zakura-transparent", default-features = false, features = ["std"] }
+zcash_protocol = { version = "=5.0.0-rc.2", package = "zakura-protocol", default-features = false, features = ["std"] }
 base64 = "0.22.1"
 bech32 = "0.11.0"
-bellman = { version = "=4.0.0", package = "zakura-bellman" }
+bellman = { version = "=5.0.0-rc.2", package = "zakura-bellman" }
 bitflags = "2.9"
-bitvec = "1.0"
 blake2b_simd = "1.0"
-bls12_381 = { version = "=4.0.0", package = "zakura-bls12-381" }
+bls12_381 = { version = "=5.0.0-rc.2", package = "zakura-bls12-381" }
 bs58 = "0.5"
 byteorder = "1.5"
 bytes = "1.10"
@@ -84,14 +83,14 @@ criterion = { version = "0.8.2", default-features = false, features = ["rayon", 
 curve25519-dalek = "4.1"
 derive-new = "0.7"
 ed25519-zebra = "4.2"
-equihash = { version = "=4.0.0", package = "zakura-equihash" }
+equihash = { version = "=5.0.0-rc.2", package = "zakura-equihash" }
 eyre = { version = "0.6.12", default-features = false, features = ["auto-install"] }
 futures = "0.3.31"
 futures-core = "0.3.31"
 futures-util = "0.3.31"
 getset = "0.1.7"
 group = "0.14"
-halo2 = { version = "=4.0.0", package = "zakura-halo2-proofs" }
+halo2 = { version = "=5.0.0-rc.2", package = "zakura-halo2-proofs" }
 hex = "0.4.3"
 http-body = "1.0.1"
 http-body-util = "0.1.3"
@@ -100,7 +99,7 @@ hyper-util = "0.1.11"
 indexmap = "2.8"
 insta = "1.42"
 itertools = "0.14"
-jubjub = { version = "=4.0.0", package = "zakura-jubjub" }
+jubjub = { version = "=5.0.0-rc.2", package = "zakura-jubjub" }
 async-trait = "0.1.89"
 libc = "0.2"
 metrics = "0.24"
@@ -115,8 +114,8 @@ rand_10 = { package = "rand", version = "0.10" }
 rand_chacha_10 = { package = "rand_chacha", version = "0.10" }
 rand_core_10 = { package = "rand_core", version = "0.10" }
 rayon = "1.10"
-reddsa = { version = "=4.0.0", package = "zakura-reddsa" }
-redjubjub = { version = "=4.0.0", package = "zakura-redjubjub" }
+reddsa = { version = "=5.0.0-rc.2", package = "zakura-reddsa" }
+redjubjub = { version = "=5.0.0-rc.2", package = "zakura-redjubjub" }
 regex = "1.11"
 # SPEC DEP-4: the sans-I/O QUIC state machine only. zakura-quic owns the socket
 # layer and the async driver, so neither `quinn` nor `quinn-udp` is a dependency.
@@ -127,31 +126,24 @@ rustls = { version = "0.23.45", default-features = false, features = ["ring", "s
 rustls-pki-types = "1.12"
 # Zakura's fork of rocksdb 0.24.0 (https://github.com/zakura-core/rust-rocksdb-wrapper).
 # It compiles the bundled RocksDB C++ as a unity build, 16 sources per
-# translation unit. The library is still named `rocksdb`, so no code changes
-# are needed.
+# translation unit, and without its default `full` feature it also leaves out
+# RocksDB features Zakura does not use (see the fork's README). The library is
+# still named `rocksdb`, so no code changes are needed.
 #
-# `full` compiles all of RocksDB. Without it, zakura-librocksdb-sys 0.17.5 skips
-# the sources of features Zakura does not use, but still compiles
-# utilities/transactions/snapshot_checker.cc, which calls into the skipped
-# write-prepared transaction code. Whether that dangling reference survives
-# the link depends on the C++ toolchain: GCC 16 keeps it, and `zakurad` fails
-# to link with an undefined `WritePreparedTxnDB::GetCommitEntry`. Keep `full`
-# until a fork release removes the reference.
+# The fork's CI links that build with many GCC and clang versions, in release
+# and debug, and checks that no compiled code references the skipped sources,
+# because 0.24.2's build failed to link with GCC 16 (#1583).
 #
-# `bindgen-runtime` makes zakura-librocksdb-sys's bindgen load libclang itself.
-# Without it, a build that resolves a second bindgen version elsewhere (for
-# example the fresh placeholder project cargo-semver-checks generates) unifies
-# clang-sys into runtime mode while this bindgen never loads the library, and
-# the build script panics with "a `libclang` shared library is not loaded on
-# this thread".
-rocksdb = { version = "=0.24.2", package = "zakura-rocksdb", default-features = false, features = ["bindgen-runtime", "full"] }
+# The fork commits its RocksDB C API bindings, so building needs neither
+# bindgen nor libclang.
+rocksdb = { version = "=0.24.4", package = "zakura-rocksdb", default-features = false }
 secp256k1 = "0.33"
 semver = "1.0.26"
 serde = "1.0.219"
 serde_json = "1.0.140"
 sha2 = "0.10"
 socket2 = "0.6"
-sinsemilla = { version = "=4.0.0", package = "zakura-sinsemilla" }
+sinsemilla = { version = "=5.0.0-rc.2", package = "zakura-sinsemilla" }
 anyhow = "1.0"
 subtle = { version = "2.6", default-features = false }
 tempfile = "3.20"
@@ -172,8 +164,8 @@ tracing = "0.1.41"
 # the `log`-to-`tracing` bridge would only add `tracing-log` and `log`.
 tracing-subscriber = { version = "0.3.19", default-features = false, features = ["ansi", "fmt", "smallvec", "std"] }
 uint = "0.10"
-zcash_note_encryption = { version = "=4.0.0", package = "zakura-note-encryption" }
-zcash_script = "0.6"
+zcash_note_encryption = { version = "=5.0.0-rc.2", package = "zakura-note-encryption" }
+zcash_script = { version = "=0.0.1", package = "zakura-zcash-script" }
 zeroize = "1.8"
 
 # All cargo-release configuration lives in this table. Do not add a root
@@ -303,14 +295,6 @@ overflow-checks = false
 incremental = false
 codegen-units = 16
 
-[profile.dev.package.bitvec]
-opt-level = 3
-debug-assertions = false
-overflow-checks = false
-incremental = false
-codegen-units = 16
-
-# Block sync hashes every body's transaction ids on its peer tasks.
 [profile.dev.package.sha2]
 opt-level = 3
 debug-assertions = false
@@ -366,6 +350,18 @@ inherits = "release"
 # most expensive code generation or cross-crate optimization.
 opt-level = 2
 lto = "off"
+
+[profile.planted]
+# `cargo xtask planted` builds the simulator with this profile. A planted case
+# can run over a million simulated steps, which an unoptimized build takes
+# minutes for. The checks the dev profile makes, such as debug assertions and
+# overflow checks, stay on, so a patched build fails as a test build would.
+inherits = "dev"
+opt-level = 2
+debug-assertions = true
+overflow-checks = true
+# As in [profile.test]: panic messages still name the file and line.
+debug = 0
 
 [workspace.lints.rust]
 # The linter should ignore these expected config flags/values

@@ -20,7 +20,7 @@ use zakura_rt::{
     sim,
     sync::{
         atomic::{AtomicU64 as RtAtomicU64, Ordering as RtOrdering},
-        Mutex as RtMutex, Notify, Semaphore,
+        CancellationToken, Mutex as RtMutex, Notify, Semaphore,
     },
     task::{self, JoinSet},
     time::{self, Instant},
@@ -691,6 +691,52 @@ fn mutex_kept_across_runs_gets_a_fresh_identity() {
     let fresh_id = parked_on(&mut s, wait_fresh);
     let kept_id = parked_on(&mut s, wait_kept);
     assert_ne!(fresh_id, kept_id);
+}
+
+#[test]
+fn mutex_points_name_their_mutex() {
+    use zakura_scheduler::{
+        At, Op,
+        RunOutcome::{Parked, Reached},
+    };
+    let reach = |s: &mut Scheduler, task: zakura_scheduler::JoinHandle| match s.run(task.task()) {
+        Reached(at) => at,
+        other => panic!("expected a point, got {other:?}"),
+    };
+    let shared = Arc::new(RtMutex::new(()));
+    let own = Arc::new(RtMutex::new(()));
+    let mut s = Scheduler::new(SchedulerConfig::default(), SimInstant::ZERO);
+    let held = shared.clone();
+    let holder = s.spawn_root("holder", async move {
+        #[allow(clippy::await_holding_lock)]
+        {
+            let _guard = held.lock().unwrap();
+            pending::<()>().await;
+        }
+    });
+    let waiter = s.spawn_root("waiter", async move { drop(shared.lock().unwrap()) });
+    let other = s.spawn_root("other", async move { drop(own.lock().unwrap()) });
+    assert!(
+        s.ready().iter().all(|r| r.at.object.is_none()),
+        "the top of a coroutine touches no object"
+    );
+
+    let at = reach(&mut s, holder);
+    assert_eq!((at.op, at.n), (Op::Lock, 1));
+    let shared_id = at.object.expect("a lock point names its mutex");
+    run_until_waiting(&mut s, holder.task());
+
+    let at = reach(&mut s, waiter);
+    assert_eq!((at.op, at.object), (Op::Lock, Some(shared_id)));
+    let offered: Vec<At> = s.ready().iter().map(|r| r.at).collect();
+    assert!(offered.contains(&at), "ready() offers the same point");
+    assert_eq!(s.run(waiter.task()), Parked(shared_id));
+
+    let lock = reach(&mut s, other);
+    let own_id = lock.object.expect("a lock point names its mutex");
+    assert_ne!(own_id, shared_id);
+    let release = reach(&mut s, other);
+    assert_eq!((release.op, release.object), (Op::Release, Some(own_id)));
 }
 
 /// Runs one task that draws an `rng()` value and builds a map, with `seed`
@@ -1378,6 +1424,132 @@ fn rt_join_returns_the_output_when_completion_races_abort() {
         "{:?}",
         joined.borrow()
     );
+}
+
+/// One worker. `holder` keeps a `zakura-rt` mutex across a `yield_now`, and
+/// a blocking job parks on it. If the parked job held the only worker,
+/// `holder` could never run to release the lock.
+#[test]
+fn blocking_job_holds_no_worker() {
+    let contended = |s: &mut Scheduler| -> Check {
+        let lock = Arc::new(RtMutex::new(()));
+        let held = lock.clone();
+        s.spawn_root("holder", async move {
+            #[allow(clippy::await_holding_lock)]
+            {
+                let _guard = held.lock().unwrap();
+                task::yield_now().await;
+            }
+        });
+        let joined = shared(Cell::new(None));
+        let out = joined.clone();
+        s.spawn_root("joiner", async move {
+            let job = task::spawn_blocking_named("job", move || {
+                drop(lock.lock().unwrap());
+                7
+            });
+            out.set(Some(job.await.unwrap()));
+        });
+        Box::new(move |r| {
+            (r.status != Status::Quiescent || joined.get() != Some(7))
+                .then(|| format!("{:?}, joined {:?}", r.status, joined.get()))
+        })
+    };
+    assert_eq!(first_violation(1, CLEAN, contended), None);
+}
+
+#[test]
+fn blocking_job_ignores_abort_after_it_starts() {
+    use zakura_scheduler::RunOutcome::Reached;
+    for started in [false, true] {
+        let mut s = Scheduler::new(SchedulerConfig::default(), SimInstant::ZERO);
+        let job = task::spawn_blocking_named("job", || {
+            point();
+            5u32
+        });
+        if started {
+            let id = s.ready()[0].task;
+            while !matches!(s.run(id), Reached(at) if at.op == zakura_scheduler::Op::Yield) {}
+        }
+        job.abort();
+        let joined = shared(RefCell::new(None));
+        let out = joined.clone();
+        s.spawn_root("joiner", async move {
+            *out.borrow_mut() = Some(job.await.map_err(|error| error.is_cancelled()));
+        });
+        let status = drive(&mut s, 0, &mut Vec::new(), &mut Vec::new());
+        assert_eq!(status, Status::Quiescent, "started {started}");
+        let expected = if started { Ok(5) } else { Err(true) };
+        assert_eq!(*joined.borrow(), Some(expected), "started {started}");
+    }
+}
+
+/// Block-sync serving's shape, with one worker: a blocking job checks a
+/// cancellation token before each of four items, while another task cancels
+/// it. The canceller runs while the job is in flight, so the job can stop
+/// after any number of items, not only before the first or after the last.
+#[test]
+fn blocking_job_sees_cancel_between_items() {
+    let mut stopped_after = std::collections::BTreeSet::new();
+    for seed in 0..64 {
+        let pushed_count = shared(Cell::new(None));
+        let count = pushed_count.clone();
+        let (_, violation) = run_fixture(1, seed, |s| {
+            let token = CancellationToken::new();
+            let items = Arc::new(RtMutex::new(Vec::new()));
+            let pushed = items.clone();
+            let canceller = token.clone();
+            s.spawn_root("canceller", async move {
+                // A few points first spread the cancel across the job's
+                // items, so these seeds reach every stop.
+                for _ in 0..4 {
+                    point();
+                }
+                canceller.cancel();
+            });
+            drop(task::spawn_blocking_named("job", move || {
+                for item in 0..4 {
+                    if token.is_cancelled() {
+                        return;
+                    }
+                    pushed.lock().unwrap().push(item);
+                }
+            }));
+            Box::new(move |r| {
+                count.set(Some(items.lock().unwrap().len()));
+                (r.status != Status::Quiescent).then(|| format!("{:?}", r.status))
+            })
+        });
+        assert_eq!(violation, None, "seed {seed}");
+        stopped_after.insert(pushed_count.get().expect("the check ran"));
+    }
+    assert_eq!(stopped_after, (0..=4).collect());
+}
+
+#[test]
+fn blocking_job_panic_reaches_the_join() {
+    let (result, violation) = run_fixture(1, 0, |s| {
+        let payload = shared(Cell::new(None));
+        let out = payload.clone();
+        s.spawn_root("root", async move {
+            let error = task::spawn_blocking_named("job", || -> u32 { panic!("boom") })
+                .await
+                .unwrap_err();
+            out.set(Some(*error.into_panic().downcast::<&str>().unwrap()));
+        });
+        Box::new(move |_| (payload.get() != Some("boom")).then(|| format!("{:?}", payload.get())))
+    });
+    assert_eq!(violation, None);
+    assert_eq!(result.panics, ["boom"]);
+}
+
+#[test]
+fn blocking_job_carries_its_label() {
+    let s = Scheduler::new(SchedulerConfig::default(), SimInstant::ZERO);
+    drop(task::spawn_blocking_named("block_sync_serve_encode", || ()));
+    drop(task::spawn_blocking(|| ()));
+    let names: Vec<String> = s.ready().iter().map(|t| s.task_name(t.task)).collect();
+    assert_eq!(names, ["block_sync_serve_encode.1", "blocking.1"]);
 }
 
 /// Counts drops of a task-owned resource.

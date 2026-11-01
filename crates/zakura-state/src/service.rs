@@ -52,8 +52,8 @@ use crate::{
         MAX_HISTORICAL_TREE_REPLAY_BLOCKS, MAX_LEGACY_CHAIN_BLOCKS,
     },
     error::{
-        AwaitBlockInfoError, CommitBlockError, CommitCheckpointVerifiedError, InvalidateError,
-        PreciousError, ReconsiderError,
+        AwaitBlockInfoError, BlockHeaderNotFound, CommitBlockError, CommitCheckpointVerifiedError,
+        InvalidateError, PreciousError, ReconsiderError,
     },
     request::TimedSpan,
     response::NonFinalizedBlocksListener,
@@ -1846,7 +1846,7 @@ impl Service<Request> for StateService {
         poll
     }
 
-    #[instrument(name = "state", skip(self, req))]
+    #[instrument(name = "state", level = "debug", skip(self, req))]
     fn call(&mut self, req: Request) -> Self::Future {
         req.count_metric();
         let span = Span::current();
@@ -2845,7 +2845,7 @@ impl Service<ReadRequest> for ReadStateService {
         Poll::Ready(Ok(()))
     }
 
-    #[instrument(name = "read_state", skip(self, req))]
+    #[instrument(name = "read_state", level = "debug", skip(self, req))]
     fn call(&mut self, req: ReadRequest) -> Self::Future {
         req.count_metric();
         let timer = CodeTimer::start_desc(req.variant_name());
@@ -2988,20 +2988,20 @@ impl Service<ReadRequest> for ReadStateService {
                     .height_or_else(|hash| {
                         read::find::height_by_hash(best_chain.clone(), &state.db, hash)
                     })
-                    .ok_or_else(|| BoxError::from("block hash or height not found"))?;
+                    .ok_or(BlockHeaderNotFound { hash_or_height })?;
 
                 let hash = hash_or_height
                     .hash_or_else(|height| {
                         read::find::hash_by_height(best_chain.clone(), &state.db, height)
                     })
-                    .ok_or_else(|| BoxError::from("block hash or height not found"))?;
+                    .ok_or(BlockHeaderNotFound { hash_or_height })?;
 
                 let next_height = height.next()?;
                 let next_block_hash =
                     read::find::hash_by_height(best_chain.clone(), &state.db, next_height);
 
                 let header = read::block_header(best_chain, &state.db, height.into())
-                    .ok_or_else(|| BoxError::from("block hash or height not found"))?;
+                    .ok_or(BlockHeaderNotFound { hash_or_height })?;
 
                 Ok(ReadResponse::BlockHeader {
                     header,

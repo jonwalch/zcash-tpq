@@ -37,13 +37,28 @@ pub struct Obligation {
     pub bound: LivenessBound,
     /// True if an observation discharges the obligation with `key`.
     pub discharged_by: fn(&ObligationKey, &Observation) -> bool,
+    /// How many open obligations one matching observation discharges.
+    pub cardinality: Cardinality,
     /// The steps a violation would depend on, in order.
     pub witness: Vec<u64>,
 }
 
-/// What an obligation waits on: its property and one subject. One
-/// observation discharges at most the oldest open obligation that it
-/// matches, so two subjects never share a discharge.
+/// How many open obligations one observation discharges. Either way, it
+/// discharges only obligations whose trigger it follows and whose key it
+/// matches, so an old close never answers a later trigger.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Cardinality {
+    /// The oldest match only, as a completion belongs to one operation or
+    /// owner.
+    One,
+    /// Every match, as one connection close answers every earlier
+    /// consequence on that connection.
+    Every,
+}
+
+/// What an obligation waits on: its property and one subject. Its
+/// [`Cardinality`] says whether one observation may discharge several
+/// obligations with matching keys.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ObligationKey {
     /// The property that opened it.
@@ -83,9 +98,9 @@ pub enum LivenessBound {
         /// The operation counted. Not `Op::Poll`: a poll boundary logs
         /// `TaskWaiting`, never a point, so a registry rejects it.
         op: Op,
-        /// The runtime object's creation label. Matching on it waits for the
-        /// scheduler to keep `Point.object` in its observations
-        /// (zakura#1643), so a registry rejects `Some` today.
+        /// The runtime object's creation label. Observations name an object
+        /// only by its creator and ordinal, and only a `Mutex` reports one,
+        /// so a registry rejects `Some` today.
         object: Option<&'static str>,
         /// The most points allowed.
         max: u32,
@@ -103,6 +118,11 @@ pub enum Inconclusive {
     AssumptionLost,
     /// An obligation was still open at run end, within its bound.
     ObligationOpen,
+    /// The run ended at a harness failure, so its evidence may be
+    /// incomplete.
+    HarnessFailed,
+    /// Every peer left, but the run ended before teardown settled.
+    TeardownOpen,
 }
 
 impl fmt::Display for Inconclusive {
@@ -112,6 +132,8 @@ impl fmt::Display for Inconclusive {
             Inconclusive::AssumptionsNeverHeld => "assumptions-never-held",
             Inconclusive::AssumptionLost => "assumption-lost",
             Inconclusive::ObligationOpen => "obligation-open",
+            Inconclusive::HarnessFailed => "harness-failed",
+            Inconclusive::TeardownOpen => "teardown-open",
         })
     }
 }

@@ -49,7 +49,7 @@ pub(crate) enum Yield {
     Preempt,
     /// The future returned `Pending`. The task releases its worker.
     Pending,
-    /// A sync wait. The task keeps its worker.
+    /// A sync wait. The task keeps its worker, if it holds one.
     Park(ObjectId),
 }
 
@@ -62,6 +62,8 @@ pub(crate) struct TaskMeta {
     /// Set by the coroutine when it starts. Valid while the coroutine runs.
     pub(crate) yielder: *const TaskYielder,
     pub(crate) at: At,
+    /// A blocking job, which holds no worker, as on tokio's blocking pool.
+    pub(crate) blocking: bool,
     point_counts: BTreeMap<Op, u32>,
     child_counts: BTreeMap<&'static str, u32>,
 }
@@ -115,17 +117,24 @@ pub(crate) struct RunState {
 }
 
 impl RunState {
-    /// Records that `task` reached its next point of kind `op`.
+    /// Records that `task` reached its next point of kind `op`, on `object`
+    /// if the primitive reports one.
     pub(crate) fn advance_point(
         &mut self,
         task: TaskId,
         op: Op,
+        object: Option<ObjectId>,
         site: Option<&'static std::panic::Location<'static>>,
     ) -> At {
         let meta = &mut self.tasks[task.index()];
         let n = meta.point_counts.entry(op).or_insert(0);
         *n = n.saturating_add(1);
-        meta.at = At { op, n: *n, site };
+        meta.at = At {
+            op,
+            n: *n,
+            object,
+            site,
+        };
         meta.at
     }
 
@@ -167,8 +176,10 @@ impl RunState {
             at: At {
                 op: Op::Poll,
                 n: 1,
+                object: None,
                 site: None,
             },
+            blocking: false,
             point_counts: BTreeMap::from([(Op::Poll, 1)]),
             child_counts: BTreeMap::new(),
         });
@@ -238,14 +249,19 @@ impl RunState {
         id
     }
 
-    /// Tasks `run` accepts now. A task mid-poll already holds a worker. Any
-    /// other ready task needs a free one.
+    /// Tasks `run` accepts now. A task mid-poll already holds a worker, and
+    /// a blocking job needs none. Any other ready task needs a free one.
     fn eligible(&self) -> impl Iterator<Item = TaskId> + '_ {
-        let free = self.mid_poll.len() < self.workers;
+        let held = self
+            .mid_poll
+            .iter()
+            .filter(|t| !self.tasks[t.index()].blocking)
+            .count();
+        let free = held < self.workers;
         self.ready
             .iter()
             .copied()
-            .filter(move |t| free || self.mid_poll.contains(t))
+            .filter(move |t| free || self.mid_poll.contains(t) || self.tasks[t.index()].blocking)
     }
 
     /// True if some parked tasks wait on each other in a cycle, so no number
@@ -594,7 +610,7 @@ impl Scheduler {
             Ok(CoroutineResult::Yield(Yield::Pending)) => {
                 self.state(|s| {
                     s.mid_poll.remove(&task);
-                    s.advance_point(task, Op::Poll, None);
+                    s.advance_point(task, Op::Poll, None, None);
                     // A wake during the poll, or an abort, makes it ready again.
                     if s.woken.remove(&task) || s.cancel_requested.contains(&task) {
                         s.ready.insert(task);
@@ -830,7 +846,7 @@ impl Scheduler {
     /// Every coroutine and the whole run state, with its queued spawns,
     /// timers, join wakers and panic payloads, are forgotten as they are,
     /// as [`ClearRun`] does during a panic. Their stacks count as leaked in
-    /// [`StackPool`](crate::StackPool).
+    /// [`StackPool`].
     ///
     /// After an abandoned run, the caller must not wait on anything it shares
     /// with the run's tasks, by dropping it or otherwise, since a leaked task

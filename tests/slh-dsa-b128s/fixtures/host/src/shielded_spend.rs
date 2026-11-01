@@ -1,7 +1,7 @@
 //! Genuine public-note spends with final native SLH effects. See SPEND_ATTRIBUTION.md.
 use super::shielded::{
     action_slot, authorize, chain_action, chain_legacy_action, chain_sapling, checks, converted,
-    digest, needed, prover, sapling_slot, wire,
+    digest, needed, prover, sapling_slot, set_action, wire,
 };
 use super::*;
 use orchard::{
@@ -107,8 +107,8 @@ fn replace(
             }
         }
     } else {
-        let target = needed(action_slot(tx, pool).as_mut())?;
-        let source = needed(action_slot(donor, pool).as_mut())?;
+        let target = needed(action_slot(tx, pool))?;
+        let source = needed(action_slot(donor, pool))?;
         match mutation {
             "binding" => target.binding_sig = source.binding_sig,
             "proof" => target.proof = source.proof.clone(),
@@ -259,7 +259,7 @@ pub(super) fn prepare(recipe: &ShieldedSpendRecipe) -> Result<Value> {
                     [0; 32],
                     std::slice::from_ref(&ask),
                 ))?;
-                *action_slot(&mut tx, &funding.pool) = Some(chain_action(&wrong)?);
+                set_action(&mut tx, &funding.pool, Some(chain_action(&wrong)?));
                 funding.metadata["real_spend_index"] = json!(real);
                 actions.push((funding.pool.clone(), proven, wrong, real));
             }
@@ -286,9 +286,9 @@ pub(super) fn prepare(recipe: &ShieldedSpendRecipe) -> Result<Value> {
     for (pool, proven, wrong, real) in actions {
         let authorized =
             converted(proven.apply_signatures(&mut rng, final_digest, std::slice::from_ref(&ask)))?;
-        *action_slot(&mut tx, &pool) = Some(chain_action(&authorized)?);
+        set_action(&mut tx, &pool, Some(chain_action(&authorized)?));
         let mut wrong_tx = tx.clone();
-        *action_slot(&mut wrong_tx, &pool) = Some(chain_action(&wrong)?);
+        set_action(&mut wrong_tx, &pool, Some(chain_action(&wrong)?));
         let funding = needed(notes.iter().find(|n| n.pool == pool))?;
         let history::Note::Action(note) = &funding.note else {
             unreachable!("pool type checked")
@@ -298,7 +298,7 @@ pub(super) fn prepare(recipe: &ShieldedSpendRecipe) -> Result<Value> {
             converted(donor.apply_signatures(&mut rng, final_digest, std::slice::from_ref(&ask)))?;
         require(donor.verify_proof(&vk).is_ok(), "shielded", "donor_proof")?;
         let mut donor_tx = tx.clone();
-        *action_slot(&mut donor_tx, &pool) = Some(chain_action(&donor)?);
+        set_action(&mut donor_tx, &pool, Some(chain_action(&donor)?));
         require(
             donor_tx.hash() != tx.hash(),
             "shielded",
@@ -486,7 +486,7 @@ pub(super) fn finalize(
                 "sapling_spend",
             )?;
         } else {
-            let data = needed(action_slot(&mut tx, &funding.pool).as_ref())?;
+            let data = needed(action_slot(&mut tx, &funding.pool))?;
             let expected_flags = if funding.pool == "orchard" { 1 } else { 5 };
             require(
                 i64::from(data.value_balance) == 50_000
@@ -607,7 +607,7 @@ pub(super) fn funding(recipe: &ShieldedSpendFundingRecipe) -> Result<Value> {
     let unsigned = needed(converted(builder.build::<ZatBalance>(&mut rng))?)?.0;
     let proven = converted(unsigned.create_proof(&pk, &mut rng))?;
     let wrong = converted(proven.clone().apply_signatures(&mut rng, [0; 32], &[]))?;
-    *action_slot(&mut tx, "orchard") = Some(chain_legacy_action(&wrong)?);
+    set_action(&mut tx, "orchard", Some(chain_legacy_action(&wrong)?));
     let final_digest = converted(tx.sighasher(NetworkUpgrade::Nu6_2, previous.clone()))?
         .sighash(HashType::ALL, None)
         .0;
@@ -619,7 +619,7 @@ pub(super) fn funding(recipe: &ShieldedSpendFundingRecipe) -> Result<Value> {
         "shielded",
         "orchard_funding_proof",
     )?;
-    *action_slot(&mut tx, "orchard") = Some(chain_legacy_action(&authorized)?);
+    set_action(&mut tx, "orchard", Some(chain_legacy_action(&authorized)?));
     let signature = classical::signature_at(
         &tx,
         previous.clone(),

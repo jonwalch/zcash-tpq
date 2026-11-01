@@ -173,7 +173,7 @@ pub(super) fn prover(parameters: &SaplingParameters) -> Result<LocalTxProver> {
 }
 pub(super) fn sapling_slot(
     tx: &mut Transaction,
-) -> &mut Option<sapling::ShieldedData<SharedAnchor>> {
+) -> &mut Option<Box<sapling::ShieldedData<SharedAnchor>>> {
     match tx {
         Transaction::V5 {
             sapling_shielded_data,
@@ -186,21 +186,43 @@ pub(super) fn sapling_slot(
         _ => unreachable!("version checked"),
     }
 }
-pub(super) fn action_slot<'a>(tx: &'a mut Transaction, pool: &str) -> &'a mut Option<ShieldedData> {
+/// Borrow either action pool without exposing its different storage representation.
+pub(super) fn action_slot<'a>(tx: &'a mut Transaction, pool: &str) -> Option<&'a mut ShieldedData> {
     match tx {
         Transaction::V5 {
             orchard_shielded_data,
             ..
-        } if pool == "orchard" => orchard_shielded_data,
+        } if pool == "orchard" => orchard_shielded_data.as_deref_mut(),
         Transaction::V6 {
             orchard_shielded_data,
             ironwood_shielded_data,
             ..
         } => {
             if pool == "orchard" {
-                orchard_shielded_data
+                orchard_shielded_data.as_deref_mut()
             } else {
-                ironwood_shielded_data
+                ironwood_shielded_data.as_mut()
+            }
+        }
+        _ => unreachable!("pool/version checked"),
+    }
+}
+/// Store Orchard in a box while retaining Ironwood's inline transaction field.
+pub(super) fn set_action(tx: &mut Transaction, pool: &str, data: Option<ShieldedData>) {
+    match tx {
+        Transaction::V5 {
+            orchard_shielded_data,
+            ..
+        } if pool == "orchard" => *orchard_shielded_data = data.map(Box::new),
+        Transaction::V6 {
+            orchard_shielded_data,
+            ironwood_shielded_data,
+            ..
+        } => {
+            if pool == "orchard" {
+                *orchard_shielded_data = data.map(Box::new);
+            } else {
+                *ironwood_shielded_data = data;
             }
         }
         _ => unreachable!("pool/version checked"),
@@ -246,7 +268,7 @@ chain_action_adapter!(chain_action, orchard);
 chain_action_adapter!(chain_legacy_action, orchard_legacy);
 pub(super) fn chain_sapling(
     bundle: &sapling_crypto::Bundle<sapling_crypto::bundle::Authorized, ZatBalance>,
-) -> Result<sapling::ShieldedData<SharedAnchor>> {
+) -> Result<Box<sapling::ShieldedData<SharedAnchor>>> {
     let outputs = bundle
         .shielded_outputs()
         .iter()
@@ -289,11 +311,11 @@ pub(super) fn chain_sapling(
             outputs: converted(outputs.try_into())?,
         }
     };
-    Ok(sapling::ShieldedData {
+    Ok(Box::new(sapling::ShieldedData {
         value_balance: converted(i64::from(*bundle.value_balance()).try_into())?,
         transfers,
         binding_sig: <[u8; 64]>::from(bundle.authorization().binding_sig).into(),
-    })
+    }))
 }
 pub(super) fn digest(tx: &Transaction, previous: Arc<Vec<ChainOutput>>) -> Result<[u8; 32]> {
     Ok(converted(tx.sighasher(NetworkUpgrade::Nu7, previous))?
@@ -407,7 +429,7 @@ pub(super) fn prepare(recipe: &ShieldedRecipe) -> Result<Value> {
     for pool in recipe.pools.iter().filter(|p| p.as_str() != "sapling") {
         let proven = prove_action(pool, &mut rng)?;
         let wrong = converted(proven.clone().apply_signatures(&mut rng, [0; 32], &[]))?;
-        *action_slot(&mut tx, pool) = Some(chain_action(&wrong)?);
+        set_action(&mut tx, pool, Some(chain_action(&wrong)?));
         actions.push((pool, proven, wrong));
     }
     let sapling = if let Some(prover) = sapling_prover.as_ref() {
@@ -438,7 +460,7 @@ pub(super) fn prepare(recipe: &ShieldedRecipe) -> Result<Value> {
     let mut replacements = Vec::new();
     for (pool, proven, wrong) in actions {
         let authorized = converted(proven.apply_signatures(&mut rng, final_digest, &[]))?;
-        *action_slot(&mut tx, pool) = Some(chain_action(&authorized)?);
+        set_action(&mut tx, pool, Some(chain_action(&authorized)?));
         let donor =
             converted(prove_action(pool, &mut rng)?.apply_signatures(&mut rng, final_digest, &[]))?;
         require(donor.verify_proof(&vk).is_ok(), "shielded", "donor_proof")?;
@@ -493,7 +515,7 @@ pub(super) fn prepare(recipe: &ShieldedRecipe) -> Result<Value> {
                 }
             } else {
                 let (_, wrong, donor) = needed(replacements.iter().find(|row| &row.0 == pool))?;
-                let data = needed(action_slot(&mut changed, pool).as_mut())?;
+                let data = needed(action_slot(&mut changed, pool))?;
                 if mutation == "binding" {
                     data.binding_sig = wrong.binding_sig;
                 } else {
@@ -580,7 +602,7 @@ pub(super) fn finalize(
         )?;
     }
     for (pool, expected) in [("orchard", 0), ("ironwood", -50_000)] {
-        if let Some(data) = action_slot(&mut tx, pool).as_ref() {
+        if let Some(data) = action_slot(&mut tx, pool) {
             require(
                 i64::from(data.value_balance) == expected
                     && !data

@@ -1,8 +1,10 @@
 //! The header storage contract: what a simulated header-chain [`Port`] may do.
 //!
 //! The simulator implements [`Port`] over the real header-chain engine. Each
-//! call becomes a pending operation, and the run completes it later with one
-//! [`Outcome`]. This module says which outcomes each operation may have, and
+//! call becomes a pending operation when its future is first polled, as the
+//! production adapter sends its state request then, and the run completes it
+//! later with one [`Outcome`]. [`controlled::ControlledPort`] runs that
+//! lifecycle. This module says which outcomes each operation may have, and
 //! when. It also names the deadlines around each operation and the events that
 //! release what it owns. It mirrors production at the revision it was written
 //! against, and the source references below name the code it follows.
@@ -32,8 +34,8 @@
 //! # Outcomes
 //!
 //! An [`Outcome`] or [`HeaderReply`] can be built freely, so the contract only
-//! holds if ST3 calls [`HeaderRequest::check`] at its completion boundary,
-//! before it runs or replies.
+//! holds because [`controlled::ControlledPort::complete`] calls
+//! [`HeaderRequest::check`] before it runs or replies.
 //!
 //! Input checks the adapter runs itself come first. A request that fails one,
 //! such as a read with another adapter's path handle or an apply of a target
@@ -196,12 +198,14 @@ use zakura_header_chain::{
     BodyWorkOwner, ErrorSubject, HeaderChainError, HeaderLocator, HeaderSyncWorkOwner,
 };
 use zakura_node_services::header_chain::{
-    AcquirePath, AcquirePathReply, AdapterKey, ApplyHeaderTargetReply, LocatorReadPermit,
-    PortError, PrepareHeaderTarget, PrepareHeaderTargetReply, PreparedHeaderTarget, ReadPath,
-    ReadPathReply, RetainedHeaderPath, SelectedChainMembership, VctRepairContextReply,
+    AcquirePath, AcquirePathReply, AdapterKey, ApplyHeaderTargetReply, PortError,
+    PrepareHeaderTarget, PrepareHeaderTargetReply, PreparedHeaderTarget, ReadPath, ReadPathReply,
+    RetainedHeaderPath, SelectedChainMembership, VctRepairContextReply,
 };
 
 pub mod adapter;
+pub mod controlled;
+pub mod evidence;
 pub mod fixture;
 pub mod lease;
 #[cfg(test)]
@@ -331,7 +335,7 @@ pub enum Deadline {
 }
 
 /// An event that ends capacity an operation owns.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Release {
     /// The operation's `LocatorReadPermit` clone drops when the operation
     /// finishes, not when its caller times out.
@@ -348,6 +352,20 @@ pub enum Release {
     LeaseIdleExpired,
     /// Service shutdown drops everything still owned.
     Shutdown,
+}
+
+impl Release {
+    /// A short name for records, such as `lease-released`.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Release::LocatorPermitOnFinish => "locator-permit-on-finish",
+            Release::LeaseConsumedByRead => "lease-consumed-by-read",
+            Release::LeaseReleased => "lease-released",
+            Release::LeaseAbandonedAcquire => "lease-abandoned-acquire",
+            Release::LeaseIdleExpired => "lease-idle-expired",
+            Release::Shutdown => "shutdown",
+        }
+    }
 }
 
 /// Why state refuses an acquire before leasing a path, following
@@ -637,7 +655,7 @@ impl HeaderOp {
     }
 
     /// Whether [`Self::enabled`] offers `outcome` at `since_submit`, for a
-    /// request that passes its adapter-side input checks. ST3 calls
+    /// request that passes its adapter-side input checks. A completion calls
     /// [`HeaderRequest::check`], which also applies those.
     pub fn check(self, outcome: Outcome, since_submit: Duration) -> Result<(), IllegalOutcome> {
         if self.enabled(since_submit).any(|legal| legal == outcome) {
@@ -694,12 +712,11 @@ impl std::error::Error for IllegalOutcome {}
 /// An operation's accepted inputs, which own what the caller handed over.
 #[derive(Debug)]
 pub enum HeaderRequest {
-    /// `continuation_locator`. The permit stays owned until the operation
-    /// finishes.
-    ContinuationLocator {
-        /// The caller's permit clone.
-        permit: LocatorReadPermit,
-    },
+    /// `continuation_locator`. The caller's permit isn't part of the
+    /// request: the controlled port holds its clone beside the operation
+    /// until the operation finishes, and the engine port holds it in its
+    /// future.
+    ContinuationLocator,
     /// `vct_repair_context`.
     VctRepairContext {
         /// The repair owner.
@@ -760,7 +777,7 @@ impl HeaderRequest {
     /// The operation this request is for.
     pub fn op(&self) -> HeaderOp {
         match self {
-            HeaderRequest::ContinuationLocator { .. } => HeaderOp::ContinuationLocator,
+            HeaderRequest::ContinuationLocator => HeaderOp::ContinuationLocator,
             HeaderRequest::VctRepairContext { .. } => HeaderOp::VctRepairContext,
             HeaderRequest::AcquireHeaderPath(_) => HeaderOp::AcquireHeaderPath,
             HeaderRequest::ReadHeaderPath { .. } => HeaderOp::ReadHeaderPath,
@@ -885,7 +902,7 @@ impl HeaderRequest {
             ))
         };
         Ok(match self {
-            HeaderRequest::ContinuationLocator { .. } => {
+            HeaderRequest::ContinuationLocator => {
                 HeaderReply::ContinuationLocator(Err(port_error()))
             }
             HeaderRequest::VctRepairContext { .. } => {
@@ -909,6 +926,46 @@ impl HeaderRequest {
             }
         })
     }
+}
+
+/// A `Port` method's reply type, taken back out of a [`HeaderReply`].
+pub(crate) trait FromReply: Sized {
+    /// The typed reply.
+    ///
+    /// # Panics
+    ///
+    /// If `reply` answers another operation. Each port builds the reply for
+    /// the request it was given, so the variants always match.
+    fn from_reply(reply: HeaderReply) -> Self;
+}
+
+/// Implements [`FromReply`] for each `Port` reply type.
+macro_rules! from_reply {
+    ($($variant:ident => $reply:ty,)*) => {$(
+        impl FromReply for $reply {
+            fn from_reply(reply: HeaderReply) -> Self {
+                match reply {
+                    HeaderReply::$variant(reply) => reply,
+                    other => unreachable!(
+                        "a {} reply for a {} request",
+                        other.op().name(),
+                        HeaderOp::$variant.name(),
+                    ),
+                }
+            }
+        }
+    )*};
+}
+
+from_reply! {
+    ContinuationLocator => Result<Option<HeaderLocator>, PortError>,
+    VctRepairContext => Result<VctRepairContextReply, PortError>,
+    AcquireHeaderPath => Result<AcquirePathReply, PortError>,
+    ReadHeaderPath => Result<ReadPathReply, PortError>,
+    ReleaseHeaderPath => Result<(), PortError>,
+    PrepareHeaderTarget => PrepareHeaderTargetReply,
+    ApplyHeaderTarget => ApplyHeaderTargetReply,
+    SelectedChainContains => Result<SelectedChainMembership, PortError>,
 }
 
 impl HeaderReply {

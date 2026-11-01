@@ -67,7 +67,7 @@ class DevnetProducerTests(unittest.TestCase):
             self.assertEqual((receipt["key_count"], receipt["artifact_count"], receipt["signature_count"]), (1, 2, 2))
             self.assertEqual(receipt["kind"], "production-only-not-independent-acceptance")
             self.assertEqual(receipt["producer"]["zakura_revision"],
-                             "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73")
+                             "436a6af46d04637bba793efce5b16be94ec1f7f0")
             for path in output.iterdir():
                 artifact = corpus.strict_json(path.read_bytes(), corpus.MAX_HOST)
                 self.assertEqual(artifact["producer"], receipt["producer"])
@@ -81,7 +81,7 @@ class DevnetProducerTests(unittest.TestCase):
         original = {"zakura_revision": corpus.UPSTREAM}
         with patch.object(corpus, "producer_identity", return_value=(copy.deepcopy(original), {})):
             producer, inventory = devnet.identity(corpus.ROOT, Path("host"), Path("signer"))
-        self.assertEqual(producer["zakura_revision"], "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73")
+        self.assertEqual(producer["zakura_revision"], "436a6af46d04637bba793efce5b16be94ec1f7f0")
         self.assertEqual(original["zakura_revision"], "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc")
         self.assertIn(dict(path=devnet.PIN_PATH, sha256=corpus.digest((corpus.ROOT / devnet.PIN_PATH).read_bytes())),
                       inventory["devnet_generator"])
