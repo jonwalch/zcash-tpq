@@ -75,3 +75,10 @@ history/ciphertext tests intentionally carry invalid proof/signature placeholder
 they test recovery/buildability only and never claim real proof validity.
 Sapling per-proof component verdict remains null rather than mislabeling its
 batch result as independent primitive verification.
+
+With upstream Zakura at `8a164df24f9c34fe87b97a0a11b55a80be3ce94d`,
+Common 5.0.0-rc.3 defers Sapling value-commitment validation until point use.
+The component adapter uses `CommitmentSum::try_sum` for spends and outputs.
+Invalid encodings return the existing construction error before binding-key
+arithmetic. The focused optional-host tests check build compatibility and
+proof-free controls. They do not generate proofs or establish live acceptance.

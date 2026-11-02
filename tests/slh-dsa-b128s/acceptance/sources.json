@@ -374,7 +374,7 @@
       "adaptation": "Document optional TPQ public tools, managed connect and local wallet/funding boundaries, plus explicit reusable qualification interfaces, schema/gate responsibilities, selected beta subcases, resume/cleanup and pending live status. New orchestration is not a direct copy of an unavailable archived driver.",
       "classification": "new product integration runbook",
       "path": "docs/slh-dsa-b128s/zdn.md",
-      "sha256": "d5523824d14a455a3ac677f42fbd7347322a99da2177aa207d484d793dcc5a1c",
+      "sha256": "4c62a748718832e54680e120140704ac08486e5fbe83fc3a98617558e343bb89",
       "sources": []
     },
     {
@@ -895,14 +895,14 @@
       "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. Identify narrowly extracted real shielded constructors and optional output-only controls, preserving independent synthetic references.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/fixtures/host/ATTRIBUTION.md",
-      "sha256": "87946b4150ecc0e800b837e8759eb16feaa0c4b097e12e5a52a1f79aa3622e38",
+      "sha256": "28bb369d4195f5cc310e956d1a845c5fe234bb4f65fe7515eb9f385352c978b0",
       "sources": []
     },
     {
       "adaptation": "Add only existing workspace secp256k1/ripemd dependency edges needed by extracted public classical helper. No registry identity/version or production graph change; coordinated root lock is separately bound by build receipts. Add optional shielded-fixtures dependencies on existing pinned workspace Orchard/Sapling/proofs/protocol/rand libraries; local-prover supplies explicit parameter loading. No download-params or bundled-prover feature requested. Cargo.lock adds only these host edges and three directory helper packages; existing package versions/checksums are unchanged. Reuse only the pinned optional incrementalmerkletree package for bounded genuine note recovery and witnesses; Sapling provides its existing decryption API, so no direct note-encryption dependency is added. The lock change is one host dependency edge only. Upstream refresh: bind the Common 3.0 fixture-only local-prover manifest; proof execution remains a separate approved check. Retain the previously pinned Orchard 2.2.0 graph behind the optional shielded-fixtures feature only, because Common 3 removed historical proof construction. Node graphs must exclude this version.",
       "classification": "existing workspace dependency reuse",
       "path": "tests/slh-dsa-b128s/fixtures/host/Cargo.toml",
-      "sha256": "5a99286beb4aced8e48fd3dc79c7b8ebc2898fd207b65545ae309f261f2f3a80",
+      "sha256": "949aa8651b92faa3e348ec9c53f6997bdb060939c52de5a963086de22ba47d28",
       "sources": []
     },
     {
@@ -923,7 +923,7 @@
       "adaptation": "Dedicated public schema/attribution or internal changelog; exact legal setup and executed versus prepared scope. Record the Common 3 historical proving restriction, isolated compatibility dependency and exact compile/no-proof regression scope.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/SPEND_ATTRIBUTION.md",
-      "sha256": "65e8256c55044a2347c1b1b811a5cc28562eb4a8846f3abcf871f64c2225e0cb",
+      "sha256": "9d6dfa7176f4eed36f57af95caddd5219516a513df3531865e811f90f3b9297e",
       "sources": []
     },
     {
@@ -958,7 +958,7 @@
       "adaptation": "Register strict bounded classical-info/classical-spend/mixed-prepare/mixed-assemble/control-block operations beside unchanged prepare/assemble/check schemas. Preserve historical corpus bytes and existing parser/native context APIs. Public guide/changelog or bounded host operation dispatch/types; document/reuse existing APIs and preserve original runtime behavior. New bounded public guide or feature-gated strict host operation/types, preserving normal production/default behavior and exact pending human scope. Register strict optional spend prepare/finalize/funding/block operations; default build has no proof/spend tooling.",
       "classification": "narrow existing product host extension",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/main.rs",
-      "sha256": "830c190f49db434344bc20ce7c022381a7894d2f4822a74a5a811da7d8eeb69e",
+      "sha256": "178adbce4966bb7e2c083f2197e11193257f7879398da3df3fb9d8636ae589be",
       "sources": []
     },
     {
@@ -980,10 +980,10 @@
       ]
     },
     {
-      "adaptation": "Pinned real-spend construction generalized to ten pool/version subsets, independent parents, current host bundle/digest/authorization helpers, pre-NU6.3 Orchard deposit, same-effect isolated spend-auth/binding/proof controls; no crypto rewrite. Sapling finalization compares the shared anchor with preserved RPC-display metadata using the pinned Zakura conversion; Orchard/Ironwood encodings and authorization boundaries are unchanged. Keep pre-NU6.3 funding on the previous pinned Orchard 2.2.0 builder; all current spend construction uses Common 3. A shared canonical adapter bridges historical bundles into current node types.",
+      "adaptation": "Pinned real-spend construction generalized to ten pool/version subsets, independent parents, current host bundle/digest/authorization helpers, pre-NU6.3 Orchard deposit, same-effect isolated spend-auth/binding/proof controls; no crypto rewrite. Sapling finalization compares the shared anchor with preserved RPC-display metadata using the pinned Zakura conversion; Orchard/Ironwood encodings and authorization boundaries are unchanged. Keep pre-NU6.3 funding on the previous pinned Orchard 2.2.0 builder; all current spend construction uses Common 3. A shared canonical adapter bridges historical bundles into current node types. Upstream 8a164df uses Common 5.0.0-rc.3's fallible CommitmentSum::try_sum; invalid deferred Sapling commitments return the existing construction error instead of reaching binding-key arithmetic.",
       "classification": "narrow attributed shielded spend fixture preparation",
       "path": "tests/slh-dsa-b128s/fixtures/host/src/shielded_spend.rs",
-      "sha256": "d65e557ae05414717fd745a74998e182f27110f28e8742e80b8262a70a7b7fc5",
+      "sha256": "abcab57915f984a416e7a9a3556d216bc23abaca9b20d49cd291cdd972bb0254",
       "sources": [
         "shielded_spend_fixture"
       ]
@@ -1015,6 +1015,6 @@
       "sources": []
     }
   ],
-  "upstream_zakura": "436a6af46d04637bba793efce5b16be94ec1f7f0",
+  "upstream_zakura": "8a164df24f9c34fe87b97a0a11b55a80be3ce94d",
   "validation_boundary": "Only offline/mock and bounded fixture-host checks were executed during preparation. All dedicated binary builds, node/wallet/terminal/signing live cases, proof generation and performance runs require human execution. See docs/slh-dsa-b128s/acceptance.md for prepared and missing driver scenarios."
 }

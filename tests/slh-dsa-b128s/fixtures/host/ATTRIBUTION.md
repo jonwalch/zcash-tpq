@@ -26,8 +26,8 @@ invalid assembly, exact profile classification and absence of secret-bearing
 fields in output. Independent digest/crypto acceptance is a separate checker.
 
 The producer identity allowlist also accepts upstream Zakura revision
-`436a6af46d04637bba793efce5b16be94ec1f7f0` for current devnet production.
-It retains all five historical pins and rejects unknown pins. The existing
+`8a164df24f9c34fe87b97a0a11b55a80be3ce94d` for current devnet production.
+It retains all six historical pins and rejects unknown pins. The existing
 host and independent oracle pin-loop tests cover this addition. This change
 does not regenerate fixtures or extend historical execution receipts.
 

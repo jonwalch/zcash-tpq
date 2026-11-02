@@ -16,7 +16,7 @@ cargo clippy -p zakura-pq-slh-dsa-b-exp --all-targets --locked -- -D warnings
 ## Expected values and source attribution
 
 [`reference.rs`](reference.rs) serializes each candidate and reparses it through
-the pinned `zakura-primitives` 2.2.0 transaction parser. It constructs context from every supplied previous output, then runs `TxIdDigester` and `signature_hash`.
+the pinned `zakura-primitives` 5.0.0-rc.3 transaction parser. It constructs context from every supplied previous output, then runs `TxIdDigester` and `signature_hash`.
 It constructs the [contract message](../../../docs/slh-dsa-b128s/protocol.md) without importing production framing constants. Expected values never call Zakura's
 `SigHasher`, native ZIP-244 cache, SLH transaction context or verifier.
 Those are comparison targets only. Both paths share low-level hash, curve and

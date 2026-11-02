@@ -130,7 +130,7 @@ and config have their own authenticated identities. No compiler override or
 local substitute is implied. Do not use an ordinary node recipe or drop SLH.
 
 The pinned upstream Zakura baseline is
-`436a6af46d04637bba793efce5b16be94ec1f7f0`; see [protocol](protocol.md).
+`8a164df24f9c34fe87b97a0a11b55a80be3ce94d`; see [protocol](protocol.md).
 R8 used TPQ `a8968159f39bd98403e6f3c67eeb16fd2ca55cbc`, containing public main
 `362b062a324bb6c8cede30ce82c791d9114d4f85`. R8's ZDN was base
 `47ebd4055b151340dba20cda38b77f4103d02594` plus pinned local changes, not that

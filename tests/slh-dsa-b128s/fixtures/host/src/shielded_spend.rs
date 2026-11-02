@@ -10,6 +10,7 @@ use orchard::{
     circuit::{OrchardCircuitVersion, ProvingKey, VerifyingKey},
     keys::{FullViewingKey, Scope, SpendAuthorizingKey, SpendingKey},
 };
+use sapling_crypto::value::CommitmentSum;
 use zakura_chain::{sapling::TransferData, transaction::HashType};
 use zcash_proofs::prover::LocalTxProver;
 use zcash_protocol::value::ZatBalance;
@@ -135,16 +136,11 @@ fn components(
             .iter()
             .map(|s| s.rk().verify(&sighash, s.spend_auth_sig()).is_ok())
             .collect::<Vec<_>>();
-        let cv = bundle
-            .shielded_spends()
-            .iter()
-            .map(|s| s.cv())
-            .sum::<sapling_crypto::value::CommitmentSum>()
-            - bundle
-                .shielded_outputs()
-                .iter()
-                .map(|o| o.cv())
-                .sum::<sapling_crypto::value::CommitmentSum>();
+        let cv = converted(
+            CommitmentSum::try_sum(bundle.shielded_spends().iter().map(|s| s.cv())).ok_or(()),
+        )? - converted(
+            CommitmentSum::try_sum(bundle.shielded_outputs().iter().map(|o| o.cv())).ok_or(()),
+        )?;
         let binding = cv
             .into_bvk(*bundle.value_balance())
             .verify(&sighash, &bundle.authorization().binding_sig)

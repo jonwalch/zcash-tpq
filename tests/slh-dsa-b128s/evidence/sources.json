@@ -16,9 +16,9 @@
       "source_commit": "6be98afe15d3e3594c7a392bbed2d4e793fd9101"
     },
     {
-      "adaptation": "Imported unchanged at runtime; no source edits.",
+      "adaptation": "Reuse the independent oracle at runtime; extend only its accepted producer history for the current upstream pin. Historical producer identities and all digest/authorization checks remain unchanged.",
       "path": "tests/slh-dsa-b128s/transactions/oracle.py",
-      "sha256": "cdf3f2b0991b8f3fed5991192bb57f807449685b452135ba71c89600fe337ac3",
+      "sha256": "aba6e01a5539c342a6da27a83b792fca90a6c6ee8c0d16d24668d18fa2247bdf",
       "source_commit": "e88653096f989742ae8b36fed35acdb63f76f498"
     },
     {

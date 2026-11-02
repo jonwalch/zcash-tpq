@@ -67,7 +67,7 @@ class DevnetProducerTests(unittest.TestCase):
             self.assertEqual((receipt["key_count"], receipt["artifact_count"], receipt["signature_count"]), (1, 2, 2))
             self.assertEqual(receipt["kind"], "production-only-not-independent-acceptance")
             self.assertEqual(receipt["producer"]["zakura_revision"],
-                             "436a6af46d04637bba793efce5b16be94ec1f7f0")
+                             "8a164df24f9c34fe87b97a0a11b55a80be3ce94d")
             for path in output.iterdir():
                 artifact = corpus.strict_json(path.read_bytes(), corpus.MAX_HOST)
                 self.assertEqual(artifact["producer"], receipt["producer"])
@@ -81,7 +81,7 @@ class DevnetProducerTests(unittest.TestCase):
         original = {"zakura_revision": corpus.UPSTREAM}
         with patch.object(corpus, "producer_identity", return_value=(copy.deepcopy(original), {})):
             producer, inventory = devnet.identity(corpus.ROOT, Path("host"), Path("signer"))
-        self.assertEqual(producer["zakura_revision"], "436a6af46d04637bba793efce5b16be94ec1f7f0")
+        self.assertEqual(producer["zakura_revision"], "8a164df24f9c34fe87b97a0a11b55a80be3ce94d")
         self.assertEqual(original["zakura_revision"], "9b175e9d3d46a6aa4cfb5552517c3d828852ecbc")
         self.assertIn(dict(path=devnet.PIN_PATH, sha256=corpus.digest((corpus.ROOT / devnet.PIN_PATH).read_bytes())),
                       inventory["devnet_generator"])
@@ -90,7 +90,9 @@ class DevnetProducerTests(unittest.TestCase):
         for revision in ("9b175e9d3d46a6aa4cfb5552517c3d828852ecbc",
                          "24a17b3f0e7d88513688d607054f018ab6f15af2",
                          "e33dc43089acca2fe2c6516927932f2b7618b8bc",
-                         "3f36c35031126a8f8cd52865ef0be9e5dc494b8d", "11" * 20, None):
+                         "3f36c35031126a8f8cd52865ef0be9e5dc494b8d",
+                         "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73",
+                         "436a6af46d04637bba793efce5b16be94ec1f7f0", "11" * 20, None):
             with self.subTest(revision=revision), tempfile.TemporaryDirectory() as directory, \
                     patch.object(corpus, "producer_identity") as producer, \
                     patch.object(corpus, "host_call") as host, \

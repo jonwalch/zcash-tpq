@@ -12,8 +12,8 @@ Live acceptance and independent security review remain open.
 
 | Item | Pinned value |
 | --- | --- |
-| Zakura commit | `436a6af46d04637bba793efce5b16be94ec1f7f0` |
-| Zakura tree | `672556660886bd00d35d8591fe9291d3ef7fcb2c` |
+| Zakura commit | `8a164df24f9c34fe87b97a0a11b55a80be3ce94d` |
+| Zakura tree | `2f06343483ccd42b6edd8dba6859c5714449e239` |
 | `PQC-Suite-B/signatures` commit | `b392fe82d2d9770142477a576a758a233888bc0a` |
 | Algorithm | `Blake3_128s` |
 | Verifier and wallet signer hash dependency | BLAKE3 `=1.8.5`, without Rayon |

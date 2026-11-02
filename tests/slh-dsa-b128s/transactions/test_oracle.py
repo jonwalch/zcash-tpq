@@ -72,7 +72,8 @@ class OracleTests(unittest.TestCase):
                          "e33dc43089acca2fe2c6516927932f2b7618b8bc",
                          "3f36c35031126a8f8cd52865ef0be9e5dc494b8d",
                          "b1dd280d1b5a4d70bd3d7b682a3f7fd37cd25f73",
-                         "436a6af46d04637bba793efce5b16be94ec1f7f0"):
+                         "436a6af46d04637bba793efce5b16be94ec1f7f0",
+                         "8a164df24f9c34fe87b97a0a11b55a80be3ce94d"):
             artifact["producer"]["zakura_revision"] = revision
             oracle.validate_schema(artifact)
         artifact["producer"]["zakura_revision"] = "00" * 20
