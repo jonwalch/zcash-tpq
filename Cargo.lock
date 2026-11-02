@@ -3764,6 +3764,7 @@ dependencies = [
  "proptest-derive",
  "rand 0.10.2",
  "rayon",
+ "rustix",
  "serde",
  "serde_json",
  "sha2 0.10.9",

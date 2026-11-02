@@ -292,6 +292,11 @@ const ZAKURA_CLOSE_UNKNOWN_STREAM: u32 = 5;
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, default)]
 pub struct ZakuraConfig {
+    /// Managed deployment identity. When set, startup requires the existing
+    /// owner-only persisted key to have this public ID; it never regenerates or
+    /// accepts a configured secret override. Omitted for ordinary deployments.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expected_node_id: Option<NodeId>,
     /// Native Zakura bootstrap peers as `node_id@direct_addr`.
     ///
     /// Native bootstrap uses direct addresses only because relays and discovery
@@ -387,6 +392,7 @@ pub struct ZakuraConfig {
 impl Default for ZakuraConfig {
     fn default() -> Self {
         Self {
+            expected_node_id: None,
             bootstrap_peers: DEFAULT_ZAKURA_BOOTSTRAP_PEERS
                 .iter()
                 .map(ToString::to_string)

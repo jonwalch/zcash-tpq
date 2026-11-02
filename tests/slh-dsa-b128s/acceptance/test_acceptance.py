@@ -89,6 +89,9 @@ class BuildReceiptTests(unittest.TestCase):
                             .split("}", 1)[0])
         body = source.split("fn experimental_slh_dsa_b128s_verifier_identity(", 1)[1].split("#[cfg(test)]", 1)[0]
         constants = dict(re.findall(r'^\s*(\w+): "([^"]*)",$', body, re.M))
+        self.assertIn("contract: zakura_chain::chain_diagnostics::SLH_CONTRACT,", body)
+        diagnostics = (common.ROOT / "crates/zakura-chain/src/chain_diagnostics.rs").read_text()
+        constants["contract"] = re.search(r'pub const SLH_CONTRACT: &str = "([^"]+)";', diagnostics).group(1)
         self.assertEqual(set(constants), {"contract", "suite_id", "algorithm_revision", "blake3_version"})
         backend = re.search(r'backend: if cfg!\(feature = "([^"]+)"\) \{\s*"([^"]+)"\s*\} else \{\s*"([^"]+)"', body)
         self.assertEqual(backend.group(1), common.FEATURE)

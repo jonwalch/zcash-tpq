@@ -11,6 +11,186 @@
     },
     {
       "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/zdn_flow.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/common.py",
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Reuse existing canonical public evidence and hashing helpers for one optional ZDN journey. Keep fixed lifecycle argv, uncertain-dispatch fences and explicit independent wallet/recovery review gates; do not replace ZDN operations or wallet journals.",
+      "sha256": "0af8414a1cba3bff8203ae2bc478e9b4c34813f329e1324c1dccfb31bc5baf32"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/zdn_cases.json",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/sources.json",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Name the selected version-pinned ZDN beta subcases and negative controls for TPQ without granting live credit or importing research execution history.",
+      "sha256": "a9349fd2e76696599cfaf2b89a5915ac592df39823466a65e0f89febb38e3f63"
+    },
+    {
+      "disposition": "new",
+      "path": "tests/slh-dsa-b128s/acceptance/zdn_test.py",
+      "provenance": [
+        "tests/slh-dsa-b128s/acceptance/zdn_flow.py"
+      ],
+      "reason": "Exercise public coordinator refusals, exact reviewed payment bindings, interrupted dispatch and cleanup through fake processes and synthetic evidence, with no live execution.",
+      "sha256": "c7118969f8a80f07ff90d04b018c184c434d0df475b45f744e5d5e193cf12d6b"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/pq-cli/tests/rpc_transport.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Check explicit mutually exclusive cookie and trusted-loopback gateway selection through the wallet CLI without live nodes.",
+      "sha256": "0810669d6a8ebbaf6d30a1b86a8f61fc8d9e99e9bb0a10b0fe305d7370eb2d10"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/pq-wallet/src/rpc/tests/gateway.rs",
+      "provenance": [
+        "crates/pq-wallet/src/rpc.rs"
+      ],
+      "reason": "Check bounded trusted-loopback transport, cookie rotation and refusal without authentication fallback using local HTTP fixtures.",
+      "sha256": "f6640b96916f74a6bd3e428b00226db00b0d488cb9caf7c4d45d931423c524ce"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/adapter.rs",
+      "provenance": [
+        "crates/tpq-devnet/src/lib.rs",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Reuse validated prepared Chain, canonical wallet Profile and native rule projection for bounded public import, compile and native configuration rendering; no duplicate consensus or fingerprint implementation. Export the native full activation list for blockchain-info readiness, including implicit coincident-height upgrades, separately from the collapsed diagnostic schedule.",
+      "sha256": "328907bebf82f1ffa45032f0cd37aadfabb8b946d9af3f2e3296ff6e89bd531b"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/adapter_main.rs",
+      "provenance": [
+        "crates/tpq-devnet/src/adapter.rs"
+      ],
+      "reason": "Expose the explicitly selected bounded ZDN public adapter protocol with fixed local input slots and signing-free feature requirements.",
+      "sha256": "3418772f44f751aeb9bc0d171fc33dbf2c7f8881a4d00138cd8d7031cdf85e78"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/src/import_main.rs",
+      "provenance": [
+        "crates/tpq-devnet/src/adapter.rs",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Export only validated public prepared-chain slots and an explicitly pinned host executable into a create-new package; never copy private preparation directories or authorize cloud execution.",
+      "sha256": "9c1abfa51e0fd0cf51db0b4107a9b3b6401570c87d0a6cc408bf82402a212d95"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/tests/adapter_protocol.rs",
+      "provenance": [
+        "crates/tpq-devnet/src/adapter_main.rs"
+      ],
+      "reason": "Exercise actual adapter process protocol framing, bindings and malformed-input refusal without a live node or signer.",
+      "sha256": "6430bc05a8b19f290952c6f0912114c6d3b3160a9886562d7f252d9d3ab8b19e"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/tpq-devnet/tests/gateway_transport.rs",
+      "provenance": [
+        "crates/tpq-devnet/src/rpc.rs"
+      ],
+      "reason": "Check explicit trusted gateway transport, bounded raw-block bodies, cookie rotation and client-side admin-method refusal with loopback fixtures.",
+      "sha256": "c5a4acaad07eda935d37030e785ce43d764ae0de037a53e15b90b66e89be5020"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/zakura-chain/src/chain_diagnostics.rs",
+      "provenance": [
+        "crates/zakura-rpc/src/methods/chain_diagnostics.rs",
+        "docs/slh-dsa-b128s/node-reuse.json"
+      ],
+      "reason": "Move the existing complete native diagnostic projection below RPC so the public adapter and RPC reuse identical rules and fingerprints without depending on the node or copying SLH semantics into ZDN.",
+      "sha256": "293ffbc43cc016a0360467a79c9ae8d6c0d5d6850440338e95a145c280baa957"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-chain/src/lib.rs",
+      "provenance": [
+        "crates/zakura-chain/src/chain_diagnostics.rs"
+      ],
+      "reason": "Expose the shared native diagnostic projection used by RPC and signing-free prepared-chain compilation.",
+      "sha256": "1e6895267b2f570363010b858b90a4200bc2e7276a762dee1362c3e4f041fef1"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakura-network/Cargo.toml",
+      "provenance": [
+        "crates/zakura-network/src/config/managed_identity.rs"
+      ],
+      "reason": "Use the already locked Unix filesystem API for no-follow owner-only managed identity persistence without changing dependency versions.",
+      "sha256": "6028ac71e437a552b8c6b2374110114ad4df65c64a1ec7fef9322c942d38de51"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-network/src/config/managed_identity.rs",
+      "provenance": [
+        "crates/zakura-network/src/config.rs",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Persist the existing native identity with owner-only no-follow create-new filesystem operations and refuse missing, unsafe or mismatched identities after public NodeId pinning.",
+      "sha256": "3f03e85385e25a4e6cd1fbfaab6ac1ea9f4a77606ae7cd622fca2ea250d50b98"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakura-network/src/config/tests/managed_identity.rs",
+      "provenance": [
+        "crates/zakura-network/src/config/managed_identity.rs"
+      ],
+      "reason": "Check durable native identity reuse, mismatch and deletion refusal, permissions and symlink rejection using disposable local files.",
+      "sha256": "6704517e1432d6ffd50a22f9e2e3b35f86017c07f570382280306bbc6a22817e"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/commands.rs",
+      "provenance": [
+        "crates/zakurad/src/commands/native_identity.rs"
+      ],
+      "reason": "Register a nonserver native identity command with public machine output and explicit identity storage, without changing ordinary startup.",
+      "sha256": "9403ce0888e85050db8e9e81be123d4031b00cc3075a9dd93288320fa2396d91"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/zakurad/src/commands/native_identity.rs",
+      "provenance": [
+        "crates/zakura-network/src/config/managed_identity.rs",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Provision or verify the existing managed native identity and print only schema, public NodeId and optional chain fingerprint; never export a private key or start a node.",
+      "sha256": "05ffed5141439899694e60d8b6625f04b02155933a1ed0cacd69bb6d424d9ff6"
+    },
+    {
+      "disposition": "upstream-modification",
+      "path": "crates/zakurad/src/commands/tests.rs",
+      "provenance": [
+        "crates/zakurad/src/commands/native_identity.rs"
+      ],
+      "reason": "Exercise parsing of the explicit native-identity command and unchanged server command boundaries without running a node.",
+      "sha256": "fa024f273e10b1a03c646de3839ade334374927bad5416b0758c16e8e713c335"
+    },
+    {
+      "disposition": "new",
+      "path": "docs/slh-dsa-b128s/zdn.md",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md",
+        "docs/slh-dsa-b128s/wallet.md"
+      ],
+      "reason": "Document separately installed public adapter tools, explicit gateway trust, terminal-owned wallet passwords and pending external lifecycle qualification without claiming live support.",
+      "sha256": "d5523824d14a455a3ac677f42fbd7347322a99da2177aa207d484d793dcc5a1c"
+    },
+    {
+      "disposition": "new",
       "path": ".agents/setup",
       "provenance": [
         "AGENTS.md"
@@ -61,7 +241,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Declare a separate unpublished standalone preparation and funding utility, outside node dependency graphs.",
-      "sha256": "ecd8bed578fc5ab5066a4784bdc8d57f6cb4cf355d81d08ec991d7b48b179004"
+      "sha256": "e9426ef7d3573f4685e92d06099049ddffcbf941f29d06dce1a85f8360e7106a"
     },
     {
       "disposition": "new",
@@ -88,7 +268,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Reuse the native SLH genesis generator and rules builder to save one validated chain definition with separate private funding storage.",
-      "sha256": "d49e23e1255c69d8a10daf054d6d9186509f690d66fddf6e23303b664ffa4ac9"
+      "sha256": "75a4e2d7451ffe7b830663789fe2af69a9b5775465bd79917be934b0119761e8"
     },
     {
       "disposition": "new",
@@ -97,7 +277,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Expose explicit standalone prepare, bootstrap, funding draft and approved submission commands; do not modify ZDN.",
-      "sha256": "e40eb90545ebd87d562a359a4e21ba2b918c7d244d88bb12a5f004c046b3aa28"
+      "sha256": "c129abbd8b4a7f232ad7f2e7c539d4723fcab2255993965d3808855c8596d229"
     },
     {
       "disposition": "new",
@@ -106,7 +286,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Provide bounded authenticated literal-loopback HTTP for the separate standalone utility, with no proxy, DNS or redirect fallback.",
-      "sha256": "4db0c6d2d97de231ec68e4d72dc58122357ce7270adb8c850bb8e207b63f1ed0"
+      "sha256": "1f6f691fd925c6f7d420b40c9399fb75202757b9b8058a5ffe0b269491142b2b"
     },
     {
       "disposition": "new",
@@ -124,7 +304,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Check saved chain identities, real classical funding signatures, wrong-chain rejection, arithmetic, retries, private storage and authenticated HTTP without a live node.",
-      "sha256": "95407a60a44993f81903b3d770a123c0b3b821f92f8600b6c5a15fa829e6bb98"
+      "sha256": "25ab0aa78bc38d506d50cc1e7fd800379314fec7b3444c1af297a7b11dd7f968"
     },
     {
       "disposition": "adapted",
@@ -133,7 +313,7 @@
         "docs/slh-dsa-b128s/launcher-rpc.md"
       ],
       "reason": "Adapt pinned research node-owned rule projection and canonical block inspection, remove absent alternate backends, and version SLH rules separately from ordinary v1.",
-      "sha256": "021a1079821ff3bbca6fda95582a10bd77d2938d2b8ea5bb86cc9d6f8df3a1a5"
+      "sha256": "43a289fe6e2278b28432559252e74f0569706e356321f62b998d482d7976cbd0"
     },
     {
       "disposition": "adapted",
@@ -142,7 +322,7 @@
         "docs/slh-dsa-b128s/launcher-rpc.md"
       ],
       "reason": "Adapt pinned research diagnostic tests with independent expected ordinary rules, SLH v2 support and the product block-byte limit.",
-      "sha256": "ce1d5196c3f27834f477999cf2591930541ffe326ef583b489846dc58445980e"
+      "sha256": "03612241b51f9be1c21eeed0fb2d36cdd910121cf23270295c096dacfc46a421"
     },
     {
       "disposition": "upstream-modification",
@@ -187,7 +367,7 @@
         "docs/slh-dsa-b128s/README.md"
       ],
       "reason": "Document standalone local-cohort preparation, bootstrap, approved funding, attributable reuse and pending live qualification.",
-      "sha256": "321b0436a70e7e45f8b7bcf21c98ed44a7f85b8fcad1db2543c9190b3b6f8cdc"
+      "sha256": "eb815e2a7c542cb19506dc3eb4acb502fc2d82eab14dee81cf83c4afb1b350f1"
     },
     {
       "disposition": "new",
@@ -263,7 +443,7 @@
         "tests/slh-dsa-b128s/dependencies/README.md"
       ],
       "reason": "Integrate reviewed SLH workspace packages and existing locked dependencies; retain upstream dependency identities. Optional fixture-only proof constructors reuse pinned crypto packages; explicit local-prover loading adds three directory helper packages without changing existing registry versions/checksums. Genuine spend fixtures add one optional direct incrementalmerkletree dependency using its existing pinned identity; no new package, version or checksum. Restore only the previous pinned Orchard 2.2.0 dependency graph for optional historical fixture generation; preserve all upstream Common 3 identities and exclude legacy Orchard from nodes.",
-      "sha256": "31801e1a778e6489813bdf4697dc2e49431e0e66c5074a7b3227978ed53d33cf"
+      "sha256": "c3549dc05ba21a66f5dbcbb487a6fba605150624beeae141f7fbbcf94b0b80ad"
     },
     {
       "disposition": "upstream-modification",
@@ -811,7 +991,7 @@
         "crates/pq-wallet/CLI_RPC_PROVENANCE.json"
       ],
       "reason": "Reuse research command and trusted-loopback RPC flows with explicit SLH feature and enrollment boundaries.",
-      "sha256": "1fa77dcfb54a7092f5bb17b3bc010d6965830f7846cfec24d84102735d89c02f"
+      "sha256": "74a821085f95e4544c7788b72dc6090ec6e239caf1c6ebaa224f837d53900883"
     },
     {
       "disposition": "adapted",
@@ -1439,7 +1619,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "43965d2f97c4b781ae0a1a46dff8e5baa26a49f22f06a787cb50646eec76e66e"
+      "sha256": "84ea9afc51da10d98cb93eefff6ce2a20fd2105d75ba7baee76364a1ca0bc134"
     },
     {
       "disposition": "attribution",
@@ -1560,7 +1740,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "4dff31aad5b1a6166a62dbca3568d5c35685d6824b2a3370c9f48bcecd297ef3"
+      "sha256": "7c895af779ac297283137ce1a9531cc76e1e48bce5f6f7eb90d5d9d25d01ce42"
     },
     {
       "disposition": "adapted",
@@ -1648,7 +1828,7 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "3d6a737a7fe2f40c23e7a7ba38103bc1e2e527c22c92a426c68f643c7991be71"
+      "sha256": "ef275355562c56728588991b21dbc6ec8cbdccb0b0db3da33a77767979e88e99"
     },
     {
       "disposition": "adapted",
@@ -1659,7 +1839,17 @@
         "crates/pq-wallet/RECOVERY_PROVENANCE.json"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
-      "sha256": "a984cd884b3734db3eed55856312bbc5d469155434dbb458b9f4fbc17a809300"
+      "sha256": "bed0a13a1c1303ad359139375e7d219cbe8cb5baec76c7c15ef2d0a247865630"
+    },
+    {
+      "disposition": "adapted",
+      "path": "crates/pq-wallet/src/profile.rs",
+      "provenance": [
+        "crates/pq-wallet/PROVENANCE.json",
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Extract existing Hex/Profile and lowercase hex decoding from manifest.rs at TPQ baseline 7d8d9349dbc8914c6423f1a5a3d3ef8f2f6f208d; preserve canonical encoding and validation while exposing public context without wallet keys or signing.",
+      "sha256": "cf5332776425ff61dc17f53765efcf69e2ab10d767d5bc1d0ce72b6ace00e4c3"
     },
     {
       "disposition": "adapted",
@@ -1956,7 +2146,7 @@
         "docs/changelog/unreleased/9.md"
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits. PR #9: Support the 20 MB devnet block limit across decoding, peer transport, RPC, wallet scanning and persistent transaction indexes; retain upstream mechanisms and test exact byte, frame and storage boundaries.",
-      "sha256": "95866cf2841d1b3af8aaec76d1dc2aca7bbe03d6ea3429c282266dbc1e4a645b"
+      "sha256": "23f7351b8f83c082724efec76a0cf1e90cfb82c98174d5c3db08613c66835b5a"
     },
     {
       "disposition": "adapted",
@@ -2111,6 +2301,15 @@
       ],
       "reason": "Reuse bounded canonical wallet, payment history, backup and recovery mechanisms; specialize the SLH suite and retained authority limits.",
       "sha256": "139cee4701687e4fd626cc642d05e47ede88b0ce6ccf61374dfd54b2b4cef54e"
+    },
+    {
+      "disposition": "new",
+      "path": "crates/pq-wallet/tests/profile.rs",
+      "provenance": [
+        "docs/slh-dsa-b128s/devnet.md"
+      ],
+      "reason": "Exercise canonical public profile bytes, context invariants and encoding/limit negatives under public-only and full wallet features; retain existing format and snapshot comparisons.",
+      "sha256": "d7950569c2e6c48627d43080deda0bea0e493e13d422543fcab3b61bc2daccb5"
     },
     {
       "disposition": "new",
@@ -2392,7 +2591,7 @@
         "docs/slh-dsa-b128s/protocol.md"
       ],
       "reason": "Narrow SLH feature/configuration, verification, payload-bound accounting, relay/mining integration or focused regression; preserve unrelated upstream behavior.",
-      "sha256": "6d054bd8b804d236d07a401acc6bc63ff686c308cbffae40f93a4144d14b2ed2"
+      "sha256": "b746379a8ce55ca02e2103c052f6b8e5d588fd205716b04a82aaba42d8ce85f4"
     },
     {
       "disposition": "upstream-modification",
@@ -2514,7 +2713,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Reuse existing reviewed Regtest gate and namespace mechanisms for SLH-only support; strict NU7 inequality and fail-closed complete-runtime support per frozen protocol Extend retained SLH activation and state mechanisms to explicitly isolated custom Testnets. Preserve Regtest and default networks; cover checked genesis scheduling, distinct chain identity, configuration boundaries and deterministic state namespaces. PR #11 review: Preserve launcher coinbase/Orchard consensus options in TOML, reject conflicting options and known public bootstrap aliases, and exercise generated-network fingerprints and peer-cache paths. Reject ambiguous numeric IP forms before DNS and recognize IPv4-compatible IPv6; initialize the known peer inventory once. PR #11 merge: adapt the peer guard and identity tests to upstream zakura-quic without restoring Iroh dependencies. Warn on automatic identity namespace upgrades without copying an unbound old key; regression tests check the warning and quiet stable restarts. Reject peer whitespace and compare the RFC 6052 well-known NAT64 prefix, with unrelated IPv6 positive controls. PR #11 peer-isolation review: Require native-only peering for SLH custom chains so a failed fingerprint check cannot fall back to the legacy magic-only handshake. Reuse the native parser strictly, rejecting malformed entries instead of silently skipping them. TOML, direct-config, and startup tests cover both restrictions.",
-      "sha256": "50d0f2a1f0de4dbc86b577653ea2328ace7e70614711bd6ca55968a33ecf5c60"
+      "sha256": "393220c303e7cc63bf669b71d8694c1ebce502571d73be251530f90aef77ebb8"
     },
     {
       "disposition": "upstream-modification",
@@ -2534,7 +2733,7 @@
         "docs/slh-dsa-b128s/devnets.md"
       ],
       "reason": "Move the existing product custom-SLH TOML fixture into this test-only parent module for shared use by configuration and native-handshake tests; no runtime API or dependency changes.",
-      "sha256": "9e40c34627a582be44d3d865ad6cc2664627aaf64c1926fe58139ccb57de21c9"
+      "sha256": "87391d5f7a709f973e59cc42818909a74cc3957c1dea23bef855f3bdd2380007"
     },
     {
       "disposition": "upstream-modification",
@@ -2717,7 +2916,7 @@
         "docs/slh-dsa-b128s/node-reuse.json"
       ],
       "reason": "PR #9 follow-up: Grow native frame payloads only after bounded chunks arrive, preserving total payload deadlines and reset/FIN handling; regress header-only and partial-body allocations and transfer a full 20 MB frame followed by another frame over loopback QUIC. Upstream refresh e33dc4308: Adapt the existing incremental 64 KiB frame reader and its allocation/body-boundary regression to zakura-quic; retain reset and timeout behavior. Mandatory native peering for SLH custom testnets exposed the retained upstream reporting gap: fresh native connections were absent from the active registry and RPC/health counted only legacy address-book entries. Register admitted native addresses and direction per connection generation, preserve existing legacy upgrade metadata, and count the live registry with fallback only when absent. Mocked registry, supervisor, RPC and health regressions cover both directions, stale callbacks, disconnects, empty registries and omitted unadvertised fields. No wire or transport changes.",
-      "sha256": "9735904ffca7a6119fae443220107ff509529412d725a70cbdcea25686247585"
+      "sha256": "2cf43ed382d3fe785e3d329427f7212b5851e483b55e57dfbc4856e5a6826926"
     },
     {
       "disposition": "upstream-modification",
@@ -4203,7 +4402,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "c7d9acb51e3c31671f2187d32c44985652b28dfad854e387c0a7e65ee1023594"
+      "sha256": "723f0d11508a9c054893616762f923f68d14fc4bd9f1609c6b6aab0f533bace5"
     },
     {
       "disposition": "new",
@@ -4354,7 +4553,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "c791e7a04569f2f75327b9482a0b0ac7e178dd3c9c61aca1afd1f476f81aec7d"
+      "sha256": "164d9e0f8051650c2a5f92053969f3a7c69eb8ffd789f134777be4d2f25724d8"
     },
     {
       "disposition": "new",
@@ -4387,7 +4586,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract. Require the specific duplicate-key fixture error after a valid JSON positive control.",
-      "sha256": "457d125dec4dffc976ad1b2546b2b89a24d347ac6b2397bfc2ef09a1ab493553"
+      "sha256": "e87394ac27f46766397212f59d495485d871611e5516c31888015940448da483"
     },
     {
       "disposition": "new",
@@ -4562,7 +4761,7 @@
         "benchmarks/slh-dsa-b128s/sources.json"
       ],
       "reason": "Document allowed dependency graphs for the isolated primitive and wallet payment benchmark, including product transaction context, while keeping benchmark code out of node, wallet and verifier graphs.",
-      "sha256": "c548b24af019441c7ca151d26dbfdfb0c59079d501133b81f815369046d3dd6b"
+      "sha256": "32f9f625f227ec6e6cfaf1d6cd25774015fdb3e5a7e42ac135c6bf2008f61c8c"
     },
     {
       "disposition": "new",
@@ -4573,7 +4772,7 @@
         "benchmarks/slh-dsa-b128s/sources.json"
       ],
       "reason": "Check resolved feature graphs for SLH dependency isolation. Require product wallet and transaction-context dependencies in the separate benchmark while excluding node services, the CLI and fixture tools and preserving the BLAKE3 pin without Rayon. Reject the fixture-only historical Orchard 2.2.0 builder in every node graph.",
-      "sha256": "58eb6740a6d878d8533d45259185f7b4828dabf9b0094e3ff88b03c1e83da120"
+      "sha256": "2182c2fee79e23f50f6c158060aa75c39042e71b02283c9ffea338f7b39542d0"
     },
     {
       "disposition": "new",
@@ -4584,7 +4783,7 @@
         "benchmarks/slh-dsa-b128s/sources.json"
       ],
       "reason": "Use mocked dependency graphs to test the updated wallet payment benchmark requirements and forbidden node-service edges, alongside existing signer, verifier and default-feature isolation controls. Inject the historical builder alongside Common 3 in each default/SLH/all-feature node graph and require rejection.",
-      "sha256": "62fe6b0479bcaced6a221494b221e3f321494cd8ab51d66e11ab7a504c6d9312"
+      "sha256": "73d251839ca682c3a756623e4894a8e94df25d760aefc2a09ab69ce3499beaa9"
     },
     {
       "disposition": "new",

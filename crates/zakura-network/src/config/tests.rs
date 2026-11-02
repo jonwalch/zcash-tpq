@@ -2,6 +2,8 @@
 
 #![allow(clippy::unwrap_in_result)]
 
+#[cfg(unix)]
+mod managed_identity;
 mod vectors;
 
 pub(crate) const CUSTOM_SLH_FIELDS: &str = "experimental_slh_dsa_b128s_activation_height = 110, experimental_slh_dsa_b128s_max_checks_per_transaction = 16, experimental_slh_dsa_b128s_max_checks_per_block = 64";

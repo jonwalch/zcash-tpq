@@ -350,6 +350,34 @@
   ],
   "targets": [
     {
+      "adaptation": "New explicit TPQ/ZDN full-journey phases with public evidence references, strict plan/gate/payment validation, fixed ZDN lifecycle argv and durable no-redispatch fences. Reuse existing common.py canonical JSON, pins and fixed diagnostics. Retain terminal.py and wallet_live.py authority without changing their Regtest semantics or adding a payment journal. Current ZDN cloud_cli.rs and devnet/external.rs command/schema contracts were inspected. The archived October 21 run.py supplied scenario guidance through the coordinator, not directly reused source.",
+      "classification": "new TPQ-owned qualification orchestration",
+      "path": "tests/slh-dsa-b128s/acceptance/zdn_flow.py",
+      "sha256": "0af8414a1cba3bff8203ae2bc478e9b4c34813f329e1324c1dccfb31bc5baf32",
+      "sources": []
+    },
+    {
+      "adaptation": "New focused offline fake-process journey and refusal tests. Synthetic public byte/version and independent integer observations test orchestration only; no RPC, wallet, signing, PTY, build, container, cloud or live qualification.",
+      "classification": "new offline orchestration regression tests",
+      "path": "tests/slh-dsa-b128s/acceptance/zdn_test.py",
+      "sha256": "c7118969f8a80f07ff90d04b018c184c434d0df475b45f744e5d5e193cf12d6b",
+      "sources": []
+    },
+    {
+      "adaptation": "New TPQ-specific subcase and negative-control manifest tracing ZDN beta plan v1.0 (2026-10-23), document SHA256 20bc7e52be2df2d78706d5e4c453bfa91e42feefcad83d550c5a1abc31a499d2. All live subcases remain pending; no expansion of historical beta scope.",
+      "classification": "new qualification manifest",
+      "path": "tests/slh-dsa-b128s/acceptance/zdn_cases.json",
+      "sha256": "a9349fd2e76696599cfaf2b89a5915ac592df39823466a65e0f89febb38e3f63",
+      "sources": []
+    },
+    {
+      "adaptation": "Document optional TPQ public tools, managed connect and local wallet/funding boundaries, plus explicit reusable qualification interfaces, schema/gate responsibilities, selected beta subcases, resume/cleanup and pending live status. New orchestration is not a direct copy of an unavailable archived driver.",
+      "classification": "new product integration runbook",
+      "path": "docs/slh-dsa-b128s/zdn.md",
+      "sha256": "d5523824d14a455a3ac677f42fbd7347322a99da2177aa207d484d793dcc5a1c",
+      "sources": []
+    },
+    {
       "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/pq-slh-dsa-b-exp/src/verifier.rs",
@@ -367,7 +395,7 @@
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Correct the reused donation-selection test amounts for independent SLH input sizes while preserving all three fee-ceiling outcomes.",
       "classification": "test-only human durable fault preparation",
       "path": "crates/pq-wallet/src/payment/tests.rs",
-      "sha256": "9433729715bc80320e8e3247954343176caf9cba8d49ed570622f21914dfbd9d",
+      "sha256": "6d7ac0400dc45d67b710f1199fdcef78c68331f54413de49adf217d85f5cb97a",
       "sources": []
     },
     {
@@ -387,7 +415,7 @@
       "adaptation": "Reuse existing private publication stages, current synthetic wallet Source, backup and snapshot APIs. Add named process boundaries, strict receipts and positive/reopen controls without operational fault APIs, format changes or signer entropy changes. Unknown snapshot restore now resets derived scan observations; the private publication stages and fault hooks are unchanged. This source mapping does not renew historical live evidence.",
       "classification": "test-only human durable fault preparation",
       "path": "crates/pq-wallet/src/watch.rs",
-      "sha256": "5ab333db8ce5033df2eeb3bbc072129dd6045ec353a3e256d90a4011af0d62dc",
+      "sha256": "35a2464b1890d4627d8c822b5e88b8ccc2e9d2dc282a65a5c2677290c19ea3bf",
       "sources": [
         "wallet_fault_watch"
       ]
@@ -412,7 +440,7 @@
       "adaptation": "Add opt-in Regtest observation at the existing real primitive boundary and bounded process/window receipts; preserve verifier result, reservation/failure ordering and unchanged eight-field identity. No backend replacement or performance machinery. Add typed nonpunitive local context/backend failures and focused boundary controls; primitive observation behavior is unchanged. This source mapping does not renew historical daemon captures. Require real parallel-worker rejection for each separately corrupted signer in every input of the retained v5/v6 15-of-15 and 16-check fixtures, after accepting the unchanged fixtures; preserve complete reservation and no-refund checks.",
       "classification": "narrow fixed-primitive observation integration and focused controls",
       "path": "crates/zakura-consensus/src/transaction/tests/slh_dsa_b128s.rs",
-      "sha256": "41829b780d840b9d785600dfb386d4156ed4714ff6954a697b8fe1354c45dd75",
+      "sha256": "33cc71877e14d77e0b97014adead3e01826ed9e5865ae81b010980f3bdd53a77",
       "sources": []
     },
     {
@@ -537,10 +565,10 @@
       "sources": []
     },
     {
-      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts. Document the narrow no-blocks readiness retry, valid height and unchanged timeout/process boundaries; no execution acceptance claim.",
+      "adaptation": "Document current command schemas, attribution, prepared versus missing cases and human-only validation boundaries; no historical acceptance result is relabeled. Link genuine note/anchor and bounded process-crash drivers, preserving inert imports and separate completed execution receipts. Document the narrow no-blocks readiness retry, valid height and unchanged timeout/process boundaries; no execution acceptance claim. Add the optional ZDN journey, explicit review gates, offline coordinator checks and pending live subcases.",
       "classification": "new or amended product documentation",
       "path": "tests/slh-dsa-b128s/acceptance/README.md",
-      "sha256": "c7d9acb51e3c31671f2187d32c44985652b28dfad854e387c0a7e65ee1023594",
+      "sha256": "723f0d11508a9c054893616762f923f68d14fc4bd9f1609c6b6aab0f533bace5",
       "sources": []
     },
     {
@@ -612,7 +640,7 @@
       "adaptation": "Reuse exact classical block/UTXO compatibility, unchanged rejection state, stopped cache hashes and ordinary backup replay. Adapt to enabled/default SLH, both mixed input orders, direct64/65 blocks, and current rule namespaces without importing generic Docker infrastructure.",
       "classification": "adapted research mechanisms and current product APIs",
       "path": "tests/slh-dsa-b128s/acceptance/lifecycle_controls.py",
-      "sha256": "da165fcc352cd577ef8eec5cd126456af15e58721ad384e433c5bb4c1566d67a",
+      "sha256": "8a3517af4fadae305945968919144202d98108707b9d60d4f531404357b66483",
       "sources": [
         "compatibility",
         "history",
@@ -707,10 +735,10 @@
       ]
     },
     {
-      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference. Verify the isolated deposit window preserves all other settings, rejects unintended profiles and reaches both node configurations without starting processes. Require the specific duplicate-key fixture error after a valid JSON positive control.",
+      "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference. Verify the isolated deposit window preserves all other settings, rejects unintended profiles and reaches both node configurations without starting processes. Require the specific duplicate-key fixture error after a valid JSON positive control. Follow the shared public chain contract constant while keeping the independent expected identity comparison.",
       "classification": "new focused offline test adapter",
       "path": "tests/slh-dsa-b128s/acceptance/test_acceptance.py",
-      "sha256": "457d125dec4dffc976ad1b2546b2b89a24d347ac6b2397bfc2ef09a1ab493553",
+      "sha256": "e87394ac27f46766397212f59d495485d871611e5516c31888015940448da483",
       "sources": []
     },
     {
@@ -759,7 +787,7 @@
       "adaptation": "Necessary regression coverage for new orchestration/provenance boundaries. Mock CLI/RPC/processes only; no production crypto or independent corpus implementation is replaced. Research command-flow expectations and unchanged product format oracle remain the reference.",
       "classification": "new focused offline test adapter",
       "path": "tests/slh-dsa-b128s/acceptance/test_lifecycle_controls.py",
-      "sha256": "2d3b5a070ea56095556a9ce6f9316bb13c9d65a768360c3884dc1923e1cd939f",
+      "sha256": "9a076002005940c2d937c723f123ccb45b902dc56e0cedd8ebe80fa661621c85",
       "sources": []
     },
     {

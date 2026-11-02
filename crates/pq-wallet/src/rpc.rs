@@ -12,7 +12,25 @@ use std::{
 
 // The cast is safe: a 20 MB block and its hex encoding fit in usize on supported targets.
 const MAX_RESPONSE: usize = 2 * zakura_chain::block::MAX_BLOCK_BYTES as usize + 100_000;
+const SMALL_BODY: usize = 2 * 1024 * 1024;
 const MAX_HEADER: usize = 16_384;
+
+// Only non-verbose hex results get the large body class. In particular, the
+// wallet's bounded verbose transaction lookup does not inherit the block cap.
+fn body_limits(method: &str, params: &Value) -> (usize, usize) {
+    let raw_lookup = matches!(method, "getblock" | "getrawtransaction")
+        && params
+            .as_array()
+            .is_some_and(|p| p.len() == 2 && p[0].is_string() && p[1].as_u64() == Some(0));
+    let send = method == "sendrawtransaction"
+        && params
+            .as_array()
+            .is_some_and(|p| p.len() == 1 && p[0].is_string());
+    (
+        if send { MAX_RESPONSE } else { SMALL_BODY },
+        if raw_lookup { MAX_RESPONSE } else { SMALL_BODY },
+    )
+}
 
 /// Bounded transport to an independently authenticated numeric loopback node.
 pub struct LocalRpc {
@@ -21,6 +39,8 @@ pub struct LocalRpc {
 }
 impl LocalRpc {
     /// Reject remote, unspecified, DNS and zero-port endpoints.
+    /// Retains the existing unauthenticated local-node API. Call
+    /// `trusted_local_gateway` when explicitly selecting an established gateway.
     pub fn new(address: SocketAddr) -> Result<Self, Error> {
         if !address.ip().is_loopback() || address.port() == 0 {
             return Err(Error::UnsupportedContext);
@@ -29,6 +49,12 @@ impl LocalRpc {
             address,
             cookie: None,
         })
+    }
+    /// Explicitly trust an operator-established local gateway (for example,
+    /// `zdn connect`). Sends no node credentials. This is not an auth fallback.
+    /// The caller must still supply and validate the independently approved profile.
+    pub fn trusted_local_gateway(address: SocketAddr) -> Result<Self, Error> {
+        Self::new(address)
     }
     /// Use a private cookie file, reopened on every request to support rotation.
     /// Parent directories must be operator-trusted and stable.
@@ -94,15 +120,21 @@ impl LocalRpc {
         params: Value,
         missing_transaction: bool,
     ) -> Result<Value, Error> {
+        let (request_limit, response_limit) = body_limits(method, &params);
         let body =
             serde_json::to_vec(&json!({"jsonrpc":"2.0", "id":1, "method":method, "params":params}))
                 .map_err(|_| Error::Encoding)?;
+        if body.len() > request_limit {
+            return Err(Error::Limits);
+        }
+        // Refuse missing/invalid cookies before any connection, never retry
+        // without authentication after either local or server auth failure.
+        let authentication = self.authentication()?;
         let mut stream = TcpStream::connect_timeout(&self.address, Duration::from_secs(5))
             .map_err(|_| Error::HistoryUnavailable)?;
         stream
             .set_write_timeout(Some(Duration::from_secs(5)))
             .map_err(|_| Error::HistoryUnavailable)?;
-        let authentication = self.authentication()?;
         write!(stream, "POST / HTTP/1.0\r\nHost: {}\r\n{}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", self.address, authentication.as_str(), body.len()).map_err(|_| Error::HistoryUnavailable)?;
         stream
             .write_all(&body)
@@ -110,6 +142,7 @@ impl LocalRpc {
         let deadline = Instant::now() + Duration::from_secs(30);
         let mut response = Vec::new();
         let mut buffer = [0; 8192];
+        let mut header_end = None;
         loop {
             let remaining = deadline
                 .checked_duration_since(Instant::now())
@@ -123,12 +156,22 @@ impl LocalRpc {
             if count == 0 {
                 break;
             }
-            if response.len() + count > MAX_RESPONSE + MAX_HEADER {
+            if response.len() + count > response_limit + MAX_HEADER {
                 return Err(Error::Limits);
             }
             response.extend_from_slice(&buffer[..count]);
+            if header_end.is_none() {
+                header_end = response.windows(4).position(|w| w == b"\r\n\r\n");
+            }
+            if let Some(end) = header_end {
+                if end > MAX_HEADER || response.len() - end - 4 > response_limit {
+                    return Err(Error::Limits);
+                }
+            } else if response.len() > MAX_HEADER {
+                return Err(Error::Limits);
+            }
         }
-        parse_response_kind(&response, missing_transaction)
+        parse_response_limited(&response, missing_transaction, response_limit)
     }
 }
 
@@ -140,12 +183,20 @@ fn parse_response(response: &[u8]) -> Result<Value, Error> {
     }
     Ok(value)
 }
+#[cfg(test)]
 fn parse_response_kind(response: &[u8], missing_transaction: bool) -> Result<Value, Error> {
+    parse_response_limited(response, missing_transaction, MAX_RESPONSE)
+}
+fn parse_response_limited(
+    response: &[u8],
+    missing_transaction: bool,
+    response_limit: usize,
+) -> Result<Value, Error> {
     let end = response
         .windows(4)
         .position(|w| w == b"\r\n\r\n")
         .ok_or(Error::HistoryUnavailable)?;
-    if end > MAX_HEADER || response.len() - end - 4 > MAX_RESPONSE {
+    if end > MAX_HEADER || response.len() - end - 4 > response_limit {
         return Err(Error::Limits);
     }
     let header = std::str::from_utf8(&response[..end]).map_err(|_| Error::HistoryUnavailable)?;
@@ -181,7 +232,8 @@ fn parse_response_kind(response: &[u8], missing_transaction: bool) -> Result<Val
     if length.is_some_and(|n| n != body.len()) {
         return Err(Error::HistoryUnavailable);
     }
-    let envelope: Value = serde_json::from_slice(body).map_err(|_| Error::HistoryUnavailable)?;
+    let mut envelope: Value =
+        serde_json::from_slice(body).map_err(|_| Error::HistoryUnavailable)?;
     if envelope.get("id") != Some(&json!(1)) {
         return Err(Error::HistoryUnavailable);
     }
@@ -195,8 +247,8 @@ fn parse_response_kind(response: &[u8], missing_transaction: bool) -> Result<Val
         return Err(Error::HistoryUnavailable);
     }
     envelope
-        .get("result")
-        .cloned()
+        .get_mut("result")
+        .map(Value::take)
         .ok_or(Error::HistoryUnavailable)
 }
 
@@ -410,6 +462,7 @@ impl crate::payment::PaymentSource for LocalRpc {
 #[cfg(test)]
 mod tests {
     mod discovery;
+    mod gateway;
     mod payment;
     use super::*;
 
@@ -518,6 +571,18 @@ mod tests {
                 .unwrap()
                 .is_null()
         );
+        for result in [Value::Null, json!({"items":[1,"text",null,{"ok":true}]})] {
+            for missing_transaction in [false, true] {
+                assert_eq!(
+                    parse_response_kind(
+                        &response(json!({"id":1,"result":result,"error":null})),
+                        missing_transaction,
+                    )
+                    .unwrap(),
+                    result
+                );
+            }
+        }
         // The pinned jsonrpsee error envelope omits result; also accept null.
         for missing in [
             json!({"jsonrpc":"2.0","id":1,"error":{"code":-5,"message":"Transaction not found in mempool or best chain"}}),
@@ -532,11 +597,18 @@ mod tests {
         }
         for body in [
             json!({"id":1}),
+            json!({"id":1,"error":null}),
             json!({"id":1,"error":{"code":-1}}),
+            json!({"id":1,"result":{"items":[1]},"error":{"code":-1}}),
+            json!({"id":2,"result":null,"error":null}),
             json!({"id":2,"error":{"code":-5}}),
+            json!({"id":2,"result":null,"error":{"code":-5}}),
+            json!({"result":null,"error":{"code":-5}}),
             json!({"id":1,"result":{},"error":{"code":-5}}),
         ] {
-            assert!(parse_response_kind(&response(body), true).is_err());
+            for missing_transaction in [false, true] {
+                assert!(parse_response_kind(&response(body.clone()), missing_transaction).is_err());
+            }
         }
         assert!(parse_response_kind(
             b"HTTP/1.0 500 Error\r\n\r\n{\"id\":1,\"error\":{\"code\":-5}}",

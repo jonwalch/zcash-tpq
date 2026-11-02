@@ -1,4 +1,6 @@
 //! Public-interface tests with an authenticated node double, never a live node.
+#![cfg(feature = "wallet")]
+
 use serde_json::{json, Value};
 use std::{
     io::{Read, Write},
@@ -179,6 +181,47 @@ fn prepare_saves_exact_public_rules_and_separate_create_new_private_key() {
     )
     .unwrap();
     assert_eq!(profile, chain.wallet_profile().unwrap());
+    let profile_bytes = serde_json::to_vec(&profile).unwrap();
+    assert_eq!(
+        chain.validate_wallet_profile(&profile_bytes).unwrap(),
+        profile
+    );
+    let mut other_fingerprint = profile.chain_fingerprint.unwrap().0;
+    other_fingerprint[0] ^= 1;
+    let mut other_genesis = profile.genesis_hash.0;
+    other_genesis[0] ^= 1;
+    // All these profiles are canonical and internally valid. Only comparison
+    // with the full native chain context can reject them.
+    for (field, value) in [
+        ("chain_fingerprint", json!(hex::encode(other_fingerprint))),
+        ("genesis_hash", json!(hex::encode(other_genesis))),
+        ("max_block_pq_checks", json!(65)),
+        ("max_tx_pq_checks", json!(15)),
+        ("nu7_activation_height", json!(101)),
+        ("pq_activation_height", json!(104)),
+    ] {
+        let mut changed = serde_json::to_value(&profile).unwrap();
+        changed[field] = value;
+        let bytes = serde_json::to_vec(&changed).unwrap();
+        assert_ne!(
+            zakura_pq_wallet::Profile::from_json(&bytes).unwrap(),
+            profile
+        );
+        assert!(chain.validate_wallet_profile(&bytes).is_err(), "{field}");
+    }
+    let mut regtest = profile.clone();
+    regtest.network = 2;
+    regtest.chain_fingerprint = None;
+    regtest.validate().unwrap();
+    assert!(chain
+        .validate_wallet_profile(&serde_json::to_vec(&regtest).unwrap())
+        .is_err());
+    assert!(chain
+        .validate_wallet_profile(&[profile_bytes.as_slice(), b" "].concat())
+        .is_err());
+    let mut corrupt = chain.clone();
+    corrupt.blocks[1].push_str("00");
+    assert!(corrupt.validate_wallet_profile(&profile_bytes).is_err());
     #[derive(serde::Deserialize)]
     struct Config {
         network: zakura_network::Config,

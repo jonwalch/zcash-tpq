@@ -1,15 +1,17 @@
 use super::*;
 use serde_json::{json, Value};
 use zakura_chain::{
-    block::Height,
+    block::{Block, Height, MAX_BLOCK_BYTES},
     parameters::{
+        subsidy::FundingStreamReceiver,
         testnet::{
             ConfiguredActivationHeights, ConfiguredCheckpoints, ConfiguredFundingStreamRecipient,
             ConfiguredFundingStreams, ConfiguredLockboxDisbursement, Parameters, ParametersBuilder,
         },
-        Magic,
+        Magic, NetworkKind, NetworkUpgrade,
     },
-    serialization::ZcashDeserializeInto,
+    serialization::{ZcashDeserializeInto, ZcashSerialize},
+    transparent::Address,
     work::difficulty::{ExpandedDifficulty, U256},
 };
 
@@ -205,18 +207,20 @@ fn public_and_regtest_networks_and_artificial_consensus_overrides_fail_closed() 
         .unwrap_err()
         .message()
         .contains("artificial NSM"));
-    for address in [
-        Address::PayToPublicKeyHash {
-            network_kind: NetworkKind::Testnet,
-            pub_key_hash: [1; 20],
-        },
-        Address::PayToScriptHash {
-            network_kind: NetworkKind::Mainnet,
-            script_hash: [1; 20],
-        },
-    ] {
-        assert!(script_identity(&address).is_err());
-    }
+    // Invalid lockbox addresses cannot reach the diagnostic: the native
+    // network builder rejects them before a Network can be constructed.
+    let address = Address::PayToPublicKeyHash {
+        network_kind: NetworkKind::Testnet,
+        pub_key_hash: [1; 20],
+    };
+    let error = custom_builder()
+        .with_lockbox_disbursements(vec![ConfiguredLockboxDisbursement {
+            address: address.to_string(),
+            amount: 1u64.try_into().unwrap(),
+        }])
+        .to_network()
+        .unwrap_err();
+    assert!(error.to_string().contains("P2SH"));
 }
 
 #[test]

@@ -1,4 +1,6 @@
 //! Experimental isolated-chain SLH wallet: backed enrollment, discovery and approved payments.
+//! The `public-profile` feature exposes canonical chain context without keys or
+//! signing APIs. Full wallet support still requires `experimental-slh-dsa-b128s`.
 
 #![forbid(unsafe_code)]
 
@@ -65,12 +67,14 @@ mod storage;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod watch;
 
-#[cfg(feature = "experimental-slh-dsa-b128s")]
+#[cfg(feature = "public-profile")]
 mod canonical;
-#[cfg(feature = "experimental-slh-dsa-b128s")]
+#[cfg(feature = "public-profile")]
 mod error;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod manifest;
+#[cfg(feature = "public-profile")]
+mod profile;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 mod suite;
 
@@ -89,10 +93,12 @@ pub use watch::{
     export_inventory, read_inventory, read_transfer, write_transfer, WatchMode, WatchStore,
 };
 
-#[cfg(feature = "experimental-slh-dsa-b128s")]
+#[cfg(feature = "public-profile")]
 pub use error::Error;
 #[cfg(feature = "experimental-slh-dsa-b128s")]
-pub use manifest::{Entry, Hex, Manifest, Origin, Profile, MAX_ENTRIES};
+pub use manifest::{Entry, Manifest, Origin, MAX_ENTRIES};
+#[cfg(feature = "public-profile")]
+pub use profile::{Hex, Profile};
 #[cfg(feature = "experimental-slh-dsa-b128s")]
 use rand_core::{CryptoRngCore, OsRng};
 #[cfg(feature = "experimental-slh-dsa-b128s")]

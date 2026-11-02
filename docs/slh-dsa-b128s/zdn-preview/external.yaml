@@ -1,0 +1,50 @@
+# Replace all marked values. This is a template, not a deployable configuration.
+apiVersion: zdn/v1alpha1
+name: tpq-preview
+profile: REPLACE_ZDN_PROFILE
+chain:
+  kind: external
+  packageSha256: REPLACE_REVIEWED_PACKAGE_SHA256
+  adapterSelectionSha256: REPLACE_APPROVED_SELECTION_SHA256
+  productionLimits:
+    maxHeight: 121
+    lifetimeSeconds: 7200
+deployment:
+  provider: aws
+  placement: one-node-per-vm
+node:
+  adapter: zakura
+  resources:
+    preset: small
+  source:
+    path: /REPLACE/absolute/pinned-node-source
+    snapshot: revision
+    revision: REPLACE_DISTRIBUTED_SOURCE_GIT_REVISION
+  build:
+    executor: aws-codebuild
+    platform: linux/amd64
+    recipe: repository
+    dockerfile: docker/Dockerfile
+    context: .
+    target: runtime
+    cargoFeatures:
+      - default-release-binaries
+      - experimental-slh-dsa-b128s
+network:
+  kind: custom-testnet
+  preset: custom-dev-v1
+  nodes: 2
+  # Required by the outer ZDN config validator, not the TPQ native rule source.
+  activationHeights:
+    NU6.3: 1
+  mining:
+    mode: scheduled
+    producer: node-1
+    interval: 3600s
+    proofOfWork: disabled
+services:
+  wallet: false
+  lightwallet: false
+  faucet: false
+access:
+  visibility: private

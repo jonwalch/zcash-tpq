@@ -20,6 +20,18 @@ fn args_with_subcommand_pass_through() {
         (true, false, false, vec!["zakurad", "warn"]),
         (false, true, false, vec!["zakurad", "start", "warn"]),
         (true, false, false, vec!["zakurad", "help", "warn"]),
+        (true, false, false, vec!["zakurad", "native-identity"]),
+        (
+            false,
+            false,
+            false,
+            vec![
+                "zakurad",
+                "native-identity",
+                "--identity-dir",
+                "/private/native",
+            ],
+        ),
     ];
 
     for (should_exit, should_be_start, should_be_verbose, args) in test_cases {
@@ -43,5 +55,11 @@ fn args_with_subcommand_pass_through() {
         );
 
         assert_eq!(matches!(args.cmd(), ZakuradCmd::Start(_)), should_be_start,);
+        if matches!(args.cmd(), ZakuradCmd::NativeIdentity(_)) {
+            assert!(!args.cmd().is_server());
+            assert!(!args.cmd().uses_intro());
+            assert!(!args.cmd().should_ignore_load_config_error());
+            assert_eq!(args.cmd().default_tracing_filter(false), "warn");
+        }
     }
 }

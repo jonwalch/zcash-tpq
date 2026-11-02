@@ -14,6 +14,7 @@ WALLET = "zakura-pq-wallet"
 CLI = "zakura-pq-cli"
 CONTEXT = "zakura-pq-tx-context"
 BENCH = "tpq-bench"
+DEVNET = "zakura-tpq-devnet"
 PQ_BACKEND = re.compile(r"(?:ml[-_]?dsa|sqisign|falcon|slh[-_]?dsa|fips20[45])", re.IGNORECASE)
 ALLOWED_PQ = {VERIFY, NATIVE, SIGN, "slh-dsa-b128s-fixture-host"}
 PACKAGE = re.compile(r"^([\w-]+) v([^\s]+)(?: \([^\n]*\))?\|([^\n]*)$")
@@ -60,11 +61,13 @@ def validate_tree(packages, *, required=(), forbidden=()):
                 require("rayon" not in features, "BLAKE3 Rayon feature in consumer graph")
 
 
-def graph(package, features=(), edges="normal,build"):
+def graph(package, features=(), edges="normal,build", *, no_default_features=False):
     args = ["tree", "-p", package, "--prefix", "none", "--format", "{p}|{f}", "-e", edges,
             "--target", "all"]
     if package == BENCH:
         args += ["--manifest-path", str(ROOT / "benchmarks/slh-dsa-b128s/Cargo.toml")]
+    if no_default_features:
+        args += ["--no-default-features"]
     if features:
         args += ["--features", ",".join(f"{package}/{feature}" for feature in features)]
     return parse_tree(cargo(*args))
@@ -81,8 +84,9 @@ def check():
 
     results = []
 
-    def record(label, package, features=(), required=(), forbidden=(), edges="normal,build"):
-        tree = graph(package, features, edges)
+    def record(label, package, features=(), required=(), forbidden=(), edges="normal,build",
+               *, no_default_features=False):
+        tree = graph(package, features, edges, no_default_features=no_default_features)
         validate_tree(tree, required=required, forbidden=(*forbidden, BENCH))
         if package in ("zakura", "zakura-consensus", "zakura-rpc"):
             require(not any(version == "2.2.0" for version, _ in tree.get("zakura-orchard", ())),
@@ -97,10 +101,21 @@ def check():
     record("consensus-slh", "zakura-consensus", ("experimental-slh-dsa-b128s",),
            required=(NATIVE, VERIFY, CONTEXT), forbidden=(SIGN, WALLET, CLI))
     record("wallet-default", WALLET, forbidden=(VERIFY, NATIVE, SIGN, CONTEXT))
+    record("wallet-public-profile", WALLET, ("public-profile",), required=(WALLET,),
+           forbidden=(SIGN, CLI, NATIVE, VERIFY, CONTEXT, "zakura-chain",
+                      "hkdf", "argon2", "chacha20poly1305", "rand_core"),
+           no_default_features=True)
     record("wallet-slh", WALLET, ("experimental-slh-dsa-b128s",), required=(SIGN, VERIFY))
     record("cli-default", CLI, forbidden=(WALLET, VERIFY, NATIVE, SIGN, CONTEXT))
     record("cli-slh", CLI, ("experimental-slh-dsa-b128s",),
            required=(WALLET, SIGN, VERIFY, NATIVE, CONTEXT))
+    record("tpq-devnet-default", DEVNET,
+           required=("zakura-chain", WALLET, SIGN, VERIFY, NATIVE, CONTEXT), forbidden=(CLI,))
+    record("tpq-devnet-no-default-features", DEVNET, required=("zakura-chain", WALLET),
+           forbidden=(SIGN, CLI, NATIVE, CONTEXT, VERIFY), no_default_features=True)
+    record("tpq-devnet-adapter", DEVNET, ("adapter",), required=("zakura-chain", WALLET),
+           forbidden=(SIGN, CLI, NATIVE, CONTEXT, VERIFY, "hkdf", "argon2", "password-hash"),
+           no_default_features=True)
     record("native-verifier-only", NATIVE, required=(VERIFY, CONTEXT), forbidden=(SIGN, WALLET, CLI))
     primitive = graph(VERIFY)
     validate_tree(primitive, required=(VERIFY, "blake3"), forbidden=(SIGN, WALLET, CLI, NATIVE, CONTEXT, "rayon", "rand_core", BENCH))

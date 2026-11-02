@@ -1,0 +1,27 @@
+{
+  "schema": "tpq-zdn-case-matrix/v1",
+  "beta_plan": {
+    "version": "1.0",
+    "date": "2026-10-23",
+    "sha256": "20bc7e52be2df2d78706d5e4c453bfa91e42feefcad83d550c5a1abc31a499d2"
+  },
+  "status": "All live subcases pending. Offline validators are not qualification credit.",
+  "subcases": [
+    {"id": "TPQ-SOURCE", "beta": ["SRC-03"], "phases": ["prepare"], "scope": "Exact prepared public input/import, source/build/features, platform tool and host adapter pins; ordinary-profile control."},
+    {"id": "TPQ-DEPLOY", "beta": ["DEP-02"], "phases": ["network", "observe"], "scope": "ZDN external up, saved seed bootstrap and transitions, strict fresh readiness on both peers."},
+    {"id": "TPQ-NATIVE", "beta": ["NET-01", "NET-03", "NET-04"], "phases": ["observe", "update", "reobserve", "recovery"], "scope": "Private native UDP, empty and lagging peer sync, relay both ways, retained identity/key/data, cookie rotation and reconnect."},
+    {"id": "TPQ-PAY", "beta": ["PAY-01", "PAY-02", "PAY-03"], "phases": ["wallets", "fund-review", "fund", "pay5-review", "pay5", "pay6-review", "pay6"], "scope": "One reviewed seed funding, fresh controlling-terminal wallets through managed forwarding, Alice v5 then Bob v6 spending the received output, independent integer balances/fees/change and two-peer inclusion."},
+    {"id": "TPQ-RECOVER", "beta": ["REC-03", "PAY-03"], "phases": ["uncertain", "restore", "pay-restored-review", "pay-restored"], "scope": "Original accepted-but-lost reply/exact bytes, independently trusted latest snapshot, retired old allocators, and a NEW confirmed v6 payment after restore."},
+    {"id": "TPQ-CLEAN", "beta": ["CLN-01"], "phases": ["disconnect", "cleanup", "audit"], "scope": "Revocation/session cleanup, ZDN destroy without local TPQ companion, owned versus protected resource audit, explicit delayed KMS deletion and secret audit."}
+  ],
+  "negative_controls": [
+    {"id": "TPQ-N01", "reason_class": "profile-binding", "effect": "no-signature-or-submit", "scope": "Wrong authenticated wallet profile refuses before signing/submission."},
+    {"id": "TPQ-N02", "reason_class": "wrong-chain", "effect": "no-peer-admission", "scope": "Reachable wrong-rule native peer receives explicit chain/rule rejection, not just a closed-port failure."},
+    {"id": "TPQ-N03", "reason_class": "approval-binding", "effect": "no-signature-or-submit", "scope": "Altered funding SHA256 and wallet proposal approval both refuse; retain separate diagnostic references in one sanitized evidence report."},
+    {"id": "TPQ-N04", "reason_class": "monitor-authority", "effect": "no-allocator-signature-or-submit", "scope": "Unknown-authority AND inventory-only restores stay monitor-only after sync/reopen; receive, sign and submit refuse in both modes."},
+    {"id": "TPQ-N05", "reason_class": "conflicting-spend", "effect": "original-payment-preserved", "scope": "A conflicting spend cannot replace the wallet's original uncertain payment or acquire its reservation."},
+    {"id": "TPQ-N06", "reason_class": "bootstrap-reconciliation", "effect": "original-operation-reconciled", "scope": "Interrupt saved bootstrap; reobserve accepted prefix through ZDN and resume the same operation."},
+    {"id": "TPQ-N07", "reason_class": "update-reconciliation", "effect": "original-operation-reconciled", "scope": "Interrupt update; use exact saved update UUID with reconcile, no new image/target capture."},
+    {"id": "TPQ-N08", "reason_class": "connection-cleanup", "effect": "sessions-absent", "scope": "Interrupt managed connect, reconnect explicitly, then independently audit all sessions after revocation."}
+  ]
+}
