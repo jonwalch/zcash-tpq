@@ -28,15 +28,30 @@ and compare the profile checksum-list/index digest through your trusted release
 channel, then verify **every** listed asset. Co-downloaded checksums alone do not
 authenticate a publisher. An unsigned preview needs an explicit operator trust
 decision; a digest is not a signature. Never use `--ignore-missing`.
+Compare the pins with the values in the ZDN repository's release documentation
+at the release tag. That is a second view from the same publisher, not a
+signature; record that trust decision.
+
+**Shell model.** Use bash or zsh with `umask 077`. Do not run `set -e` in your
+interactive shell: one failed command would close it and lose every variable.
+Blocks that must stop on the first error run in a `( set -eu; … )` subshell.
+Every value that later steps need goes into one private environment file,
+`$ENV`. Load it with `. "$ENV"` in each new terminal. Start it now from
+[`env.sh.in`](zdn-preview/env.sh.in), which lists every value, where it
+comes from, and the step that sets it.
 
 ```sh
-set -eu
 umask 077
 DOWNLOADS=/REPLACE/absolute/verified-downloads
 PROFILE_SUMS="$DOWNLOADS/SHA256SUMS.tpq-linux-x86_64"
 cd "$DOWNLOADS"
-sha256sum "$PROFILE_SUMS"   # compare with independently trusted value first
-sha256sum -c "$PROFILE_SUMS"
+sha256sum "$PROFILE_SUMS"   # STOP unless this equals the trusted pin
+```
+
+Only after the pin matches:
+
+```sh
+(set -eu; cd "$DOWNLOADS"; sha256sum -c "$PROFILE_SUMS")
 ```
 
 Retain controller/source provenance, complete TPQ node source/map, product source,
@@ -44,45 +59,47 @@ notices, build manifest, instructions and starter archive. The profile also
 supplies `zdn-tpq-adapter`, `zdn-tpq-import`, `tpq-devnet` and `pq-wallet`.
 It does **not** select an ordinary chain-manifest/bundle or Ironwood wallet.
 Inspect archive member paths before extracting into new trusted directories.
-Set the following absolute paths from the reviewed index and extraction layout;
-replace every `REPLACE` value. Filenames can change between candidates.
+Create the private work directory and its environment file. For the Preview 5
+layout (START-TPQ.md extracts everything into one download directory), the
+template's defaults already match: tools at `$DOWNLOADS/zdn`,
+`zdn-tpq-adapter`, `zdn-tpq-import`, `tpq-devnet` and `pq-wallet`; node source
+at `$DOWNLOADS/node-source`; starter files at
+`$DOWNLOADS/tpq/docs/slh-dsa-b128s/zdn-preview`. Its revision and selection pins
+come from `distribution.json` and START-TPQ.md; check them, do not just accept
+them. Another candidate can use other names; then edit those lines.
 
 ```sh
-ZDN="$DOWNLOADS/REPLACE_CONTROLLER_FILENAME"
-HOST_HELPER="$ZDN"
-HOST_ADAPTER="$DOWNLOADS/REPLACE_ADAPTER_FILENAME"
-IMPORT="$DOWNLOADS/REPLACE_IMPORT_FILENAME"
-DEVNET="$DOWNLOADS/REPLACE_DEVNET_FILENAME"
-WALLET="$DOWNLOADS/REPLACE_WALLET_FILENAME"
-NODE_SOURCE=/REPLACE/absolute/extracted-node-source
-STARTER=/REPLACE/absolute/docs/slh-dsa-b128s/zdn-preview
-NODE_REV=REPLACE_REVIEWED_DISTRIBUTED_SOURCE_GIT_COMMIT
-TPQ_REV=REPLACE_REVIEWED_ORIGINAL_TPQ_SOURCE_COMMIT
-ADAPTER_SELECTION_SHA256=REPLACE_INDEPENDENTLY_APPROVED_SELECTION_SHA256
-WORK=/REPLACE/absolute/new-private-tpq-work
+WORK=/REPLACE/absolute/new-private-tpq-work   # must not exist yet
 mkdir -m 700 "$WORK"
-STATE="$WORK/state"
-CONFIG_DIR="$WORK/config"
-CONFIG="$CONFIG_DIR/external.yaml"
-mkdir -m 700 "$STATE" "$CONFIG_DIR"
-chmod 700 "$ZDN" "$HOST_ADAPTER" "$IMPORT" "$DEVNET" "$WALLET"
-git -C "$NODE_SOURCE" fsck --full --no-reflogs
-test "$(git -C "$NODE_SOURCE" rev-parse HEAD)" = "$NODE_REV"
-test -z "$(git -C "$NODE_SOURCE" status --porcelain)"
-test -z "$(git -C "$NODE_SOURCE" remote)"
-STATE=$(cd "$STATE" && pwd -P)
-CONFIG_DIR=$(cd "$CONFIG_DIR" && pwd -P)
-CONFIG="$CONFIG_DIR/external.yaml"
-SOURCE_WORKTREE=$(git -C "$NODE_SOURCE" rev-parse --show-toplevel)
-case "$STATE/" in
-  "$CONFIG_DIR/"*|"$SOURCE_WORKTREE/"*)
-    echo 'State must be outside the configuration directory and source Git worktree' >&2
-    exit 1 ;;
-esac
-"$ZDN" --version
-"$ZDN" reference > "$WORK/command-reference.txt"
-"$ZDN" reference --schema > "$WORK/command-schema.json"
-"$WALLET" --help
+cp "$DOWNLOADS/tpq/docs/slh-dsa-b128s/zdn-preview/env.sh.in" "$WORK/env.sh"
+chmod 600 "$WORK/env.sh"
+# Edit "$WORK/env.sh": set DOWNLOADS and WORK, review the pins, leave later
+# values empty. Then load it here and in every new terminal:
+. "$WORK/env.sh"
+```
+
+Check the layout before anything else. The subshell stops at the first
+failure without closing your terminal:
+
+```sh
+(set -eu
+ mkdir -m 700 "$STATE" "$CONFIG_DIR"
+ chmod 700 "$ZDN" "$HOST_ADAPTER" "$IMPORT" "$DEVNET" "$WALLET"
+ git -C "$NODE_SOURCE" fsck --full --no-reflogs
+ test "$(git -C "$NODE_SOURCE" rev-parse HEAD)" = "$NODE_REV"
+ test -z "$(git -C "$NODE_SOURCE" status --porcelain)"
+ test -z "$(git -C "$NODE_SOURCE" remote)"
+ state=$(cd "$STATE" && pwd -P); config=$(cd "$CONFIG_DIR" && pwd -P)
+ source=$(git -C "$NODE_SOURCE" rev-parse --show-toplevel)
+ case "$state/" in "$config/"*|"$source/"*)
+   echo 'State must be outside the configuration directory and source Git worktree' >&2
+   exit 1 ;;
+ esac
+ "$ZDN" --version
+ "$ZDN" reference > "$WORK/command-reference.txt"
+ "$ZDN" reference --schema > "$WORK/command-schema.json"
+ "$WALLET" --help >/dev/null
+ echo layout OK)
 ```
 
 Keep config and state in separate directories. Do not put state below the config
@@ -142,28 +159,28 @@ to a base commit as if that commit contained the edits.
 
 ## 2. Prepare a new seed and import public inputs
 
-Choose one new cohort name. Preparation is local and creates random **private**
+Choose one new cohort name and set `COHORT` in `$ENV`. A cohort name has 1 to
+30 letters, digits or `_`. Hyphens and reserved network names such as `Mainnet`
+fail. Example: `tpq_trial_1`. Preparation is local and creates random **private**
 classical funding authority. Never distribute a maintainer's seed funder or
 copy test authority from R8.
 
 ```sh
-COHORT=REPLACE_NEW_COHORT_NAME
-PUBLIC="$WORK/cohort-public"
-PRIVATE="$WORK/cohort-private"
 "$DEVNET" prepare "$PUBLIC" "$PRIVATE" "$COHORT" > "$WORK/native-fingerprint.txt"
-CHAIN="$PUBLIC/chain.json"
-PROFILE="$PUBLIC/wallet-profile.json"
-FUNDER="$PRIVATE/funder.json"
-PACKAGE="$WORK/public-package"
-TRUST="$WORK/core-trust.json"
 HOST_ADAPTER_SHA256=$(sha256sum "$HOST_ADAPTER" | cut -d ' ' -f 1)
 HOST_ADAPTER_BYTES=$(wc -c < "$HOST_ADAPTER" | tr -d '[:space:]')
+jq -e --arg h "$HOST_ADAPTER_SHA256" --argjson b "$HOST_ADAPTER_BYTES" \
+  '.assets[] | select(.role == "tpq-adapter-linux-x86_64")
+   | .sha256 == $h and .bytes == $b' "$DOWNLOADS/distribution.json"
+printf 'HOST_ADAPTER_SHA256=%s\nHOST_ADAPTER_BYTES=%s\n' \
+  "$HOST_ADAPTER_SHA256" "$HOST_ADAPTER_BYTES" >> "$ENV"
 ```
 
-Review the adapter byte count/hash against the **authenticated distribution**
-and source/build manifest before import. Merely measuring an arbitrary local
-file does not approve its execution. Independently approve the selection digest;
-it identifies the chosen adapter implementation, not the native chain or package.
+The `jq` check must print `true`. It compares the local adapter with the
+distribution index whose pin you checked in step 1. A `prepare` that fails
+removes the directories it created, so you can fix the name and run it again.
+The selection digest identifies the chosen adapter implementation, not the
+native chain or package.
 
 Preparation creates public `chain.json`, `network.json`, `node-network.toml`
 and canonical `wallet-profile.json`. The seed has heights **0..101**: genesis,
@@ -177,6 +194,8 @@ backup. Both output directories must be new, disjoint and under trusted parents.
   "$ADAPTER_SELECTION_SHA256" "$TPQ_REV" "$PACKAGE" > "$WORK/import-receipt.json"
 PACKAGE_SHA256=$(sha256sum "$PACKAGE/package.json" | cut -d ' ' -f 1)
 PACKAGE_BYTES=$(wc -c < "$PACKAGE/package.json" | tr -d '[:space:]')
+printf 'PACKAGE_SHA256=%s\nPACKAGE_BYTES=%s\n' "$PACKAGE_SHA256" "$PACKAGE_BYTES" >> "$ENV"
+cmp "$HOST_ADAPTER" "$PACKAGE/host-adapter" && echo adapter slot matches
 ```
 
 Review the import receipt, native fingerprint, original public inputs and seven
@@ -197,25 +216,63 @@ jq --arg p "$PACKAGE_SHA256" --arg e "$HOST_ADAPTER_SHA256" \
 Keep only explicitly selected public inputs in the package. Do not recursively
 upload `$WORK`, `$PRIVATE`, a wallet directory or a preparation directory.
 Source launch needs these seven slots, not the completed-image eleven-slot set.
-Authenticate the profile and native fingerprint independently before any wallet
-uses them. A public profile supplied by an untrusted RPC is not approval.
+Wallets use only the profile your own `prepare` wrote. Check that the import
+describes the same chain, which must print `true`:
+`jq -e --arg f "$(cat "$WORK/native-fingerprint.txt")" '.nativeFingerprint == $f' "$WORK/import-receipt.json"`.
+A public profile supplied by an RPC or another person is not approval.
 
-## 3. Select AWS scope and render locally
+## 3. Create both wallets before launch
+
+Do every step that needs no node now. The six-hour production lifetime starts
+at `devnet up` and is never renewed (see the time budget in step 5). Wallet
+creation, backups and receivers use only the local `wallet-profile.json`.
+
+```sh
+mkdir -m 700 "$WORK/alice" "$WORK/bob" "$WORK/recovery-copies"
+"$WALLET" create-slh-exp "$PROFILE" "$WORK/alice/root.tpq" 0
+"$WALLET" extend "$PROFILE" "$WORK/alice/root.tpq" "$WORK/alice/enrolled.tpq" 8 8
+"$WALLET" --json export "$PROFILE" "$WORK/alice/enrolled.tpq" \
+  "$WORK/alice/inventory.json" > "$WORK/alice/export.json"
+"$WALLET" inspect "$PROFILE" "$WORK/alice/enrolled.tpq"
+```
+
+This single-key extension enrolls receive/change entries and saves a covering
+encrypted backup. Copy it to protected recovery storage before creating an
+allocator or issuing receivers. The fingerprint check below binds the watch
+store to the inventory file that `export` just wrote, so a file replaced in
+between is refused. In a solo test this captured value is the comparison.
+With another participant, confirm it with them over a separate channel.
+
+```sh
+cp "$WORK/alice/enrolled.tpq" "$WORK/recovery-copies/alice-enrolled.tpq"
+ALICE_INVENTORY_FP=$(jq -er .inventory_fingerprint "$WORK/alice/export.json")
+"$WALLET" watch-create "$PROFILE" "$WORK/alice/inventory.json" \
+  "$ALICE_INVENTORY_FP" "$WORK/alice/watch" allocator
+ALICE_RECEIVER=$("$WALLET" --json receive "$PROFILE" "$WORK/alice/watch" | jq -er .receiver)
+printf 'ALICE_INVENTORY_FP=%s\nALICE_RECEIVER=%s\n' \
+  "$ALICE_INVENTORY_FP" "$ALICE_RECEIVER" >> "$ENV"
+```
+
+Repeat those creation, extension, export, fingerprint, backup, watch-create and
+receive commands for `bob`, with `bob` paths and `BOB_INVENTORY_FP` /
+`BOB_RECEIVER`. Keep only one allocator per inventory; never clone one.
+
+## 4. Select AWS scope and render locally
 
 AWS builds, NAT, hosts, disks and storage cost money. Use a dedicated development
 account, never root or a shared production tenant. A deadline is not a spending
 cap. Use one authenticated administrator-capable source login through cleanup.
 Deployment credentials can read/cancel other SSM commands in the region unless
-external policy denies that access. Set your own values:
+external policy denies that access. Set the step 4 values in `$ENV` and reload
+it. Sign in first (for example `aws sso login --profile "$AWS_PROFILE"`).
+`aws sts get-caller-identity` shows your account. For an assumed or SSO role it
+shows an `assumed-role` ARN; `TRUST_PRINCIPAL` must instead be that role's IAM
+ARN, which `aws iam get-role --role-name NAME --query Role.Arn` prints with its
+path.
 
 ```sh
-AWS_PROFILE=REPLACE_AUTHENTICATED_AWS_PROFILE
-ACCOUNT_ID=REPLACE_OWN_TWELVE_DIGIT_ACCOUNT_ID
-TRUST_PRINCIPAL=REPLACE_EXACT_IAM_USER_OR_ROLE_ARN
-REGION=REPLACE_AWS_REGION
-TEAM=REPLACE_NEW_DISPOSABLE_TEAM
-BUCKET=REPLACE_NEW_GLOBALLY_UNIQUE_BUCKET
-ZDN_PROFILE=default
+. "$ENV"
+aws sts get-caller-identity --profile "$AWS_PROFILE"
 "$ZDN" deps install --noninteractive
 "$ZDN" doctor
 AMI_ID=$(aws ssm get-parameter --profile "$AWS_PROFILE" --region "$REGION" \
@@ -224,27 +281,37 @@ AMI_ID=$(aws ssm get-parameter --profile "$AWS_PROFILE" --region "$REGION" \
 aws ec2 describe-images --profile "$AWS_PROFILE" --region "$REGION" \
   --owners amazon --image-ids "$AMI_ID" \
   --query 'Images[].{Id:ImageId,Name:Name,Architecture:Architecture,State:State}'
-aws ec2 describe-availability-zones --profile "$AWS_PROFILE" --region "$REGION" \
-  --query 'AvailabilityZones[?State==`available`].ZoneName' --output text
-ZONE=REPLACE_SELECTED_ZONE
+aws ec2 describe-instance-type-offerings --profile "$AWS_PROFILE" --region "$REGION" \
+  --location-type availability-zone --filters Name=instance-type,Values=m7a.large \
+  --query 'InstanceTypeOfferings[].Location' --output text
+ZONE=REPLACE_ZONE_FROM_THE_LIST_ABOVE
+printf 'AMI_ID=%s\nZONE=%s\n' "$AMI_ID" "$ZONE" >> "$ENV"
 ```
 
 Those AWS lookups are read-only. Require one available Amazon Linux 2023 x86-64
-image and an available zone in that region. Retain the concrete AMI and zone;
+image. The `small` node preset uses `m7a.large`, which not every zone offers:
+choose `ZONE` from the offering list. An empty list means the region does not
+offer it; pick another region. Retain the concrete AMI and zone;
 do not resolve the moving parameter again to resume an interrupted deployment.
-Before creating resources, independently record your account's protected baseline
+Before creating resources, record your account's protected baseline
 and chosen cleanup scope with read-only inventory. Keep it private for comparison
 after teardown; do not infer resource ownership from names or tags alone.
 Prepare and check the config locally before creating IAM/backend resources:
 
 ```sh
-cp "$STARTER/external.yaml" "$CONFIG"
+sed -e "s|REPLACE_ZDN_PROFILE|$ZDN_PROFILE|" \
+  -e "s|REPLACE_REVIEWED_PACKAGE_SHA256|$PACKAGE_SHA256|" \
+  -e "s|REPLACE_APPROVED_SELECTION_SHA256|$ADAPTER_SELECTION_SHA256|" \
+  -e "s|/REPLACE/absolute/pinned-node-source|$NODE_SOURCE|" \
+  -e "s|REPLACE_DISTRIBUTED_SOURCE_GIT_REVISION|$NODE_REV|" \
+  "$STARTER/external.yaml" > "$CONFIG"
 ```
 
-In a trusted editor, replace all `REPLACE` values in `$CONFIG`: local profile,
-reviewed `$PACKAGE_SHA256`, selection digest, absolute `$NODE_SOURCE` and its
-`$NODE_REV`. The template uses two private `small` nodes, no cloud wallet,
-faucet or lightwalletd, explicit height 121 and two-hour first-activation ceilings.
+Review the result in a trusted editor. `profile` is the local ZDN profile that
+`setup bootstrap --profile` creates (`$ZDN_PROFILE`), not your AWS profile.
+The template uses two private `small` nodes, no cloud wallet, faucet or
+lightwalletd, an explicit height ceiling of 121 and a six-hour production
+lifetime (`lifetimeSeconds: 21600`, the controller maximum).
 Its native rules come from the compiled package, not ordinary activation defaults.
 The outer config still requires `network.activationHeights.NU6.3: 1` for schema
 validation. That field does not set TPQ's NU7/SLH schedule or native fingerprint.
@@ -259,14 +326,17 @@ funder. No PQ mining payout or shielded proof generation is provided here.
 
 ```sh
 REWARD_ADDRESS=REPLACE_OWN_CLASSICAL_TESTNET_ADDRESS
-if grep -n REPLACE "$CONFIG"; then echo 'Edit all marked values first' >&2; exit 1; fi
-"$ZDN" check --config "$CONFIG"
-"$ZDN" plan --config "$CONFIG"
+printf 'REWARD_ADDRESS=%s\n' "$REWARD_ADDRESS" >> "$ENV"
+(set -eu
+ if grep -n REPLACE "$CONFIG"; then echo 'Edit all marked values first' >&2; exit 1; fi
+ "$ZDN" check --config "$CONFIG"
+ "$ZDN" plan --config "$CONFIG")
 ```
 
-After reviewing costs and permissions, `setup bootstrap` below **creates
-IAM/backend resources**. It is not local preparation. The following render is
-local and must use the same config and state paths checked above:
+After reviewing the `plan` output and costs, `setup bootstrap` below **creates
+IAM/backend resources**. It is not local preparation. There is no separate
+permission plan before bootstrap; the matching ZDN `docs/aws-state.md`
+describes the roles it creates. The following render is local and must use the same config and state paths checked above:
 
 ```sh
 "$ZDN" setup bootstrap --aws-profile "$AWS_PROFILE" \
@@ -276,8 +346,10 @@ local and must use the same config and state paths checked above:
 "$ZDN" devnet render --config "$CONFIG" --state-dir "$STATE" \
   --external-public-directory "$PACKAGE" --external-trust "$TRUST" \
   --external-build-helper "$HOST_HELPER" --host-helper "$HOST_HELPER" \
-  --reward-address "$REWARD_ADDRESS" --ami-id "$AMI_ID" --availability-zone "$ZONE"
-NETWORK=REPLACE_EXACT_NETWORK_UUID_RETURNED_BY_RENDER
+  --reward-address "$REWARD_ADDRESS" --ami-id "$AMI_ID" --availability-zone "$ZONE" \
+  > "$WORK/render.json"
+NETWORK=$(jq -er .networkId "$WORK/render.json")
+printf 'NETWORK=%s\n' "$NETWORK" >> "$ENV"
 ```
 
 Render captures immutable source/public inputs and saves a network UUID. It
@@ -285,7 +357,17 @@ makes no cloud calls and builds no image. Keep the original saved state and
 source receipts. Do not run ordinary `chain verify`, `identity bind`, `wallet`,
 `fund` or `send` commands to manufacture a parallel ordinary-chain identity.
 
-## 4. Launch and use saved bounded controls
+## 5. Launch and use saved bounded controls
+
+> **Time budget.** `devnet up` starts the producer's six-hour lifetime
+> (`lifetimeSeconds: 21600`). It is never renewed, not by restarts, retries or
+> reconnecting. After it ends no block can be produced, so funding and payments
+> can no longer confirm. Finish steps 5 to 8, through the restored payment, inside
+> that window. Recorded rehearsals took 42 to 56 minutes of it, mostly
+> automated. Wallets already exist from step 3. `"$ZDN" devnet status` shows the
+> deadline where your controller reports it. If the lifetime runs out, do not
+> try to renew it: finish any reads you need, then destroy this network (step 9)
+> and render and launch a new one, which is a new billed build and deployment.
 
 This command **submits/reuses a billed native CodeBuild image and deploys nodes**:
 
@@ -299,6 +381,10 @@ This command **submits/reuses a billed native CodeBuild image and deploys nodes*
 
 Require fresh strict readiness on both nodes: full effective rules, native
 inventory, saved seed history and current image/producer/gateway bindings.
+Run `devnet health` now, while the producer is active. After you stop the
+producer below, readiness evidence is the saved control results instead: fresh
+`tip.json` reads with the same height and hash on both nodes, and
+`gateway-identity.json` on node-1.
 An open socket or matching genesis is insufficient. Unknown build dispatch must
 be inspected/reconciled through this original saved UUID, never a fresh render.
 
@@ -336,13 +422,14 @@ both tips and use the stable SLH-active state. Do not bootstrap a running chain.
 
 For later confirmation, create a new typed action at a new path with `jq -n
 --argjson h HEIGHT '{kind:"produce",blocks:1,height:$h,seconds:120}'`, replacing
-`HEIGHT` with the independently observed stable tip plus one (103 after initial
-funding at 102). Prepare/review/execute it with the same saved-ID pattern.
+`HEIGHT` with the stable tip that both nodes' fresh `tip` reads agree on, plus one
+(103 after initial funding at 102). Prepare/review/execute it on **node-1**, the
+only producer, with the same saved-ID pattern; node-2 refuses produce actions.
 Each invocation stops scheduled production. Limits are 1..20 blocks, a positive
 absolute height and 1..600 seconds, intersected with immutable launch ceilings.
 An in-flight RPC/reconciliation can outlast the budget; this is not a kill switch.
 
-## 5. Connect in terminal A; create wallets in terminal B
+## 6. Connect in terminal A; sync wallets in terminal B
 
 In terminal A, retain the original `STATE`, `ZDN_PROFILE`, `NETWORK` and `ZDN`:
 
@@ -350,10 +437,9 @@ In terminal A, retain the original `STATE`, `ZDN_PROFILE`, `NETWORK` and `ZDN`:
 "$ZDN" connect "$NETWORK" --state-dir "$STATE" --profile "$ZDN_PROFILE"
 ```
 
-Leave it running. In terminal B, set the same verified `WALLET`, `DEVNET`,
-`PROFILE`, `CHAIN`, `FUNDER`, `WORK` and `STARTER` absolute paths from above.
-Use `set -eu` and `umask 077` in that shell too.
-Set `RPC_SOCKET` to the numeric loopback socket in the printed RPC URL, **without
+Leave it running. In terminal B, load the same environment with `. "$ENV"`
+(use the absolute path). Do the same in terminal C, which runs the saved
+bounded `zdn devnet control` commands while A is busy. Set `RPC_SOCKET` to the numeric loopback socket in the printed RPC URL, **without
 `http://`**. Do not guess a port or use DNS/a remote address. An invited participant
 instead uses their own login and a reviewed credential-free endpoint file with
 `zdn connect --endpoints FILE --aws-profile OWN_PROFILE`. This preview journey
@@ -362,38 +448,14 @@ not an invented second gateway route.
 
 ```sh
 RPC_SOCKET=127.0.0.1:REPLACE_PRINTED_LOCAL_PORT
-mkdir -m 700 "$WORK/alice" "$WORK/bob" "$WORK/recovery-copies"
-"$WALLET" create-slh-exp "$PROFILE" "$WORK/alice/root.tpq" 0
-"$WALLET" extend "$PROFILE" "$WORK/alice/root.tpq" "$WORK/alice/enrolled.tpq" 8 8
-"$WALLET" export "$PROFILE" "$WORK/alice/enrolled.tpq" "$WORK/alice/inventory.json"
-"$WALLET" inspect "$PROFILE" "$WORK/alice/enrolled.tpq"
-```
-
-This single-key extension enrolls receive/change entries and saves a covering
-encrypted backup. Copy it to protected recovery storage before creating an
-allocator or issuing receivers. Check the inventory fingerprint independently;
-do not accept a replacement inventory just because it has its own hash.
-
-```sh
-cp "$WORK/alice/enrolled.tpq" "$WORK/recovery-copies/alice-enrolled.tpq"
-ALICE_INVENTORY_FP=REPLACE_REVIEWED_ALICE_INVENTORY_FINGERPRINT
-"$WALLET" watch-create "$PROFILE" "$WORK/alice/inventory.json" \
-  "$ALICE_INVENTORY_FP" "$WORK/alice/watch" allocator
-"$WALLET" receive "$PROFILE" "$WORK/alice/watch"
-```
-
-Repeat those creation, extension, export, independent fingerprint check, backup
-and watch-create commands for `bob` with its own root and fingerprint. Keep only
-one allocator per inventory; never clone one. Record their returned receivers:
-
-```sh
-ALICE_RECEIVER=REPLACE_AUTHENTICATED_ALICE_TPQTEST_RECEIVER
-BOB_RECEIVER=REPLACE_AUTHENTICATED_BOB_TPQTEST_RECEIVER
+printf 'RPC_SOCKET=%s\n' "$RPC_SOCKET" >> "$ENV"
 BACKUP="$WORK/alice/enrolled.tpq"
 STORE="$WORK/alice/watch"
 "$WALLET" --trusted-local-gateway sync "$PROFILE" "$STORE" "$RPC_SOCKET" 256
 "$WALLET" status "$PROFILE" "$STORE"
 ```
+
+`RPC_SOCKET` changes each time you reconnect; update it in `$ENV` then.
 
 Passwords use the normal controlling terminal (`/dev/tty`), with echo disabled.
 Never put them in argv, environment, JSON or scripts. Do not run wallet commands
@@ -403,7 +465,7 @@ It sends no node credentials and explicitly trusts the selected local service.
 There is no cookie/authentication fallback. Ctrl-C in terminal A ends the
 connection, not the deployment. Reconnect explicitly and reconcile saved records.
 
-## 6. Review one funding, then make v5 and v6 payments
+## 7. Review one funding, then make v5 and v6 payments
 
 At the stopped stable SLH-ready tip, fund Alice once (3,000,000 zat example).
 The funding tool's gateway argument is positional **after the socket**, unlike
@@ -412,15 +474,18 @@ the wallet's global option:
 ```sh
 REVIEW="$WORK/seed-funding.json"
 "$DEVNET" fund-draft "$CHAIN" "$RPC_SOCKET" --trusted-local-gateway \
-  "$FUNDER" "$REVIEW" "$ALICE_RECEIVER" 3000000 10000
-APPROVED_TRANSACTION_SHA256=REPLACE_INDEPENDENTLY_REVIEWED_TRANSACTION_SHA256
+  "$FUNDER" "$REVIEW" "$ALICE_RECEIVER" 3000000 10000 > /dev/null
+jq '{observed_height, source_txid, source_index, destination_script_hex,
+     amount_zat, fee_zat, change_zat, expiry_height, txid, transaction_sha256}' "$REVIEW"
+# STOP. Approve only if each field above is what you intend.
+APPROVED_TRANSACTION_SHA256=$(jq -er .transaction_sha256 "$REVIEW")
 "$DEVNET" fund-submit "$CHAIN" "$RPC_SOCKET" --trusted-local-gateway \
   "$REVIEW" "$APPROVED_TRANSACTION_SHA256"
 ```
 
-Check fingerprint, mature seed outpoint, recipient script, amount, fee, change,
-expiry, txid and exact transaction digest before approving. Do not pipe draft
-output into approval. This tool spends only the one prepared seed outpoint; it
+Your review is the field check above: the mature seed outpoint, the recipient
+script for Alice's receiver, amount, fee, change and expiry. The approved digest
+then pins exactly the bytes you reviewed; it is not a second review. This tool spends only the one prepared seed outpoint; it
 does not spend arbitrary classical change. Keep the private funder and review
 file. After an uncertain reply, use this **same** review file and approved digest
 to reconcile exact saved bytes, not a new draft. Node-known does not mean mined.
@@ -453,8 +518,11 @@ jq -S -c -j --arg r "$BOB_RECEIVER" \
 "$WALLET" --trusted-local-gateway propose "$PROFILE" "$BACKUP" "$STORE" \
   "$RPC_SOCKET" "$INTENT" "$PROPOSAL"
 "$WALLET" --trusted-local-gateway review "$PROFILE" "$BACKUP" "$STORE" \
-  "$RPC_SOCKET" "$INTENT" "$PROPOSAL"
-APPROVED_ID=REPLACE_INDEPENDENTLY_REVIEWED_FULL_PROPOSAL_ID
+  "$RPC_SOCKET" "$INTENT" "$PROPOSAL" > "$WORK/pay5-review.json"
+jq '{payment_receiver, payment_value, version, fee, change_value, change_receiver,
+     input_value, expiry_height, local_change, proposal_id}' "$WORK/pay5-review.json"
+# STOP. Continue only if those effects are what you intend.
+APPROVED_ID=$(jq -er .proposal_id "$WORK/pay5-review.json")
 "$WALLET" --trusted-local-gateway sign "$PROFILE" "$BACKUP" "$STORE" \
   "$RPC_SOCKET" "$INTENT" "$PROPOSAL" "$APPROVED_ID" "$PARTIALS"
 "$WALLET" --trusted-local-gateway assemble "$PROFILE" "$BACKUP" "$STORE" \
@@ -482,12 +550,12 @@ value = recipient amount + fee + change and sync both wallets. Do not infer
 confirmation from a returned txid or cached `status` alone.
 
 For the v6 return payment, set `BACKUP`/`STORE` to Bob's enrolled backup/watch,
-`INTENT`, `PROPOSAL`, `PARTIALS` to **new** pay6 paths, and generate a new canonical
+`INTENT`, `PROPOSAL`, `PARTIALS` and the review file to **new** pay6 paths, and generate a new canonical
 intent with receiver `$ALICE_RECEIVER`, amount 400000 and version 6. Repeat the
 complete propose/review/approval/sign/assemble/submit flow and bounded confirmation.
 Require it to spend Bob's actual received outpoint before proceeding.
 
-## 7. Reconcile, back up, restore and restart without replacing authority
+## 8. Reconcile, back up, restore and restart without replacing authority
 
 After uncertainty inspect `payments PROFILE STORE RPC` (with the gateway global
 option) and retain the original proposal ID, intent, partials and saved bytes.
@@ -499,14 +567,17 @@ operation, not permission to change transaction effects or expiry.
 
 Quiesce wallet writers before capture. Save each complete operational snapshot
 and matching encrypted backup, including watch state and all retained journal
-objects. Protect the receipt fingerprint through a separate trusted channel.
+objects. Keep the receipt fingerprint somewhere the snapshot cannot overwrite: in `$ENV`
+and in a note outside `$WORK`. Restore checks the snapshot against it.
 For Alice (repeat capture independently for Bob):
 
 ```sh
 BACKUP="$WORK/alice/enrolled.tpq"
 STORE="$WORK/alice/watch"
-"$WALLET" snapshot-save "$PROFILE" "$BACKUP" "$STORE" "$WORK/alice-snapshot"
-TRUSTED_RECEIPT_FP=REPLACE_INDEPENDENTLY_RETAINED_LATEST_RECEIPT_FINGERPRINT
+"$WALLET" --json snapshot-save "$PROFILE" "$BACKUP" "$STORE" "$WORK/alice-snapshot" \
+  > "$WORK/alice-snapshot-receipt.json"
+TRUSTED_RECEIPT_FP=$(jq -er .receipt_fingerprint "$WORK/alice-snapshot-receipt.json")
+printf 'TRUSTED_RECEIPT_FP=%s\n' "$TRUSTED_RECEIPT_FP" >> "$ENV"
 "$WALLET" snapshot-restore "$PROFILE" "$WORK/alice-snapshot" "$WORK/alice-monitor" unknown
 ```
 
@@ -524,11 +595,13 @@ STORE="$WORK/alice-restored/watch"
 "$WALLET" --trusted-local-gateway sync "$PROFILE" "$STORE" "$RPC_SOCKET" 256
 "$WALLET" extend "$PROFILE" "$BACKUP" "$WORK/alice-restored/extended.tpq" 8 8
 BACKUP="$WORK/alice-restored/extended.tpq"
-"$WALLET" export "$PROFILE" "$BACKUP" "$WORK/alice-restored/inventory.json"
+"$WALLET" --json export "$PROFILE" "$BACKUP" "$WORK/alice-restored/inventory.json" \
+  > "$WORK/alice-restored/export.json"
+RESTORED_FP=$(jq -er .inventory_fingerprint "$WORK/alice-restored/export.json")
+"$WALLET" watch-import "$PROFILE" "$STORE" "$WORK/alice-restored/inventory.json" "$RESTORED_FP"
 ```
 
-Save an external protected copy of the extended backup, independently check its
-new inventory fingerprint, then `watch-import PROFILE STORE INVENTORY FINGERPRINT`.
+Save an external protected copy of the extended backup before using it.
 Restoration rotates allocator authority and retires old ranges. Rescan until
 complete, reconcile original payments and verify old exports. It cannot prove
 that no newer state/signatures were lost. See [recovery](recovery.md).
@@ -547,7 +620,7 @@ connection and collect a new gateway-identity control; compare PID, start ticks,
 boot ID and executable pin to the original observation. Do not claim continuity
 from unit text or isolated observations. Confirm final coin sets on both nodes.
 
-## 8. Destroy, retain/delete data and remove only your disposable team
+## 9. Destroy, retain/delete data and remove only your disposable team
 
 Stop local connections (Ctrl-C in terminal A), wallet writers and other controllers.
 Keep private backups and original state/journals. Cleanup does not need local
@@ -604,8 +677,9 @@ Import does not clear unknown work or restart builds. An unfinished first launch
 must reconcile on its original controller. These are not R8 handoff/update passes.
 
 The optional source-only [qualification coordinator](../../tests/slh-dsa-b128s/acceptance/zdn_flow.py)
-and [case manifest](../../tests/slh-dsa-b128s/acceptance/zdn_cases.json) remain
-developer tools, not installation/runtime prerequisites. That coordinator's live
+and [case manifest](../../tests/slh-dsa-b128s/acceptance/zdn_cases.json) are in
+the node source archive (`node-source/tests/slh-dsa-b128s/acceptance/`), not in
+the starter. They remain developer tools, not installation/runtime prerequisites. That coordinator's live
 gates remain unrun. Its completed-image path and fault gates must not be confused
 with R8's actual source-launch happy path. The release rehearsal must consume the
 actual candidate downloads and these instructions, with exact source/binary/config
