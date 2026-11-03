@@ -8,7 +8,7 @@ chain:
   adapterSelectionSha256: REPLACE_APPROVED_SELECTION_SHA256
   productionLimits:
     maxHeight: 121
-    lifetimeSeconds: 7200
+    lifetimeSeconds: 21600
 deployment:
   provider: aws
   placement: one-node-per-vm

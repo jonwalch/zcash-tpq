@@ -154,6 +154,25 @@ fn receiver(chain: &Chain) -> String {
 }
 
 #[test]
+fn prepare_rejects_invalid_names_without_leaving_directories() {
+    let dir = tempfile::tempdir().unwrap();
+    let (public, private) = (dir.path().join("public"), dir.path().join("private"));
+    for name in ["tpq-test-1", "Mainnet", &"a".repeat(31)] {
+        let Err(error) = prepare(&public, &private, name.into()) else {
+            panic!("{name} accepted");
+        };
+        assert!(error.to_string().contains("no hyphens"), "{error}");
+        assert!(!public.exists() && !private.exists(), "{name}");
+    }
+    // A failure after creating both directories removes them too.
+    let nested = private.join("public");
+    assert!(prepare(&nested, &private, "ToolTests".into()).is_err());
+    assert!(!private.exists());
+    // The same paths then succeed with a valid name.
+    prepare(&public, &private, "tpq_test_1".into()).unwrap();
+}
+
+#[test]
 fn prepare_saves_exact_public_rules_and_separate_create_new_private_key() {
     let (dir, chain) = prepared();
     let loaded = Chain::load(&dir.path().join("public/chain.json")).unwrap();

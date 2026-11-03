@@ -3,7 +3,11 @@
 Use these files with the matching [ZDN walkthrough](../zdn.md). They contain no
 keys, funding authority, approved hashes or working AWS defaults.
 
-- Copy `external.yaml` to private working storage. Replace every `REPLACE` value.
+- Copy `env.sh.in` to `$WORK/env.sh` (mode 0600) and load it in every terminal.
+  It lists each walkthrough value and where it comes from. Later steps append
+  captured values. It holds no passwords, keys, cookies or credentials.
+- The walkthrough fills `external.yaml` from that environment with `sed`.
+  Review the result; no `REPLACE` value may remain.
   Its revision is the distributed source repository's Git revision, not necessarily
   the original TPQ commit. The source map must explain that relationship.
 - `core-trust.json.in` is the exact `CoreTrust` shape. Zero byte counts and
@@ -19,7 +23,8 @@ keys, funding authority, approved hashes or working AWS defaults.
 The example cadence is 3600 seconds so the operator can stop scheduled production
 and use saved bounded controls. It is not a guarantee that no scheduled block
 will race an observation. Check the stable tip after stopping. The explicit
-height-121 and two-hour first-activation ceilings do not renew on restart. They
+height-121 and six-hour (21600-second, the controller maximum) production
+lifetime ceilings start at `devnet up` and do not renew on restart. They
 are not defaults, a wall-clock kill switch or a spending cap.
 
 ## Packaging

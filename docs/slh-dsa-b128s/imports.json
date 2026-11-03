@@ -106,7 +106,7 @@
         "docs/slh-dsa-b128s/zdn.md"
       ],
       "reason": "Retain the PR #21 static starter-input instructions, with placeholder trust values and explicit human review gates. This inventory entry asserts no execution.",
-      "sha256": "f8a4a371ced36a1b220c33997f2c3bd11758aa57a65e2e7ce17ec9fa52b4fd18"
+      "sha256": "eb2fd79804671468cedc8ea8142e87461556bbe87c025d777272f9d7cf79383e"
     },
     {
       "disposition": "new",
@@ -119,12 +119,21 @@
     },
     {
       "disposition": "new",
+      "path": "docs/slh-dsa-b128s/zdn-preview/env.sh.in",
+      "provenance": [
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "New walkthrough environment template: one private file of paths and public identifiers reloaded in each terminal, so a failed command cannot lose state. It holds no secrets and grants no authority.",
+      "sha256": "88009b6f2d843ee3d7ae83d36e8524ce4a415d6ff4e8dd6eb72feaae3e8a4be2"
+    },
+    {
+      "disposition": "new",
       "path": "docs/slh-dsa-b128s/zdn-preview/external.yaml",
       "provenance": [
         "docs/slh-dsa-b128s/zdn.md"
       ],
       "reason": "Retain the PR #21 non-deployable configuration template with required replacement values, explicit production ceilings and experimental features; do not run it.",
-      "sha256": "656f227f6516292db9717c2409fa70ec46adf7a57b24b29379fab55eef9ba4dc"
+      "sha256": "17149c72fa71c32a922d2b691329ddc8c622fc207396a202451bb6949095e1b9"
     },
     {
       "disposition": "new",
@@ -367,7 +376,7 @@
         "docs/slh-dsa-b128s/wallet.md"
       ],
       "reason": "Document separately installed public adapter tools, explicit gateway trust, terminal-owned wallet passwords and pending external lifecycle qualification without claiming live support.",
-      "sha256": "4c62a748718832e54680e120140704ac08486e5fbe83fc3a98617558e343bb89"
+      "sha256": "5bf307f5ecf7d39fc81a9deb4bd2953eeccc1dd711d31cf0bc5341148db5cd02"
     },
     {
       "disposition": "new",
@@ -448,7 +457,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Reuse the native SLH genesis generator and rules builder to save one validated chain definition with separate private funding storage.",
-      "sha256": "75a4e2d7451ffe7b830663789fe2af69a9b5775465bd79917be934b0119761e8"
+      "sha256": "cc7979681c02480c3a7c6cd2f802df17b0a6af24d8b9af4a8b469551997cf019"
     },
     {
       "disposition": "new",
@@ -484,7 +493,7 @@
         "docs/slh-dsa-b128s/devnet.md"
       ],
       "reason": "Check saved chain identities, real classical funding signatures, wrong-chain rejection, arithmetic, retries, private storage and authenticated HTTP without a live node.",
-      "sha256": "25ab0aa78bc38d506d50cc1e7fd800379314fec7b3444c1af297a7b11dd7f968"
+      "sha256": "df8010d437b77dd507dd8341771c1380213dcb6b6a4602fc24d86321e20cd7f2"
     },
     {
       "disposition": "adapted",
@@ -4733,7 +4742,7 @@
         "tests/slh-dsa-b128s/acceptance/README.md"
       ],
       "reason": "Maintain attributable independent public references, fixed fixtures or focused adapters for the SLH contract.",
-      "sha256": "c2cfa877f1a559f92e71eeef8f9da107b20a9fb4570e4c820037b85b167e482a"
+      "sha256": "2575c403ce2fae8275f32b9bb43a9a5309f1f1a12a48744bc8d0e2679e22f5fa"
     },
     {
       "disposition": "new",

@@ -281,8 +281,39 @@ pub(crate) fn decode_block(encoded: &str) -> Result<Block> {
 /// A separate create-new private directory holds the classical key, not a PQ root.
 #[cfg(feature = "wallet")]
 pub fn prepare(public_dir: &Path, private_dir: &Path, name: String) -> Result<Chain> {
+    // Reject an invalid name before creating anything, so a retry can reuse the paths.
+    Parameters::build()
+        .with_network_name(&name)
+        .map_err(|error| {
+            format!(
+                "invalid cohort name: {error}; use letters, digits or '_' (no hyphens), \
+             at most 30 characters, not a reserved network name"
+            )
+        })?;
     storage::create_private_dir(private_dir)?;
+    // Remove only directories this call created if preparation later fails.
+    let mut created = CreatedDirs(vec![private_dir.to_path_buf()]);
     std::fs::create_dir(public_dir)?;
+    created.0.push(public_dir.to_path_buf());
+    let chain = prepare_into(public_dir, private_dir, name)?;
+    created.0.clear();
+    Ok(chain)
+}
+
+#[cfg(feature = "wallet")]
+struct CreatedDirs(Vec<std::path::PathBuf>);
+
+#[cfg(feature = "wallet")]
+impl Drop for CreatedDirs {
+    fn drop(&mut self) {
+        for dir in self.0.iter().rev() {
+            let _ = std::fs::remove_dir_all(dir);
+        }
+    }
+}
+
+#[cfg(feature = "wallet")]
+fn prepare_into(public_dir: &Path, private_dir: &Path, name: String) -> Result<Chain> {
     let public_path = public_dir.canonicalize()?;
     let private_path = private_dir.canonicalize()?;
     require(
