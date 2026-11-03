@@ -101,6 +101,16 @@
     },
     {
       "disposition": "new",
+      "path": "docs/changelog/unreleased/22.md",
+      "provenance": [
+        "crates/tpq-devnet/src/lib.rs",
+        "docs/slh-dsa-b128s/zdn.md"
+      ],
+      "reason": "Changelog fragment for PR #22: cohort-name validation before directory creation and the first-time-user walkthrough corrections.",
+      "sha256": "5049e5d0f243675879e4540c18b679852ae1b82a8ff56b8f576c81236dad6e20"
+    },
+    {
+      "disposition": "new",
       "path": "docs/slh-dsa-b128s/zdn-preview/README.md",
       "provenance": [
         "docs/slh-dsa-b128s/zdn.md"
